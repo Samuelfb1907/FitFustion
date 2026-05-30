@@ -4,8 +4,9 @@ import { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import HomeScreen from './HomeScreen';
 import TrainingScreen from './TrainingScreen';
+import PlanScreen from './PlanScreen';
 
-type Tab = 'home' | 'training';
+type Tab = 'home' | 'training' | 'plan';
 
 function TabButton({ label, icon, active, onPress }: { label: string; icon: string; active: boolean; onPress: () => void }) {
   return (
@@ -21,11 +22,12 @@ export default function MainTabs() {
   return (
     <View style={styles.root}>
       <View style={styles.screen}>
-        {tab === 'home' ? <HomeScreen /> : <TrainingScreen />}
+        {tab === 'home' ? <HomeScreen /> : tab === 'training' ? <TrainingScreen /> : <PlanScreen />}
       </View>
       <View style={styles.tabBar}>
         <TabButton label="Start" icon="🏠" active={tab === 'home'} onPress={() => setTab('home')} />
         <TabButton label="Training" icon="💪" active={tab === 'training'} onPress={() => setTab('training')} />
+        <TabButton label="Plan" icon="📅" active={tab === 'plan'} onPress={() => setTab('plan')} />
       </View>
     </View>
   );
