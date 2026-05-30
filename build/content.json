@@ -1,0 +1,662 @@
+[
+{"t":"h1","x":"1. Executive Summary"},
+{"t":"p","x":"FitFusion (Arbeitstitel) ist eine mobile Fitness- und Ernährungs-App, die Trainingspläne und Ernährungspläne erstmals durchgängig und intelligent miteinander verzahnt. Während der Markt heute weitgehend zwischen reinen Trainings-Apps und reinen Ernährungs-Trackern aufgeteilt ist, betreut FitFusion den Nutzer ganzheitlich: Auf Basis persönlicher Daten, individueller Ziele und der konkreten Trainingsumgebung erstellt eine KI-gestützte Engine aufeinander abgestimmte Trainings- und Ernährungsempfehlungen und passt diese kontinuierlich an den realen Fortschritt an."},
+{"t":"h2","x":"1.1 Das Problem"},
+{"t":"ul","items":[
+"Fitness-Einsteiger sind von der Informationsflut überfordert und wissen nicht, womit sie anfangen sollen.",
+"Training und Ernährung werden in getrennten Apps verwaltet, die nicht miteinander kommunizieren.",
+"Generische Pläne ignorieren das Erfahrungslevel, die verfügbaren Geräte und die individuellen Ziele.",
+"Mangelnde Motivation und fehlende sichtbare Fortschritte führen zu hohen Abbruchquoten (typischerweise verlieren Fitness-Apps einen Großteil der Nutzer innerhalb der ersten 30 Tage)."
+]},
+{"t":"h2","x":"1.2 Die Lösung"},
+{"t":"p","x":"FitFusion führt Nutzer durch ein geführtes Onboarding und erstellt daraus einen vollständig personalisierten, sich selbst anpassenden Plan für Training und Ernährung. Kernbausteine:"},
+{"t":"ul","items":[
+"Intelligentes Onboarding (persönliche Daten, Erfahrung, Trainingsumgebung, Ziel).",
+"Interaktive 3D-Muskelkarte (Mann/Frau, Vorder- und Rückansicht) mit anklickbaren Muskelgruppen.",
+"Umfangreiche Übungsdatenbank mit 3D-Animationen, gefiltert nach Equipment und Level.",
+"Automatisch generierte Trainings-Splits und darauf abgestimmte Ernährungspläne mit Makro-Tracking.",
+"Fortschritts-Dashboard, Gamification und ein optionaler KI-Coach als Premium-Feature."
+]},
+{"t":"h2","x":"1.3 Alleinstellungsmerkmal (USP)"},
+{"t":"p","x":"Die echte Verzahnung von Training und Ernährung ist der Kern der Differenzierung: Ändert sich das Trainingsvolumen, passt sich der Kalorien- und Makrobedarf automatisch an – und umgekehrt. Hinzu kommen die umgebungsbasierte Übungsauswahl (Studio / Home-Gym / ohne Equipment) und eine visuell herausragende, animationsgestützte Trainingsführung, die in dieser Kombination am Markt kaum existiert."},
+{"t":"h2","x":"1.4 Marktchance"},
+{"t":"p","x":"Der globale Markt für Fitness- und Ernährungs-Apps wird auf eine niedrige zweistellige Milliarden-USD-Größe geschätzt und wächst zweistellig pro Jahr (CAGR-Schätzungen verschiedener Marktforscher liegen je nach Quelle im Bereich von ca. 14–25 %). Der Rückenwind aus Wearables, KI-Coaching und einem anhaltenden Gesundheits- und Gewichtsmanagement-Trend stützt das Wachstum. Hinweis: Alle Marktzahlen in diesem Dokument sind Schätzungen und vor Investitionsentscheidungen mit aktuellen Primär- und Sekundärquellen zu validieren."},
+{"t":"h2","x":"1.5 Geschäftsmodell"},
+{"t":"p","x":"Freemium mit Abo-Monetarisierung: kostenloser Basisplan zur Nutzergewinnung, Premium-Abo (monatlich/jährlich) sowie eine Lifetime-Lizenz. Premium schaltet KI-Coach, erweiterte Ernährungspläne, detaillierte Statistiken, individuelle Trainingspläne und Videoinhalte frei."},
+{"t":"h2","x":"1.6 Kennzahlen auf einen Blick"},
+{"t":"table","headers":["Kennzahl","Zielwert / Annahme (zu validieren)"],"w":[5,5],"rows":[
+["Markteintritt","DACH-Region (DE/AT/CH), danach EU-weit"],
+["Time-to-MVP","ca. 8–10 Monate ab Projektstart"],
+["Plattformen","iOS und Android (Cross-Platform)"],
+["Free-zu-Premium-Conversion","3–5 % der aktiven Nutzer (Branchenrichtwert 2–5 %)"],
+["Premium-Preis","9,99 €/Monat; 59,99 €/Jahr; 199 € Lifetime"],
+["Ziel-CAC (geblendet)","4–12 € pro Installation"],
+["Kapitalbedarf (18–24 Monate)","ca. 1,2–1,8 Mio. € (Pre-Seed/Seed)"],
+["Ziel LTV/CAC","> 3,0"]
+]},
+{"t":"h2","x":"1.7 Mittelbedarf & Vision"},
+{"t":"p","x":"Zur Finanzierung von Produktentwicklung, Content-Produktion (3D-Animationen, Rezepte), Markteintritt und Compliance wird eine Pre-Seed-/Seed-Runde von ca. 1,2–1,8 Mio. € angestrebt (Runway 18–24 Monate). Vision: FitFusion soll zum führenden, ganzheitlichen Fitness-Begleiter im deutschsprachigen Raum werden und sich zu einer KI-gestützten Gesundheits-Plattform mit Wearable-Integration und Community ausbauen."},
+{"t":"callout","k":"Diagramm-Vorschlag","x":"One-Pager / Business Model Canvas auf einer Seite: Problem, Lösung, USP, Zielgruppe, Markt (TAM/SAM/SOM-Trichter), Geschäftsmodell, Wettbewerb, Team, Kapitalbedarf – ideal als visuelle Zusammenfassung für Investoren."},
+
+{"t":"pb"},
+{"t":"h1","x":"2. Produktvision"},
+{"t":"h2","x":"2.1 Vision Statement"},
+{"t":"p","x":"„Jeder Mensch verdient einen persönlichen Trainer und Ernährungsberater in der Hosentasche.“ FitFusion macht professionelle, individuelle Betreuung für Training und Ernährung für jeden zugänglich – unabhängig von Vorwissen, Budget oder Ausstattung."},
+{"t":"h2","x":"2.2 Mission"},
+{"t":"p","x":"Wir reduzieren die Komplexität von Fitness und Ernährung auf einen klaren, täglich umsetzbaren Plan, der sich automatisch an den Nutzer anpasst – und halten Menschen durch sichtbare Fortschritte und Motivation langfristig am Ball."},
+{"t":"h2","x":"2.3 Kern-Nutzenversprechen"},
+{"t":"table","headers":["Säule","Nutzenversprechen"],"w":[3,7],"rows":[
+["Personalisierung","Pläne basieren auf realen Daten (Alter, Gewicht, Ziel, Erfahrung, Umgebung) statt auf Schema F."],
+["Verzahnung","Training und Ernährung sprechen miteinander – ein Plan, ein System, ein Ziel."],
+["Adaptivität","Die App lernt aus jedem abgeschlossenen Training und passt Belastung und Kalorien an."],
+["Klarheit","Visuelle Führung (3D-Muskelkarte, Animationen) statt Fachjargon."],
+["Motivation","Gamification, Streaks und sichtbarer Fortschritt halten die Nutzer dabei."]
+]},
+{"t":"h2","x":"2.4 Produktprinzipien"},
+{"t":"ul","items":[
+"Guided by default, flexible on demand: Einsteiger werden geführt, Fortgeschrittene können alles anpassen.",
+"Show, don't tell: visuelle Erklärung vor Textwüsten.",
+"Adaptiv statt statisch: kein Plan ist in Stein gemeißelt.",
+"Privacy by design: Gesundheitsdaten werden minimal erhoben und maximal geschützt.",
+"Offline-first im Training: das Workout funktioniert auch ohne stabile Verbindung."
+]},
+{"t":"h2","x":"2.5 Langfristige Produktvision (3–5 Jahre)"},
+{"t":"ul","items":[
+"Wearable- und Health-Kit-Integration (Apple Health, Google Fit, Garmin) für automatische Aktivitäts- und Schlafdaten.",
+"Community- und Social-Features (Challenges mit Freunden, Bestenlisten, geteilte Pläne).",
+"Marktplatz für verifizierte Coaches und Ernährungsberater.",
+"Internationale Expansion und Lokalisierung über die DACH-Region hinaus.",
+"Ausbau zur präventiven Gesundheitsplattform mit optionaler Krankenkassen-/B2B-Kooperation."
+]},
+
+{"t":"pb"},
+{"t":"h1","x":"3. Marktanalyse"},
+{"t":"h2","x":"3.1 Marktgröße (TAM / SAM / SOM)"},
+{"t":"p","x":"Die folgende Schätzung dient der Größenordnung und ist vor Finanzierungsrunden mit aktuellen Quellen zu untermauern."},
+{"t":"table","headers":["Ebene","Definition","Schätzung (illustrativ)"],"w":[2,5,3],"rows":[
+["TAM","Globaler Markt für Fitness-/Ernährungs-Apps","zweistelliger Mrd.-USD-Bereich, CAGR ~14–25 %"],
+["SAM","Deutschsprachiger Markt (DACH), abo-fitnessaffine Nutzer","mehrere hundert Mio. € p. a."],
+["SOM","Realistisch erreichbarer Anteil in 3 Jahren","niedriger zweistelliger Mio.-€-Umsatz möglich"]
+]},
+{"t":"h2","x":"3.2 Markttrends"},
+{"t":"ul","items":[
+"KI-Coaching: personalisierte, adaptive Pläne werden vom Differenzierungs- zum Erwartungsmerkmal.",
+"Gewichtsmanagement im Fokus: gesellschaftlich und durch neue Abnehm-Trends getriebene Nachfrage.",
+"Home- und Hybrid-Training: Nachfrage nach equipment-flexiblen Lösungen bleibt hoch.",
+"Wearables & Datenintegration: Nutzer erwarten Anbindung an Health-Plattformen.",
+"Abo-Müdigkeit: hoher Wert pro Abo und eine überzeugende Free-Erfahrung werden wichtiger.",
+"Datenschutz-Sensibilität: gerade bei Gesundheitsdaten ein zunehmendes Kauf- und Vertrauenskriterium (DSGVO als Wettbewerbsvorteil)."
+]},
+{"t":"h2","x":"3.3 Wettbewerbsanalyse"},
+{"t":"table","headers":["Wettbewerber","Fokus","Stärke","Schwäche / Lücke"],"w":[2,3,3,3],"rows":[
+["MyFitnessPal","Ernährung/Kalorien","Riesige Lebensmittel-Datenbank","Schwaches Training; wenig Verzahnung"],
+["Yazio (DE)","Ernährung/Abnehmen","Starke DACH-Marke, gutes UX","Kaum Trainingsführung"],
+["Freeletics (DE)","Bodyweight/KI-Coach","Adaptiver Coach, Marke","Ernährung sekundär; Geräte begrenzt"],
+["Gymondo (DE)","Video-Kurse","Content-Qualität","Wenig individualisiertes Krafttraining"],
+["Fitbod","KI-Krafttraining","Adaptive Splits","Nur Training; US-zentriert"],
+["Hevy / Strong","Workout-Logging","Beliebt bei Fortgeschrittenen","Kein Coaching, keine Ernährung"],
+["Lifesum","Ernährung","Schönes Design","Training schwach"],
+["Centr","Premium-Lifestyle","Promi-Marke, Content","Teuer; wenig adaptiv"]
+]},
+{"t":"h2","x":"3.4 Wettbewerbslücke & Positionierung"},
+{"t":"p","x":"Kein etablierter Anbieter löst Training und Ernährung gleichermaßen stark und adaptiv verzahnt – genau hier positioniert sich FitFusion. Sekundäre Differenzierung: visuelle Trainingsführung (interaktive Muskelkarte + 3D-Animationen), umgebungsbasierte Übungsauswahl und konsequente DSGVO-Konformität als Vertrauensargument im DACH-Markt."},
+{"t":"callout","k":"Diagramm-Vorschlag","x":"Positionierungs-Matrix (2x2): X-Achse „Trainingstiefe“, Y-Achse „Ernährungstiefe“. Wettbewerber einordnen; FitFusion oben rechts als einziger Anbieter mit hoher Tiefe in beiden Dimensionen."},
+
+{"t":"pb"},
+{"t":"h1","x":"4. Zielgruppenanalyse"},
+{"t":"h2","x":"4.1 Kernsegmente"},
+{"t":"table","headers":["Segment","Beschreibung","Primäres Bedürfnis"],"w":[3,4,3],"rows":[
+["Einsteiger","Wenig Erfahrung, unsicher, überfordert","Geführter, einfacher Einstieg"],
+["Studio-Besucher","Trainieren regelmäßig im Gym","Struktur, Progression, Abwechslung"],
+["Home-Gym-Nutzer","Begrenztes Equipment zu Hause","Pläne für vorhandene Geräte"],
+["Gewichts-Ziel-Gruppe","Möchten ab- oder zunehmen","Klares Defizit/Überschuss + Begleitung"]
+]},
+{"t":"h2","x":"4.2 Personas"},
+{"t":"h3","x":"Persona 1 – Lena, 27, Einsteigerin"},
+{"t":"ul","items":[
+"Ziel: Abnehmen und sich wohler fühlen; trainiert zu Hause ohne Equipment.",
+"Pain Points: überfordert von Informationen, wenig Zeit, schnell demotiviert.",
+"Erwartung: einfacher, geführter Plan; klare tägliche To-dos; sichtbare Erfolge."
+]},
+{"t":"h3","x":"Persona 2 – Markus, 34, Studio-Gänger"},
+{"t":"ul","items":[
+"Ziel: Muskelaufbau; trainiert 4x/Woche im Fitnessstudio (mittleres Level).",
+"Pain Points: Plateau, unsichere Ernährungsmakros, fehlende Progression.",
+"Erwartung: strukturierter Split, Makro-Tracking, das zum Training passt, Statistiken."
+]},
+{"t":"h3","x":"Persona 3 – Sandra, 41, Wiedereinsteigerin"},
+{"t":"ul","items":[
+"Ziel: allgemeine Fitness; Home-Gym mit Kurzhanteln; sehr wenig Zeit.",
+"Pain Points: Zeitmangel, Angst vor Verletzungen, Motivation im Alltag.",
+"Erwartung: kurze effiziente Workouts, korrekte Ausführung (Animationen), Flexibilität."
+]},
+{"t":"h2","x":"4.3 Jobs-to-be-Done"},
+{"t":"ul","items":[
+"„Hilf mir anzufangen, ohne dass ich Fehler mache.“",
+"„Sag mir täglich genau, was ich trainieren und essen soll.“",
+"„Zeig mir, dass sich meine Mühe lohnt.“",
+"„Pass den Plan an, wenn sich mein Leben ändert.“"
+]},
+
+{"t":"pb"},
+{"t":"h1","x":"5. Funktionsübersicht"},
+{"t":"p","x":"Dieses Kapitel beschreibt den vollständigen Funktionsumfang, gegliedert nach Onboarding, Training, Ernährung, Fortschritt, Gamification und Premium. Die Priorisierung (MVP vs. später) ist am Kapitelende als MoSCoW-Tabelle zusammengefasst."},
+{"t":"h2","x":"5.1 Onboarding"},
+{"t":"p","x":"Vier Schritte führen den Nutzer von der Registrierung zum fertigen Plan. Datenschutzhinweis: Körper- und Gesundheitsdaten sind besondere Kategorien (Art. 9 DSGVO) – Erhebung nur mit ausdrücklicher Einwilligung und Datenminimierung (siehe Kapitel 7)."},
+{"t":"h3","x":"Schritt 1 – Persönliche Daten"},
+{"t":"table","headers":["Pflichtfelder","Optionale Felder"],"w":[5,5],"rows":[
+["Vorname\nAlter\nGeschlecht\nKörpergewicht\nKörpergröße","Aktivitätslevel\nAllergien\nErnährungsvorlieben (z. B. vegetarisch, vegan)"]
+]},
+{"t":"h3","x":"Schritt 2 – Trainingserfahrung"},
+{"t":"p","x":"Auswahl: Anfänger / Etwas erfahren / Fortgeschritten / Profi. Die Auswahl steuert Übungsauswahl, Volumen, Intensität und Progressionsgeschwindigkeit."},
+{"t":"h3","x":"Schritt 3 – Trainingsumgebung"},
+{"t":"table","headers":["Umgebung","Verfügbarkeit","Konsequenz für Übungsauswahl"],"w":[3,3,4],"rows":[
+["Fitnessstudio","Vollständiger Gerätezugang","Gesamte Übungsdatenbank verfügbar"],
+["Home-Gym","Begrenzte Geräte","Filter auf vorhandenes Equipment"],
+["Ohne Equipment","Bodyweight","Nur Körpergewichtsübungen"]
+]},
+{"t":"h3","x":"Schritt 4 – Fitnessziel"},
+{"t":"ul","items":[
+"Abnehmen, Muskelaufbau, Kraftsteigerung, Ausdauer verbessern, Allgemeine Fitness, Körper definieren.",
+"Bei „Abnehmen“ zusätzlich: Traumgewicht und Zielzeitraum → daraus berechnet die App ein sicheres Kaloriendefizit und einen realistischen Wochen-Zielwert."
+]},
+{"t":"check","items":[
+"Onboarding in unter 2 Minuten abschließbar",
+"Fortschrittsanzeige über die 4 Schritte",
+"Einwilligung für Gesundheitsdaten getrennt und transparent eingeholt",
+"Eingaben jederzeit im Profil änderbar (Plan rekalkuliert automatisch)"
+]},
+{"t":"h2","x":"5.2 Trainingsbereich"},
+{"t":"h3","x":"5.2.1 Interaktive Muskelkarte"},
+{"t":"ul","items":[
+"Zwei Körpermodelle (Mann/Frau), jeweils Vorder- und Rückansicht.",
+"Anklickbare Muskelgruppen; ausgewählter Muskel wird rot hervorgehoben.",
+"Mehrfachauswahl möglich; Anzeige von Muskelinformationen bei Auswahl.",
+"Abgedeckte Gruppen u. a.: Brust, Rücken, Schultern, Bizeps, Trizeps, Bauch, Beine, Waden, Gesäß."
+]},
+{"t":"callout","k":"Diagramm-Vorschlag","x":"UI-Mockup der Muskelkarte: 3D-/SVG-Körpermodell mit Hotspots, rot markierter Auswahl und seitlichem Info-Panel pro Muskel (Funktion, zugehörige Übungen)."},
+{"t":"h3","x":"5.2.2 Übungsdatenbank"},
+{"t":"p","x":"Jeder Muskel ist mit zahlreichen Übungen verknüpft, gestaffelt nach Anfänger-, Fortgeschrittenen- und Profiübungen."},
+{"t":"table","headers":["Attribut pro Übung","Beschreibung"],"w":[3,7],"rows":[
+["Name","Eindeutiger Übungsname"],
+["Schwierigkeitsgrad","Anfänger / Fortgeschritten / Profi"],
+["Benötigtes Equipment","z. B. Langhantel, Kurzhantel, Maschine, keines"],
+["Zielmuskel","Primär- und Sekundärmuskulatur"],
+["Beschreibung","Kurzbeschreibung und Trainingsreiz"],
+["Schritt-für-Schritt-Anleitung","Detaillierte Ausführung in Einzelschritten"]
+]},
+{"t":"h3","x":"5.2.3 Übungsanimationen"},
+{"t":"ul","items":[
+"Animiertes 3D-Modell der korrekten Ausführung bei Auswahl einer Übung.",
+"Hinweise zur Fehlervermeidung und Hervorhebung der Zielmuskeln.",
+"Optional: Videoanleitung und Sprachanleitung (Premium / spätere Ausbaustufe)."
+]},
+{"t":"h3","x":"5.2.4 Trainingsfortschritt"},
+{"t":"p","x":"Nach jeder Übung bestätigt der Nutzer über den Button „Übung abgeschlossen“. Gespeichert werden: Wiederholungen, Gewicht, Dauer und Datum. Diese Daten speisen Progression und Statistiken."},
+{"t":"h3","x":"5.2.5 Automatische Trainingspläne"},
+{"t":"p","x":"Die App generiert automatisch tägliche Trainingspläne und optimale Muskelkombinationen (Splits). Beispiel eines 5-Tage-Splits:"},
+{"t":"table","headers":["Tag","Fokus"],"w":[2,8],"rows":[
+["Tag 1","Brust + Trizeps"],
+["Tag 2","Rücken + Bizeps"],
+["Tag 3","Beine"],
+["Tag 4","Schultern + Bauch"],
+["Tag 5","Cardio"]
+]},
+{"t":"p","x":"Die Engine berücksichtigt Regeneration (kein hartes Training derselben Muskelgruppe an Folgetagen), Ziel, verfügbare Trainingstage und Erfahrungslevel. Details zur KI siehe Kapitel 6.8."},
+{"t":"check","items":[
+"Split passt sich an Anzahl der Trainingstage an (z. B. 3er-, 4er-, 5er-Split)",
+"Regenerationslogik verhindert Überlastung einzelner Muskelgruppen",
+"Übungsauswahl respektiert Equipment und Level",
+"Plan jederzeit manuell anpassbar (Premium: vollständig individuell)"
+]},
+{"t":"h2","x":"5.3 Ernährungsbereich"},
+{"t":"p","x":"Ernährungspläne basieren auf Gewicht, Alter, Geschlecht, Trainingsziel und Aktivitätslevel und sind mit dem Trainingsvolumen verknüpft."},
+{"t":"h3","x":"5.3.1 Ernährungsziele"},
+{"t":"table","headers":["Ziel","Kalorienstrategie"],"w":[5,5],"rows":[
+["Abnehmen","Kaloriendefizit (moderat, gesundheitsverträglich)"],
+["Muskelaufbau","Kalorienüberschuss (kontrolliert)"],
+["Fitness / Erhaltung","Erhaltungskalorien"]
+]},
+{"t":"h3","x":"5.3.2 Automatische Berechnung"},
+{"t":"ul","items":[
+"Kalorienbedarf (Grundumsatz nach anerkannter Formel + Aktivitäts- und Trainingsfaktor).",
+"Proteinbedarf (zielabhängig, z. B. erhöht bei Muskelaufbau/Definition).",
+"Kohlenhydrat- und Fettbedarf als abgestimmte Makroverteilung."
+]},
+{"t":"h3","x":"5.3.3 Ernährungsplan"},
+{"t":"ul","items":[
+"Tägliche Anzeige: Frühstück, Mittagessen, Abendessen, Snacks.",
+"Optional: Einkaufsliste, Rezeptvorschläge, Makro-Tracking.",
+"Berücksichtigung von Allergien und Ernährungsvorlieben aus dem Onboarding."
+]},
+{"t":"callout","k":"Hinweis (rechtlich)","x":"Ernährungsempfehlungen sind als allgemeine Lifestyle-Information zu positionieren, nicht als medizinische oder therapeutische Beratung. Klarer Disclaimer und Vermeidung von Health Claims (VO (EG) 1924/2006) erforderlich; siehe Kapitel 7 und 12."},
+{"t":"h2","x":"5.4 Fortschrittsbereich"},
+{"t":"p","x":"Ein Dashboard bündelt alle Fortschrittsdaten und macht Erfolge sichtbar."},
+{"t":"table","headers":["Bereich","Inhalt","Visualisierung"],"w":[3,4,3],"rows":[
+["Gewicht","Startgewicht, aktuelles Gewicht, Verlauf","Liniendiagramm"],
+["Training","Trainingshistorie, Volumen, persönliche Rekorde","Balken / Heatmap"],
+["Ziele","Erreichte Ziele, Zielnähe","Fortschrittsbalken"],
+["Konsistenz","Streaks, aktive Tage","Kalender / Streak-Counter"],
+["Statistik","Aggregierte Kennzahlen","Karten / KPIs"]
+]},
+{"t":"h2","x":"5.5 Gamification"},
+{"t":"table","headers":["Element","Beschreibung","Wirkung"],"w":[3,4,3],"rows":[
+["Levelsystem","XP für abgeschlossene Workouts/Tage","Langfristige Bindung"],
+["Achievements","Erfolge für Meilensteine","Belohnung, Stolz"],
+["Badges","Sammelbare Abzeichen","Statussymbol"],
+["Tagesziele","Tägliche Mini-Ziele","Tagesroutine"],
+["Challenges","Zeitlich begrenzte Aufgaben","Aktivierung, Viralität"],
+["Streaks","Serien aktiver Tage","Gewohnheitsbildung"]
+]},
+{"t":"callout","k":"Diagramm-Vorschlag","x":"Engagement-Loop-Diagramm: Trigger (Push) → Aktion (Workout) → Belohnung (XP/Badge/Streak) → Investment (Fortschritt sichtbar) → erneuter Trigger."},
+{"t":"h2","x":"5.6 Premium-Funktionen"},
+{"t":"ul","items":[
+"KI-Coach (dialogbasierte Anpassung, Motivation, Fragen).",
+"Erweiterte Ernährungspläne (mehr Rezepte, Varianten, automatische Einkaufslisten).",
+"Erweiterte Statistiken und Analysen.",
+"Vollständig individuelle Trainingspläne.",
+"Videoübungen und Sprachanleitung."
+]},
+{"t":"h2","x":"5.7 Feature-Priorisierung (MoSCoW)"},
+{"t":"table","headers":["Priorität","Features"],"w":[2,8],"rows":[
+["Must (MVP)","Onboarding, Muskelkarte (Basis), Übungsdatenbank, Animationen (Kernübungen), automatische Splits, Trainings-Logging, Basis-Ernährungsplan + Makros, Fortschritts-Dashboard, Auth/Account"],
+["Should","Gamification (Streaks/Badges), Einkaufsliste, erweiterte Statistiken, Push-Benachrichtigungen"],
+["Could","KI-Coach (Chat), Videoübungen, Sprachanleitung, Wearable-Anbindung, Community"],
+["Won't (vorerst)","Marktplatz für Coaches, B2B-Portal, internationale Lokalisierung"]
+]},
+
+{"t":"pb"},
+{"t":"h1","x":"6. Technische Architektur"},
+{"t":"h2","x":"6.1 Architektur-Überblick"},
+{"t":"p","x":"Empfohlen wird eine schlanke, cloud-native Architektur mit Cross-Platform-App, API-Gateway, modularen Backend-Services, verwalteter relationaler Datenbank, Objekt-Speicher/CDN für Medien sowie einem separaten KI-/Empfehlungsdienst. Für den MVP wird Geschwindigkeit über maximale Eigenentwicklung gestellt (pragmatischer Einsatz von Managed Services)."},
+{"t":"callout","k":"Diagramm-Vorschlag","x":"Systemarchitektur-Diagramm: Mobile App → API-Gateway → Services (Auth, Training, Ernährung, Fortschritt, KI) → PostgreSQL / Redis / Objekt-Speicher (CDN). Seitlich: Monitoring, Logging, CI/CD."},
+{"t":"h2","x":"6.2 Frontend"},
+{"t":"table","headers":["Aspekt","Empfehlung","Begründung"],"w":[3,3,4],"rows":[
+["Framework","React Native (TypeScript), Expo","Eine Codebasis für iOS/Android, großer Talentpool"],
+["Alternative","Flutter (Dart)","Sehr performante UI; abhängig vom Team-Know-how"],
+["3D / Animation","react-three-fiber / glTF-Modelle","Muskelkarte & Übungs-3D plattformübergreifend"],
+["State / Daten","React Query + lokaler Cache","Offline-first im Training"],
+["Design-System","Komponentenbibliothek + Tokens","Konsistenz, Tempo, Skalierbarkeit"]
+]},
+{"t":"h2","x":"6.3 Backend"},
+{"t":"table","headers":["Aspekt","Empfehlung","Begründung"],"w":[3,3,4],"rows":[
+["MVP-Ansatz","Managed BaaS (z. B. Supabase: PostgreSQL, Auth, Storage)","Schneller Start, weniger Ops-Aufwand"],
+["Skalierungs-Ansatz","Node.js (NestJS, TypeScript) Microservices","End-to-end TypeScript, klare Module"],
+["Alternative","Python (FastAPI)","Stark für KI-/Datendienste"],
+["Async/Jobs","Queue (z. B. Redis/Bull) für Planerstellung","Entkoppelt rechenintensive Aufgaben"]
+]},
+{"t":"h2","x":"6.4 Datenbank"},
+{"t":"ul","items":[
+"Primär: PostgreSQL (relational; strukturierte Nutzer-, Übungs-, Plan- und Trackingdaten).",
+"Cache: Redis (Sessions, häufige Abfragen, Ratenbegrenzung).",
+"Medien: Objekt-Speicher (S3-kompatibel) + CDN für 3D-Modelle, Animationen, Videos.",
+"Analytics: separates Data-Warehouse/Event-Store für Produktanalytik (später)."
+]},
+{"t":"callout","k":"Diagramm-Vorschlag","x":"ER-Diagramm der Kernentitäten: User, Profile, Goal, Muscle, Exercise, WorkoutPlan, WorkoutSession, SetLog, NutritionPlan, Meal, FoodItem, ProgressEntry, Achievement."},
+{"t":"h2","x":"6.5 Cloud-Infrastruktur"},
+{"t":"table","headers":["Option","Eignung","Hinweis"],"w":[3,4,3],"rows":[
+["AWS (eu-central-1, Frankfurt)","Voll ausgestattet, skaliert","Datenresidenz in der EU (DSGVO)"],
+["Hetzner / OVH (DE/EU)","Kostengünstig, DSGVO-freundlich","Weniger Managed Services"],
+["Azure / GCP (EU-Region)","Alternativen","KI-Dienste je nach Stack"]
+]},
+{"t":"p","x":"Empfehlung: EU-Region (z. B. Frankfurt) zur Sicherstellung der Datenresidenz für Gesundheitsdaten; Auswahl AWS für Managed Services bzw. Hetzner für Kostenoptimierung in frühen Phasen."},
+{"t":"h2","x":"6.6 API-Architektur"},
+{"t":"ul","items":[
+"REST-API nach OpenAPI-Spezifikation (klare Versionierung, z. B. /v1).",
+"Authentifizierung via OAuth2 / JWT (kurzlebige Access-Tokens, Refresh-Tokens).",
+"Ratenbegrenzung, Input-Validierung und konsistente Fehlerformate.",
+"Optional GraphQL für datenintensive Client-Abfragen (später)."
+]},
+{"t":"h2","x":"6.7 Skalierbarkeit & Performance"},
+{"t":"table","headers":["Anforderung","Zielwert / Maßnahme"],"w":[4,6],"rows":[
+["App-Kaltstart","< 2 Sekunden"],
+["API-Antwortzeit (p95)","< 300 ms"],
+["Skalierung","Zustandslose Services, horizontale Autoskalierung"],
+["Medien","Auslieferung über CDN, adaptive Qualität"],
+["Offline","Workouts lokal zwischengespeichert, spätere Synchronisation"],
+["Lastspitzen","Async-Queue für Planberechnung, Caching häufiger Antworten"]
+]},
+{"t":"h2","x":"6.8 KI-Integration"},
+{"t":"p","x":"Die KI-Funktionen werden bewusst gestuft eingeführt: zunächst regelbasierte/heuristische Engines (transparent, günstig, sicher), später ML-gestützte Personalisierung und ein dialogbasierter KI-Coach auf Basis eines LLM."},
+{"t":"table","headers":["KI-Funktion","Ansatz","Bewertung"],"w":[3,4,3],"rows":[
+["Trainingsplan-KI","Regelbasiert (Split-Logik, Regeneration), später ML","Hoher Nutzen, gut beherrschbar"],
+["Ernährungsplan-KI","Formelbasiert (Bedarf) + Rezept-Matching","Hoher Nutzen, geringes Risiko"],
+["Fortschrittsanalyse","Statistik/Trend, ML-Prognosen später","Mittlerer Nutzen"],
+["Personalisierung","Adaptive Anpassung aus Trackingdaten","Kernwert, iterativ ausbauen"],
+["KI-Coach (Chat)","LLM-API mit Leitplanken & Vorlagen","Differenzierung; Sorgfalt nötig"]
+]},
+{"t":"h3","x":"6.8.1 Datenfluss (KI)"},
+{"t":"p","x":"Nutzer-/Trackingdaten → Feature-Aufbereitung → Empfehlungsdienst (Regeln/Modell) → validierter Plan → App. Beim KI-Coach: Kontext (Profil, aktueller Plan, Ziel) wird kuratiert an die LLM-API übergeben; Ausgaben werden gegen Leitplanken geprüft, bevor sie dem Nutzer angezeigt werden."},
+{"t":"h3","x":"6.8.2 Risiken & Gegenmaßnahmen"},
+{"t":"ul","items":[
+"Fehlerhafte/halluzinierte Empfehlungen → Leitplanken, geprüfte Vorlagen, Wertebereichs-Prüfungen, Disclaimer.",
+"Haftung bei Gesundheitsbezug → keine medizinischen Aussagen; konservative Defaults.",
+"Datenschutz bei LLM-APIs → Datenminimierung, Auftragsverarbeitung/AVV, möglichst EU-Hosting, keine Klartext-Gesundheitsidentifikatoren.",
+"Kostenkontrolle → Caching, kompakte Prompts, Nutzungslimits im Free-Tier."
+]},
+{"t":"h3","x":"6.8.3 Kosten (Indikation)"},
+{"t":"ul","items":[
+"Regelbasierte Engines: vernachlässigbare Laufzeitkosten.",
+"LLM-KI-Coach: variable API-Kosten pro Konversation → nur im Premium, mit Limits und Caching.",
+"Monatliche KI-/API-Kosten skalieren mit aktiver Premium-Nutzung (Budget siehe Kapitel 11)."
+]},
+{"t":"callout","k":"Diagramm-Vorschlag","x":"KI-Datenfluss-Diagramm mit Leitplanken-Schicht (Guardrails) zwischen LLM-Ausgabe und Nutzer; getrennte Pfade für regelbasierte Planerstellung und dialogbasierten Coach."},
+{"t":"h2","x":"6.9 QA & Teststrategie"},
+{"t":"table","headers":["Testart","Ziel","Werkzeuge (Beispiel)"],"w":[3,4,3],"rows":[
+["Unit-Tests","Logik isoliert prüfen (z. B. Kalorienformel)","Jest / Vitest"],
+["Integrationstests","Zusammenspiel Services/DB","Jest + Testcontainers"],
+["End-to-End-Tests","Nutzerflüsse auf dem Gerät","Detox / Appium / Maestro"],
+["Security-Tests","Schwachstellen, Abhängigkeiten","OWASP ZAP, SAST/Dependency-Scan"],
+["Performance-Tests","Last/Antwortzeiten","k6 / Locust"],
+["Usability-Tests","Verständlichkeit, Friction","Moderierte Tests, Beta-Feedback"]
+]},
+{"t":"check","items":[
+"Testabdeckung der Kernlogik (Plan-/Kalorienberechnung) > 80 %",
+"CI-Pipeline blockt Merge bei roten Tests / Sicherheitsfunden",
+"Geräte-Testmatrix (gängige iOS-/Android-Geräte & OS-Versionen)",
+"Beta über TestFlight (iOS) und Play Console (Android)",
+"Definierte Abnahmekriterien (Definition of Done) pro Feature"
+]},
+
+{"t":"pb"},
+{"t":"h1","x":"7. Sicherheitskonzept"},
+{"t":"p","x":"Da FitFusion Gesundheitsdaten verarbeitet (Gewicht, Körpermaße, ggf. Allergien), gelten erhöhte Anforderungen. Diese Daten sind besondere Kategorien personenbezogener Daten nach Art. 9 DSGVO und erfordern eine ausdrückliche Einwilligung sowie besonders robuste technische und organisatorische Maßnahmen (TOMs)."},
+{"t":"h2","x":"7.1 Datenschutz (DSGVO)"},
+{"t":"ul","items":[
+"Rechtsgrundlage: ausdrückliche Einwilligung (Art. 9 Abs. 2 lit. a) für Gesundheitsdaten; Vertragserfüllung für die Kernfunktion.",
+"Datenminimierung: nur erheben, was für Pläne nötig ist; optionale Felder klar als optional kennzeichnen.",
+"Einwilligungen: granular, getrennt (z. B. Gesundheitsdaten, Analytics, Marketing), jederzeit widerrufbar; Consent-Logging.",
+"Betroffenenrechte: Auskunft, Berichtigung, Löschung, Datenübertragbarkeit, Widerspruch – per Self-Service umsetzen.",
+"Datenschutz-Folgenabschätzung (DSFA): wegen Gesundheitsdaten und Profiling voraussichtlich erforderlich.",
+"Verzeichnis von Verarbeitungstätigkeiten (VVT) und AV-Verträge (AVV) mit allen Dienstleistern.",
+"Privacy by Design & by Default; Datenschutzerklärung in klarer Sprache."
+]},
+{"t":"h2","x":"7.2 Benutzersicherheit"},
+{"t":"ul","items":[
+"Passwortschutz: Speicherung nur als starker Hash (z. B. Argon2/bcrypt), Mindestkomplexität, Prüfung gegen bekannte Leaks.",
+"Multi-Faktor-Authentifizierung (MFA) optional, für sensible Aktionen empfohlen.",
+"Session-Management: kurzlebige Access-Tokens, rotierende Refresh-Tokens, serverseitiger Logout/Invalidate.",
+"Schutz vor Brute-Force (Rate-Limiting, Lockout), sichere Passwort-Reset-Flüsse."
+]},
+{"t":"h2","x":"7.3 Backend-Sicherheit"},
+{"t":"ul","items":[
+"API-Security: Authentifizierung/Autorisierung pro Endpunkt, strikte Input-Validierung, Schutz vor OWASP-Top-10 (Injection, Broken Access Control etc.).",
+"Verschlüsselung: TLS 1.2+ erzwingen; interne Service-Kommunikation abgesichert.",
+"Secrets-Management (kein Hardcoding), Least-Privilege-Zugriffe, regelmäßige Rotation.",
+"Logging & Monitoring: sicherheitsrelevante Events protokollieren (ohne sensible Klartextdaten), Alerting, Audit-Trails.",
+"Abhängigkeits- und Container-Scanning in der CI/CD-Pipeline."
+]},
+{"t":"h2","x":"7.4 Datensicherheit"},
+{"t":"table","headers":["Maßnahme","Umsetzung"],"w":[4,6],"rows":[
+["Verschlüsselung at Rest","Datenbank- und Speicher-Verschlüsselung (z. B. AES-256)"],
+["Verschlüsselung in Transit","TLS für alle Verbindungen"],
+["Backup-Strategie","Automatisierte, verschlüsselte Backups; regelmäßige Restore-Tests; geografische Redundanz in der EU"],
+["Datentrennung","Logische Trennung; Pseudonymisierung wo möglich"],
+["Aufbewahrung/Löschung","Definierte Fristen; automatisierte Löschkonzepte"]
+]},
+{"t":"h2","x":"7.5 Compliance"},
+{"t":"ul","items":[
+"DSGVO und deutsches BDSG; EU-Datenresidenz für Gesundheitsdaten.",
+"EU AI Act: Transparenzpflichten für KI-Funktionen prüfen (voraussichtlich begrenztes Risiko).",
+"Abgrenzung zum Medizinprodukt (MDR): keine Diagnose-/Therapieaussagen, Positionierung als Wellness/Lifestyle.",
+"App-Store-Richtlinien (Apple/Google) zu Gesundheits- und Abo-Inhalten.",
+"Bestellung eines Datenschutzbeauftragten prüfen (abhängig von Umfang/Risiko)."
+]},
+{"t":"check","items":[
+"Datenschutzerklärung & Einwilligungs-Flows live und versioniert",
+"VVT und AVV mit allen Auftragsverarbeitern vorhanden",
+"DSFA durchgeführt und dokumentiert",
+"Pen-Test / Security-Review vor Launch",
+"Incident-Response-Plan & Meldewege (72-Stunden-Frist) definiert",
+"Lösch- und Aufbewahrungskonzept implementiert"
+]},
+
+{"t":"pb"},
+{"t":"h1","x":"8. Monetarisierungsstrategie"},
+{"t":"h2","x":"8.1 Modell-Übersicht"},
+{"t":"table","headers":["Plan","Preis (Annahme)","Umfang"],"w":[2,3,5],"rows":[
+["Kostenlos","0 €","Onboarding, Basis-Split, Basis-Ernährungsplan, Logging, begrenzte Statistiken"],
+["Premium (Monat)","9,99 € / Monat","Alle Premium-Features"],
+["Premium (Jahr)","59,99 € / Jahr (~5 €/Monat)","Alle Premium-Features, beste Bindung"],
+["Lifetime","199 € einmalig","Einmalzahlung, Cashflow früh"]
+]},
+{"t":"h2","x":"8.2 Premium-Mehrwert"},
+{"t":"ul","items":[
+"KI-Coach, vollständig individuelle Trainingspläne.",
+"Erweiterte Ernährungspläne inkl. Rezepte und Einkaufslisten.",
+"Erweiterte Statistiken und Videoinhalte.",
+"Freie Anpassung von Plänen und Prioritäten."
+]},
+{"t":"h2","x":"8.3 Conversion- & Umsatzannahmen"},
+{"t":"p","x":"Illustratives Szenario (Annahmen, zu validieren). ARPU = durchschnittlicher Jahresumsatz je zahlendem Nutzer (~55–65 €)."},
+{"t":"table","headers":["Jahr","Installs (kum.)","MAU","Premium-Conv.","Zahlende","ARR (illustrativ)"],"w":[1,2,2,2,1,2],"rows":[
+["Jahr 1","150.000","50.000","4 %","~2.000","~0,11 Mio. €"],
+["Jahr 2","600.000","180.000","5 %","~9.000","~0,54 Mio. €"],
+["Jahr 3","1.500.000","400.000","6 %","~24.000","~1,5 Mio. €"]
+]},
+{"t":"h2","x":"8.4 Unit Economics"},
+{"t":"table","headers":["Kennzahl","Annahme / Ziel"],"w":[5,5],"rows":[
+["CAC (geblendet)","4–12 € (organik-lastig)"],
+["Monatliche Churn (Premium)","5–8 %"],
+["Durchschn. Abo-Dauer","12–18 Monate"],
+["LTV","~70–110 €"],
+["LTV / CAC","Ziel > 3,0"]
+]},
+{"t":"callout","k":"Diagramm-Vorschlag","x":"Conversion-Funnel (Install → Onboarding abgeschlossen → aktiver Nutzer → Trial → Premium) und daneben ein ARR-Wachstumsdiagramm über 3 Jahre."},
+{"t":"h2","x":"8.5 Zusätzliche / spätere Erlösquellen"},
+{"t":"ul","items":[
+"Partnerschaften (Supplements, Equipment) mit klarer Trennung von redaktioneller Empfehlung.",
+"B2B / Corporate Wellness (Mitarbeiter-Lizenzen).",
+"Marktplatz für verifizierte Coaches (Umsatzbeteiligung)."
+]},
+
+{"t":"pb"},
+{"t":"h1","x":"9. Marketingstrategie"},
+{"t":"h2","x":"9.1 Zielgruppen (Marketing)"},
+{"t":"p","x":"Anfänger, Fitnessstudio-Besucher, Home-Gym-Nutzer und Menschen mit Gewichtsverlust-Zielen (siehe Kapitel 4). Botschaften werden pro Segment differenziert (z. B. „Sicher anfangen“ vs. „Plateau durchbrechen“)."},
+{"t":"h2","x":"9.2 Akquise-Kanäle"},
+{"t":"table","headers":["Kanal","Taktik","Eignung"],"w":[2,5,3],"rows":[
+["TikTok","Kurzvideos: Transformationen, Form-Tipps, App-Demos","Hoch (organische Reichweite)"],
+["Instagram","Reels, Stories, Coach-Kooperationen","Hoch"],
+["YouTube","Tutorials, Langform, SEO-Videos","Mittel–hoch"],
+["SEO","Ratgeber-Content (Training/Ernährung)","Hoch (langfristig, günstig)"],
+["Influencer","Micro-/Mid-Tier Fitness-Creator (DACH)","Hoch (Vertrauen)"],
+["App-Store-Optimierung (ASO)","Keywords, Screenshots, Bewertungen","Pflicht"]
+]},
+{"t":"h2","x":"9.3 Retention"},
+{"t":"ul","items":[
+"Push-Benachrichtigungen (Trainingserinnerung, Streak-Schutz, Motivation) – mit Bedacht und Personalisierung.",
+"Challenges und zeitlich begrenzte Events.",
+"Sichtbarer Fortschritt und Gamification als Bindungsmotor.",
+"Lifecycle-Mails/In-App-Nachrichten an wichtigen Punkten (Onboarding, Tag 3, Tag 7, Reaktivierung)."
+]},
+{"t":"h2","x":"9.4 Referral-System"},
+{"t":"ul","items":[
+"„Freunde einladen“ mit beidseitiger Belohnung (z. B. Premium-Tage für Einlader und Eingeladenen).",
+"Teilbare Erfolge/Streaks als organischer Wachstumskanal.",
+"Tracking von Einladungs-Codes zur Attribution."
+]},
+{"t":"h2","x":"9.5 Marketing-KPIs"},
+{"t":"table","headers":["KPI","Zielrichtung"],"w":[5,5],"rows":[
+["CPI / CAC","minimieren, organik-lastig halten"],
+["Aktivierungsrate (Onboarding abgeschlossen)","maximieren"],
+["D1 / D7 / D30 Retention","über Branchen-Benchmark"],
+["Free-zu-Premium-Conversion","3–5 %+"],
+["Viralität (K-Faktor)","> 0 durch Referral"]
+]},
+{"t":"callout","k":"Diagramm-Vorschlag","x":"Marketing-Funnel (Awareness → Acquisition → Activation → Retention → Revenue → Referral) mit Kanälen und KPIs je Stufe (Pirate Metrics / AARRR)."},
+
+{"t":"pb"},
+{"t":"h1","x":"10. Roadmap"},
+{"t":"p","x":"Acht Phasen vom Konzept bis zur KI-Erweiterung. Dauerangaben sind Schätzungen und überlappen teilweise; Gesamtdauer bis Launch ca. 8–10 Monate."},
+{"t":"table","headers":["Phase","Schwerpunkt","Dauer (Schätzung)"],"w":[1,6,3],"rows":[
+["1","Konzept & Research","4–6 Wochen"],
+["2","UX/UI Design","6–8 Wochen"],
+["3","MVP-Entwicklung","12–16 Wochen"],
+["4","Alpha-Test","3–4 Wochen"],
+["5","Beta-Test","6–8 Wochen"],
+["6","Launch","4 Wochen"],
+["7","Marketing-Skalierung","laufend (Fokus 6 Monate)"],
+["8","KI-Erweiterung","laufend (ab Monat 9+)"]
+]},
+{"t":"callout","k":"Diagramm-Vorschlag","x":"Gantt-Diagramm über ca. 12–15 Monate mit überlappenden Phasenbalken und gesetzten Meilensteinen (M1–M8)."},
+{"t":"h3","x":"Phase 1 – Konzept & Research"},
+{"t":"table","headers":["Aspekt","Inhalt"],"w":[3,7],"rows":[
+["Ziele","Validierte Produktdefinition, Markt-/Wettbewerbsbild, Feature-Scope"],
+["Aufgaben","Nutzerinterviews, Wettbewerbsanalyse, Scope/MoSCoW, technische Vorentscheidungen"],
+["Teams","Product, Founder, Business Analyst, (UX)"],
+["Risiken","Fehlannahmen über Nutzerbedarf; zu großer Scope"],
+["Meilenstein","M1: freigegebenes Konzept & MVP-Scope"]
+]},
+{"t":"h3","x":"Phase 2 – UX/UI Design"},
+{"t":"table","headers":["Aspekt","Inhalt"],"w":[3,7],"rows":[
+["Ziele","Klickbarer Prototyp, Design-System, validierte Flows"],
+["Aufgaben","Wireframes, Visual Design, Muskelkarten-/Onboarding-Flow, Usability-Tests"],
+["Teams","UX/UI Design, Product, (Frontend)"],
+["Risiken","Komplexität der 3D-/Muskelkarten-UX"],
+["Meilenstein","M2: getesteter High-Fidelity-Prototyp"]
+]},
+{"t":"h3","x":"Phase 3 – MVP-Entwicklung"},
+{"t":"table","headers":["Aspekt","Inhalt"],"w":[3,7],"rows":[
+["Ziele","Funktionsfähiges MVP (siehe MoSCoW Must)"],
+["Aufgaben","Frontend, Backend/API, DB, Auth, Plan-Engines, Content-Integration, Tests"],
+["Teams","Mobile, Backend, Content/Coach, QA"],
+["Risiken","3D-/Animations-Aufwand, Content-Produktion, Integrationskomplexität"],
+["Meilenstein","M3: Feature-Complete MVP (Code-Freeze für Alpha)"]
+]},
+{"t":"h3","x":"Phase 4 – Alpha-Test"},
+{"t":"table","headers":["Aspekt","Inhalt"],"w":[3,7],"rows":[
+["Ziele","Stabilität intern verifizieren"],
+["Aufgaben","Interne Tests, Bugfixing, Telemetrie, Krisenfälle"],
+["Teams","QA, Mobile, Backend"],
+["Risiken","Schwerwiegende Bugs, instabile Kernflüsse"],
+["Meilenstein","M4: Alpha-Stabilität erreicht"]
+]},
+{"t":"h3","x":"Phase 5 – Beta-Test"},
+{"t":"table","headers":["Aspekt","Inhalt"],"w":[3,7],"rows":[
+["Ziele","Externes Feedback, Retention messen, Polish"],
+["Aufgaben","Closed/Open Beta (TestFlight/Play), Feedback-Loops, Performance/Security-Review"],
+["Teams","QA, Product, Mobile, Backend, Marketing (Wartelisten)"],
+["Risiken","Schwache Retention, Performance-/Sicherheitsmängel"],
+["Meilenstein","M5: Launch-Freigabe (Go/No-Go)"]
+]},
+{"t":"h3","x":"Phase 6 – Launch"},
+{"t":"table","headers":["Aspekt","Inhalt"],"w":[3,7],"rows":[
+["Ziele","Öffentlicher Release in DACH"],
+["Aufgaben","Store-Release, Monitoring, Support, Launch-Kampagne"],
+["Teams","Alle"],
+["Risiken","Lastspitzen, Store-Ablehnung, kritische Fehler"],
+["Meilenstein","M6: App live in iOS App Store & Google Play"]
+]},
+{"t":"h3","x":"Phase 7 – Marketing-Skalierung"},
+{"t":"table","headers":["Aspekt","Inhalt"],"w":[3,7],"rows":[
+["Ziele","Wachstum & nachhaltige Unit Economics"],
+["Aufgaben","Kanal-Skalierung, Influencer, ASO, Referral, Funnel-Optimierung"],
+["Teams","Marketing/Growth, Product, Data"],
+["Risiken","Steigende CAC, schwache Conversion"],
+["Meilenstein","M7: definierte Wachstums-/CAC-Ziele erreicht"]
+]},
+{"t":"h3","x":"Phase 8 – KI-Erweiterung"},
+{"t":"table","headers":["Aspekt","Inhalt"],"w":[3,7],"rows":[
+["Ziele","KI-Coach & ML-Personalisierung produktiv"],
+["Aufgaben","LLM-Coach mit Leitplanken, ML-Modelle, Wearable-Integration"],
+["Teams","KI/Data, Backend, Mobile, DSGVO"],
+["Risiken","Kosten, Datenschutz, Qualität der Empfehlungen"],
+["Meilenstein","M8: KI-Coach live im Premium"]
+]},
+
+{"t":"pb"},
+{"t":"h1","x":"11. Budgetplanung"},
+{"t":"p","x":"Alle Werte sind Schätzungen für den DACH-Markt (brutto, ohne Gewähr) und dienen der Größenordnung. Personalkosten dominieren typischerweise das Budget."},
+{"t":"h2","x":"11.1 Personal (Jahresbasis, illustrativ)"},
+{"t":"table","headers":["Rolle","Anzahl","Jahresbrutto p. P. (€)"],"w":[6,2,2],"rows":[
+["Product / Founder","1","(ggf. reduziert)"],
+["Tech Lead / Architekt","1","~95.000"],
+["Mobile Developer (Senior)","1","~85.000"],
+["Mobile Developer (Mid)","1","~65.000"],
+["Backend Developer","1","~80.000"],
+["UX/UI Designer","1","~65.000"],
+["QA Engineer (ab Beta)","1","~60.000"],
+["Content / Coach","1","~55.000 (oder freelance)"],
+["Marketing / Growth","1","~60.000"]
+]},
+{"t":"h2","x":"11.2 Budget je Phase (bis Launch)"},
+{"t":"table","headers":["Phase","Dauer","Budget (€)"],"w":[5,3,2],"rows":[
+["Konzept & Research","4–6 Wo","15.000–30.000"],
+["UX/UI Design","6–8 Wo","30.000–60.000"],
+["MVP-Entwicklung","12–16 Wo","120.000–220.000"],
+["Alpha-Test","3–4 Wo","10.000–20.000"],
+["Beta-Test","6–8 Wo","40.000–70.000"],
+["Launch","4 Wo","30.000–60.000"]
+]},
+{"t":"h2","x":"11.3 18-Monats-Gesamtbudget (Kategorien)"},
+{"t":"table","headers":["Kategorie","18 Monate (€)"],"w":[6,4],"rows":[
+["Personal","650.000–900.000"],
+["Infrastruktur / Cloud","25.000–60.000"],
+["KI / API-Kosten","20.000–80.000"],
+["Content-Produktion (3D, Rezepte, Video)","60.000–150.000"],
+["Marketing & Growth","150.000–400.000"],
+["Recht, DSGVO, Steuer","25.000–50.000"],
+["Tools / Lizenzen","15.000–30.000"],
+["Puffer (~15 %)","anteilig"],
+["Gesamt (Richtwert)","ca. 1,0–1,6 Mio. €"]
+]},
+{"t":"callout","k":"Hinweis","x":"Größter variabler Kostentreiber ist die 3D-/Animations-Content-Produktion. Prüfen: Lizenzierung einer bestehenden Übungs-Animationsbibliothek vs. Eigenproduktion – kann das Budget erheblich beeinflussen."},
+
+{"t":"pb"},
+{"t":"h1","x":"12. Risikoanalyse"},
+{"t":"p","x":"Bewertung nach Eintrittswahrscheinlichkeit (W) und Auswirkung (A): jeweils niedrig / mittel / hoch."},
+{"t":"table","headers":["Risiko","Kategorie","W","A","Gegenmaßnahme"],"w":[3,2,1,1,3],"rows":[
+["3D-/Animations-Aufwand sprengt Budget/Zeit","Technisch","mittel","hoch","Lizenz statt Eigenbau; MVP-Kernübungen zuerst"],
+["Schwache Nutzer-Retention","Markt","mittel","hoch","Gamification, Onboarding-Optimierung, Beta-Lernen"],
+["Steigende Akquisekosten (CAC)","Finanziell","mittel","hoch","Organik/SEO/Referral, Funnel-Optimierung"],
+["DSGVO-Verstoß (Gesundheitsdaten)","Datenschutz","niedrig","hoch","DSFA, Einwilligungen, TOMs, DSB, EU-Hosting"],
+["Einstufung als Medizinprodukt","Rechtlich","niedrig","hoch","Wellness-Positionierung, keine med. Aussagen, Disclaimer"],
+["Skalierungs-/Lastprobleme","Skalierung","niedrig","mittel","Autoskalierung, Caching, Lasttests"],
+["Fehlerhafte KI-Empfehlungen","Technisch/Recht","mittel","mittel","Leitplanken, geprüfte Vorlagen, konservative Defaults"],
+["Starker Wettbewerb / Copycats","Markt","hoch","mittel","Schnelle Iteration, Marke, Verzahnungs-USP"],
+["Abhängigkeit von App-Store-Regeln","Rechtlich","mittel","mittel","Richtlinien-Compliance, Web-Fallback prüfen"],
+["KI-/API-Kosten laufen aus dem Ruder","Finanziell","mittel","mittel","Limits, Caching, nur Premium"],
+["Schlüsselpersonen-Risiko","Organisatorisch","mittel","mittel","Dokumentation, Wissensteilung, Backups"],
+["Finanzierungslücke / Runway","Finanziell","mittel","hoch","Meilenstein-Finanzierung, Puffer, Cashflow Lifetime"]
+]},
+{"t":"callout","k":"Diagramm-Vorschlag","x":"Risiko-Heatmap (3x3): Achsen Eintrittswahrscheinlichkeit × Auswirkung; Risiken als Punkte; rot (oben rechts) priorisiert behandeln."},
+
+{"t":"pb"},
+{"t":"h1","x":"13. Nächste Schritte"},
+{"t":"h2","x":"13.1 Sofortmaßnahmen (0–30 Tage)"},
+{"t":"ol","items":[
+"Marktzahlen und Wettbewerbsanalyse mit aktuellen Primärquellen validieren.",
+"Markennamen prüfen (Verfügbarkeit, Marken-/Domainrecht) – „FitFusion“ ist nur Arbeitstitel.",
+"MVP-Scope final festziehen (MoSCoW bestätigen).",
+"Technische Grundsatzentscheidungen treffen (React Native vs. Flutter; BaaS vs. eigenes Backend).",
+"DSGVO-Fundament starten (Einwilligungskonzept, DSFA-Vorbereitung, Rechtsberatung).",
+"Entscheidung 3D-Animationen: Lizenz vs. Eigenproduktion (Angebote einholen)."
+]},
+{"t":"h2","x":"13.2 30–60 Tage"},
+{"t":"ol","items":[
+"UX/UI-Prototyp erstellen und mit Zielnutzern testen.",
+"Team-Setup / erste Schlüsselrollen besetzen.",
+"Content-Pipeline für Übungen und Rezepte aufsetzen.",
+"Technisches Fundament & CI/CD initialisieren."
+]},
+{"t":"h2","x":"13.3 60–90 Tage"},
+{"t":"ol","items":[
+"MVP-Entwicklung starten (Sprint-Planung).",
+"Pre-Launch-Marketing (Warteliste, Social-Kanäle) aufbauen.",
+"Finanzierung vorbereiten/abschließen (Pitch Deck auf Basis dieser Masterfile)."
+]},
+{"t":"h2","x":"13.4 Entscheidungs-Checkliste"},
+{"t":"check","items":[
+"Endgültiger Produktname & Markenschutz",
+"MVP-Scope freigegeben",
+"Tech-Stack entschieden",
+"Cloud-/Hosting-Region (EU) entschieden",
+"3D-Content: Lizenz vs. Eigenproduktion",
+"DSGVO-Verantwortliche(r) / DSB benannt",
+"Budget & Finanzierungsweg bestätigt",
+"Roadmap-Meilensteine terminiert"
+]},
+{"t":"h2","x":"13.5 Schlusswort"},
+{"t":"p","x":"Diese Masterfile bildet die gemeinsame Grundlage für Entwicklung, Design, Marketing, Recht und Investoren-Kommunikation. Sie ist ein lebendes Dokument: Annahmen werden durch Research und Beta-Daten ersetzt, Zahlen präzisiert und der Scope diszipliniert gehalten. Empfohlener nächster Schritt ist die Validierung der Kernannahmen und die Ableitung eines Pitch Decks sowie eines detaillierten Sprint-Plans aus dieser Datei."}
+]
