@@ -1,9 +1,10 @@
-// Trainingsbereich: Muskelgruppe wählen -> passende Übungen -> Übungsdetails.
+// Trainingsbereich: Muskelgruppe wählen -> passende Übungen -> Übungsdetail (mit Mitschreiben).
 // Filter: Übungen werden nach Erfahrungslevel UND Trainingsumgebung des Nutzers gefiltert.
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import ExerciseDetail from '../components/ExerciseDetail';
 
 type Muscle = { id: string; key: string; name_de: string; body_region: string | null };
 type Exercise = {
@@ -29,14 +30,12 @@ const EQUIP_LABELS: Record<string, string> = {
   none: 'Kein Gerät',
   other: 'Sonstiges',
 };
-// Welche Schwierigkeitsgrade sieht welches Erfahrungslevel?
 const ALLOWED_DIFF: Record<string, string[]> = {
   beginner: ['beginner'],
   some: ['beginner', 'intermediate'],
   advanced: ['beginner', 'intermediate', 'advanced'],
   pro: ['beginner', 'intermediate', 'advanced'],
 };
-// Welches Equipment ist in welcher Umgebung verfügbar?
 const ALLOWED_EQUIP: Record<string, string[]> = {
   gym: ['barbell', 'dumbbell', 'machine', 'cable', 'bodyweight', 'none', 'other'],
   home_gym: ['dumbbell', 'bodyweight', 'none', 'other'],
@@ -81,31 +80,9 @@ export default function TrainingScreen() {
     setLoadingExercises(false);
   }
 
-  // ---- Ansicht 3: Übungsdetail ----
+  // ---- Ansicht 3: Übungsdetail + Training mitschreiben ----
   if (selectedExercise) {
-    const ex = selectedExercise;
-    return (
-      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
-        <TouchableOpacity onPress={() => setSelectedExercise(null)}>
-          <Text style={styles.back}>‹ Zurück</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>{ex.name}</Text>
-        <View style={styles.badges}>
-          <Text style={styles.badge}>{DIFF_LABELS[ex.difficulty] ?? ex.difficulty}</Text>
-          <Text style={styles.badge}>{EQUIP_LABELS[ex.equipment] ?? ex.equipment}</Text>
-        </View>
-        {ex.description ? <Text style={styles.desc}>{ex.description}</Text> : null}
-        {ex.instructions ? (
-          <>
-            <Text style={styles.h2}>Ausführung</Text>
-            <Text style={styles.instr}>{ex.instructions}</Text>
-          </>
-        ) : null}
-        <View style={styles.note}>
-          <Text style={styles.noteText}>🎬 Animierte 3D-Anleitung folgt in einer späteren Ausbaustufe.</Text>
-        </View>
-      </ScrollView>
-    );
+    return <ExerciseDetail exercise={selectedExercise} onBack={() => setSelectedExercise(null)} />;
   }
 
   // ---- Ansicht 2: Übungsliste ----
@@ -201,12 +178,6 @@ const styles = StyleSheet.create({
   exName: { fontSize: 17, fontWeight: '600', color: '#222' },
   exMeta: { fontSize: 13, color: '#888', marginTop: 2 },
   chev: { fontSize: 24, color: '#C7CFD9', marginLeft: 8 },
-
-  badges: { flexDirection: 'row', gap: 8, marginBottom: 16 },
-  badge: { backgroundColor: '#EAF1FB', color: '#2E5496', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, fontSize: 13, overflow: 'hidden' },
-  desc: { fontSize: 15, color: '#444', lineHeight: 22, marginBottom: 16 },
-  h2: { fontSize: 17, fontWeight: '700', color: '#1F3864', marginBottom: 8 },
-  instr: { fontSize: 15, color: '#444', lineHeight: 24 },
 
   note: { backgroundColor: '#FFF8E6', borderColor: '#E9D8A6', borderWidth: 1, borderRadius: 10, padding: 14, marginTop: 16 },
   noteText: { fontSize: 14, color: '#7a6a2a', lineHeight: 20 },
