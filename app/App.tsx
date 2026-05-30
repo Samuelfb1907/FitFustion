@@ -4,13 +4,12 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { isSupabaseConfigured } from './lib/supabase';
 import AuthScreen from './screens/AuthScreen';
 import OnboardingScreen from './screens/OnboardingScreen';
-import HomeScreen from './screens/HomeScreen';
+import MainTabs from './screens/MainTabs';
 
 // Entscheidet anhand von Login- und Profil-Status, welcher Screen erscheint.
 function Root() {
   const { session, profile, loading, refreshProfile } = useAuth();
 
-  // Sicherheitsnetz: Zugangsdaten fehlen
   if (!isSupabaseConfigured) {
     return (
       <View style={styles.centered}>
@@ -21,7 +20,6 @@ function Root() {
     );
   }
 
-  // Status wird geladen
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -30,15 +28,13 @@ function Root() {
     );
   }
 
-  // Nicht eingeloggt -> Login/Registrierung
   if (!session) return <AuthScreen />;
 
-  // Eingeloggt, aber Onboarding noch nicht erledigt -> Onboarding
   const onboardingDone = !!profile?.experience_level;
   if (!onboardingDone) return <OnboardingScreen onDone={refreshProfile} />;
 
-  // Eingeloggt + Onboarding fertig -> Home
-  return <HomeScreen />;
+  // Eingeloggt + Onboarding fertig -> App mit Tab-Navigation
+  return <MainTabs />;
 }
 
 export default function App() {
