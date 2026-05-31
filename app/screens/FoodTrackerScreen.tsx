@@ -14,6 +14,8 @@ function todayStr(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+const WATER_GOAL = 2500; // Tagesziel in ml
+
 export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) {
   const { session } = useAuth();
   const userId = session?.user?.id;
@@ -30,6 +32,8 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
   const [selectedFood, setSelectedFood] = useState<Food | null>(null);
   const [amount, setAmount] = useState('100');
   const [saving, setSaving] = useState(false);
+  const [waterMl, setWaterMl] = useState(0);
+  const [waterIds, setWaterIds] = useState<string[]>([]);
 
   useEffect(() => { init(); }, [userId]);
 
@@ -48,7 +52,28 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
       setTargetKcal(t.targetCalories);
     }
     await loadLogs();
+    await loadWater();
     setLoading(false);
+  }
+
+  async function loadWater() {
+    if (!userId) return;
+    const { data } = await supabase.from('water_logs').select('id, amount_ml').eq('user_id', userId).eq('log_date', todayStr()).order('created_at');
+    const rows = (data ?? []) as any[];
+    setWaterMl(rows.reduce((s, r) => s + (r.amount_ml ?? 0), 0));
+    setWaterIds(rows.map((r) => r.id));
+  }
+
+  async function addWater(ml: number) {
+    if (!userId) return;
+    await supabase.from('water_logs').insert({ user_id: userId, amount_ml: ml, log_date: todayStr() });
+    await loadWater();
+  }
+
+  async function undoWater() {
+    if (!userId || !waterIds.length) return;
+    await supabase.from('water_logs').delete().eq('id', waterIds[waterIds.length - 1]);
+    await loadWater();
   }
 
   async function loadLogs() {
@@ -130,6 +155,22 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
     <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }}>
       {!embedded && <Text style={styles.title}>Tracker</Text>}
       <Text style={styles.subtitle}>Dein Essens-Tagebuch für heute</Text>
+
+      <View style={styles.waterCard}>
+        <View style={styles.waterTop}>
+          <Text style={styles.waterTitle}>💧 Wasser{waterMl >= WATER_GOAL ? '  ✓' : ''}</Text>
+          <Text style={styles.waterVal}>{waterMl} / {WATER_GOAL} ml</Text>
+        </View>
+        <View style={styles.waterTrack}>
+          <View style={[styles.waterFill, { width: `${Math.min(100, Math.round((waterMl / WATER_GOAL) * 100))}%` }]} />
+        </View>
+        <View style={styles.waterBtns}>
+          <TouchableOpacity style={styles.waterBtn} onPress={() => addWater(250)} activeOpacity={0.8}><Text style={styles.waterBtnText}>+250 ml 🥛</Text></TouchableOpacity>
+          <TouchableOpacity style={styles.waterBtn} onPress={() => addWater(500)} activeOpacity={0.8}><Text style={styles.waterBtnText}>+500 ml 🍶</Text></TouchableOpacity>
+          <TouchableOpacity style={styles.waterUndo} onPress={undoWater} activeOpacity={0.8}><Text style={styles.waterUndoText}>↩</Text></TouchableOpacity>
+        </View>
+      </View>
+
       <View style={styles.summary}>
         <View style={styles.sumCol}><Text style={styles.sumValue}>{totalKcal}</Text><Text style={styles.sumLabel}>gegessen</Text></View>
         <View style={styles.sumCol}><Text style={styles.sumValue}>{targetKcal ?? '–'}</Text><Text style={styles.sumLabel}>Ziel</Text></View>
@@ -167,6 +208,17 @@ function makeStyles(c: Colors) {
     sumValue: { fontSize: 24, fontWeight: 'bold', color: c.heading },
     sumLabel: { fontSize: 12, color: c.textMuted, marginTop: 2 },
     macroLine: { fontSize: 13, color: c.textMuted, textAlign: 'center', marginBottom: 16 },
+    waterCard: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    waterTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    waterTitle: { fontSize: 16, fontWeight: '700', color: c.heading },
+    waterVal: { fontSize: 14, fontWeight: '700', color: c.primary },
+    waterTrack: { height: 10, backgroundColor: c.track, borderRadius: 5, overflow: 'hidden', marginTop: 10 },
+    waterFill: { height: 10, backgroundColor: c.primary, borderRadius: 5 },
+    waterBtns: { flexDirection: 'row', gap: 10, marginTop: 12, alignItems: 'center' },
+    waterBtn: { flex: 1, backgroundColor: c.inputBg, borderWidth: 1, borderColor: c.border, borderRadius: 10, paddingVertical: 11, alignItems: 'center' },
+    waterBtnText: { color: c.primary, fontWeight: '700', fontSize: 14 },
+    waterUndo: { width: 46, borderWidth: 1, borderColor: c.border, borderRadius: 10, paddingVertical: 11, alignItems: 'center' },
+    waterUndoText: { color: c.textMuted, fontSize: 16, fontWeight: '700' },
     addBtn: { backgroundColor: c.primary, borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginBottom: 16 },
     addText: { color: c.onPrimary, fontSize: 16, fontWeight: '700' },
     empty: { fontSize: 14, color: c.textMuted, textAlign: 'center', marginTop: 16 },

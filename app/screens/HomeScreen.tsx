@@ -38,6 +38,7 @@ async function countRows(table: string, userId: string): Promise<number> {
 }
 
 type Eaten = { kcal: number; p: number; c: number; f: number };
+const WATER_GOAL = 2500; // Tagesziel in ml
 
 export default function HomeScreen({ onNavigate }: { onNavigate?: (tab: string) => void }) {
   const { session, profile } = useAuth();
@@ -52,6 +53,8 @@ export default function HomeScreen({ onNavigate }: { onNavigate?: (tab: string) 
   const [activeSession, setActiveSession] = useState<string | null>(null);
   const [activeSets, setActiveSets] = useState(0);
   const [goalsData, setGoalsData] = useState<GoalsData | null>(null);
+  const [waterMl, setWaterMl] = useState(0);
+  const [waterIds, setWaterIds] = useState<string[]>([]);
 
   useEffect(() => {
     async function load() {
@@ -91,6 +94,8 @@ export default function HomeScreen({ onNavigate }: { onNavigate?: (tab: string) 
       }
       setEaten({ kcal: Math.round(e.kcal), p: Math.round(e.p), c: Math.round(e.c), f: Math.round(e.f) });
 
+      await refreshWater();
+
       // Aktives (noch nicht beendetes) Training von heute?
       const { data: act } = await supabase
         .from('workout_sessions').select('id').eq('user_id', userId).is('ended_at', null)
@@ -127,6 +132,26 @@ export default function HomeScreen({ onNavigate }: { onNavigate?: (tab: string) 
     await supabase.from('workout_sessions').update({ ended_at: new Date().toISOString() }).eq('id', activeSession);
     setActiveSession(null);
     setActiveSets(0);
+  }
+
+  async function refreshWater() {
+    const uid = session?.user?.id;
+    if (!uid) return;
+    const { data } = await supabase.from('water_logs').select('id, amount_ml').eq('user_id', uid).eq('log_date', todayStr()).order('created_at');
+    const rows = (data ?? []) as any[];
+    setWaterMl(rows.reduce((s, r) => s + (r.amount_ml ?? 0), 0));
+    setWaterIds(rows.map((r) => r.id));
+  }
+  async function addWater(ml: number) {
+    const uid = session?.user?.id;
+    if (!uid) return;
+    await supabase.from('water_logs').insert({ user_id: uid, amount_ml: ml, log_date: todayStr() });
+    await refreshWater();
+  }
+  async function undoWater() {
+    if (!waterIds.length) return;
+    await supabase.from('water_logs').delete().eq('id', waterIds[waterIds.length - 1]);
+    await refreshWater();
   }
 
   const xp = stats ? computeXp(stats) : 0;
@@ -182,6 +207,22 @@ export default function HomeScreen({ onNavigate }: { onNavigate?: (tab: string) 
                 </View>
               </>
             )}
+
+            {/* WASSER */}
+            <Text style={styles.section}>WASSER</Text>
+            <View style={styles.waterCard}>
+              <View style={styles.waterTop}>
+                <Text style={styles.waterTitle}>💧 {waterMl} / {WATER_GOAL} ml{waterMl >= WATER_GOAL ? '  ✓' : ''}</Text>
+              </View>
+              <View style={styles.waterTrack}>
+                <View style={[styles.waterFill, { width: `${Math.min(100, Math.round((waterMl / WATER_GOAL) * 100))}%` }]} />
+              </View>
+              <View style={styles.waterBtns}>
+                <TouchableOpacity style={styles.waterBtn} onPress={() => addWater(250)} activeOpacity={0.8}><Text style={styles.waterBtnText}>+250 ml 🥛</Text></TouchableOpacity>
+                <TouchableOpacity style={styles.waterBtn} onPress={() => addWater(500)} activeOpacity={0.8}><Text style={styles.waterBtnText}>+500 ml 🍶</Text></TouchableOpacity>
+                <TouchableOpacity style={styles.waterUndo} onPress={undoWater} activeOpacity={0.8}><Text style={styles.waterUndoText}>↩</Text></TouchableOpacity>
+              </View>
+            </View>
 
             {/* TAGESZIELE */}
             {nutrition && goalsData && (
@@ -303,6 +344,17 @@ function makeStyles(c: Colors) {
     macroDot: { width: 10, height: 10, borderRadius: 5, marginBottom: 6 },
     macroValue: { fontSize: 15, fontWeight: '700', color: c.text },
     macroLabel: { fontSize: 12, color: c.textMuted, marginTop: 2, textAlign: 'center' },
+
+    waterCard: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 6, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    waterTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    waterTitle: { fontSize: 16, fontWeight: '700', color: c.heading },
+    waterTrack: { height: 10, backgroundColor: c.track, borderRadius: 5, overflow: 'hidden', marginTop: 10 },
+    waterFill: { height: 10, backgroundColor: c.primary, borderRadius: 5 },
+    waterBtns: { flexDirection: 'row', gap: 10, marginTop: 12, alignItems: 'center' },
+    waterBtn: { flex: 1, backgroundColor: c.inputBg, borderWidth: 1, borderColor: c.border, borderRadius: 10, paddingVertical: 11, alignItems: 'center' },
+    waterBtnText: { color: c.primary, fontWeight: '700', fontSize: 14 },
+    waterUndo: { width: 46, borderWidth: 1, borderColor: c.border, borderRadius: 10, paddingVertical: 11, alignItems: 'center' },
+    waterUndoText: { color: c.textMuted, fontSize: 16, fontWeight: '700' },
 
     listCard: { backgroundColor: c.card, borderRadius: 16, paddingHorizontal: 16, marginBottom: 6, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     goalRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },
