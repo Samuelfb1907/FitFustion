@@ -3,156 +3,127 @@
 > **Zweck:** Kompletter Projektstand, damit eine **neue Claude-Session ohne Vorwissen** sofort
 > weiterarbeiten kann. Im neuen Chat einfügen oder darauf verweisen.
 >
-> *Stand: Auth, Onboarding, 5-Tab-App mit Training-/Essen-Hub, realistischer klickbarer Körper,
-> Fortschritts-Dashboard, Dark Mode, Gamification, **animierte Übungs-GIFs (ExerciseDB)** und
-> **127 Übungen** (≥5 je Muskel & Umgebung). Läuft im Browser UND auf dem Handy (Expo Go, SDK 54).*
+> *Stand: 5-Tab-App (Expo SDK 54 + Supabase). Training-Hub (klickbarer Körper → Übungen mit
+> animierten GIFs → Detail/Logging), aufgewerteter Trainingsplan, Essen-Hub (Tracker + Plan),
+> Wasser-Tracker, Fortschritts-Dashboard, Tagesziele & Challenges, Gamification, Dark Mode,
+> Erinnerungen (startklar, brauchen Dev-Build). Läuft im Browser UND auf dem iPhone (Expo Go).*
 
 ---
 
 ## 0. Aktueller Stand & Wiedereinstieg
-- **Zuletzt gebaut:** **Animierte Übungs-GIFs** + **viel mehr Übungen**.
-  - Jede Übung im Detail zeigt oben eine **animierte 3D-GIF-Demo** (ExerciseDB). Fallback ohne
-    GIF/Internet: statische Muskel-Grafik (`ExerciseFigure`).
-  - **127 Übungen** gesamt (68 alt + **59 neu** via Migration 008): **≥5 pro Muskel je Umgebung**
-    (Kein Equipment / Home-Gym / Studio) und **≥5 Anfänger pro Muskel** (gesamt). Anfänger-
-    Körpergewicht erreicht 5 bei 7/9 Muskeln; **Bizeps & Schultern nur 3** (mit reinem Körpergewicht
-    real nicht mehr möglich – mit Kurzhantel/höherem Level aber ≥5).
-  - **Profil** (`ProfileScreen`) kann jetzt **Erfahrungslevel** und **Trainingsumgebung** ändern.
-- **⚠️ OFFENER DB-SCHRITT:** **Migration `008_more_exercises_gifs.sql` muss im Supabase SQL Editor
-  ausgeführt sein** (fügt die 59 neuen Übungen ein, idempotent). Schnell-Check: zeigt das Training pro
-  Muskel viele Übungen? Wenn nein → 008 ausführen (SQL per `Set-Clipboard` liefern).
-- **⚠️ ExerciseDB-API-Key (kostenpflichtiger Plan!):** liegt in **`app/.env`** als
-  `EXPO_PUBLIC_EXERCISEDB_KEY` (NICHT im Repo). Der Nutzer hat einen **bezahlten RapidAPI-Plan**
-  (sonst kommen keine GIFs, nur Text). Details s. Abschnitt 6b.
-- **Am Handy:** `npx expo start` in `app/` → QR mit Expo Go scannen (SDK muss 54 bleiben, s. Abschnitt 4).
-- **Browser:** `build\Start-FitFusion-Web.cmd` oder `npx expo start --web`.
-- **Build:** `npx tsc --noEmit` lief fehlerfrei.
-- **Nächster Schritt:** offen – mit Nutzer abstimmen (Roadmap Abschnitt 8). Nutzer wollte ggf. noch
-  „speichern" auf GitHub und Theraband-Anfängervarianten für Bizeps/Schultern.
+- **Zuletzt gebaut (neueste zuerst):**
+  - **Erinnerungen** (`lib/reminders.ts`, `expo-notifications`): Einstellungen → **ERINNERUNGEN**
+    (Wasser 10/13/16/19 Uhr, Training mit Uhrzeit). **Funktioniert NICHT in Expo Go** – Code ist
+    startklar; echte Benachrichtigungen erst mit **Development-Build**. iOS-Dev-Build braucht ein
+    **Apple-Entwickler-Konto (99 $/Jahr)**; Nutzer (iPhone + Windows) hat das noch nicht → „später aktivieren".
+  - **Wasser-Tracker** (Home + Tracker, synchron): Tabelle `water_logs` (**Migration 009**).
+  - **Tagesziele & Challenges** auf dem Start-Screen (`lib/goals.ts`).
+  - **Trainingsplan aufgewertet** (`PlanScreen`): Übungen antippbar → Detail mit GIF/Anleitung/Mitschreiben,
+    ✓ wenn heute trainiert, Zielmuskel; robustere Generierung.
+- **⚠️ OFFENE DB-SCHRITTE (im Supabase SQL Editor ausführen, idempotent):**
+  - **`008_more_exercises_gifs.sql`** – 64 zusätzliche Übungen (≥5 je Muskel & Umgebung, ≥5 Anfänger; Theraband für Bizeps/Schultern „kein Equipment").
+  - **`009_water.sql`** – Tabelle `water_logs` für den Wasser-Tracker.
+  - Schnell-Check: Hat das Training viele Übungen pro Muskel? Lässt sich Wasser hinzufügen? Wenn nein → 008/009 ausführen.
+- **⚠️ API-Keys in `app/.env`** (gitignored): `EXPO_PUBLIC_SUPABASE_URL/_ANON_KEY`, `EXPO_PUBLIC_EXERCISEDB_KEY` (bezahlter Plan, für GIFs).
+- **Handy:** in `app/` → `npx expo start` (nach `.env`/Versions-Wechsel `-c`), QR scannen. SDK bleibt **54**.
+- **Browser:** `build\Start-FitFusion-Web.cmd` oder `npx expo start --web`. **Build-Check:** `npx tsc --noEmit`.
+- **Nächste Idee (offen):** eigene Rezepte/Mahlzeiten; Erfolge dauerhaft speichern; Dev-Build für echte Erinnerungen.
 
 ---
 
-## 1. Projekt in einem Satz
-**FitFusion** – mobile Fitness- & Ernährungs-App (Expo/React Native + Supabase). Produktvision: `FitFusion-Masterfile.docx`.
-
-## 2. Arbeitsweise mit dem Nutzer (wichtig)
-- Nutzer ist **Programmier-Anfänger**. Modus: **„Claude richtet ein, erklärt jeden Schritt"**.
-- **Sprache: Deutsch**, klar & schrittweise. Ablauf: bauen → `npx tsc --noEmit` → testen lassen → committen.
-- Bei Design/Features hat der Nutzer einen **hohen Qualitätsanspruch** (lieber ehrlich Grenzen nennen
-  als schlechte Platzhalter liefern – z. B. Animationen: selbstgezeichnet wurde abgelehnt).
+## 1./2. Projekt & Arbeitsweise
+- **FitFusion** = mobile Fitness-/Ernährungs-App. Produktvision: `FitFusion-Masterfile.docx`.
+- Nutzer ist **Anfänger**; Modus **„Claude richtet ein, erklärt jeden Schritt"**, **Sprache Deutsch**.
+  Ablauf: bauen → `npx tsc --noEmit` → testen lassen → committen. **Hoher Qualitätsanspruch** – lieber
+  ehrlich Grenzen nennen (z. B. selbstgemalte Animationen wurden abgelehnt → ExerciseDB-GIFs).
 
 ## 3. Umgebung (Windows) – Stolpersteine
-- OS Windows, **PowerShell 5.1**. Arbeitsverzeichnis: `C:\Users\Samuel\fitness-app`.
-- **Node v24 PORTABEL** unter `C:\Users\Samuel\tools\node` (nicht im PATH): vorher
+- **PowerShell 5.1**, Arbeitsverzeichnis `C:\Users\Samuel\fitness-app`.
+- **Node v24 portabel** unter `C:\Users\Samuel\tools\node` (nicht im PATH): vorher
   `$env:Path = 'C:\Users\Samuel\tools\node;' + $env:Path`.
-- **PS 5.1 zeigt UTF-8-Dateien als ANSI falsch an** (Umlaute „Ã¤"). Zum Prüfen **Read-Tool** oder
-  `Get-Content -Encoding UTF8`. Inline-PS-Befehle ASCII halten.
-- **git commit:** Mehrzeilige Nachrichten + Sonderzeichen scheitern oft am PS-Quoting →
-  Nachricht in Tempdatei schreiben und `git commit -F <datei>`. `$env:GIT_TERMINAL_PROMPT='0'`.
-- DB-Änderungen: SQL liefern, **Nutzer führt sie im Supabase SQL Editor aus** (per `Set-Clipboard`).
-- **`.env`-Änderung → Metro neu starten** (`npx expo start -c`), sonst greift die neue Variable nicht.
+- **PS 5.1 zeigt UTF-8 als ANSI falsch** (Umlaute „Ã¤") → zum Prüfen **Read-Tool** / `Get-Content -Encoding UTF8`.
+- **git commit:** mehrzeilig/Sonderzeichen scheitern am Quoting → `git commit -F <tempdatei>` ODER
+  zwei einzeilige `-m` (Subject + `-m "Co-Authored-By: ..."`). `$env:GIT_TERMINAL_PROMPT='0'`.
+- DB-Änderungen als SQL liefern; **Nutzer führt sie im Supabase SQL Editor aus** (per `Set-Clipboard`).
+- **Neues Modul / `.env` / `app.json` geändert → Metro neu starten** (`npx expo start -c`).
 
 ## 4. Tech-Stack
 | Bereich | Wahl |
 |---|---|
 | Frontend | **Expo SDK 54**, React Native 0.81.5, React 19.1.0, TypeScript 5.9 |
 | Backend/DB | Supabase (PostgreSQL, Auth, RLS) |
-| Libs | `@supabase/supabase-js`, `@react-native-async-storage/async-storage`, `react-native-url-polyfill`, `react-native-svg`, `react-native-body-highlighter` |
-| Web-Preview | `react-dom`, `react-native-web`, `@expo/metro-runtime` |
+| Libs | supabase-js, async-storage, url-polyfill, **react-native-svg**, **react-native-body-highlighter**, **expo-notifications** |
 | Repo | GitHub `Samuelfb1907/FitFustion`, Branch `main` |
-- **SDK 54 ist FIX** (Expo Go des Nutzers unterstützt nur 54). NICHT upgraden, sonst „incompatible".
-  Versionen mit `npx expo install ...` / `npx expo install --fix` setzen.
+- **SDK 54 FIX** (Expo Go des Nutzers). Versionen via `npx expo install`/`--fix`.
 
 ## 5. Supabase
-- Projekt-Ref `ugofjmdwjcrjvakilmsu` · URL `https://ugofjmdwjcrjvakilmsu.supabase.co`
-- Dashboard: `https://supabase.com/dashboard/project/ugofjmdwjcrjvakilmsu`
-- `app/.env`: `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`, `EXPO_PUBLIC_EXERCISEDB_KEY` (alle gitignored).
-- E-Mail-Bestätigung deaktiviert. DB-Passwort/service_role NIE teilen.
+- Ref `ugofjmdwjcrjvakilmsu` · URL `https://ugofjmdwjcrjvakilmsu.supabase.co` · Dashboard `https://supabase.com/dashboard/project/ugofjmdwjcrjvakilmsu`
+- Keys in `app/.env` (gitignored). E-Mail-Bestätigung aus. DB-Passwort/service_role NIE teilen.
 
-## 6. Datenbank + Migrationen
-- Reihenfolge im SQL Editor: `schema.sql` → `002_allergies` → `003_more_exercises` →
-  `004_more_exercises` → `005_food_tracking` → `006_foods_500plus` → `007_session_end`
-  (`workout_sessions.ended_at`) → **`008_more_exercises_gifs`** (59 neue Übungen). Alle idempotent.
-- 17 Tabellen (profiles, goals, muscles, exercises, …, foods, food_logs). RLS überall.
-- `exercises`: name, difficulty (beginner/intermediate/advanced), equipment
-  (barbell/dumbbell/machine/cable/bodyweight/none/other), primary_muscle_id, description, instructions.
+## 6. Datenbank + Migrationen (im SQL Editor, in Reihenfolge)
+`schema.sql` → `002_allergies` → `003_more_exercises` → `004_more_exercises` → `005_food_tracking`
+→ `006_foods_500plus` → `007_session_end` (`workout_sessions.ended_at`) → **`008_more_exercises_gifs`**
+(64 Übungen) → **`009_water`** (`water_logs`). Alle idempotent. RLS überall (`auth.uid()=user_id`).
 - Muskel-Keys: chest, back, shoulders, biceps, triceps, abs, legs, calves, glutes.
+- `water_logs`: id, user_id, log_date, amount_ml, created_at (RLS own).
 
 ### 6b. Übungs-GIFs (ExerciseDB) – WICHTIG
-- Quelle: **ExerciseDB über RapidAPI**, Host `exercisedb.p.rapidapi.com`. Key in `app/.env`
-  (`EXPO_PUBLIC_EXERCISEDB_KEY`). **Bezahlter Plan nötig** (Gratis = nur Textdaten, keine Bilder).
-- **Diese API liefert KEIN `gifUrl`-Feld.** GIF nur über den **Bild-Endpunkt**:
-  `GET https://exercisedb.p.rapidapi.com/image?exerciseId={ID}&resolution=360`
-  mit Headern `X-RapidAPI-Key` + `X-RapidAPI-Host`. **GET (nicht HEAD!)**, Header zwingend.
-  (HEAD gibt 404 – das hatte uns lange in die Irre geführt.) Auflösung 360 (Plan-abhängig).
-- **`app/lib/exerciseMedia.ts`**: `EXERCISE_GIF_ID` = Map *deutscher Übungsname → ExerciseDB-ID*
-  (127 Einträge) + `exerciseGifId(name)`. **Auto-generiert** per Node-Skript (s. u.).
-- **`app/components/ExerciseGif.tsx`**: lädt das GIF via `<Image source={{uri, headers}}>`
-  (RN cached per uri → ~1 Request je Übung). Bei Fehler → `onFail` → Fallback `ExerciseFigure`.
-- Generator-Skripte liegen in **`%TEMP%`** (nicht im Repo): `gen-final.js` erzeugt
-  `exerciseMedia.ts` + `008_*.sql`; `%TEMP%\exercisedb-list.json` = komplette ExerciseDB-Liste
-  (mit `npx ... /exercises?limit=1500` + Key geholt). **Neue Übungen hinzufügen:** Eintrag in der
-  `ADDED`-Liste von `gen-final.js` ergänzen (deutscher Name + keywords ODER feste `id` + muscle +
-  equipment + difficulty + desc + instr) → `node gen-final.js` → schreibt beide Dateien + prüft
-  „≥5 je Umgebung". Matching gegen ExerciseDB-Namen (englisch) per Stichworten.
-- **Publishing-Hinweis:** Key steckt aktuell client-seitig (ok für Tests). Vor echtem Release über
-  einen Server-Proxy (z. B. Supabase Edge Function) verstecken.
+- ExerciseDB via **RapidAPI**, Host `exercisedb.p.rapidapi.com`, Key `EXPO_PUBLIC_EXERCISEDB_KEY` in `.env` (**bezahlter Plan**).
+- **Kein `gifUrl`-Feld!** GIF nur über Bild-Endpunkt:
+  `GET https://exercisedb.p.rapidapi.com/image?exerciseId={ID}&resolution=360` mit Headern
+  `X-RapidAPI-Key` + `X-RapidAPI-Host`. **GET (nicht HEAD!)**, Header zwingend.
+- `app/lib/exerciseMedia.ts`: Map *deutscher Name → ExerciseDB-ID* (auto-generiert) + `exerciseGifId(name)`.
+- `components/ExerciseGif.tsx` lädt das GIF (`<Image source={{uri, headers}}>`, RN cached → ~1 Request/Übung);
+  bei Fehler → `onFail` → Fallback `ExerciseFigure` (statische anatomische Muskelgrafik).
+- **Neue Übungen + GIFs hinzufügen:** Generator-Skripte liegen in `%TEMP%` (nicht im Repo): `gen-final.js`
+  erzeugt `exerciseMedia.ts` + `008_*.sql`; `%TEMP%\exercisedb-list.json` = ExerciseDB-Liste
+  (`/exercises?limit=1500` + Key). In `gen-final.js` die `ADDED`-Liste ergänzen (Name + keywords ODER feste
+  `id` + muscle/equipment/difficulty/desc/instr) → `node gen-final.js`. SQL-Spaltenreihenfolge =
+  (name, difficulty, equipment, muscle_key, …).
+
+### 6c. Erinnerungen (expo-notifications)
+- `lib/reminders.ts`: `ReminderPrefs` (enabled/water/training/trainingHour) in AsyncStorage `fitfusion.reminders`;
+  `applyReminders()` plant tägliche lokale Notifications (Trigger `{type:'daily',hour,minute}`).
+- `app.json` hat `"plugins": ["expo-notifications"]`.
+- **Expo Go feuert nicht** (v. a. iOS) → erst im **Dev-Build**. iOS-Dev-Build: Apple-Entwickler-Konto (99 $/Jahr) + EAS.
 
 ## 7. App-Struktur (aktuell)
 ```
 app/
-  App.tsx                       Routing (loading -> Auth / Onboarding / MainTabs), Theme+Auth Provider
-  contexts/AuthContext.tsx      session + profile {id, first_name, gender, experience_level, training_environment}
-                                (Deadlock-Hinweis: im onAuthStateChange NIE await auf DB!)
-  contexts/ThemeContext.tsx     Dark/Light (useColors/useTheme); Tokens inkl. accent/hero/muscle
-  components/BodyMuscleMap.tsx   realistischer, klickbarer Koerper (react-native-body-highlighter),
-                                 Vorder-/Rueckseite, gender m/w, Muskel dezent getoent
-  components/ExerciseGif.tsx     animiertes ExerciseDB-GIF (Image + Header), onFail-Fallback
-  components/ExerciseFigure.tsx  statische anatomische Koerpergrafik (Zielmuskel hervorgehoben) = Fallback
-  components/CalorieGauge.tsx    animierte Halbkreis-Gauge (svg)
-  components/Charts.tsx          LineChart + BarChart (svg) fuer Fortschritt
-  components/Segmented.tsx       Pillen-Umschalter (Hubs)
-  components/ExerciseDetail.tsx  Detail: GIF/Fallback + Beschreibung + nummerierte Schritte + Tipps + "Training mitschreiben" + "Training beenden"
-  lib/supabase.ts | nutrition.ts | meals.ts | gamification.ts
-  lib/exerciseMedia.ts          Name -> ExerciseDB-ID (auto-generiert)
-  screens/AuthScreen | OnboardingScreen (5 Schritte)
-  screens/MainTabs.tsx          5 Reiter: Start | Training | Essen | Fortschritt | Einstellungen (iOS paddingBottom 30)
-  screens/HomeScreen.tsx        Hero (Level/Streak/XP), "Training laeuft"-Banner+Beenden, Kalorien-Gauge, Schnellzugriff, Erfolge
-  screens/TrainingScreen.tsx    HUB: Freies Training (BodyMuscleMap -> Uebungen -> ExerciseDetail) | Plan (PlanScreen embedded)
-  screens/PlanScreen.tsx        Auto-Trainingsplan (embedded-faehig)
-  screens/EssenScreen.tsx       HUB: Tracker | Ernaehrungsplan (beide embedded)
-  screens/NutritionScreen.tsx | FoodTrackerScreen.tsx  (embedded-faehig)
-  screens/ProgressScreen.tsx    Gewichtsverlauf (Eingabe), Wochenvolumen, Rekorde, Historie
-  screens/SettingsScreen.tsx    Einstellungen + Dark-Mode + Profil-Unterseite
-  screens/ProfileScreen.tsx     Profil: Name/Alter/Geschlecht/Gewicht/Groesse/Aktivitaet/**Erfahrungslevel**/**Trainingsumgebung**/Ziel
-  db/*.sql                      schema + 002..008
+  App.tsx  – Routing (loading -> Auth / Onboarding / MainTabs), Theme+Auth Provider
+  contexts/AuthContext.tsx  – session + profile {id, first_name, gender, experience_level, training_environment}
+                              (Deadlock-Hinweis: im onAuthStateChange NIE await auf DB!)
+  contexts/ThemeContext.tsx – Dark/Light (useColors/useTheme); Tokens inkl. accent/hero/muscle
+  components/ BodyMuscleMap (klickbarer Koerper, gender m/w) · ExerciseGif · ExerciseFigure ·
+              ExerciseDetail (GIF/Fallback + Schritte + Tipps + Mitschreiben + "Training beenden") ·
+              CalorieGauge · Charts · Segmented
+  lib/ supabase · nutrition · meals · gamification · exerciseMedia (Name->GIF-ID) · goals (Tagesziele/Challenges) · reminders
+  screens/ Auth · Onboarding(5 Schritte) · MainTabs(5 Reiter: Start|Training|Essen|Fortschritt|Einstellungen)
+           HomeScreen – Hero, "Training laeuft"-Banner, Kalorien-Gauge, **WASSER**, **Tagesziele**, **Challenges**, Schnellzugriff, Erfolge
+           TrainingScreen – HUB: Freies Training (Koerper->Uebungen->Detail) | Plan
+           PlanScreen – Trainingsplan: Uebungen ANTIPPBAR -> ExerciseDetail, ✓ heute erledigt, Zielmuskel; Muskel via separater muscles-Abfrage (NICHT nested embed -> mehrdeutig!)
+           EssenScreen – HUB: Tracker | Ernaehrungsplan
+           FoodTrackerScreen – Essens-Tagebuch + **Wasser-Tracker** (embedded-faehig)
+           NutritionScreen · ProgressScreen · SettingsScreen (Dark-Mode, **ERINNERUNGEN**, Profil-Unterseite) · ProfileScreen (inkl. Erfahrungslevel + Trainingsumgebung)
+  db/*.sql – schema + 002..009
 ```
-**Filter-Logik (Training/Plan):** `ALLOWED_DIFF[experience_level]` (beginner/some/advanced/pro) und
-`ALLOWED_EQUIP[training_environment]`: gym = alle; home_gym = dumbbell/bodyweight/none/other;
-no_equipment = bodyweight/none. → Übungen werden nach Level **und** Umgebung gefiltert.
-**Body-Map gender:** `profile.gender === 'female' ? 'female' : 'male'`.
+**Filter (Training/Plan):** `ALLOWED_DIFF[experience_level]` (beginner/some/advanced/pro) +
+`ALLOWED_EQUIP[training_environment]`: gym=alle; home_gym=dumbbell/bodyweight/none/other; no_equipment=bodyweight/none.
+**Wasser:** `WATER_GOAL=2500` ml; `water_logs` (heute summiert); +250/+500/Undo; Home+Tracker synchron.
 
 ## 8. Roadmap (offen)
-1. Theraband-/Wasserflaschen-Anfängervarianten für **Bizeps & Schultern** (Kein-Equipment).
-2. Tagesziele & Challenges; eigene Rezepte/Mahlzeiten speichern.
-3. API-Key per Server-Proxy verstecken (vor Veröffentlichung).
-4. Premium-Funktionen; neuere SDKs via EAS Dev-Build (dann nicht mehr an Expo-Go-SDK gebunden).
+1. Eigene Rezepte/Mahlzeiten speichern & tracken.
+2. Erfolge/Badges dauerhaft speichern (mit Freischalt-Hinweis).
+3. **Dev-Build (EAS)** für echte Erinnerungen (iOS: Apple-Konto 99 $/Jahr) und Veröffentlichung.
+4. API-Key per Server-Proxy verstecken (vor Release).
 
-## 9. Befehle (Spickzettel)
-- Node-PATH setzen (s. Abschnitt 3).
-- Handy: in `app/` → `npx expo start` (nach Versions-/`.env`-Wechsel `-c`). LAN-IP via
-  `Get-NetIPConfiguration`. exp-URL = `exp://<IP>:8081`. QR via api.qrserver.com -> `build/expo-qr.png` (gitignored) -> mit Read anzeigen.
-- Browser: `build\Start-FitFusion-Web.cmd`.
-- Typecheck: in `app/` → `npx tsc --noEmit`.
-- ExerciseDB testen: `Invoke-WebRequest 'https://exercisedb.p.rapidapi.com/image?exerciseId=0001&resolution=360' -Headers @{'X-RapidAPI-Key'=$key;'X-RapidAPI-Host'='exercisedb.p.rapidapi.com'}` (GET!).
-- Speichern: Commit-Nachricht in Tempdatei → `git add -A; git commit -F <datei>; git push`.
-
-## 10. Git / GitHub
-- Remote `origin` = `https://github.com/Samuelfb1907/FitFustion.git`, Branch `main`.
-- Commit-Identität: `Samuel <Samuelfb1907@users.noreply.github.com>`.
-- Commit-Messages enden mit: `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`.
-- Auth via PAT (Windows-Anmeldespeicher).
+## 9./10. Befehle & Git
+- Handy: `npx expo start` (`-c` nach Wechsel). LAN-IP via `Get-NetIPConfiguration`. exp-URL `exp://<IP>:8081`.
+  QR via api.qrserver.com → `build/expo-qr.png` (gitignored) → mit Read anzeigen.
+- Typecheck: `npx tsc --noEmit`. SQL: Nutzer im Supabase SQL Editor.
+- Remote `origin` = `https://github.com/Samuelfb1907/FitFustion.git`, Branch `main`. Auth via PAT.
+  Commit-Messages enden mit `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`.
 
 ## 11. Empfohlener nächster Schritt
-Mit Nutzer abstimmen. Sicherstellen, dass **Migration 008 ausgeführt** ist; dann ggf. Theraband-
-Anfängervarianten (Bizeps/Schultern) oder Tagesziele/Challenges.
+Sicherstellen, dass **008 & 009** ausgeführt sind. Dann mit Nutzer abstimmen (eigene Rezepte oder
+Erfolge dauerhaft). Für echte Erinnerungen: Dev-Build planen.

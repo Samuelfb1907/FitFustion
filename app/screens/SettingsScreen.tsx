@@ -1,13 +1,11 @@
 // Einstellungen: Profil-Unterseite, Dark-Mode-Schalter, Abmelden und übliche App-Einstellungen.
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme, useColors, Colors } from '../contexts/ThemeContext';
 import ProfileScreen from './ProfileScreen';
-
-const NOTIF_KEY = 'fitfusion.notif';
+import { loadReminderPrefs, saveReminderPrefs, applyReminders, ensurePermission, ReminderPrefs } from '../lib/reminders';
 
 export default function SettingsScreen() {
   const { session, refreshProfile } = useAuth();
@@ -16,16 +14,21 @@ export default function SettingsScreen() {
   const styles = makeStyles(c);
 
   const [view, setView] = useState<'menu' | 'profile'>('menu');
-  const [notif, setNotif] = useState(false);
+  const [rem, setRem] = useState<ReminderPrefs | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    AsyncStorage.getItem(NOTIF_KEY).then((v) => setNotif(v === '1'));
+    loadReminderPrefs().then(setRem);
   }, []);
-  function toggleNotif(v: boolean) {
-    setNotif(v);
-    AsyncStorage.setItem(NOTIF_KEY, v ? '1' : '0').catch(() => {});
+  async function updateRem(next: ReminderPrefs) {
+    if (next.enabled && !rem?.enabled) {
+      const ok = await ensurePermission();
+      if (!ok) { setMsg('Bitte Benachrichtigungen für die App erlauben (Handy-Einstellungen).'); next = { ...next, enabled: false }; }
+    }
+    setRem(next);
+    await saveReminderPrefs(next);
+    await applyReminders(next);
   }
 
   async function resetPassword() {
@@ -76,13 +79,35 @@ export default function SettingsScreen() {
         </View>
       </View>
 
-      <Text style={styles.section}>BENACHRICHTIGUNGEN</Text>
+      <Text style={styles.section}>ERINNERUNGEN</Text>
       <View style={styles.card}>
         <View style={styles.row}>
-          <Text style={styles.rowLabel}>🔔  Push-Erinnerungen</Text>
-          <Switch value={notif} onValueChange={toggleNotif} />
+          <Text style={styles.rowLabel}>🔔  Erinnerungen aktiv</Text>
+          <Switch value={!!rem?.enabled} onValueChange={(v) => { if (rem) updateRem({ ...rem, enabled: v }); }} />
         </View>
-        <Text style={styles.hint}>Trainings-Erinnerungen (Funktion folgt – Einstellung wird gespeichert).</Text>
+        {rem?.enabled && (
+          <>
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>💧  Wasser trinken</Text>
+              <Switch value={rem.water} onValueChange={(v) => updateRem({ ...rem, water: v })} />
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>💪  Training</Text>
+              <Switch value={rem.training} onValueChange={(v) => updateRem({ ...rem, training: v })} />
+            </View>
+            {rem.training && (
+              <View style={styles.row}>
+                <Text style={styles.rowLabel}>Trainingszeit</Text>
+                <View style={styles.stepper}>
+                  <TouchableOpacity style={styles.stepBtn} onPress={() => updateRem({ ...rem, trainingHour: Math.max(5, rem.trainingHour - 1) })}><Text style={styles.stepBtnText}>−</Text></TouchableOpacity>
+                  <Text style={styles.stepVal}>{String(rem.trainingHour).padStart(2, '0')}:00</Text>
+                  <TouchableOpacity style={styles.stepBtn} onPress={() => updateRem({ ...rem, trainingHour: Math.min(22, rem.trainingHour + 1) })}><Text style={styles.stepBtnText}>+</Text></TouchableOpacity>
+                </View>
+              </View>
+            )}
+          </>
+        )}
+        <Text style={styles.hint}>Wasser: 10/13/16/19 Uhr · Training zur gewählten Zeit. Echte Benachrichtigungen erscheinen erst nach einem Development-Build (in Expo Go nicht).</Text>
       </View>
 
       <Text style={styles.section}>DATEN</Text>
@@ -120,6 +145,10 @@ function makeStyles(c: Colors) {
     linkRow: { paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.border },
     link: { fontSize: 16, color: c.primary, fontWeight: '600' },
     hint: { fontSize: 12, color: c.textMuted, paddingHorizontal: 16, paddingVertical: 10 },
+    stepper: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    stepBtn: { width: 32, height: 32, borderRadius: 8, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center' },
+    stepBtnText: { fontSize: 18, color: c.primary, fontWeight: '700' },
+    stepVal: { fontSize: 15, color: c.heading, fontWeight: '700', minWidth: 48, textAlign: 'center' },
     msg: { color: c.success, textAlign: 'center', marginTop: 14, fontSize: 14 },
     logoutBtn: { marginTop: 24, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: c.danger },
     logoutText: { color: c.danger, fontSize: 16, fontWeight: '700' },
