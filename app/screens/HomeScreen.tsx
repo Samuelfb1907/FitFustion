@@ -1,23 +1,11 @@
-// Start-Screen fuer eingeloggte Nutzer: zeigt den taeglichen Kalorien- & Makrobedarf.
+// Start-Screen / Dashboard: Level & XP, Streak, Kalorien-Gauge (gegessen vs. übrig), Erfolge.
 import { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import {
-  computeNutrition,
-  ageFromBirthDate,
-  NutritionResult,
-  Gender,
-  ActivityLevel,
-  GoalType,
-} from '../lib/nutrition';
+import { computeNutrition, ageFromBirthDate, NutritionResult, Gender, ActivityLevel, GoalType } from '../lib/nutrition';
+import { computeXp, levelInfo, computeStreak, ACHIEVEMENTS, GameStats } from '../lib/gamification';
+import CalorieGauge from '../components/CalorieGauge';
 
 const GOAL_LABELS: Record<string, string> = {
   lose_weight: 'Abnehmen',
@@ -28,15 +16,19 @@ const GOAL_LABELS: Record<string, string> = {
   get_defined: 'Definieren',
 };
 
-function Macro({ label, value, color }: { label: string; value: number; color: string }) {
-  return (
-    <View style={styles.macro}>
-      <View style={[styles.macroDot, { backgroundColor: color }]} />
-      <Text style={styles.macroValue}>{value} g</Text>
-      <Text style={styles.macroLabel}>{label}</Text>
-    </View>
-  );
+function todayStr(): string {
+  const d = new Date();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${m}-${day}`;
 }
+
+async function countRows(table: string, userId: string): Promise<number> {
+  const res = await supabase.from(table).select('*', { count: 'exact', head: true }).eq('user_id', userId);
+  return res.error ? 0 : res.count ?? 0;
+}
+
+type Eaten = { kcal: number; p: number; c: number; f: number };
 
 export default function HomeScreen() {
   const { session, profile } = useAuth();
@@ -44,20 +36,19 @@ export default function HomeScreen() {
   const [error, setError] = useState<string | null>(null);
   const [nutrition, setNutrition] = useState<NutritionResult | null>(null);
   const [goalLabel, setGoalLabel] = useState('');
+  const [stats, setStats] = useState<GameStats | null>(null);
+  const [eaten, setEaten] = useState<Eaten>({ kcal: 0, p: 0, c: 0, f: 0 });
 
   useEffect(() => {
     async function load() {
       const userId = session?.user?.id;
       if (!userId) return;
 
-      // Vollständiges Profil (für die Berechnung)
-      const { data: prof, error: pErr } = await supabase
+      const { data: prof } = await supabase
         .from('profiles')
         .select('weight_kg, height_cm, birth_date, gender, activity_level')
         .eq('id', userId)
         .maybeSingle();
-
-      // Aktives Ziel (neuestes)
       const { data: goal } = await supabase
         .from('goals')
         .select('goal_type')
@@ -67,23 +58,54 @@ export default function HomeScreen() {
         .limit(1)
         .maybeSingle();
 
-      if (pErr || !prof || !prof.weight_kg || !prof.height_cm) {
-        setError('Deine Profildaten sind unvollständig. Bitte das Onboarding erneut durchlaufen.');
-        setLoading(false);
-        return;
+      if (prof && prof.weight_kg && prof.height_cm) {
+        const goalType = (goal?.goal_type ?? 'general_fitness') as GoalType;
+        setNutrition(
+          computeNutrition({
+            weightKg: Number(prof.weight_kg),
+            heightCm: Number(prof.height_cm),
+            age: ageFromBirthDate(prof.birth_date),
+            gender: (prof.gender ?? 'prefer_not') as Gender,
+            activity: (prof.activity_level ?? 'moderate') as ActivityLevel,
+            goal: goalType,
+          })
+        );
+        setGoalLabel(GOAL_LABELS[goalType] ?? goalType);
+      } else {
+        setError('Profildaten unvollständig.');
       }
 
-      const goalType = (goal?.goal_type ?? 'general_fitness') as GoalType;
-      const result = computeNutrition({
-        weightKg: Number(prof.weight_kg),
-        heightCm: Number(prof.height_cm),
-        age: ageFromBirthDate(prof.birth_date),
-        gender: (prof.gender ?? 'prefer_not') as Gender,
-        activity: (prof.activity_level ?? 'moderate') as ActivityLevel,
-        goal: goalType,
-      });
-      setNutrition(result);
-      setGoalLabel(GOAL_LABELS[goalType] ?? goalType);
+      // Heute gegessen (aus dem Tracker)
+      const fdt = await supabase
+        .from('food_logs')
+        .select('amount_g, foods(kcal, protein, carbs, fat)')
+        .eq('user_id', userId)
+        .eq('log_date', todayStr());
+      const e: Eaten = { kcal: 0, p: 0, c: 0, f: 0 };
+      if (!fdt.error && fdt.data) {
+        for (const row of fdt.data as any[]) {
+          const food = Array.isArray(row.foods) ? row.foods[0] : row.foods;
+          if (!food) continue;
+          const factor = (row.amount_g ?? 0) / 100;
+          e.kcal += (food.kcal ?? 0) * factor;
+          e.p += (food.protein ?? 0) * factor;
+          e.c += (food.carbs ?? 0) * factor;
+          e.f += (food.fat ?? 0) * factor;
+        }
+      }
+      setEaten({ kcal: Math.round(e.kcal), p: Math.round(e.p), c: Math.round(e.c), f: Math.round(e.f) });
+
+      // Aktivität für Gamification
+      const sessions = await countRows('workout_sessions', userId);
+      const sets = await countRows('set_logs', userId);
+      const foodLogs = await countRows('food_logs', userId);
+      const { data: sd } = await supabase.from('workout_sessions').select('performed_at').eq('user_id', userId);
+      const fd = await supabase.from('food_logs').select('log_date').eq('user_id', userId);
+      const dates = [
+        ...((sd ?? []) as any[]).map((r) => String(r.performed_at).slice(0, 10)),
+        ...(fd.error ? [] : ((fd.data ?? []) as any[]).map((r) => String(r.log_date).slice(0, 10))),
+      ];
+      setStats({ sessions, sets, foodLogs, streak: computeStreak(dates), goalSet: !!goal });
       setLoading(false);
     }
     load();
@@ -92,6 +114,10 @@ export default function HomeScreen() {
   async function handleLogout() {
     await supabase.auth.signOut();
   }
+
+  const xp = stats ? computeXp(stats) : 0;
+  const lv = levelInfo(xp);
+  const earnedCount = stats ? ACHIEVEMENTS.filter((a) => a.earned(stats, lv.level)).length : 0;
 
   return (
     <View style={styles.container}>
@@ -106,40 +132,68 @@ export default function HomeScreen() {
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
-        {loading && <ActivityIndicator size="large" color="#1F3864" style={{ marginTop: 40 }} />}
-
-        {!loading && error && (
-          <View style={styles.errorBox}>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        )}
-
-        {!loading && !error && nutrition && (
+        {loading ? (
+          <ActivityIndicator size="large" color="#1F3864" style={{ marginTop: 40 }} />
+        ) : (
           <>
-            <View style={styles.card}>
-              <Text style={styles.cardLabel}>DEIN TAGESZIEL · {goalLabel}</Text>
-              <Text style={styles.kcal}>{nutrition.targetCalories.toLocaleString('de-DE')}</Text>
-              <Text style={styles.kcalUnit}>kcal pro Tag</Text>
-
-              <View style={styles.macros}>
-                <Macro label="Protein" value={nutrition.proteinG} color="#2E7D32" />
-                <Macro label="Kohlenhydrate" value={nutrition.carbsG} color="#E69500" />
-                <Macro label="Fett" value={nutrition.fatG} color="#C62828" />
+            {stats && (
+              <View style={styles.levelCard}>
+                <View style={styles.levelTop}>
+                  <Text style={styles.levelText}>Level {lv.level}</Text>
+                  <View style={styles.streakChip}>
+                    <Text style={styles.streakText}>🔥 {stats.streak} {stats.streak === 1 ? 'Tag' : 'Tage'}</Text>
+                  </View>
+                </View>
+                <View style={styles.xpTrack}>
+                  <View style={[styles.xpFill, { width: `${Math.round(lv.progress * 100)}%` }]} />
+                </View>
+                <Text style={styles.xpText}>{lv.intoLevel} / {lv.perLevel} XP bis Level {lv.level + 1}</Text>
               </View>
+            )}
 
-              <View style={styles.divider} />
-              <View style={styles.subRow}>
-                <Text style={styles.subItem}>Grundumsatz{'\n'}<Text style={styles.subValue}>{nutrition.bmr} kcal</Text></Text>
-                <Text style={styles.subItem}>Erhaltung{'\n'}<Text style={styles.subValue}>{nutrition.tdee} kcal</Text></Text>
+            {nutrition && (
+              <View style={styles.card}>
+                <Text style={styles.cardLabel}>HEUTE · {goalLabel}</Text>
+                <CalorieGauge target={nutrition.targetCalories} eaten={eaten.kcal} />
+                <View style={styles.macros}>
+                  <Macro label="Protein" eaten={eaten.p} target={nutrition.proteinG} color="#2E7D32" />
+                  <Macro label="Kohlenhydrate" eaten={eaten.c} target={nutrition.carbsG} color="#E69500" />
+                  <Macro label="Fett" eaten={eaten.f} target={nutrition.fatG} color="#C62828" />
+                </View>
               </View>
-            </View>
+            )}
 
-            <Text style={styles.disclaimer}>
-              Richtwert auf Basis deiner Angaben (Mifflin-St-Jeor-Formel). Keine medizinische Beratung.
-            </Text>
+            {stats && (
+              <View style={styles.achSection}>
+                <Text style={styles.achTitle}>Erfolge ({earnedCount}/{ACHIEVEMENTS.length})</Text>
+                <View style={styles.badgeGrid}>
+                  {ACHIEVEMENTS.map((a) => {
+                    const got = a.earned(stats, lv.level);
+                    return (
+                      <View key={a.key} style={[styles.badge, !got && styles.badgeLocked]}>
+                        <Text style={[styles.badgeIcon, !got && styles.lockedIcon]}>{got ? a.icon : '🔒'}</Text>
+                        <Text style={[styles.badgeName, !got && styles.lockedName]} numberOfLines={2}>{a.name}</Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
+
+            {error && <Text style={styles.error}>{error}</Text>}
           </>
         )}
       </ScrollView>
+    </View>
+  );
+}
+
+function Macro({ label, eaten, target, color }: { label: string; eaten: number; target: number; color: string }) {
+  return (
+    <View style={styles.macro}>
+      <View style={[styles.macroDot, { backgroundColor: color }]} />
+      <Text style={styles.macroValue}>{eaten} / {target} g</Text>
+      <Text style={styles.macroLabel}>{label}</Text>
     </View>
   );
 }
@@ -152,33 +206,32 @@ const styles = StyleSheet.create({
   logoutBtn: { borderWidth: 1, borderColor: '#CFD8E3', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8, backgroundColor: '#fff' },
   logoutText: { color: '#2E5496', fontWeight: '600' },
 
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 24,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
-  },
-  cardLabel: { fontSize: 12, letterSpacing: 1, color: '#8A97A8', fontWeight: '700' },
-  kcal: { fontSize: 56, fontWeight: 'bold', color: '#1F3864', marginTop: 6 },
-  kcalUnit: { fontSize: 15, color: '#666', marginTop: -4 },
+  levelCard: { backgroundColor: '#1F3864', borderRadius: 16, padding: 18, marginBottom: 14 },
+  levelTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  levelText: { color: '#fff', fontSize: 22, fontWeight: 'bold' },
+  streakChip: { backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 },
+  streakText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+  xpTrack: { height: 10, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 5, marginTop: 14, overflow: 'hidden' },
+  xpFill: { height: 10, backgroundColor: '#5B8DEF', borderRadius: 5 },
+  xpText: { color: '#C7D4EC', fontSize: 12, marginTop: 6 },
 
-  macros: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 24 },
+  card: { backgroundColor: '#fff', borderRadius: 16, padding: 20, alignItems: 'center', marginBottom: 14, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
+  cardLabel: { fontSize: 12, letterSpacing: 1, color: '#8A97A8', fontWeight: '700', marginBottom: 6 },
+  macros: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 18 },
   macro: { flex: 1, alignItems: 'center' },
   macroDot: { width: 10, height: 10, borderRadius: 5, marginBottom: 6 },
-  macroValue: { fontSize: 18, fontWeight: '700', color: '#222' },
+  macroValue: { fontSize: 15, fontWeight: '700', color: '#222' },
   macroLabel: { fontSize: 12, color: '#777', marginTop: 2, textAlign: 'center' },
 
-  divider: { height: 1, backgroundColor: '#EEF1F6', width: '100%', marginTop: 22, marginBottom: 14 },
-  subRow: { flexDirection: 'row', justifyContent: 'space-around', width: '100%' },
-  subItem: { fontSize: 12, color: '#8A97A8', textAlign: 'center' },
-  subValue: { fontSize: 15, color: '#444', fontWeight: '700' },
+  achSection: { marginTop: 4 },
+  achTitle: { fontSize: 17, fontWeight: '700', color: '#1F3864', marginBottom: 10 },
+  badgeGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  badge: { width: '31%', backgroundColor: '#fff', borderRadius: 14, paddingVertical: 14, paddingHorizontal: 6, alignItems: 'center', marginBottom: 10, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 1 },
+  badgeLocked: { backgroundColor: '#ECEFF4' },
+  badgeIcon: { fontSize: 26 },
+  lockedIcon: { opacity: 0.6 },
+  badgeName: { fontSize: 11, color: '#333', textAlign: 'center', marginTop: 6, fontWeight: '600' },
+  lockedName: { color: '#9AA5B4', fontWeight: '400' },
 
-  disclaimer: { fontSize: 12, color: '#9AA5B4', textAlign: 'center', marginTop: 16, lineHeight: 17 },
-  errorBox: { backgroundColor: '#FFF4F4', borderColor: '#E0A0A0', borderWidth: 1, borderRadius: 10, padding: 16, marginTop: 24 },
-  errorText: { fontSize: 14, color: '#7a2a2a' },
+  error: { color: '#B00020', fontSize: 14, marginTop: 16, textAlign: 'center' },
 });

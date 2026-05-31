@@ -10,7 +10,7 @@
 ---
 
 ## 0. Aktueller Stand & Wiedereinstieg
-- **Letzter Commit:** `722c354` – alles auf GitHub (`main`) gepusht, Arbeitsbaum sauber.
+- **Letzter Stand:** Gamification-Dashboard (Level/XP, Streak, Erfolge) + animierte Kalorien-Gauge (gegessen vs. übrig) auf dem Start-Screen. Alles auf GitHub (`main`) gepusht.
 - **App starten:** `C:\Users\Samuel\fitness-app\build\Start-FitFusion-Web.cmd` doppelklicken (Browser, Port 8081), dann einloggen.
 - **Build:** `npx tsc --noEmit` lief zuletzt fehlerfrei (Node-PATH vorher setzen, s. Abschnitt 3).
 - **⚠️ Offener DB-Schritt (stateful prüfen):** `schema.sql` + `002`–`004` sind angewendet.
@@ -111,12 +111,13 @@ app/
 - Automatischer Trainingsplan
 - Ernährungsplan (Mahlzeiten zu Makros, allergikersicher)
 - Kalorien-Tracker mit 540+ Zutaten
+- Gamification-Dashboard: Level/XP, Streak, Erfolge (`lib/gamification.ts`) + animierte Kalorien-Gauge (gegessen vs. übrig, `components/CalorieGauge.tsx`, `react-native-svg`)
 - Alles auf GitHub
 
 **⬜ Nächste Bausteine (Roadmap)**
 1. **Fortschritts-Dashboard** – Trainingshistorie/Volumen (`set_logs`), persönliche Rekorde,
    Gewichtsverlauf (`progress_entries`; dafür Gewicht-Eingabe ergänzen).
-2. **Gamification** – XP/Badges/Streaks (`achievements`, `user_achievements`).
+2. **Tagesziele & Challenges** + persistente Erfolge mit Freischalt-Hinweis. *(Basis-Gamification: Level/XP, Streak, Badges ist erledigt.)*
 3. **Premium-Funktionen** (KI-Coach etc., siehe Masterfile).
 4. **Makro-genauerer Ernährungsplan** & eigene Rezepte/Mahlzeiten speichern.
 5. **Visuelle 3D-Muskelkarte** (aktuell ein Raster) und **Übungs-Animationen**.

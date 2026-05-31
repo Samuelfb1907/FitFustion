@@ -16,11 +16,12 @@ auf Basis deiner persönlichen Daten und Ziele.
 - 🤖 **Automatischer Trainingsplan**: Split passend zu deinen Trainingstagen
 - 🍽️ **Ernährungsplan**: Mahlzeiten, die deine Makros treffen – **allergikersicher**
 - 🍎 **Kalorien-Tracker** mit **540+ Zutaten** (eigene Mengen, Tagessumme vs. Ziel)
+- 🎮 **Gamification-Dashboard**: Level/XP, Streak & Erfolge + **animierte Kalorien-Gauge** (gegessen vs. übrig)
 - 🧭 Navigation über 5 Tabs: **Start · Training · Plan · Ernährung · Tracker**
 
 ## 🔭 Geplant
 - 📈 Fortschritts-Dashboard (Trainingshistorie, Rekorde, Gewichtsverlauf)
-- 🎮 Gamification (XP, Streaks, Badges) · 💎 Premium-Funktionen
+- 💎 Premium-Funktionen · 🎯 Tagesziele & Challenges
 - 🧍 Visuelle 3D-Muskelkarte & Übungs-Animationen · 📱 native Handy-Builds
 
 ---
