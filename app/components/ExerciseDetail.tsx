@@ -33,6 +33,8 @@ export default function ExerciseDetail({ exercise, onBack }: { exercise: Exercis
   const [sets, setSets] = useState<SetLog[]>([]);
   const [reps, setReps] = useState('');
   const [weight, setWeight] = useState('');
+  const [ending, setEnding] = useState(false);
+  const [ended, setEnded] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -43,6 +45,7 @@ export default function ExerciseDetail({ exercise, onBack }: { exercise: Exercis
         .from('workout_sessions')
         .select('id')
         .eq('user_id', userId)
+        .is('ended_at', null)
         .gte('performed_at', startOfTodayISO())
         .order('performed_at', { ascending: false })
         .limit(1)
@@ -86,8 +89,24 @@ export default function ExerciseDetail({ exercise, onBack }: { exercise: Exercis
       user_id: userId, session_id: sid, exercise_id: exercise.id, set_index: sets.length + 1, reps: r, weight_kg: w,
     });
     if (iErr) setError(iErr.message);
-    else { await refreshSets(sid); setReps(''); }
+    else { await refreshSets(sid); setReps(''); setEnded(false); }
     setSaving(false);
+  }
+
+  async function endTraining() {
+    if (!sessionId) return;
+    setEnding(true);
+    setError(null);
+    const { error: eErr } = await supabase
+      .from('workout_sessions')
+      .update({ ended_at: new Date().toISOString() })
+      .eq('id', sessionId);
+    setEnding(false);
+    if (eErr) { setError(eErr.message); return; }
+    setSessionId(null);
+    setSets([]);
+    setReps('');
+    setEnded(true);
   }
 
   return (
@@ -134,6 +153,14 @@ export default function ExerciseDetail({ exercise, onBack }: { exercise: Exercis
             </TouchableOpacity>
             {sets.length > 0 && <Text style={styles.doneHint}>{sets.length} Satz{sets.length === 1 ? '' : 'e'} heute gespeichert 💪</Text>}
             {error && <Text style={styles.error}>{error}</Text>}
+            {sessionId && (
+              <TouchableOpacity style={styles.endBtn} onPress={endTraining} disabled={ending || saving}>
+                {ending ? <ActivityIndicator color={c.success} /> : <Text style={styles.endText}>✓ Training beenden</Text>}
+              </TouchableOpacity>
+            )}
+            {ended && (
+              <Text style={styles.endedHint}>Training beendet 💪 Dein nächster Satz startet automatisch ein neues Training.</Text>
+            )}
           </>
         )}
       </View>
@@ -165,5 +192,8 @@ function makeStyles(c: Colors) {
     saveText: { color: c.onPrimary, fontSize: 16, fontWeight: '700' },
     doneHint: { fontSize: 13, color: c.success, fontWeight: '600', textAlign: 'center', marginTop: 12 },
     error: { color: c.danger, fontSize: 14, marginTop: 12, textAlign: 'center' },
+    endBtn: { marginTop: 14, borderRadius: 10, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: c.success },
+    endText: { color: c.success, fontSize: 15, fontWeight: '700' },
+    endedHint: { fontSize: 13, color: c.success, textAlign: 'center', marginTop: 12, lineHeight: 19 },
   });
 }

@@ -10,6 +10,9 @@ node_modules/
 dist/
 web-build/
 
+# Generierter QR-Code fuer Expo Go (enthaelt lokale LAN-IP)
+build/expo-qr.png
+
 # Logs and misc
 *.log
 npm-debug.*

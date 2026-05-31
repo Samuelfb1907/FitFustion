@@ -1,4 +1,5 @@
-// Start-Screen / Dashboard (themed): Level & XP, Streak, Kalorien-Gauge, Erfolge.
+// Start-Screen / Dashboard (themed, aufgeraeumt): Hero mit Level/Streak,
+// "Training laeuft"-Banner zum Beenden, Tages-Kalorien (Gauge), Schnellzugriff, Erfolge.
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
@@ -17,6 +18,11 @@ function todayStr(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
+function startOfTodayISO(): string {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString();
+}
 async function countRows(table: string, userId: string): Promise<number> {
   const res = await supabase.from(table).select('*', { count: 'exact', head: true }).eq('user_id', userId);
   return res.error ? 0 : res.count ?? 0;
@@ -24,7 +30,7 @@ async function countRows(table: string, userId: string): Promise<number> {
 
 type Eaten = { kcal: number; p: number; c: number; f: number };
 
-export default function HomeScreen() {
+export default function HomeScreen({ onNavigate }: { onNavigate?: (tab: string) => void }) {
   const { session, profile } = useAuth();
   const c = useColors();
   const styles = makeStyles(c);
@@ -34,6 +40,8 @@ export default function HomeScreen() {
   const [goalLabel, setGoalLabel] = useState('');
   const [stats, setStats] = useState<GameStats | null>(null);
   const [eaten, setEaten] = useState<Eaten>({ kcal: 0, p: 0, c: 0, f: 0 });
+  const [activeSession, setActiveSession] = useState<string | null>(null);
+  const [activeSets, setActiveSets] = useState(0);
 
   useEffect(() => {
     async function load() {
@@ -41,29 +49,17 @@ export default function HomeScreen() {
       if (!userId) return;
 
       const { data: prof } = await supabase
-        .from('profiles')
-        .select('weight_kg, height_cm, birth_date, gender, activity_level')
-        .eq('id', userId)
-        .maybeSingle();
+        .from('profiles').select('weight_kg, height_cm, birth_date, gender, activity_level').eq('id', userId).maybeSingle();
       const { data: goal } = await supabase
-        .from('goals')
-        .select('goal_type')
-        .eq('user_id', userId)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .from('goals').select('goal_type').eq('user_id', userId).eq('is_active', true)
+        .order('created_at', { ascending: false }).limit(1).maybeSingle();
 
       if (prof && prof.weight_kg && prof.height_cm) {
         const goalType = (goal?.goal_type ?? 'general_fitness') as GoalType;
         setNutrition(
           computeNutrition({
-            weightKg: Number(prof.weight_kg),
-            heightCm: Number(prof.height_cm),
-            age: ageFromBirthDate(prof.birth_date),
-            gender: (prof.gender ?? 'prefer_not') as Gender,
-            activity: (prof.activity_level ?? 'moderate') as ActivityLevel,
-            goal: goalType,
+            weightKg: Number(prof.weight_kg), heightCm: Number(prof.height_cm), age: ageFromBirthDate(prof.birth_date),
+            gender: (prof.gender ?? 'prefer_not') as Gender, activity: (prof.activity_level ?? 'moderate') as ActivityLevel, goal: goalType,
           })
         );
         setGoalLabel(GOAL_LABELS[goalType] ?? goalType);
@@ -72,23 +68,28 @@ export default function HomeScreen() {
       }
 
       const fdt = await supabase
-        .from('food_logs')
-        .select('amount_g, foods(kcal, protein, carbs, fat)')
-        .eq('user_id', userId)
-        .eq('log_date', todayStr());
+        .from('food_logs').select('amount_g, foods(kcal, protein, carbs, fat)').eq('user_id', userId).eq('log_date', todayStr());
       const e: Eaten = { kcal: 0, p: 0, c: 0, f: 0 };
       if (!fdt.error && fdt.data) {
         for (const row of fdt.data as any[]) {
           const food = Array.isArray(row.foods) ? row.foods[0] : row.foods;
           if (!food) continue;
           const factor = (row.amount_g ?? 0) / 100;
-          e.kcal += (food.kcal ?? 0) * factor;
-          e.p += (food.protein ?? 0) * factor;
-          e.c += (food.carbs ?? 0) * factor;
-          e.f += (food.fat ?? 0) * factor;
+          e.kcal += (food.kcal ?? 0) * factor; e.p += (food.protein ?? 0) * factor;
+          e.c += (food.carbs ?? 0) * factor; e.f += (food.fat ?? 0) * factor;
         }
       }
       setEaten({ kcal: Math.round(e.kcal), p: Math.round(e.p), c: Math.round(e.c), f: Math.round(e.f) });
+
+      // Aktives (noch nicht beendetes) Training von heute?
+      const { data: act } = await supabase
+        .from('workout_sessions').select('id').eq('user_id', userId).is('ended_at', null)
+        .gte('performed_at', startOfTodayISO()).order('performed_at', { ascending: false }).limit(1).maybeSingle();
+      setActiveSession(act?.id ?? null);
+      if (act?.id) {
+        const r = await supabase.from('set_logs').select('*', { count: 'exact', head: true }).eq('session_id', act.id);
+        setActiveSets(r.count ?? 0);
+      } else setActiveSets(0);
 
       const sessions = await countRows('workout_sessions', userId);
       const sets = await countRows('set_logs', userId);
@@ -105,8 +106,11 @@ export default function HomeScreen() {
     load();
   }, [session?.user?.id]);
 
-  async function handleLogout() {
-    await supabase.auth.signOut();
+  async function endTraining() {
+    if (!activeSession) return;
+    await supabase.from('workout_sessions').update({ ended_at: new Date().toISOString() }).eq('id', activeSession);
+    setActiveSession(null);
+    setActiveSets(0);
   }
 
   const xp = stats ? computeXp(stats) : 0;
@@ -115,51 +119,66 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.hello}>Hallo, {profile?.first_name || 'willkommen'}! 👋</Text>
-          <Text style={styles.email}>{session?.user.email}</Text>
-        </View>
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
         {loading ? (
-          <ActivityIndicator size="large" color={c.primary} style={{ marginTop: 40 }} />
+          <ActivityIndicator size="large" color={c.primary} style={{ marginTop: 80 }} />
         ) : (
           <>
-            {stats && (
-              <View style={styles.levelCard}>
-                <View style={styles.levelTop}>
-                  <Text style={styles.levelText}>Level {lv.level}</Text>
-                  <View style={styles.streakChip}>
-                    <Text style={styles.streakText}>🔥 {stats.streak} {stats.streak === 1 ? 'Tag' : 'Tage'}</Text>
+            {/* HERO */}
+            <View style={styles.hero}>
+              <Text style={styles.heroHi}>Hallo, {profile?.first_name || 'willkommen'} 👋</Text>
+              {stats && (
+                <>
+                  <View style={styles.heroChips}>
+                    <View style={styles.heroChip}><Text style={styles.heroChipText}>⭐ Level {lv.level}</Text></View>
+                    <View style={styles.heroChip}><Text style={styles.heroChipText}>🔥 {stats.streak} {stats.streak === 1 ? 'Tag' : 'Tage'}</Text></View>
+                  </View>
+                  <View style={styles.xpTrack}><View style={[styles.xpFill, { width: `${Math.round(lv.progress * 100)}%` }]} /></View>
+                  <Text style={styles.xpText}>{lv.intoLevel} / {lv.perLevel} XP bis Level {lv.level + 1}</Text>
+                </>
+              )}
+            </View>
+
+            {/* TRAINING LÄUFT */}
+            {activeSession && (
+              <View style={styles.banner}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.bannerTitle}>🏋️ Training läuft</Text>
+                  <Text style={styles.bannerSub}>{activeSets} {activeSets === 1 ? 'Satz' : 'Sätze'} heute mitgeschrieben</Text>
+                </View>
+                <TouchableOpacity style={styles.bannerBtn} onPress={endTraining} activeOpacity={0.85}>
+                  <Text style={styles.bannerBtnText}>✓ Beenden</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* HEUTE / KALORIEN */}
+            {nutrition && (
+              <>
+                <Text style={styles.section}>HEUTE · {goalLabel}</Text>
+                <View style={styles.card}>
+                  <CalorieGauge target={nutrition.targetCalories} eaten={eaten.kcal} />
+                  <View style={styles.macros}>
+                    <Macro label="Protein" eaten={eaten.p} target={nutrition.proteinG} color={c.accent} styles={styles} />
+                    <Macro label="Kohlenhydrate" eaten={eaten.c} target={nutrition.carbsG} color="#E69500" styles={styles} />
+                    <Macro label="Fett" eaten={eaten.f} target={nutrition.fatG} color={c.danger} styles={styles} />
                   </View>
                 </View>
-                <View style={styles.xpTrack}>
-                  <View style={[styles.xpFill, { width: `${Math.round(lv.progress * 100)}%` }]} />
-                </View>
-                <Text style={styles.xpText}>{lv.intoLevel} / {lv.perLevel} XP bis Level {lv.level + 1}</Text>
-              </View>
+              </>
             )}
 
-            {nutrition && (
-              <View style={styles.card}>
-                <Text style={styles.cardLabel}>HEUTE · {goalLabel}</Text>
-                <CalorieGauge target={nutrition.targetCalories} eaten={eaten.kcal} />
-                <View style={styles.macros}>
-                  <Macro label="Protein" eaten={eaten.p} target={nutrition.proteinG} color="#2E7D32" styles={styles} />
-                  <Macro label="Kohlenhydrate" eaten={eaten.c} target={nutrition.carbsG} color="#E69500" styles={styles} />
-                  <Macro label="Fett" eaten={eaten.f} target={nutrition.fatG} color="#C62828" styles={styles} />
-                </View>
-              </View>
-            )}
+            {/* SCHNELLZUGRIFF */}
+            <Text style={styles.section}>SCHNELLZUGRIFF</Text>
+            <View style={styles.quick}>
+              <Quick icon="🏋️" label="Training" onPress={() => onNavigate?.('training')} styles={styles} />
+              <Quick icon="🍽️" label="Essen" onPress={() => onNavigate?.('essen')} styles={styles} />
+              <Quick icon="📈" label="Fortschritt" onPress={() => onNavigate?.('progress')} styles={styles} />
+            </View>
 
+            {/* ERFOLGE */}
             {stats && (
-              <View style={styles.achSection}>
-                <Text style={styles.achTitle}>Erfolge ({earnedCount}/{ACHIEVEMENTS.length})</Text>
+              <>
+                <Text style={styles.section}>ERFOLGE ({earnedCount}/{ACHIEVEMENTS.length})</Text>
                 <View style={styles.badgeGrid}>
                   {ACHIEVEMENTS.map((a) => {
                     const got = a.earned(stats, lv.level);
@@ -171,7 +190,7 @@ export default function HomeScreen() {
                     );
                   })}
                 </View>
-              </View>
+              </>
             )}
 
             {error && <Text style={styles.error}>{error}</Text>}
@@ -192,34 +211,48 @@ function Macro({ label, eaten, target, color, styles }: { label: string; eaten: 
   );
 }
 
+function Quick({ icon, label, onPress, styles }: { icon: string; label: string; onPress: () => void; styles: any }) {
+  return (
+    <TouchableOpacity style={styles.quickCard} onPress={onPress} activeOpacity={0.85}>
+      <Text style={styles.quickIcon}>{icon}</Text>
+      <Text style={styles.quickLabel}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
 function makeStyles(c: Colors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: c.bg, paddingTop: 60, paddingHorizontal: 20 },
-    header: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
-    hello: { fontSize: 24, fontWeight: 'bold', color: c.heading },
-    email: { fontSize: 13, color: c.textMuted, marginTop: 2 },
-    logoutBtn: { borderWidth: 1, borderColor: c.border, borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8, backgroundColor: c.card },
-    logoutText: { color: c.primary, fontWeight: '600' },
 
-    levelCard: { backgroundColor: '#1F3864', borderRadius: 16, padding: 18, marginBottom: 14 },
-    levelTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    levelText: { color: '#fff', fontSize: 22, fontWeight: 'bold' },
-    streakChip: { backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 },
-    streakText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+    hero: { backgroundColor: c.hero, borderRadius: 18, padding: 20, marginBottom: 14 },
+    heroHi: { color: '#fff', fontSize: 22, fontWeight: 'bold' },
+    heroChips: { flexDirection: 'row', gap: 8, marginTop: 12 },
+    heroChip: { backgroundColor: 'rgba(255,255,255,0.16)', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 },
+    heroChipText: { color: '#fff', fontSize: 13, fontWeight: '600' },
     xpTrack: { height: 10, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 5, marginTop: 14, overflow: 'hidden' },
-    xpFill: { height: 10, backgroundColor: '#5B8DEF', borderRadius: 5 },
-    xpText: { color: '#C7D4EC', fontSize: 12, marginTop: 6 },
+    xpFill: { height: 10, backgroundColor: '#7FA6FF', borderRadius: 5 },
+    xpText: { color: 'rgba(255,255,255,0.8)', fontSize: 12, marginTop: 6 },
 
-    card: { backgroundColor: c.card, borderRadius: 16, padding: 20, alignItems: 'center', marginBottom: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
-    cardLabel: { fontSize: 12, letterSpacing: 1, color: c.textMuted, fontWeight: '700', marginBottom: 6 },
+    banner: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 14, padding: 14, marginBottom: 14, borderWidth: 1, borderColor: c.accent },
+    bannerTitle: { fontSize: 16, fontWeight: '700', color: c.heading },
+    bannerSub: { fontSize: 13, color: c.textMuted, marginTop: 2 },
+    bannerBtn: { backgroundColor: c.accent, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10, marginLeft: 12 },
+    bannerBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+
+    section: { fontSize: 12, fontWeight: '700', letterSpacing: 0.8, color: c.textMuted, marginTop: 8, marginBottom: 8, marginLeft: 4 },
+
+    card: { backgroundColor: c.card, borderRadius: 16, padding: 20, alignItems: 'center', marginBottom: 6, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     macros: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 18 },
     macro: { flex: 1, alignItems: 'center' },
     macroDot: { width: 10, height: 10, borderRadius: 5, marginBottom: 6 },
     macroValue: { fontSize: 15, fontWeight: '700', color: c.text },
     macroLabel: { fontSize: 12, color: c.textMuted, marginTop: 2, textAlign: 'center' },
 
-    achSection: { marginTop: 4 },
-    achTitle: { fontSize: 17, fontWeight: '700', color: c.heading, marginBottom: 10 },
+    quick: { flexDirection: 'row', gap: 10, marginBottom: 6 },
+    quickCard: { flex: 1, backgroundColor: c.card, borderRadius: 14, paddingVertical: 18, alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    quickIcon: { fontSize: 24 },
+    quickLabel: { fontSize: 12, color: c.heading, marginTop: 6, fontWeight: '600' },
+
     badgeGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
     badge: { width: '31%', backgroundColor: c.card, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 6, alignItems: 'center', marginBottom: 10, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     badgeLocked: { backgroundColor: c.bg },

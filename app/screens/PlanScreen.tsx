@@ -52,7 +52,7 @@ const DAY_OPTIONS = [2, 3, 4, 5, 6];
 type ExView = { id: string; name: string; difficulty: string; sets: number; reps: number };
 type DayView = { id: string; day_index: number; focus: string | null; exercises: ExView[] };
 
-export default function PlanScreen() {
+export default function PlanScreen({ embedded }: { embedded?: boolean }) {
   const { session, profile } = useAuth();
   const userId = session?.user?.id;
   const c = useColors();
@@ -137,13 +137,13 @@ export default function PlanScreen() {
   }
 
   if (loading) {
-    return (<View style={styles.container}><Text style={styles.title}>Trainingsplan</Text><ActivityIndicator size="large" color={c.primary} style={{ marginTop: 40 }} /></View>);
+    return (<View style={[styles.container, embedded && styles.embedded]}>{!embedded && <Text style={styles.title}>Trainingsplan</Text>}<ActivityIndicator size="large" color={c.primary} style={{ marginTop: 40 }} /></View>);
   }
 
   if (mode === 'create') {
     return (
-      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
-        <Text style={styles.title}>Trainingsplan erstellen</Text>
+      <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }}>
+        {!embedded && <Text style={styles.title}>Trainingsplan erstellen</Text>}
         <Text style={styles.subtitle}>Wie viele Tage pro Woche möchtest du trainieren?</Text>
         <View style={styles.dayPicker}>
           {DAY_OPTIONS.map((n) => {
@@ -166,8 +166,8 @@ export default function PlanScreen() {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
-      <Text style={styles.title}>Dein Trainingsplan</Text>
+    <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }}>
+      {!embedded && <Text style={styles.title}>Dein Trainingsplan</Text>}
       <Text style={styles.subtitle}>{planName}</Text>
       <TouchableOpacity style={styles.secondaryBtn} onPress={() => setMode('create')}>
         <Text style={styles.secondaryText}>Neuen Plan erstellen</Text>
@@ -195,6 +195,7 @@ export default function PlanScreen() {
 function makeStyles(c: Colors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: c.bg, paddingTop: 60, paddingHorizontal: 20 },
+    embedded: { paddingTop: 8, paddingHorizontal: 0, backgroundColor: 'transparent' },
     title: { fontSize: 26, fontWeight: 'bold', color: c.heading },
     subtitle: { fontSize: 15, color: c.textMuted, marginTop: 2, marginBottom: 16 },
     dayPicker: { flexDirection: 'row', gap: 10, marginBottom: 24 },

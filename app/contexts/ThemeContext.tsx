@@ -18,17 +18,22 @@ export type Colors = {
   danger: string;
   success: string;
   track: string;     // Fortschritts-/Gauge-Hintergrund
+  accent: string;    // lebendige Akzentfarbe (Highlights)
+  hero: string;      // dunkle Hero-Flaeche fuer Karten
+  muscle: string;    // Grundfarbe der Muskeln im Koerper-Diagramm
 };
 
 const LIGHT: Colors = {
-  bg: '#F2F5FA', card: '#FFFFFF', text: '#222222', textMuted: '#8A97A8', heading: '#1F3864',
-  primary: '#1F3864', onPrimary: '#FFFFFF', border: '#E3E9F2', inputBg: '#FFFFFF',
-  danger: '#B00020', success: '#1a7f37', track: '#E3E9F2',
+  bg: '#F1F4FA', card: '#FFFFFF', text: '#1A2230', textMuted: '#7C8AA0', heading: '#16224A',
+  primary: '#2B50D8', onPrimary: '#FFFFFF', border: '#E4EAF3', inputBg: '#F6F8FC',
+  danger: '#D92D20', success: '#1F9D55', track: '#E4EAF3',
+  accent: '#12B886', hero: '#22357F', muscle: '#C3D0E8',
 };
 const DARK: Colors = {
-  bg: '#0F141B', card: '#1A222E', text: '#E6EAF0', textMuted: '#9AA5B4', heading: '#EAF1FF',
-  primary: '#3B6FD4', onPrimary: '#FFFFFF', border: '#2A3442', inputBg: '#222C3A',
-  danger: '#FF6B6B', success: '#5BD18A', track: '#2A3442',
+  bg: '#0E1117', card: '#181F2A', text: '#E6EAF0', textMuted: '#94A1B4', heading: '#EAF1FF',
+  primary: '#5B86F0', onPrimary: '#FFFFFF', border: '#283242', inputBg: '#1E2735',
+  danger: '#FF6B6B', success: '#5BD18A', track: '#283242',
+  accent: '#38D9A9', hero: '#1A2A66', muscle: '#33445E',
 };
 
 type ThemeCtx = {

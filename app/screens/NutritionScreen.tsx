@@ -10,7 +10,7 @@ import { generateMealPlan, MEAL_TYPE_LABELS, MealType } from '../lib/meals';
 type LoadedMeal = { id: string; meal_type: string; name: string; calories: number; protein_g: number; carbs_g: number; fat_g: number };
 const TYPE_RANK: Record<string, number> = { breakfast: 0, lunch: 1, dinner: 2, snack: 3 };
 
-export default function NutritionScreen() {
+export default function NutritionScreen({ embedded }: { embedded?: boolean }) {
   const { session } = useAuth();
   const userId = session?.user?.id;
   const c = useColors();
@@ -76,12 +76,12 @@ export default function NutritionScreen() {
   const totals = meals.reduce((acc, m) => ({ kcal: acc.kcal + (m.calories ?? 0), p: acc.p + (m.protein_g ?? 0), c: acc.c + (m.carbs_g ?? 0), f: acc.f + (m.fat_g ?? 0) }), { kcal: 0, p: 0, c: 0, f: 0 });
 
   if (loading) {
-    return (<View style={styles.container}><Text style={styles.title}>Ernährungsplan</Text><ActivityIndicator size="large" color={c.primary} style={{ marginTop: 40 }} /></View>);
+    return (<View style={[styles.container, embedded && styles.embedded]}>{!embedded && <Text style={styles.title}>Ernährungsplan</Text>}<ActivityIndicator size="large" color={c.primary} style={{ marginTop: 40 }} /></View>);
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
-      <Text style={styles.title}>Ernährungsplan</Text>
+    <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }}>
+      {!embedded && <Text style={styles.title}>Ernährungsplan</Text>}
       {targets && (
         <View style={styles.targetCard}>
           <Text style={styles.targetLabel}>DEIN TAGESZIEL</Text>
@@ -124,8 +124,9 @@ export default function NutritionScreen() {
 function makeStyles(c: Colors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: c.bg, paddingTop: 60, paddingHorizontal: 20 },
+    embedded: { paddingTop: 8, paddingHorizontal: 0, backgroundColor: 'transparent' },
     title: { fontSize: 26, fontWeight: 'bold', color: c.heading, marginBottom: 16 },
-    targetCard: { backgroundColor: '#1F3864', borderRadius: 16, padding: 18, marginBottom: 16, alignItems: 'center' },
+    targetCard: { backgroundColor: c.hero, borderRadius: 16, padding: 18, marginBottom: 16, alignItems: 'center' },
     targetLabel: { color: '#A9B8D6', fontSize: 12, fontWeight: '700', letterSpacing: 1 },
     targetKcal: { color: '#fff', fontSize: 30, fontWeight: 'bold', marginTop: 4 },
     targetMacros: { color: '#D6DEEE', fontSize: 14, marginTop: 4 },

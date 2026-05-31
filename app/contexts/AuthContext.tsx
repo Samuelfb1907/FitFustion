@@ -11,6 +11,7 @@ import { supabase } from '../lib/supabase';
 export type Profile = {
   id: string;
   first_name: string | null;
+  gender: string | null;
   experience_level: string | null;
   training_environment: string | null;
 };
@@ -29,7 +30,7 @@ const AuthContext = createContext<AuthContextValue>({
   refreshProfile: async () => {},
 });
 
-const PROFILE_COLUMNS = 'id, first_name, experience_level, training_environment';
+const PROFILE_COLUMNS = 'id, first_name, gender, experience_level, training_environment';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);

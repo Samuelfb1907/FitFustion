@@ -14,7 +14,7 @@ function todayStr(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-export default function FoodTrackerScreen() {
+export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) {
   const { session } = useAuth();
   const userId = session?.user?.id;
   const c = useColors();
@@ -82,14 +82,14 @@ export default function FoodTrackerScreen() {
   const filteredFoods = search.trim() ? foods.filter((f) => f.name.toLowerCase().includes(search.trim().toLowerCase())) : foods;
 
   if (loading) {
-    return (<View style={styles.container}><Text style={styles.title}>Tracker</Text><ActivityIndicator size="large" color={c.primary} style={{ marginTop: 40 }} /></View>);
+    return (<View style={[styles.container, embedded && styles.embedded]}>{!embedded && <Text style={styles.title}>Tracker</Text>}<ActivityIndicator size="large" color={c.primary} style={{ marginTop: 40 }} /></View>);
   }
 
   if (mode === 'amount' && selectedFood) {
     const a = Number(amount.replace(',', '.')) || 0;
     const previewKcal = Math.round((selectedFood.kcal * a) / 100);
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, embedded && styles.embedded]}>
         <TouchableOpacity onPress={() => setMode('pick')}><Text style={styles.back}>‹ Zurück</Text></TouchableOpacity>
         <Text style={styles.title}>{selectedFood.name}</Text>
         <Text style={styles.subtitle}>{selectedFood.kcal} kcal / 100 g</Text>
@@ -106,7 +106,7 @@ export default function FoodTrackerScreen() {
 
   if (mode === 'pick') {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, embedded && styles.embedded]}>
         <TouchableOpacity onPress={() => { setMode('diary'); setSearch(''); }}><Text style={styles.back}>‹ Zurück</Text></TouchableOpacity>
         <Text style={styles.title}>Zutat auswählen</Text>
         <TextInput style={styles.input} value={search} onChangeText={setSearch} placeholder="Suchen (z. B. Banane)…" placeholderTextColor={c.textMuted} autoCorrect={false} />
@@ -127,8 +127,8 @@ export default function FoodTrackerScreen() {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
-      <Text style={styles.title}>Tracker</Text>
+    <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }}>
+      {!embedded && <Text style={styles.title}>Tracker</Text>}
       <Text style={styles.subtitle}>Dein Essens-Tagebuch für heute</Text>
       <View style={styles.summary}>
         <View style={styles.sumCol}><Text style={styles.sumValue}>{totalKcal}</Text><Text style={styles.sumLabel}>gegessen</Text></View>
@@ -158,6 +158,7 @@ export default function FoodTrackerScreen() {
 function makeStyles(c: Colors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: c.bg, paddingTop: 60, paddingHorizontal: 20 },
+    embedded: { paddingTop: 8, paddingHorizontal: 0, backgroundColor: 'transparent' },
     title: { fontSize: 26, fontWeight: 'bold', color: c.heading },
     subtitle: { fontSize: 15, color: c.textMuted, marginTop: 2, marginBottom: 16 },
     back: { color: c.primary, fontSize: 15, fontWeight: '600', marginBottom: 10 },
