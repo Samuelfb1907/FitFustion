@@ -126,7 +126,13 @@ export const EXERCISE_GIF_ID: Record<string, string> = {
   "Beinbeuger einbeinig (stehend)": "0795",
   "Einbeiniges Wadenheben am Boden": "1387",
   "Flache Gesäßbrücke am Boden": "3013",
-  "Bizeps-Konzentration (Eigengewicht)": "1770"
+  "Bizeps-Konzentration (Eigengewicht)": "1770",
+  "Bizeps-Curl mit Theraband": "0968",
+  "Konzentrationscurl mit Theraband": "0976",
+  "Überkopf-Bizepscurl mit Theraband": "0986",
+  "Seitheben mit Theraband": "0977",
+  "Frontheben mit Theraband": "0978",
+  "Schulterdrücken mit Theraband": "0997"
 };
 
 export function exerciseGifId(name: string): string | null {

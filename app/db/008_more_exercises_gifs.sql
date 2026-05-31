@@ -62,7 +62,13 @@ from (values
   ('Beinbeuger einbeinig (stehend)','beginner','bodyweight','legs','Beinrückseite einbeinig im Stehen.','1. Auf einem Bein stehen. 2. Ferse zum Gesäß ziehen. 3. Senken.'),
   ('Einbeiniges Wadenheben am Boden','beginner','bodyweight','calves','Wadenheben auf einem Bein, flach am Boden.','1. Auf einem Bein stehen. 2. Ferse heben. 3. Senken, Seite wechseln.'),
   ('Flache Gesäßbrücke am Boden','beginner','bodyweight','glutes','Leichte Gesäßbrücke flach am Boden.','1. Rückenlage, Knie gebeugt. 2. Hüfte leicht anheben. 3. Senken.'),
-  ('Bizeps-Konzentration (Eigengewicht)','beginner','bodyweight','biceps','Bizeps-Curl gegen das eigene Bein als Widerstand.','1. Sitzend, Hand unter dem Knie. 2. Gegen Widerstand curlen. 3. Senken.')
+  ('Bizeps-Konzentration (Eigengewicht)','beginner','bodyweight','biceps','Bizeps-Curl gegen das eigene Bein als Widerstand.','1. Sitzend, Hand unter dem Knie. 2. Gegen Widerstand curlen. 3. Senken.'),
+  ('Bizeps-Curl mit Theraband','beginner','bodyweight','biceps','Bizeps-Curl mit dem Theraband – ohne Gym, auch mit Wasserflaschen möglich.','1. Auf das Band treten, Enden greifen. 2. Hochcurlen. 3. Langsam senken.'),
+  ('Konzentrationscurl mit Theraband','beginner','bodyweight','biceps','Isolierter Bizeps-Curl mit dem Band.','1. Band unter den Fuß, Ellbogen am Oberschenkel. 2. Hochcurlen. 3. Senken.'),
+  ('Überkopf-Bizepscurl mit Theraband','beginner','bodyweight','biceps','Einarmiger Bizepscurl mit dem Band.','1. Band fixieren, Arm seitlich anheben. 2. Hand Richtung Kopf curlen. 3. Strecken.'),
+  ('Seitheben mit Theraband','beginner','bodyweight','shoulders','Seitheben mit dem Theraband – ohne Gym, auch mit Wasserflaschen möglich.','1. Auf das Band treten, Enden greifen. 2. Arme zur Seite heben. 3. Senken.'),
+  ('Frontheben mit Theraband','beginner','bodyweight','shoulders','Frontheben mit dem Band für die vordere Schulter.','1. Auf das Band treten, Enden greifen. 2. Arme nach vorn heben. 3. Senken.'),
+  ('Schulterdrücken mit Theraband','beginner','bodyweight','shoulders','Schulterdrücken mit dem Band über Kopf.','1. Band unter die Füße, Enden auf Schulterhöhe. 2. Über Kopf drücken. 3. Senken.')
 ) as e(name, difficulty, equipment, muscle_key, description, instructions)
 join public.muscles m on m.key = e.muscle_key
 where not exists (select 1 from public.exercises x where x.name = e.name);
