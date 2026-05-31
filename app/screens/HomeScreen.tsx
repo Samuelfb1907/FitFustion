@@ -1,7 +1,7 @@
 // Start-Screen / Dashboard (themed, aufgeraeumt): Hero mit Level/Streak,
 // "Training laeuft"-Banner zum Beenden, Tages-Kalorien (Gauge), Schnellzugriff, Erfolge.
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
@@ -9,6 +9,7 @@ import { computeNutrition, ageFromBirthDate, NutritionResult, Gender, ActivityLe
 import { computeXp, levelInfo, computeStreak, ACHIEVEMENTS, GameStats } from '../lib/gamification';
 import CalorieGauge from '../components/CalorieGauge';
 import { dailyGoals, weeklyChallenges, Goal } from '../lib/goals';
+import { saveTodayWeight, parseWeight, WEIGHT_MIN, WEIGHT_MAX } from '../lib/weight';
 
 const GOAL_LABELS: Record<string, string> = {
   lose_weight: 'Abnehmen', build_muscle: 'Muskelaufbau', gain_strength: 'Kraft steigern',
@@ -55,6 +56,10 @@ export default function HomeScreen({ onNavigate }: { onNavigate?: (tab: string) 
   const [goalsData, setGoalsData] = useState<GoalsData | null>(null);
   const [waterMl, setWaterMl] = useState(0);
   const [waterIds, setWaterIds] = useState<string[]>([]);
+  const [weightKg, setWeightKg] = useState<number | null>(null);
+  const [weightInput, setWeightInput] = useState('');
+  const [savingW, setSavingW] = useState(false);
+  const [weightMsg, setWeightMsg] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -63,6 +68,7 @@ export default function HomeScreen({ onNavigate }: { onNavigate?: (tab: string) 
 
       const { data: prof } = await supabase
         .from('profiles').select('weight_kg, height_cm, birth_date, gender, activity_level').eq('id', userId).maybeSingle();
+      setWeightKg(prof?.weight_kg != null ? Number(prof.weight_kg) : null);
       const { data: goal } = await supabase
         .from('goals').select('goal_type').eq('user_id', userId).eq('is_active', true)
         .order('created_at', { ascending: false }).limit(1).maybeSingle();
@@ -154,6 +160,21 @@ export default function HomeScreen({ onNavigate }: { onNavigate?: (tab: string) 
     await refreshWater();
   }
 
+  async function saveHomeWeight() {
+    const uid = session?.user?.id;
+    if (!uid) return;
+    const w = parseWeight(weightInput);
+    if (w == null) { setWeightMsg(`Bitte ${WEIGHT_MIN}–${WEIGHT_MAX} kg eingeben.`); return; }
+    setSavingW(true);
+    setWeightMsg(null);
+    const err = await saveTodayWeight(uid, w);
+    setSavingW(false);
+    if (err) { setWeightMsg('Speichern fehlgeschlagen.'); return; }
+    setWeightKg(w);
+    setWeightInput('');
+    setWeightMsg('Gespeichert ✓');
+  }
+
   const xp = stats ? computeXp(stats) : 0;
   const lv = levelInfo(xp);
   const earnedCount = stats ? ACHIEVEMENTS.filter((a) => a.earned(stats, lv.level)).length : 0;
@@ -222,6 +243,31 @@ export default function HomeScreen({ onNavigate }: { onNavigate?: (tab: string) 
                 <TouchableOpacity style={styles.waterBtn} onPress={() => addWater(500)} activeOpacity={0.8}><Text style={styles.waterBtnText}>+500 ml 🍶</Text></TouchableOpacity>
                 <TouchableOpacity style={styles.waterUndo} onPress={undoWater} activeOpacity={0.8}><Text style={styles.waterUndoText}>↩</Text></TouchableOpacity>
               </View>
+            </View>
+
+            {/* GEWICHT */}
+            <Text style={styles.section}>GEWICHT</Text>
+            <View style={styles.waterCard}>
+              <View style={styles.weightTop}>
+                <Text style={styles.waterTitle}>⚖️ {weightKg != null ? `${weightKg} kg` : 'Noch kein Wert'}</Text>
+                <TouchableOpacity onPress={() => onNavigate?.('progress')} activeOpacity={0.7}>
+                  <Text style={styles.weightLink}>Verlauf ›</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.weightRow}>
+                <TextInput
+                  style={styles.weightInput}
+                  value={weightInput}
+                  onChangeText={setWeightInput}
+                  placeholder="Heutiges Gewicht (kg)"
+                  placeholderTextColor={c.textMuted}
+                  keyboardType="numeric"
+                />
+                <TouchableOpacity style={[styles.weightBtn, savingW && { opacity: 0.6 }]} onPress={saveHomeWeight} disabled={savingW} activeOpacity={0.85}>
+                  {savingW ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.weightBtnText}>Eintragen</Text>}
+                </TouchableOpacity>
+              </View>
+              {weightMsg && <Text style={styles.weightMsg}>{weightMsg}</Text>}
             </View>
 
             {/* TAGESZIELE */}
@@ -355,6 +401,14 @@ function makeStyles(c: Colors) {
     waterBtnText: { color: c.primary, fontWeight: '700', fontSize: 14 },
     waterUndo: { width: 46, borderWidth: 1, borderColor: c.border, borderRadius: 10, paddingVertical: 11, alignItems: 'center' },
     waterUndoText: { color: c.textMuted, fontSize: 16, fontWeight: '700' },
+
+    weightTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    weightLink: { color: c.primary, fontSize: 13, fontWeight: '600' },
+    weightRow: { flexDirection: 'row', gap: 10, marginTop: 12, alignItems: 'center' },
+    weightInput: { flex: 1, borderWidth: 1, borderColor: c.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 16, backgroundColor: c.inputBg, color: c.text },
+    weightBtn: { backgroundColor: c.primary, borderRadius: 10, paddingHorizontal: 18, paddingVertical: 12, alignItems: 'center', justifyContent: 'center' },
+    weightBtnText: { color: c.onPrimary, fontSize: 15, fontWeight: '700' },
+    weightMsg: { fontSize: 13, color: c.success, marginTop: 8 },
 
     listCard: { backgroundColor: c.card, borderRadius: 16, paddingHorizontal: 16, marginBottom: 6, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     goalRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },

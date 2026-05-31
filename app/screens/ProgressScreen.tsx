@@ -7,15 +7,11 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { LineChart, BarChart } from '../components/Charts';
+import { WeightPoint, loadWeights, saveTodayWeight, deleteWeight, deltaOver, parseWeight, WEIGHT_MIN, WEIGHT_MAX } from '../lib/weight';
 
-type WeightPoint = { date: string; kg: number };
 type PR = { name: string; weight: number; reps: number | null };
 type HistRow = { date: string; sets: number; volume: number };
 
-function todayStr(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
 function dStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
@@ -62,6 +58,7 @@ export default function ProgressScreen() {
   const [savingW, setSavingW] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [msgErr, setMsgErr] = useState(false);
+  const [showHist, setShowHist] = useState(false);
 
   const load = useCallback(async () => {
     const userId = session?.user?.id;
@@ -69,15 +66,7 @@ export default function ProgressScreen() {
     setLoading(true);
 
     // 1) Gewichtseintraege
-    const { data: pe } = await supabase
-      .from('progress_entries')
-      .select('entry_date, weight_kg')
-      .eq('user_id', userId)
-      .order('entry_date', { ascending: true });
-    const wpts: WeightPoint[] = (pe ?? [])
-      .filter((r: any) => r.weight_kg != null)
-      .map((r: any) => ({ date: String(r.entry_date), kg: Number(r.weight_kg) }));
-    setWeights(wpts);
+    setWeights(await loadWeights(userId));
 
     // Profil-Gewicht (Fallback fuer "aktuell")
     const { data: prof } = await supabase.from('profiles').select('weight_kg').eq('id', userId).maybeSingle();
@@ -175,29 +164,18 @@ export default function ProgressScreen() {
   async function saveWeight() {
     const userId = session?.user?.id;
     if (!userId) return;
-    const w = Number(weightInput.replace(',', '.'));
-    if (!w || w < 30 || w > 300) {
-      setMsg('Bitte ein gültiges Gewicht (30–300 kg) eingeben.');
+    const w = parseWeight(weightInput);
+    if (w == null) {
+      setMsg(`Bitte ein gültiges Gewicht (${WEIGHT_MIN}–${WEIGHT_MAX} kg) eingeben.`);
       setMsgErr(true);
       return;
     }
     setSavingW(true);
     setMsg(null);
-    const today = todayStr();
-    const { data: ex } = await supabase
-      .from('progress_entries')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('entry_date', today)
-      .maybeSingle();
-    const res = ex?.id
-      ? await supabase.from('progress_entries').update({ weight_kg: w }).eq('id', ex.id)
-      : await supabase.from('progress_entries').insert({ user_id: userId, entry_date: today, weight_kg: w });
-    // aktuelles Profil-Gewicht mitziehen -> haelt Kalorienziel aktuell
-    await supabase.from('profiles').update({ weight_kg: w }).eq('id', userId);
+    const err = await saveTodayWeight(userId, w);
     setSavingW(false);
-    if (res.error) {
-      setMsg('Speichern fehlgeschlagen: ' + res.error.message);
+    if (err) {
+      setMsg('Speichern fehlgeschlagen: ' + err);
       setMsgErr(true);
     } else {
       setMsg('Gewicht gespeichert ✓');
@@ -207,14 +185,27 @@ export default function ProgressScreen() {
     }
   }
 
+  async function removeWeight(id: string) {
+    await deleteWeight(id);
+    await load();
+  }
+
   const current = weights.length ? weights[weights.length - 1].kg : profileWeight;
   const start = weights.length ? weights[0].kg : null;
-  const delta = current != null && start != null ? Math.round((current - start) * 10) / 10 : null;
-  const towardGoal =
-    current != null && start != null && targetWeight != null
-      ? Math.abs(current - targetWeight) <= Math.abs(start - targetWeight)
+  const delta = current != null && start != null && weights.length >= 2 ? Math.round((current - start) * 10) / 10 : null;
+  const d7 = deltaOver(weights, 7);
+  const d30 = deltaOver(weights, 30);
+  // Vorzeichen Richtung Ziel (ueber=abnehmen gut, unter=zunehmen gut). Ohne Ziel neutral.
+  const desiredSign = targetWeight != null && current != null ? Math.sign(targetWeight - current) : 0;
+  const deltaCol = (d: number | null): string => {
+    if (d == null || d === 0 || desiredSign === 0) return c.textMuted;
+    return Math.sign(d) === desiredSign ? c.success : c.danger;
+  };
+  const toGoal = targetWeight != null && current != null ? Math.round(Math.abs(current - targetWeight) * 10) / 10 : null;
+  const goalProgress =
+    targetWeight != null && start != null && current != null && Math.abs(start - targetWeight) > 0.01
+      ? Math.max(0, Math.min(1, (Math.abs(start - targetWeight) - Math.abs(current - targetWeight)) / Math.abs(start - targetWeight)))
       : null;
-  const deltaColor = towardGoal == null ? c.textMuted : towardGoal ? c.success : c.danger;
 
   const statCards = [
     { icon: '🏋️', label: 'Trainings', value: String(stats.sessions) },
@@ -240,15 +231,6 @@ export default function ProgressScreen() {
                 <Text style={styles.bigWeight}>{current != null ? `${current}` : '–'}</Text>
                 <Text style={styles.weightUnit}>kg aktuell</Text>
               </View>
-              {delta != null && (
-                <View style={[styles.deltaChip, { borderColor: deltaColor }]}>
-                  <Text style={[styles.deltaText, { color: deltaColor }]}>
-                    {delta > 0 ? '+' : ''}
-                    {delta} kg
-                  </Text>
-                  <Text style={styles.deltaSub}>seit Start</Text>
-                </View>
-              )}
               {targetWeight != null && (
                 <View style={styles.weightCol}>
                   <Text style={styles.bigWeightMuted}>{targetWeight}</Text>
@@ -257,9 +239,17 @@ export default function ProgressScreen() {
               )}
             </View>
 
+            {(d7 != null || d30 != null || delta != null) && (
+              <View style={styles.deltaGrid}>
+                <DeltaChip label="7 Tage" value={d7} color={deltaCol(d7)} styles={styles} />
+                <DeltaChip label="30 Tage" value={d30} color={deltaCol(d30)} styles={styles} />
+                <DeltaChip label="seit Start" value={delta} color={deltaCol(delta)} styles={styles} />
+              </View>
+            )}
+
             {weights.length >= 2 ? (
               <View style={styles.chartWrap}>
-                <LineChart values={weights.map((w) => w.kg)} width={chartW} height={120} color={c.primary} c={c} />
+                <LineChart values={weights.map((w) => w.kg)} width={chartW} height={120} color={c.primary} c={c} goal={targetWeight} showMinMax />
                 <View style={styles.chartAxis}>
                   <Text style={styles.axisLabel}>{ddmm(weights[0].date)}</Text>
                   <Text style={styles.axisLabel}>{ddmm(weights[weights.length - 1].date)}</Text>
@@ -267,6 +257,18 @@ export default function ProgressScreen() {
               </View>
             ) : (
               <Text style={styles.hint}>Trag regelmäßig dein Gewicht ein – ab dem 2. Wert siehst du hier deine Kurve.</Text>
+            )}
+
+            {goalProgress != null && toGoal != null && (
+              <View style={styles.goalWrap}>
+                <View style={styles.goalHead}>
+                  <Text style={styles.goalCaption}>Ziel-Fortschritt</Text>
+                  <Text style={styles.goalCaption}>{toGoal === 0 ? 'erreicht 🎉' : `noch ${toGoal} kg`}</Text>
+                </View>
+                <View style={styles.goalTrack}>
+                  <View style={[styles.goalFill, { width: `${Math.round(goalProgress * 100)}%` }]} />
+                </View>
+              </View>
             )}
 
             <View style={styles.inputRow}>
@@ -283,6 +285,24 @@ export default function ProgressScreen() {
               </TouchableOpacity>
             </View>
             {msg && <Text style={[styles.msg, { color: msgErr ? c.danger : c.success }]}>{msg}</Text>}
+
+            {weights.length > 0 && (
+              <>
+                <TouchableOpacity onPress={() => setShowHist((s) => !s)} style={styles.histToggle}>
+                  <Text style={styles.histToggleText}>{showHist ? 'Verlauf ausblenden' : `Verlauf anzeigen (${weights.length})`}</Text>
+                </TouchableOpacity>
+                {showHist &&
+                  [...weights].reverse().map((w) => (
+                    <View key={w.id} style={styles.histRow}>
+                      <Text style={styles.histDate}>{ddmm(w.date)}</Text>
+                      <Text style={styles.histKg}>{w.kg} kg</Text>
+                      <TouchableOpacity onPress={() => removeWeight(w.id)} style={styles.histDel}>
+                        <Text style={styles.histDelText}>✕</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+              </>
+            )}
           </View>
 
           {/* STATISTIK-KACHELN */}
@@ -360,6 +380,15 @@ export default function ProgressScreen() {
   );
 }
 
+function DeltaChip({ label, value, color, styles }: { label: string; value: number | null; color: string; styles: any }) {
+  return (
+    <View style={styles.deltaCell}>
+      <Text style={[styles.deltaCellVal, { color }]}>{value == null ? '–' : `${value > 0 ? '+' : ''}${value}`}</Text>
+      <Text style={styles.deltaCellLabel}>{label}</Text>
+    </View>
+  );
+}
+
 function makeStyles(c: Colors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: c.bg, paddingTop: 60, paddingHorizontal: 20 },
@@ -377,6 +406,25 @@ function makeStyles(c: Colors) {
     deltaChip: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6, alignItems: 'center' },
     deltaText: { fontSize: 16, fontWeight: '700' },
     deltaSub: { fontSize: 10, color: c.textMuted, marginTop: 1 },
+
+    deltaGrid: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 14, gap: 8 },
+    deltaCell: { flex: 1, backgroundColor: c.inputBg, borderRadius: 12, paddingVertical: 10, alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    deltaCellVal: { fontSize: 17, fontWeight: '800' },
+    deltaCellLabel: { fontSize: 11, color: c.textMuted, marginTop: 2 },
+
+    goalWrap: { marginTop: 14 },
+    goalHead: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+    goalCaption: { fontSize: 12, color: c.textMuted, fontWeight: '600' },
+    goalTrack: { height: 8, backgroundColor: c.track, borderRadius: 4, overflow: 'hidden' },
+    goalFill: { height: 8, backgroundColor: c.success, borderRadius: 4 },
+
+    histToggle: { marginTop: 14, alignItems: 'center' },
+    histToggleText: { color: c.primary, fontSize: 14, fontWeight: '600' },
+    histRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 9, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.border },
+    histDate: { fontSize: 14, color: c.textMuted, width: 64 },
+    histKg: { fontSize: 15, color: c.heading, fontWeight: '700', flex: 1 },
+    histDel: { padding: 6 },
+    histDelText: { fontSize: 14, color: c.textMuted },
 
     chartWrap: { marginTop: 10, alignItems: 'center' },
     chartAxis: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 2 },
