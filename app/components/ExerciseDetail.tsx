@@ -4,6 +4,9 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOp
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
+import ExerciseFigure from './ExerciseFigure';
+import ExerciseGif from './ExerciseGif';
+import { exerciseGifId } from '../lib/exerciseMedia';
 
 type Exercise = { id: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null };
 type SetLog = { id: string; set_index: number; reps: number | null; weight_kg: number | null };
@@ -20,11 +23,36 @@ function startOfTodayISO(): string {
   return d.toISOString();
 }
 
-export default function ExerciseDetail({ exercise, onBack }: { exercise: Exercise; onBack: () => void }) {
+// "1. ... 2. ... 3. ..." -> ["...", "...", "..."]
+function parseSteps(instr: string | null): string[] {
+  if (!instr) return [];
+  const parts = instr.split(/\s*\d+\.\s*/).map((s) => s.trim()).filter(Boolean);
+  return parts.length ? parts : [instr.trim()];
+}
+
+// allgemein gueltige, hilfreiche Technik-Tipps (nach Geraet & Level)
+function tipsFor(equipment: string, difficulty: string): string[] {
+  const t = [
+    'Bewegung langsam & kontrolliert ausführen – kein Schwung.',
+    'Atmung: beim Anstrengen ausatmen, beim Zurückführen einatmen.',
+  ];
+  if (equipment === 'barbell' || equipment === 'dumbbell') t.push('Rumpf anspannen, Rücken gerade halten.');
+  else if (equipment === 'bodyweight' || equipment === 'none') t.push('Körper in einer Linie halten, Bauch anspannen.');
+  else if (equipment === 'machine') t.push('Sitz & Polster passend einstellen, damit die Gelenke sauber geführt werden.');
+  else if (equipment === 'cable') t.push('Spannung über die ganze Bewegung halten.');
+  t.push(difficulty === 'beginner' ? 'Erst die Technik mit wenig Gewicht üben, dann steigern.' : 'Volle Bewegungsamplitude nutzen und vorher kurz aufwärmen.');
+  return t.slice(0, 4);
+}
+
+export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName }: { exercise: Exercise; onBack: () => void; muscleKey?: string | null; muscleName?: string | null }) {
   const { session } = useAuth();
   const userId = session?.user?.id;
   const c = useColors();
   const styles = makeStyles(c);
+  const steps = parseSteps(exercise.instructions);
+  const tips = tipsFor(exercise.equipment, exercise.difficulty);
+  const gifId = exerciseGifId(exercise.name);
+  const hasGifKey = !!process.env.EXPO_PUBLIC_EXERCISEDB_KEY;
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -35,6 +63,7 @@ export default function ExerciseDetail({ exercise, onBack }: { exercise: Exercis
   const [weight, setWeight] = useState('');
   const [ending, setEnding] = useState(false);
   const [ended, setEnded] = useState(false);
+  const [gifFailed, setGifFailed] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -59,6 +88,8 @@ export default function ExerciseDetail({ exercise, onBack }: { exercise: Exercis
     init();
     return () => { active = false; };
   }, [userId, exercise.id]);
+
+  useEffect(() => { setGifFailed(false); }, [exercise.id]);
 
   async function refreshSets(sid: string) {
     const { data } = await supabase
@@ -117,8 +148,39 @@ export default function ExerciseDetail({ exercise, onBack }: { exercise: Exercis
         <Text style={styles.badge}>{DIFF_LABELS[exercise.difficulty] ?? exercise.difficulty}</Text>
         <Text style={styles.badge}>{EQUIP_LABELS[exercise.equipment] ?? exercise.equipment}</Text>
       </View>
+      {gifId && hasGifKey && !gifFailed ? (
+        <View style={styles.illusCard}>
+          <ExerciseGif exerciseId={gifId} c={c} onFail={() => setGifFailed(true)} />
+          <Text style={styles.illusCaption}>So wird's gemacht{muscleName ? ` · Zielmuskel: ${muscleName}` : ''}</Text>
+        </View>
+      ) : muscleKey ? (
+        <View style={styles.illusCard}>
+          <ExerciseFigure muscleKey={muscleKey} c={c} width={150} />
+          <Text style={styles.illusCaption}>Zielmuskel: {muscleName ?? '—'}</Text>
+        </View>
+      ) : null}
+
       {exercise.description ? <Text style={styles.desc}>{exercise.description}</Text> : null}
-      {exercise.instructions ? (<><Text style={styles.h2}>Ausführung</Text><Text style={styles.instr}>{exercise.instructions}</Text></>) : null}
+
+      {steps.length > 0 ? (
+        <>
+          <Text style={styles.h2}>Ausführung</Text>
+          {steps.map((s, i) => (
+            <View key={i} style={styles.stepRow}>
+              <View style={styles.stepNum}><Text style={styles.stepNumText}>{i + 1}</Text></View>
+              <Text style={styles.stepText}>{s}</Text>
+            </View>
+          ))}
+        </>
+      ) : null}
+
+      <Text style={[styles.h2, { marginTop: 18 }]}>Tipps</Text>
+      {tips.map((t, i) => (
+        <View key={i} style={styles.tipRow}>
+          <Text style={styles.tipDot}>•</Text>
+          <Text style={styles.tipText}>{t}</Text>
+        </View>
+      ))}
 
       <View style={styles.logCard}>
         <Text style={styles.h2}>Training mitschreiben</Text>
@@ -178,6 +240,15 @@ function makeStyles(c: Colors) {
     desc: { fontSize: 15, color: c.text, lineHeight: 22, marginBottom: 16 },
     h2: { fontSize: 17, fontWeight: '700', color: c.heading, marginBottom: 8 },
     instr: { fontSize: 15, color: c.text, lineHeight: 24, marginBottom: 8 },
+    illusCard: { backgroundColor: c.card, borderRadius: 16, paddingVertical: 16, paddingHorizontal: 14, alignItems: 'center', marginBottom: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    illusCaption: { fontSize: 13, color: c.textMuted, marginTop: 8, fontWeight: '600' },
+    stepRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10 },
+    stepNum: { width: 24, height: 24, borderRadius: 12, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center', marginRight: 10, marginTop: 1 },
+    stepNumText: { color: c.onPrimary, fontSize: 13, fontWeight: '700' },
+    stepText: { flex: 1, fontSize: 15, color: c.text, lineHeight: 22 },
+    tipRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 },
+    tipDot: { color: c.accent, fontSize: 16, marginRight: 8, lineHeight: 20 },
+    tipText: { flex: 1, fontSize: 14, color: c.textMuted, lineHeight: 20 },
     logCard: { backgroundColor: c.card, borderRadius: 16, padding: 18, marginTop: 18, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     hint: { fontSize: 14, color: c.textMuted, marginBottom: 12 },
     setList: { marginBottom: 12 },

@@ -71,7 +71,7 @@ export default function TrainingScreen() {
 
   // Übungsdetail = volle Ansicht
   if (selectedExercise) {
-    return <ExerciseDetail exercise={selectedExercise} onBack={() => setSelectedExercise(null)} />;
+    return <ExerciseDetail exercise={selectedExercise} onBack={() => setSelectedExercise(null)} muscleKey={selectedMuscle?.key ?? null} muscleName={selectedMuscle?.name_de ?? null} />;
   }
 
   // Übungsliste für den gewählten Muskel

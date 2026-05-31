@@ -28,6 +28,17 @@ const GOALS: Opt[] = [
   { label: 'Allgemeine Fitness', value: 'general_fitness' },
   { label: 'Körper definieren', value: 'get_defined' },
 ];
+const LEVELS: Opt[] = [
+  { label: 'Anfänger', value: 'beginner' },
+  { label: 'Etwas Erfahrung', value: 'some' },
+  { label: 'Fortgeschritten', value: 'advanced' },
+  { label: 'Profi', value: 'pro' },
+];
+const ENVIRONMENTS: Opt[] = [
+  { label: 'Fitnessstudio', value: 'gym' },
+  { label: 'Home-Gym', value: 'home_gym' },
+  { label: 'Kein Equipment', value: 'no_equipment' },
+];
 
 export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
   const { session, refreshProfile } = useAuth();
@@ -45,6 +56,8 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
   const [weight, setWeight] = useState('');
   const [height, setHeight] = useState('');
   const [activity, setActivity] = useState('moderate');
+  const [experience, setExperience] = useState('');
+  const [environment, setEnvironment] = useState('');
   const [goal, setGoal] = useState('');
   const [targetWeight, setTargetWeight] = useState('');
 
@@ -56,7 +69,7 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
       if (!userId) return;
       const { data: prof } = await supabase
         .from('profiles')
-        .select('first_name, birth_date, gender, weight_kg, height_cm, activity_level')
+        .select('first_name, birth_date, gender, weight_kg, height_cm, activity_level, experience_level, training_environment')
         .eq('id', userId)
         .maybeSingle();
       const { data: g } = await supabase
@@ -74,6 +87,8 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
         setWeight(prof.weight_kg != null ? String(prof.weight_kg) : '');
         setHeight(prof.height_cm != null ? String(prof.height_cm) : '');
         setActivity(prof.activity_level ?? 'moderate');
+        setExperience(prof.experience_level ?? '');
+        setEnvironment(prof.training_environment ?? '');
       }
       if (g) {
         setGoal(g.goal_type ?? '');
@@ -87,7 +102,7 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
   async function save() {
     const userId = session?.user?.id;
     if (!userId) return;
-    if (!firstName.trim() || num(age) < 10 || num(age) > 100 || !gender || num(weight) < 30 || num(weight) > 300 || num(height) < 100 || num(height) > 250 || !goal) {
+    if (!firstName.trim() || num(age) < 10 || num(age) > 100 || !gender || num(weight) < 30 || num(weight) > 300 || num(height) < 100 || num(height) > 250 || !goal || !experience || !environment) {
       setMsg('Bitte alle Felder gültig ausfüllen.');
       setIsError(true);
       return;
@@ -104,6 +119,8 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
       weight_kg: num(weight),
       height_cm: num(height),
       activity_level: activity,
+      experience_level: experience,
+      training_environment: environment,
     });
 
     // Ziel aktualisieren: altes aktives deaktivieren, neues anlegen
@@ -174,6 +191,12 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
 
       <Text style={styles.label}>Aktivitätslevel</Text>
       {renderChoice(ACTIVITY, activity, setActivity)}
+
+      <Text style={styles.label}>Erfahrungslevel</Text>
+      {renderChoice(LEVELS, experience, setExperience)}
+
+      <Text style={styles.label}>Trainingsumgebung</Text>
+      {renderChoice(ENVIRONMENTS, environment, setEnvironment)}
 
       <Text style={styles.label}>Ziel</Text>
       {renderChoice(GOALS, goal, setGoal)}
