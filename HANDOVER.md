@@ -9,6 +9,18 @@
 
 ---
 
+## 0. Aktueller Stand & Wiedereinstieg
+- **Letzter Commit:** `722c354` – alles auf GitHub (`main`) gepusht, Arbeitsbaum sauber.
+- **App starten:** `C:\Users\Samuel\fitness-app\build\Start-FitFusion-Web.cmd` doppelklicken (Browser, Port 8081), dann einloggen.
+- **Build:** `npx tsc --noEmit` lief zuletzt fehlerfrei (Node-PATH vorher setzen, s. Abschnitt 3).
+- **⚠️ Offener DB-Schritt (stateful prüfen):** `schema.sql` + `002`–`004` sind angewendet.
+  **`005_food_tracking.sql` und `006_foods_500plus.sql` evtl. noch im Supabase SQL Editor ausführen.**
+  Schnell-Check: Existieren die Tabellen `foods`/`food_logs` und zeigt der **Tracker** viele Zutaten?
+  Falls nein → beide Dateien ausführen (Reihenfolge 005 → 006, beide idempotent).
+- **Unmittelbar als Nächstes geplant:** Fortschritts-Dashboard (Details in Abschnitt 11).
+
+---
+
 ## 1. Projekt in einem Satz
 **FitFusion** ist eine mobile Fitness- & Ernährungs-App (Expo/React Native + Supabase), die
 Trainings- und Ernährungspläne personalisiert verbindet. Produktvision: `FitFusion-Masterfile.docx`.
