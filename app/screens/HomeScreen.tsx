@@ -8,6 +8,7 @@ import { useColors, Colors } from '../contexts/ThemeContext';
 import { computeNutrition, ageFromBirthDate, NutritionResult, Gender, ActivityLevel, GoalType } from '../lib/nutrition';
 import { computeXp, levelInfo, computeStreak, ACHIEVEMENTS, GameStats } from '../lib/gamification';
 import CalorieGauge from '../components/CalorieGauge';
+import { dailyGoals, weeklyChallenges, Goal } from '../lib/goals';
 
 const GOAL_LABELS: Record<string, string> = {
   lose_weight: 'Abnehmen', build_muscle: 'Muskelaufbau', gain_strength: 'Kraft steigern',
@@ -23,6 +24,14 @@ function startOfTodayISO(): string {
   d.setHours(0, 0, 0, 0);
   return d.toISOString();
 }
+function mondayStr(): string {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); // Montag dieser Woche
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+type GoalsData = { trainedToday: boolean; trackedToday: boolean; sessionsThisWeek: number; trackedDaysThisWeek: number };
 async function countRows(table: string, userId: string): Promise<number> {
   const res = await supabase.from(table).select('*', { count: 'exact', head: true }).eq('user_id', userId);
   return res.error ? 0 : res.count ?? 0;
@@ -42,6 +51,7 @@ export default function HomeScreen({ onNavigate }: { onNavigate?: (tab: string) 
   const [eaten, setEaten] = useState<Eaten>({ kcal: 0, p: 0, c: 0, f: 0 });
   const [activeSession, setActiveSession] = useState<string | null>(null);
   const [activeSets, setActiveSets] = useState(0);
+  const [goalsData, setGoalsData] = useState<GoalsData | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -96,11 +106,17 @@ export default function HomeScreen({ onNavigate }: { onNavigate?: (tab: string) 
       const foodLogs = await countRows('food_logs', userId);
       const { data: sd } = await supabase.from('workout_sessions').select('performed_at').eq('user_id', userId);
       const fd = await supabase.from('food_logs').select('log_date').eq('user_id', userId);
-      const dates = [
-        ...((sd ?? []) as any[]).map((r) => String(r.performed_at).slice(0, 10)),
-        ...(fd.error ? [] : ((fd.data ?? []) as any[]).map((r) => String(r.log_date).slice(0, 10))),
-      ];
+      const sdDates = ((sd ?? []) as any[]).map((r) => String(r.performed_at).slice(0, 10));
+      const fdDates = fd.error ? [] : ((fd.data ?? []) as any[]).map((r) => String(r.log_date).slice(0, 10));
+      const dates = [...sdDates, ...fdDates];
       setStats({ sessions, sets, foodLogs, streak: computeStreak(dates), goalSet: !!goal });
+      const today = todayStr(), mon = mondayStr();
+      setGoalsData({
+        trainedToday: sdDates.includes(today),
+        trackedToday: fdDates.includes(today),
+        sessionsThisWeek: new Set(sdDates.filter((x) => x >= mon)).size,
+        trackedDaysThisWeek: new Set(fdDates.filter((x) => x >= mon)).size,
+      });
       setLoading(false);
     }
     load();
@@ -167,6 +183,30 @@ export default function HomeScreen({ onNavigate }: { onNavigate?: (tab: string) 
               </>
             )}
 
+            {/* TAGESZIELE */}
+            {nutrition && goalsData && (
+              <>
+                <Text style={styles.section}>TAGESZIELE</Text>
+                <View style={styles.listCard}>
+                  {dailyGoals({ trainedToday: goalsData.trainedToday, trackedToday: goalsData.trackedToday, eatenKcal: eaten.kcal, targetKcal: nutrition.targetCalories, eatenProtein: eaten.p, targetProtein: nutrition.proteinG }).map((g, i, arr) => (
+                    <GoalRow key={g.key} g={g} last={i === arr.length - 1} c={c} styles={styles} />
+                  ))}
+                </View>
+              </>
+            )}
+
+            {/* CHALLENGES */}
+            {goalsData && stats && (
+              <>
+                <Text style={styles.section}>CHALLENGES · DIESE WOCHE</Text>
+                <View style={styles.listCard}>
+                  {weeklyChallenges({ sessionsThisWeek: goalsData.sessionsThisWeek, trackedDaysThisWeek: goalsData.trackedDaysThisWeek, streak: stats.streak }).map((g, i, arr) => (
+                    <GoalRow key={g.key} g={g} last={i === arr.length - 1} c={c} styles={styles} />
+                  ))}
+                </View>
+              </>
+            )}
+
             {/* SCHNELLZUGRIFF */}
             <Text style={styles.section}>SCHNELLZUGRIFF</Text>
             <View style={styles.quick}>
@@ -220,6 +260,22 @@ function Quick({ icon, label, onPress, styles }: { icon: string; label: string; 
   );
 }
 
+function GoalRow({ g, last, c, styles }: { g: Goal; last: boolean; c: Colors; styles: any }) {
+  return (
+    <View style={[styles.goalRow, !last && styles.goalRowBorder]}>
+      <Text style={styles.goalIcon}>{g.icon}</Text>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.goalLabel}>{g.label}</Text>
+        <View style={styles.goalTrack}>
+          <View style={[styles.goalFill, { width: `${Math.round(g.progress * 100)}%`, backgroundColor: g.done ? c.success : c.primary }]} />
+        </View>
+        <Text style={styles.goalDetail}>{g.detail}</Text>
+      </View>
+      <Text style={[styles.goalCheck, { color: g.done ? c.success : c.textMuted }]}>{g.done ? '✓' : '○'}</Text>
+    </View>
+  );
+}
+
 function makeStyles(c: Colors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: c.bg, paddingTop: 60, paddingHorizontal: 20 },
@@ -247,6 +303,16 @@ function makeStyles(c: Colors) {
     macroDot: { width: 10, height: 10, borderRadius: 5, marginBottom: 6 },
     macroValue: { fontSize: 15, fontWeight: '700', color: c.text },
     macroLabel: { fontSize: 12, color: c.textMuted, marginTop: 2, textAlign: 'center' },
+
+    listCard: { backgroundColor: c.card, borderRadius: 16, paddingHorizontal: 16, marginBottom: 6, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    goalRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },
+    goalRowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.border },
+    goalIcon: { fontSize: 20, marginRight: 12 },
+    goalLabel: { fontSize: 15, fontWeight: '600', color: c.text },
+    goalTrack: { height: 6, backgroundColor: c.track, borderRadius: 3, marginTop: 6, overflow: 'hidden' },
+    goalFill: { height: 6, borderRadius: 3 },
+    goalDetail: { fontSize: 12, color: c.textMuted, marginTop: 4 },
+    goalCheck: { fontSize: 20, fontWeight: '700', marginLeft: 10 },
 
     quick: { flexDirection: 'row', gap: 10, marginBottom: 6 },
     quickCard: { flex: 1, backgroundColor: c.card, borderRadius: 14, paddingVertical: 18, alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
