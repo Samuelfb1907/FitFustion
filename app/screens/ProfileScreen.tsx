@@ -1,0 +1,214 @@
+// Profil: persönliche Daten & Ziel bearbeiten (vorausgefüllt, speichert in profiles + goals).
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
+import { useColors, Colors } from '../contexts/ThemeContext';
+import { ageFromBirthDate } from '../lib/nutrition';
+
+type Opt = { label: string; value: string };
+const GENDERS: Opt[] = [
+  { label: 'Männlich', value: 'male' },
+  { label: 'Weiblich', value: 'female' },
+  { label: 'Divers', value: 'diverse' },
+  { label: 'Keine Angabe', value: 'prefer_not' },
+];
+const ACTIVITY: Opt[] = [
+  { label: 'Kaum aktiv', value: 'sedentary' },
+  { label: 'Leicht aktiv', value: 'light' },
+  { label: 'Mäßig aktiv', value: 'moderate' },
+  { label: 'Sehr aktiv', value: 'active' },
+  { label: 'Extrem aktiv', value: 'very_active' },
+];
+const GOALS: Opt[] = [
+  { label: 'Abnehmen', value: 'lose_weight' },
+  { label: 'Muskelaufbau', value: 'build_muscle' },
+  { label: 'Kraft steigern', value: 'gain_strength' },
+  { label: 'Ausdauer verbessern', value: 'endurance' },
+  { label: 'Allgemeine Fitness', value: 'general_fitness' },
+  { label: 'Körper definieren', value: 'get_defined' },
+];
+
+export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
+  const { session, refreshProfile } = useAuth();
+  const c = useColors();
+  const styles = makeStyles(c);
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [isError, setIsError] = useState(false);
+
+  const [firstName, setFirstName] = useState('');
+  const [age, setAge] = useState('');
+  const [gender, setGender] = useState('');
+  const [weight, setWeight] = useState('');
+  const [height, setHeight] = useState('');
+  const [activity, setActivity] = useState('moderate');
+  const [goal, setGoal] = useState('');
+  const [targetWeight, setTargetWeight] = useState('');
+
+  const num = (v: string) => Number(v.replace(',', '.'));
+
+  useEffect(() => {
+    async function load() {
+      const userId = session?.user?.id;
+      if (!userId) return;
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('first_name, birth_date, gender, weight_kg, height_cm, activity_level')
+        .eq('id', userId)
+        .maybeSingle();
+      const { data: g } = await supabase
+        .from('goals')
+        .select('goal_type, target_weight_kg')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (prof) {
+        setFirstName(prof.first_name ?? '');
+        setAge(prof.birth_date ? String(ageFromBirthDate(prof.birth_date)) : '');
+        setGender(prof.gender ?? '');
+        setWeight(prof.weight_kg != null ? String(prof.weight_kg) : '');
+        setHeight(prof.height_cm != null ? String(prof.height_cm) : '');
+        setActivity(prof.activity_level ?? 'moderate');
+      }
+      if (g) {
+        setGoal(g.goal_type ?? '');
+        setTargetWeight(g.target_weight_kg != null ? String(g.target_weight_kg) : '');
+      }
+      setLoading(false);
+    }
+    load();
+  }, [session?.user?.id]);
+
+  async function save() {
+    const userId = session?.user?.id;
+    if (!userId) return;
+    if (!firstName.trim() || num(age) < 10 || num(age) > 100 || !gender || num(weight) < 30 || num(weight) > 300 || num(height) < 100 || num(height) > 250 || !goal) {
+      setMsg('Bitte alle Felder gültig ausfüllen.');
+      setIsError(true);
+      return;
+    }
+    setSaving(true);
+    setMsg(null);
+    const birthYear = new Date().getFullYear() - Math.round(num(age));
+
+    const { error: pErr } = await supabase.from('profiles').upsert({
+      id: userId,
+      first_name: firstName.trim(),
+      birth_date: `${birthYear}-01-01`,
+      gender,
+      weight_kg: num(weight),
+      height_cm: num(height),
+      activity_level: activity,
+    });
+
+    // Ziel aktualisieren: altes aktives deaktivieren, neues anlegen
+    await supabase.from('goals').update({ is_active: false }).eq('user_id', userId).eq('is_active', true);
+    const { error: gErr } = await supabase.from('goals').insert({
+      user_id: userId,
+      goal_type: goal,
+      target_weight_kg: goal === 'lose_weight' && targetWeight ? num(targetWeight) : null,
+      is_active: true,
+    });
+
+    setSaving(false);
+    if (pErr || gErr) {
+      setMsg('Speichern fehlgeschlagen: ' + (pErr?.message || gErr?.message));
+      setIsError(true);
+    } else {
+      setMsg('Profil gespeichert ✓');
+      setIsError(false);
+      await refreshProfile();
+    }
+  }
+
+  function renderChoice(options: Opt[], value: string, onChange: (v: string) => void) {
+    return (
+      <View style={styles.choiceWrap}>
+        {options.map((o) => {
+          const active = value === o.value;
+          return (
+            <TouchableOpacity key={o.value} style={[styles.choice, active && styles.choiceActive]} onPress={() => onChange(o.value)}>
+              <Text style={[styles.choiceText, active && styles.choiceTextActive]}>{o.label}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    );
+  }
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        {onBack && (<TouchableOpacity onPress={onBack}><Text style={styles.back}>‹ Einstellungen</Text></TouchableOpacity>)}
+        <Text style={styles.title}>Profil</Text>
+        <ActivityIndicator size="large" color={c.primary} style={{ marginTop: 40 }} />
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+      {onBack && (<TouchableOpacity onPress={onBack}><Text style={styles.back}>‹ Einstellungen</Text></TouchableOpacity>)}
+      <Text style={styles.title}>Profil</Text>
+      <Text style={styles.subtitle}>Deine Daten – jederzeit anpassbar</Text>
+
+      <Text style={styles.label}>Vorname</Text>
+      <TextInput style={styles.input} value={firstName} onChangeText={setFirstName} placeholder="Vorname" placeholderTextColor={c.textMuted} />
+
+      <Text style={styles.label}>Alter</Text>
+      <TextInput style={styles.input} value={age} onChangeText={setAge} keyboardType="numeric" placeholder="z. B. 28" placeholderTextColor={c.textMuted} />
+
+      <Text style={styles.label}>Geschlecht</Text>
+      {renderChoice(GENDERS, gender, setGender)}
+
+      <Text style={styles.label}>Körpergewicht (kg)</Text>
+      <TextInput style={styles.input} value={weight} onChangeText={setWeight} keyboardType="numeric" placeholder="z. B. 78" placeholderTextColor={c.textMuted} />
+
+      <Text style={styles.label}>Körpergröße (cm)</Text>
+      <TextInput style={styles.input} value={height} onChangeText={setHeight} keyboardType="numeric" placeholder="z. B. 180" placeholderTextColor={c.textMuted} />
+
+      <Text style={styles.label}>Aktivitätslevel</Text>
+      {renderChoice(ACTIVITY, activity, setActivity)}
+
+      <Text style={styles.label}>Ziel</Text>
+      {renderChoice(GOALS, goal, setGoal)}
+
+      {goal === 'lose_weight' && (
+        <>
+          <Text style={styles.label}>Traumgewicht (kg)</Text>
+          <TextInput style={styles.input} value={targetWeight} onChangeText={setTargetWeight} keyboardType="numeric" placeholder="z. B. 72" placeholderTextColor={c.textMuted} />
+        </>
+      )}
+
+      <TouchableOpacity style={[styles.saveBtn, saving && { opacity: 0.6 }]} onPress={save} disabled={saving}>
+        {saving ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.saveText}>Speichern</Text>}
+      </TouchableOpacity>
+
+      {msg && <Text style={[styles.msg, { color: isError ? c.danger : c.success }]}>{msg}</Text>}
+    </ScrollView>
+  );
+}
+
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.bg, paddingTop: 60, paddingHorizontal: 20 },
+    back: { color: c.primary, fontSize: 15, fontWeight: '600', marginBottom: 10 },
+    title: { fontSize: 26, fontWeight: 'bold', color: c.heading },
+    subtitle: { fontSize: 15, color: c.textMuted, marginTop: 2, marginBottom: 8 },
+    label: { fontSize: 14, color: c.text, fontWeight: '600', marginTop: 16, marginBottom: 6 },
+    input: { borderWidth: 1, borderColor: c.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, backgroundColor: c.inputBg, color: c.text },
+    choiceWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    choice: { borderWidth: 1, borderColor: c.border, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: c.card },
+    choiceActive: { backgroundColor: c.primary, borderColor: c.primary },
+    choiceText: { color: c.text, fontSize: 15 },
+    choiceTextActive: { color: c.onPrimary, fontWeight: '600' },
+    saveBtn: { backgroundColor: c.primary, borderRadius: 10, paddingVertical: 15, alignItems: 'center', marginTop: 28 },
+    saveText: { color: c.onPrimary, fontSize: 16, fontWeight: '700' },
+    msg: { fontSize: 14, textAlign: 'center', marginTop: 14 },
+  });
+}

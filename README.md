@@ -17,7 +17,8 @@ auf Basis deiner persönlichen Daten und Ziele.
 - 🍽️ **Ernährungsplan**: Mahlzeiten, die deine Makros treffen – **allergikersicher**
 - 🍎 **Kalorien-Tracker** mit **540+ Zutaten** (eigene Mengen, Tagessumme vs. Ziel)
 - 🎮 **Gamification-Dashboard**: Level/XP, Streak & Erfolge + **animierte Kalorien-Gauge** (gegessen vs. übrig)
-- 🧭 Navigation über 5 Tabs: **Start · Training · Plan · Ernährung · Tracker**
+- 🌙 **Dark Mode** (hell/dunkel, gespeichert) & ⚙️ **Einstellungen** (Profil bearbeiten, Abmelden, Passwort-Reset)
+- 🧭 Navigation über 6 Tabs: **Start · Training · Plan · Ernährung · Tracker · Einstellungen**
 
 ## 🔭 Geplant
 - 📈 Fortschritts-Dashboard (Trainingshistorie, Rekorde, Gewichtsverlauf)

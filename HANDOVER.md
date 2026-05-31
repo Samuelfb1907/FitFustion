@@ -10,7 +10,7 @@
 ---
 
 ## 0. Aktueller Stand & Wiedereinstieg
-- **Letzter Stand:** Gamification-Dashboard (Level/XP, Streak, Erfolge) + animierte Kalorien-Gauge (gegessen vs. übrig) auf dem Start-Screen. Alles auf GitHub (`main`) gepusht.
+- **Letzter Stand:** App-weites **Theme-System mit Dark Mode** + **Einstellungen-Reiter** (mit Profil-Unterseite zum Datenbearbeiten, Abmelden, Dark-Mode-Schalter). Davor: Gamification-Dashboard + animierte Kalorien-Gauge. Alles auf GitHub (`main`) gepusht.
 - **App starten:** `C:\Users\Samuel\fitness-app\build\Start-FitFusion-Web.cmd` doppelklicken (Browser, Port 8081), dann einloggen.
 - **Build:** `npx tsc --noEmit` lief zuletzt fehlerfrei (Node-PATH vorher setzen, s. Abschnitt 3).
 - **⚠️ Offener DB-Schritt (stateful prüfen):** `schema.sql` + `002`–`004` sind angewendet.
@@ -112,6 +112,8 @@ app/
 - Ernährungsplan (Mahlzeiten zu Makros, allergikersicher)
 - Kalorien-Tracker mit 540+ Zutaten
 - Gamification-Dashboard: Level/XP, Streak, Erfolge (`lib/gamification.ts`) + animierte Kalorien-Gauge (gegessen vs. übrig, `components/CalorieGauge.tsx`, `react-native-svg`)
+- **Dark Mode / Theme-System** (`contexts/ThemeContext.tsx`, hell/dunkel, gespeichert) – alle Screens themed (`useColors`/`useTheme`)
+- **Einstellungen-Reiter** (`screens/SettingsScreen.tsx`): Dark-Mode-Schalter, Abmelden, Passwort-Reset, Onboarding-Reset + **Profil-Unterseite** (`screens/ProfileScreen.tsx`). Tab-Leiste hat jetzt 6 Reiter (kein separater Profil-Reiter).
 - Alles auf GitHub
 
 **⬜ Nächste Bausteine (Roadmap)**

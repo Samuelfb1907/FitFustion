@@ -1,15 +1,14 @@
-// Halbkreis-Diagramm (Gauge) mit Animation: der Bogen "zieht" sich beim Öffnen
-// von 0 auf den aktuellen Stand hoch; die Zahl zählt passend mit.
+// Halbkreis-Diagramm (Gauge) mit Animation, theme-fähig.
 import { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { useColors } from '../contexts/ThemeContext';
 
-// Pfad entlang des oberen Halbkreises von Anteil fStart bis fEnd (0..1).
 function arcPath(cx: number, cy: number, r: number, fStart: number, fEnd: number, segments: number): string {
   let d = '';
   for (let i = 0; i <= segments; i++) {
     const f = fStart + (fEnd - fStart) * (i / segments);
-    const theta = Math.PI * (1 - f); // 180° -> 0°
+    const theta = Math.PI * (1 - f);
     const x = cx + r * Math.cos(theta);
     const y = cy - r * Math.sin(theta);
     d += (i === 0 ? 'M' : ' L') + ` ${x.toFixed(2)} ${y.toFixed(2)}`;
@@ -18,6 +17,7 @@ function arcPath(cx: number, cy: number, r: number, fStart: number, fEnd: number
 }
 
 export default function CalorieGauge({ target, eaten }: { target: number; eaten: number }) {
+  const c = useColors();
   const W = 240;
   const stroke = 20;
   const r = 100;
@@ -27,10 +27,9 @@ export default function CalorieGauge({ target, eaten }: { target: number; eaten:
 
   const fraction = target > 0 ? Math.min(eaten / target, 1) : 0;
   const finalOver = target - eaten < 0;
-  const fgColor = finalOver ? '#C62828' : '#2E7D32';
+  const fgColor = finalOver ? c.danger : c.success;
   const bgPath = arcPath(cx, cy, r, 0, 1, 60);
 
-  // Animation: p läuft beim Mounten von 0 -> 1 (also bei jedem Öffnen der Startseite).
   const anim = useRef(new Animated.Value(0)).current;
   const [p, setP] = useState(0);
   useEffect(() => {
@@ -44,8 +43,8 @@ export default function CalorieGauge({ target, eaten }: { target: number; eaten:
     };
   }, [target, eaten]);
 
-  const fillFraction = fraction * p;            // Bogen-Füllung (animiert)
-  const shownRemaining = Math.round(target - eaten * p); // Zahl zählt mit
+  const fillFraction = fraction * p;
+  const shownRemaining = Math.round(target - eaten * p);
   const curOver = shownRemaining < 0;
   const fgPath = arcPath(cx, cy, r, 0, fillFraction, Math.max(2, Math.round(60 * fillFraction)));
 
@@ -53,27 +52,27 @@ export default function CalorieGauge({ target, eaten }: { target: number; eaten:
     <View style={styles.wrap}>
       <View style={{ width: W, height }}>
         <Svg width={W} height={height}>
-          <Path d={bgPath} stroke="#E3E9F2" strokeWidth={stroke} strokeLinecap="round" fill="none" />
+          <Path d={bgPath} stroke={c.track} strokeWidth={stroke} strokeLinecap="round" fill="none" />
           {fillFraction > 0.005 && (
             <Path d={fgPath} stroke={fgColor} strokeWidth={stroke} strokeLinecap="round" fill="none" />
           )}
         </Svg>
         <View style={[styles.center, { width: W, top: cy - 64 }]}>
-          <Text style={[styles.big, curOver && { color: '#C62828' }]}>
+          <Text style={[styles.big, { color: curOver ? c.danger : c.heading }]}>
             {Math.abs(shownRemaining).toLocaleString('de-DE')}
           </Text>
-          <Text style={styles.label}>{curOver ? 'kcal über Ziel' : 'kcal übrig'}</Text>
+          <Text style={[styles.label, { color: c.textMuted }]}>{curOver ? 'kcal über Ziel' : 'kcal übrig'}</Text>
         </View>
       </View>
 
       <View style={styles.footRow}>
         <View style={styles.foot}>
-          <Text style={styles.footValue}>{Math.round(eaten).toLocaleString('de-DE')}</Text>
-          <Text style={styles.footLabel}>gegessen</Text>
+          <Text style={[styles.footValue, { color: c.text }]}>{Math.round(eaten).toLocaleString('de-DE')}</Text>
+          <Text style={[styles.footLabel, { color: c.textMuted }]}>gegessen</Text>
         </View>
         <View style={styles.foot}>
-          <Text style={styles.footValue}>{target.toLocaleString('de-DE')}</Text>
-          <Text style={styles.footLabel}>Ziel (kcal)</Text>
+          <Text style={[styles.footValue, { color: c.text }]}>{target.toLocaleString('de-DE')}</Text>
+          <Text style={[styles.footLabel, { color: c.textMuted }]}>Ziel (kcal)</Text>
         </View>
       </View>
     </View>
@@ -83,10 +82,10 @@ export default function CalorieGauge({ target, eaten }: { target: number; eaten:
 const styles = StyleSheet.create({
   wrap: { alignItems: 'center' },
   center: { position: 'absolute', left: 0, alignItems: 'center' },
-  big: { fontSize: 38, fontWeight: 'bold', color: '#1F3864' },
-  label: { fontSize: 14, color: '#666', marginTop: -2 },
+  big: { fontSize: 38, fontWeight: 'bold' },
+  label: { fontSize: 14, marginTop: -2 },
   footRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 6, gap: 36 },
   foot: { alignItems: 'center' },
-  footValue: { fontSize: 16, fontWeight: '700', color: '#222' },
-  footLabel: { fontSize: 12, color: '#8A97A8', marginTop: 1 },
+  footValue: { fontSize: 16, fontWeight: '700' },
+  footLabel: { fontSize: 12, marginTop: 1 },
 });

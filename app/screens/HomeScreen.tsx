@@ -1,28 +1,22 @@
-// Start-Screen / Dashboard: Level & XP, Streak, Kalorien-Gauge (gegessen vs. übrig), Erfolge.
+// Start-Screen / Dashboard (themed): Level & XP, Streak, Kalorien-Gauge, Erfolge.
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useColors, Colors } from '../contexts/ThemeContext';
 import { computeNutrition, ageFromBirthDate, NutritionResult, Gender, ActivityLevel, GoalType } from '../lib/nutrition';
 import { computeXp, levelInfo, computeStreak, ACHIEVEMENTS, GameStats } from '../lib/gamification';
 import CalorieGauge from '../components/CalorieGauge';
 
 const GOAL_LABELS: Record<string, string> = {
-  lose_weight: 'Abnehmen',
-  build_muscle: 'Muskelaufbau',
-  gain_strength: 'Kraft steigern',
-  endurance: 'Ausdauer',
-  general_fitness: 'Allgemeine Fitness',
-  get_defined: 'Definieren',
+  lose_weight: 'Abnehmen', build_muscle: 'Muskelaufbau', gain_strength: 'Kraft steigern',
+  endurance: 'Ausdauer', general_fitness: 'Allgemeine Fitness', get_defined: 'Definieren',
 };
 
 function todayStr(): string {
   const d = new Date();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${d.getFullYear()}-${m}-${day}`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
-
 async function countRows(table: string, userId: string): Promise<number> {
   const res = await supabase.from(table).select('*', { count: 'exact', head: true }).eq('user_id', userId);
   return res.error ? 0 : res.count ?? 0;
@@ -32,6 +26,8 @@ type Eaten = { kcal: number; p: number; c: number; f: number };
 
 export default function HomeScreen() {
   const { session, profile } = useAuth();
+  const c = useColors();
+  const styles = makeStyles(c);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [nutrition, setNutrition] = useState<NutritionResult | null>(null);
@@ -75,7 +71,6 @@ export default function HomeScreen() {
         setError('Profildaten unvollständig.');
       }
 
-      // Heute gegessen (aus dem Tracker)
       const fdt = await supabase
         .from('food_logs')
         .select('amount_g, foods(kcal, protein, carbs, fat)')
@@ -95,7 +90,6 @@ export default function HomeScreen() {
       }
       setEaten({ kcal: Math.round(e.kcal), p: Math.round(e.p), c: Math.round(e.c), f: Math.round(e.f) });
 
-      // Aktivität für Gamification
       const sessions = await countRows('workout_sessions', userId);
       const sets = await countRows('set_logs', userId);
       const foodLogs = await countRows('food_logs', userId);
@@ -133,7 +127,7 @@ export default function HomeScreen() {
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         {loading ? (
-          <ActivityIndicator size="large" color="#1F3864" style={{ marginTop: 40 }} />
+          <ActivityIndicator size="large" color={c.primary} style={{ marginTop: 40 }} />
         ) : (
           <>
             {stats && (
@@ -156,9 +150,9 @@ export default function HomeScreen() {
                 <Text style={styles.cardLabel}>HEUTE · {goalLabel}</Text>
                 <CalorieGauge target={nutrition.targetCalories} eaten={eaten.kcal} />
                 <View style={styles.macros}>
-                  <Macro label="Protein" eaten={eaten.p} target={nutrition.proteinG} color="#2E7D32" />
-                  <Macro label="Kohlenhydrate" eaten={eaten.c} target={nutrition.carbsG} color="#E69500" />
-                  <Macro label="Fett" eaten={eaten.f} target={nutrition.fatG} color="#C62828" />
+                  <Macro label="Protein" eaten={eaten.p} target={nutrition.proteinG} color="#2E7D32" styles={styles} />
+                  <Macro label="Kohlenhydrate" eaten={eaten.c} target={nutrition.carbsG} color="#E69500" styles={styles} />
+                  <Macro label="Fett" eaten={eaten.f} target={nutrition.fatG} color="#C62828" styles={styles} />
                 </View>
               </View>
             )}
@@ -188,7 +182,7 @@ export default function HomeScreen() {
   );
 }
 
-function Macro({ label, eaten, target, color }: { label: string; eaten: number; target: number; color: string }) {
+function Macro({ label, eaten, target, color, styles }: { label: string; eaten: number; target: number; color: string; styles: any }) {
   return (
     <View style={styles.macro}>
       <View style={[styles.macroDot, { backgroundColor: color }]} />
@@ -198,40 +192,42 @@ function Macro({ label, eaten, target, color }: { label: string; eaten: number; 
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F2F5FA', paddingTop: 60, paddingHorizontal: 20 },
-  header: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
-  hello: { fontSize: 24, fontWeight: 'bold', color: '#1F3864' },
-  email: { fontSize: 13, color: '#777', marginTop: 2 },
-  logoutBtn: { borderWidth: 1, borderColor: '#CFD8E3', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8, backgroundColor: '#fff' },
-  logoutText: { color: '#2E5496', fontWeight: '600' },
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.bg, paddingTop: 60, paddingHorizontal: 20 },
+    header: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+    hello: { fontSize: 24, fontWeight: 'bold', color: c.heading },
+    email: { fontSize: 13, color: c.textMuted, marginTop: 2 },
+    logoutBtn: { borderWidth: 1, borderColor: c.border, borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8, backgroundColor: c.card },
+    logoutText: { color: c.primary, fontWeight: '600' },
 
-  levelCard: { backgroundColor: '#1F3864', borderRadius: 16, padding: 18, marginBottom: 14 },
-  levelTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  levelText: { color: '#fff', fontSize: 22, fontWeight: 'bold' },
-  streakChip: { backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 },
-  streakText: { color: '#fff', fontSize: 14, fontWeight: '600' },
-  xpTrack: { height: 10, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 5, marginTop: 14, overflow: 'hidden' },
-  xpFill: { height: 10, backgroundColor: '#5B8DEF', borderRadius: 5 },
-  xpText: { color: '#C7D4EC', fontSize: 12, marginTop: 6 },
+    levelCard: { backgroundColor: '#1F3864', borderRadius: 16, padding: 18, marginBottom: 14 },
+    levelTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    levelText: { color: '#fff', fontSize: 22, fontWeight: 'bold' },
+    streakChip: { backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 },
+    streakText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+    xpTrack: { height: 10, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 5, marginTop: 14, overflow: 'hidden' },
+    xpFill: { height: 10, backgroundColor: '#5B8DEF', borderRadius: 5 },
+    xpText: { color: '#C7D4EC', fontSize: 12, marginTop: 6 },
 
-  card: { backgroundColor: '#fff', borderRadius: 16, padding: 20, alignItems: 'center', marginBottom: 14, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
-  cardLabel: { fontSize: 12, letterSpacing: 1, color: '#8A97A8', fontWeight: '700', marginBottom: 6 },
-  macros: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 18 },
-  macro: { flex: 1, alignItems: 'center' },
-  macroDot: { width: 10, height: 10, borderRadius: 5, marginBottom: 6 },
-  macroValue: { fontSize: 15, fontWeight: '700', color: '#222' },
-  macroLabel: { fontSize: 12, color: '#777', marginTop: 2, textAlign: 'center' },
+    card: { backgroundColor: c.card, borderRadius: 16, padding: 20, alignItems: 'center', marginBottom: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    cardLabel: { fontSize: 12, letterSpacing: 1, color: c.textMuted, fontWeight: '700', marginBottom: 6 },
+    macros: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 18 },
+    macro: { flex: 1, alignItems: 'center' },
+    macroDot: { width: 10, height: 10, borderRadius: 5, marginBottom: 6 },
+    macroValue: { fontSize: 15, fontWeight: '700', color: c.text },
+    macroLabel: { fontSize: 12, color: c.textMuted, marginTop: 2, textAlign: 'center' },
 
-  achSection: { marginTop: 4 },
-  achTitle: { fontSize: 17, fontWeight: '700', color: '#1F3864', marginBottom: 10 },
-  badgeGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  badge: { width: '31%', backgroundColor: '#fff', borderRadius: 14, paddingVertical: 14, paddingHorizontal: 6, alignItems: 'center', marginBottom: 10, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 1 },
-  badgeLocked: { backgroundColor: '#ECEFF4' },
-  badgeIcon: { fontSize: 26 },
-  lockedIcon: { opacity: 0.6 },
-  badgeName: { fontSize: 11, color: '#333', textAlign: 'center', marginTop: 6, fontWeight: '600' },
-  lockedName: { color: '#9AA5B4', fontWeight: '400' },
+    achSection: { marginTop: 4 },
+    achTitle: { fontSize: 17, fontWeight: '700', color: c.heading, marginBottom: 10 },
+    badgeGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+    badge: { width: '31%', backgroundColor: c.card, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 6, alignItems: 'center', marginBottom: 10, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    badgeLocked: { backgroundColor: c.bg },
+    badgeIcon: { fontSize: 26 },
+    lockedIcon: { opacity: 0.6 },
+    badgeName: { fontSize: 11, color: c.text, textAlign: 'center', marginTop: 6, fontWeight: '600' },
+    lockedName: { color: c.textMuted, fontWeight: '400' },
 
-  error: { color: '#B00020', fontSize: 14, marginTop: 16, textAlign: 'center' },
-});
+    error: { color: c.danger, fontSize: 14, marginTop: 16, textAlign: 'center' },
+  });
+}

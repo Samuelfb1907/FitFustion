@@ -1,52 +1,57 @@
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { isSupabaseConfigured } from './lib/supabase';
 import AuthScreen from './screens/AuthScreen';
 import OnboardingScreen from './screens/OnboardingScreen';
 import MainTabs from './screens/MainTabs';
 
-// Entscheidet anhand von Login- und Profil-Status, welcher Screen erscheint.
 function Root() {
   const { session, profile, loading, refreshProfile } = useAuth();
+  const { colors, theme } = useTheme();
 
+  let content;
   if (!isSupabaseConfigured) {
-    return (
-      <View style={styles.centered}>
-        <Text style={styles.warn}>
+    content = (
+      <View style={[styles.centered, { backgroundColor: colors.bg }]}>
+        <Text style={{ color: colors.danger, textAlign: 'center', fontSize: 15 }}>
           Bitte Supabase-Zugangsdaten in app/.env eintragen und den Server neu starten.
         </Text>
       </View>
     );
-  }
-
-  if (loading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#1F3864" />
+  } else if (loading) {
+    content = (
+      <View style={[styles.centered, { backgroundColor: colors.bg }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
+  } else if (!session) {
+    content = <AuthScreen />;
+  } else if (!profile?.experience_level) {
+    content = <OnboardingScreen onDone={refreshProfile} />;
+  } else {
+    content = <MainTabs />;
   }
 
-  if (!session) return <AuthScreen />;
-
-  const onboardingDone = !!profile?.experience_level;
-  if (!onboardingDone) return <OnboardingScreen onDone={refreshProfile} />;
-
-  // Eingeloggt + Onboarding fertig -> App mit Tab-Navigation
-  return <MainTabs />;
+  return (
+    <>
+      {content}
+      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+    </>
+  );
 }
 
 export default function App() {
   return (
-    <AuthProvider>
-      <Root />
-      <StatusBar style="auto" />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <Root />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: '#fff' },
-  warn: { fontSize: 15, color: '#B00020', textAlign: 'center' },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
 });
