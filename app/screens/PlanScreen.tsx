@@ -4,6 +4,13 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
+import ExerciseDetail from '../components/ExerciseDetail';
+
+function startOfTodayISO(): string {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString();
+}
 
 const DIFF_LABELS: Record<string, string> = { beginner: 'Anfänger', intermediate: 'Fortgeschritten', advanced: 'Profi' };
 const ALLOWED_DIFF: Record<string, string[]> = {
@@ -49,8 +56,9 @@ const SPLITS: Record<number, { focus: string; muscles: string[] }[]> = {
 };
 const DAY_OPTIONS = [2, 3, 4, 5, 6];
 
-type ExView = { id: string; name: string; difficulty: string; sets: number; reps: number };
-type DayView = { id: string; day_index: number; focus: string | null; exercises: ExView[] };
+type PlanEx = { rowId: string; exId: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null; muscleKey: string | null; muscleName: string | null; sets: number; reps: number };
+type DayView = { id: string; day_index: number; focus: string | null; exercises: PlanEx[] };
+type Selected = { exercise: { id: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null }; muscleKey: string | null; muscleName: string | null };
 
 export default function PlanScreen({ embedded }: { embedded?: boolean }) {
   const { session, profile } = useAuth();
@@ -65,6 +73,8 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
   const [days, setDays] = useState<DayView[]>([]);
   const [mode, setMode] = useState<'view' | 'create'>('create');
   const [selectedDays, setSelectedDays] = useState(3);
+  const [selected, setSelected] = useState<Selected | null>(null);
+  const [doneToday, setDoneToday] = useState<Set<string>>(new Set());
 
   const allowedDiff = ALLOWED_DIFF[profile?.experience_level ?? 'beginner'] ?? ['beginner'];
   const allowedEquip = ALLOWED_EQUIP[profile?.training_environment ?? 'gym'] ?? ALLOWED_EQUIP.gym;
@@ -84,18 +94,31 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
     if (dayIds.length) {
       const { data } = await supabase
         .from('workout_plan_exercises')
-        .select('id, plan_day_id, order_index, target_sets, target_reps, exercises(name, difficulty)')
+        .select('id, plan_day_id, order_index, target_sets, target_reps, exercise_id, exercises(id, name, difficulty, equipment, description, instructions, primary_muscle_id)')
         .in('plan_day_id', dayIds).order('order_index');
       peRows = data ?? [];
     }
+    const unwrap = (r: any) => (Array.isArray(r) ? r[0] : r);
+    const { data: muscleRows } = await supabase.from('muscles').select('id, key, name_de');
+    const muscById: Record<string, any> = {};
+    (muscleRows ?? []).forEach((m: any) => { muscById[m.id] = m; });
     const assembled: DayView[] = (dayRows ?? []).map((d: any) => ({
       id: d.id, day_index: d.day_index, focus: d.focus,
       exercises: peRows.filter((pe: any) => pe.plan_day_id === d.id).map((pe: any) => {
-        const ex = Array.isArray(pe.exercises) ? pe.exercises[0] : pe.exercises;
-        return { id: pe.id, name: ex?.name ?? '—', difficulty: ex?.difficulty ?? '', sets: pe.target_sets ?? 3, reps: pe.target_reps ?? 10 };
+        const ex = unwrap(pe.exercises) || {};
+        const mu = muscById[ex.primary_muscle_id] || {};
+        return { rowId: pe.id, exId: ex.id ?? pe.exercise_id, name: ex.name ?? '—', difficulty: ex.difficulty ?? '', equipment: ex.equipment ?? '', description: ex.description ?? null, instructions: ex.instructions ?? null, muscleKey: mu.key ?? null, muscleName: mu.name_de ?? null, sets: pe.target_sets ?? 3, reps: pe.target_reps ?? 10 };
       }),
     }));
-    setPlanName(plan.name); setDays(assembled); setMode('view'); setLoading(false);
+    setPlanName(plan.name); setDays(assembled); setMode('view');
+    await loadDoneToday();
+    setLoading(false);
+  }
+
+  async function loadDoneToday() {
+    if (!userId) return;
+    const { data } = await supabase.from('set_logs').select('exercise_id').eq('user_id', userId).gte('created_at', startOfTodayISO());
+    setDoneToday(new Set((data ?? []).map((r: any) => r.exercise_id)));
   }
 
   async function generatePlan(n: number) {
@@ -111,9 +134,10 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
       const idByKey: Record<string, string> = {};
       (muscleRows ?? []).forEach((m: any) => { idByKey[m.key] = m.id; });
       const muscleIds = Object.values(idByKey);
-      const { data: exRows } = await supabase.from('exercises').select('id, primary_muscle_id, difficulty').in('primary_muscle_id', muscleIds).in('difficulty', allowedDiff).in('equipment', allowedEquip);
-      const exByMuscle: Record<string, string[]> = {};
-      (exRows ?? []).forEach((e: any) => { if (!e.primary_muscle_id) return; if (!exByMuscle[e.primary_muscle_id]) exByMuscle[e.primary_muscle_id] = []; exByMuscle[e.primary_muscle_id].push(e.id); });
+      // Equipment streng (Umgebung), Schwierigkeit bevorzugt – aber notfalls auch andere, damit kein Tag leer bleibt
+      const { data: exRows } = await supabase.from('exercises').select('id, primary_muscle_id, difficulty').in('primary_muscle_id', muscleIds).in('equipment', allowedEquip);
+      const exByMuscle: Record<string, any[]> = {};
+      (exRows ?? []).forEach((e: any) => { if (!e.primary_muscle_id) return; if (!exByMuscle[e.primary_muscle_id]) exByMuscle[e.primary_muscle_id] = []; exByMuscle[e.primary_muscle_id].push(e); });
       const dayInsert = template.map((d, i) => ({ user_id: userId, plan_id: plan.id, day_index: i + 1, focus: d.focus }));
       const { data: insertedDays, error: dErr } = await supabase.from('workout_plan_days').insert(dayInsert).select('id, day_index');
       if (dErr || !insertedDays) throw dErr ?? new Error('Tage konnten nicht erstellt werden.');
@@ -123,8 +147,10 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
         if (!day) return;
         let order = 0;
         d.muscles.forEach((mk) => {
-          const list = (exByMuscle[idByKey[mk]] ?? []).slice(0, 2);
-          list.forEach((exId) => { peInsert.push({ user_id: userId, plan_day_id: day.id, exercise_id: exId, target_sets: 3, target_reps: 10, order_index: order++ }); });
+          const all = exByMuscle[idByKey[mk]] ?? [];
+          const preferred = all.filter((e: any) => allowedDiff.includes(e.difficulty));
+          const list = (preferred.length ? preferred : all).slice(0, 2);
+          list.forEach((e: any) => { peInsert.push({ user_id: userId, plan_day_id: day.id, exercise_id: e.id, target_sets: 3, target_reps: 10, order_index: order++ }); });
         });
       });
       if (peInsert.length) { const { error: peErr } = await supabase.from('workout_plan_exercises').insert(peInsert); if (peErr) throw peErr; }
@@ -134,6 +160,17 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
     } finally {
       setGenerating(false);
     }
+  }
+
+  if (selected) {
+    return (
+      <ExerciseDetail
+        exercise={selected.exercise}
+        muscleKey={selected.muscleKey}
+        muscleName={selected.muscleName}
+        onBack={() => { setSelected(null); loadDoneToday(); }}
+      />
+    );
   }
 
   if (loading) {
@@ -172,6 +209,7 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
       <TouchableOpacity style={styles.secondaryBtn} onPress={() => setMode('create')}>
         <Text style={styles.secondaryText}>Neuen Plan erstellen</Text>
       </TouchableOpacity>
+      <Text style={styles.tapHint}>Tippe eine Übung an für Animation, Anleitung & Mitschreiben.</Text>
       {days.map((d) => (
         <View key={d.id} style={styles.dayCard}>
           <Text style={styles.dayTitle}>Tag {d.day_index}</Text>
@@ -179,12 +217,19 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
           {d.exercises.length === 0 ? (
             <Text style={styles.muted}>Keine passenden Übungen – ggf. Umgebung/Level im Profil anpassen.</Text>
           ) : (
-            d.exercises.map((ex) => (
-              <View key={ex.id} style={styles.exItem}>
-                <Text style={styles.exName}>{ex.name}</Text>
-                <Text style={styles.exMeta}>{ex.sets} × {ex.reps} · {DIFF_LABELS[ex.difficulty] ?? ex.difficulty}</Text>
-              </View>
-            ))
+            d.exercises.map((ex) => {
+              const done = doneToday.has(ex.exId);
+              return (
+                <TouchableOpacity key={ex.rowId} style={styles.exItem} activeOpacity={0.7}
+                  onPress={() => setSelected({ exercise: { id: ex.exId, name: ex.name, difficulty: ex.difficulty, equipment: ex.equipment, description: ex.description, instructions: ex.instructions }, muscleKey: ex.muscleKey, muscleName: ex.muscleName })}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.exName, done && { color: c.success, fontWeight: '700' }]}>{done ? '✓ ' : ''}{ex.name}</Text>
+                    <Text style={styles.exMeta}>{ex.sets} × {ex.reps} · {DIFF_LABELS[ex.difficulty] ?? ex.difficulty}{ex.muscleName ? ` · ${ex.muscleName}` : ''}</Text>
+                  </View>
+                  <Text style={styles.chev}>›</Text>
+                </TouchableOpacity>
+              );
+            })
           )}
         </View>
       ))}
@@ -214,8 +259,10 @@ function makeStyles(c: Colors) {
     dayTitle: { fontSize: 13, color: c.textMuted, fontWeight: '700', letterSpacing: 0.5 },
     dayFocus: { fontSize: 18, fontWeight: '700', color: c.heading, marginTop: 2, marginBottom: 10 },
     exItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8, borderTopColor: c.border, borderTopWidth: StyleSheet.hairlineWidth },
-    exName: { fontSize: 15, color: c.text, flex: 1 },
-    exMeta: { fontSize: 13, color: c.textMuted, marginLeft: 8 },
+    exName: { fontSize: 15, color: c.text },
+    exMeta: { fontSize: 13, color: c.textMuted, marginTop: 2 },
+    chev: { fontSize: 22, color: c.textMuted, marginLeft: 8 },
+    tapHint: { fontSize: 12, color: c.textMuted, marginTop: -6, marginBottom: 12 },
     muted: { fontSize: 14, color: c.textMuted, fontStyle: 'italic' },
   });
 }
