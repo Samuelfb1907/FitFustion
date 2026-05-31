@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import ExerciseFigure from './ExerciseFigure';
 import ExerciseGif from './ExerciseGif';
+import RestTimer from './RestTimer';
 import { exerciseGifId } from '../lib/exerciseMedia';
 
 type Exercise = { id: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null };
@@ -64,6 +65,7 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
   const [ending, setEnding] = useState(false);
   const [ended, setEnded] = useState(false);
   const [gifFailed, setGifFailed] = useState(false);
+  const [restSignal, setRestSignal] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -120,7 +122,7 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
       user_id: userId, session_id: sid, exercise_id: exercise.id, set_index: sets.length + 1, reps: r, weight_kg: w,
     });
     if (iErr) setError(iErr.message);
-    else { await refreshSets(sid); setReps(''); setEnded(false); }
+    else { await refreshSets(sid); setReps(''); setEnded(false); setRestSignal((n) => n + 1); }
     setSaving(false);
   }
 
@@ -215,6 +217,7 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
             </TouchableOpacity>
             {sets.length > 0 && <Text style={styles.doneHint}>{sets.length} Satz{sets.length === 1 ? '' : 'e'} heute gespeichert 💪</Text>}
             {error && <Text style={styles.error}>{error}</Text>}
+            <RestTimer c={c} autoStartSignal={restSignal} />
             {sessionId && (
               <TouchableOpacity style={styles.endBtn} onPress={endTraining} disabled={ending || saving}>
                 {ending ? <ActivityIndicator color={c.success} /> : <Text style={styles.endText}>✓ Training beenden</Text>}
