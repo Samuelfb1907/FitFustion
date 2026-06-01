@@ -10,6 +10,7 @@ import { computeXp, levelInfo, computeStreak, ACHIEVEMENTS, GameStats } from '..
 import CalorieGauge from '../components/CalorieGauge';
 import { dailyGoals, weeklyChallenges, Goal } from '../lib/goals';
 import { saveTodayWeight, parseWeight, WEIGHT_MIN, WEIGHT_MAX } from '../lib/weight';
+import { todayWeekday } from '../lib/weekdays';
 
 const GOAL_LABELS: Record<string, string> = {
   lose_weight: 'Abnehmen', build_muscle: 'Muskelaufbau', gain_strength: 'Kraft steigern',
@@ -56,6 +57,7 @@ export default function HomeScreen({ onNavigate }: { onNavigate?: (tab: string) 
   const [goalsData, setGoalsData] = useState<GoalsData | null>(null);
   const [waterMl, setWaterMl] = useState(0);
   const [waterIds, setWaterIds] = useState<string[]>([]);
+  const [planToday, setPlanToday] = useState<{ has: boolean; focus: string | null } | null>(null);
   const [weightKg, setWeightKg] = useState<number | null>(null);
   const [weightInput, setWeightInput] = useState('');
   const [savingW, setSavingW] = useState(false);
@@ -128,6 +130,19 @@ export default function HomeScreen({ onNavigate }: { onNavigate?: (tab: string) 
         sessionsThisWeek: new Set(sdDates.filter((x) => x >= mon)).size,
         trackedDaysThisWeek: new Set(fdDates.filter((x) => x >= mon)).size,
       });
+
+      // Heutiges Training laut Wochenplan
+      const { data: schedRows } = await supabase
+        .from('plan_schedule').select('weekday, workout_plan_days(focus)').eq('user_id', userId);
+      if (schedRows && schedRows.length) {
+        const wd = todayWeekday();
+        const row = (schedRows as any[]).find((r) => r.weekday === wd);
+        const day = row ? (Array.isArray(row.workout_plan_days) ? row.workout_plan_days[0] : row.workout_plan_days) : null;
+        setPlanToday({ has: true, focus: day?.focus ?? null });
+      } else {
+        setPlanToday(null);
+      }
+
       setLoading(false);
     }
     load();
@@ -200,6 +215,18 @@ export default function HomeScreen({ onNavigate }: { onNavigate?: (tab: string) 
                 </>
               )}
             </View>
+
+            {/* HEUTE LAUT PLAN */}
+            {planToday?.has && (
+              <TouchableOpacity style={styles.planToday} onPress={() => onNavigate?.('training')} activeOpacity={0.85}>
+                <Text style={styles.planTodayIcon}>{planToday.focus ? '📅' : '😌'}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.planTodayLabel}>Heute laut Plan</Text>
+                  <Text style={styles.planTodayFocus} numberOfLines={1}>{planToday.focus ?? 'Ruhetag – Erholung'}</Text>
+                </View>
+                {planToday.focus && <Text style={styles.planTodayGo}>Start ›</Text>}
+              </TouchableOpacity>
+            )}
 
             {/* TRAINING LÄUFT */}
             {activeSession && (
@@ -375,6 +402,12 @@ function makeStyles(c: Colors) {
     xpTrack: { height: 10, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 5, marginTop: 14, overflow: 'hidden' },
     xpFill: { height: 10, backgroundColor: '#7FA6FF', borderRadius: 5 },
     xpText: { color: 'rgba(255,255,255,0.8)', fontSize: 12, marginTop: 6 },
+
+    planToday: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 14, padding: 14, marginBottom: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    planTodayIcon: { fontSize: 24, marginRight: 12 },
+    planTodayLabel: { fontSize: 12, color: c.textMuted, fontWeight: '700', letterSpacing: 0.5 },
+    planTodayFocus: { fontSize: 16, fontWeight: '700', color: c.heading, marginTop: 2 },
+    planTodayGo: { fontSize: 14, color: c.primary, fontWeight: '700', marginLeft: 10 },
 
     banner: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 14, padding: 14, marginBottom: 14, borderWidth: 1, borderColor: c.accent },
     bannerTitle: { fontSize: 16, fontWeight: '700', color: c.heading },

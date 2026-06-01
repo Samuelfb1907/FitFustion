@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import ExerciseDetail from '../components/ExerciseDetail';
+import { WEEKDAYS, todayWeekday } from '../lib/weekdays';
 
 function startOfTodayISO(): string {
   const d = new Date();
@@ -75,6 +76,8 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
   const [selectedDays, setSelectedDays] = useState(3);
   const [selected, setSelected] = useState<Selected | null>(null);
   const [doneToday, setDoneToday] = useState<Set<string>>(new Set());
+  const [schedule, setSchedule] = useState<Record<number, string>>({}); // Wochentag -> plan_day_id
+  const [editWeekday, setEditWeekday] = useState<number | null>(null);
 
   const allowedDiff = ALLOWED_DIFF[profile?.experience_level ?? 'beginner'] ?? ['beginner'];
   const allowedEquip = ALLOWED_EQUIP[profile?.training_environment ?? 'gym'] ?? ALLOWED_EQUIP.gym;
@@ -111,8 +114,28 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
       }),
     }));
     setPlanName(plan.name); setDays(assembled); setMode('view');
+    const dayIdSet = new Set(assembled.map((d) => d.id));
+    const { data: schedRows } = await supabase.from('plan_schedule').select('weekday, plan_day_id').eq('user_id', userId);
+    const sched: Record<number, string> = {};
+    (schedRows ?? []).forEach((r: any) => { if (dayIdSet.has(r.plan_day_id)) sched[r.weekday] = r.plan_day_id; });
+    setSchedule(sched);
     await loadDoneToday();
     setLoading(false);
+  }
+
+  async function assignDay(weekday: number, dayId: string | null) {
+    if (!userId) return;
+    setEditWeekday(null);
+    setSchedule((prev) => {
+      const next = { ...prev };
+      if (dayId) next[weekday] = dayId; else delete next[weekday];
+      return next;
+    });
+    if (dayId) {
+      await supabase.from('plan_schedule').upsert({ user_id: userId, weekday, plan_day_id: dayId }, { onConflict: 'user_id,weekday' });
+    } else {
+      await supabase.from('plan_schedule').delete().eq('user_id', userId).eq('weekday', weekday);
+    }
   }
 
   async function loadDoneToday() {
@@ -126,6 +149,8 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
     setGenerating(true); setError(null);
     try {
       await supabase.from('workout_plans').update({ is_active: false }).eq('user_id', userId).eq('is_active', true);
+      await supabase.from('plan_schedule').delete().eq('user_id', userId); // Wochenplan zuruecksetzen
+      setSchedule({});
       const { data: plan, error: pErr } = await supabase.from('workout_plans').insert({ user_id: userId, name: `Mein ${n}-Tage-Plan`, is_active: true }).select('id').single();
       if (pErr || !plan) throw pErr ?? new Error('Plan konnte nicht erstellt werden.');
       const template = SPLITS[n];
@@ -209,6 +234,36 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
       <TouchableOpacity style={styles.secondaryBtn} onPress={() => setMode('create')}>
         <Text style={styles.secondaryText}>Neuen Plan erstellen</Text>
       </TouchableOpacity>
+      <View style={styles.weekCard}>
+        <Text style={styles.weekTitle}>📅 Wochenplan</Text>
+        <Text style={styles.weekHint}>Tippe einen Wochentag, um ihm einen Trainingstag (oder Ruhetag) zuzuordnen.</Text>
+        {WEEKDAYS.map((wd, i) => {
+          const dayId = schedule[i];
+          const focus = dayId ? (days.find((d) => d.id === dayId)?.focus ?? 'Training') : null;
+          const isToday = i === todayWeekday();
+          return (
+            <View key={i}>
+              <TouchableOpacity style={[styles.weekRow, isToday && styles.weekRowToday]} onPress={() => setEditWeekday(editWeekday === i ? null : i)} activeOpacity={0.7}>
+                <Text style={[styles.weekDay, isToday && { color: c.primary, fontWeight: '700' }]}>{wd}{isToday ? '  · heute' : ''}</Text>
+                <Text style={[styles.weekFocus, !focus && styles.weekRest]} numberOfLines={1}>{focus ?? 'Ruhetag'}</Text>
+              </TouchableOpacity>
+              {editWeekday === i && (
+                <View style={styles.weekPicker}>
+                  {days.map((d) => (
+                    <TouchableOpacity key={d.id} style={[styles.weekOpt, dayId === d.id && styles.weekOptActive]} onPress={() => assignDay(i, d.id)} activeOpacity={0.7}>
+                      <Text style={[styles.weekOptText, dayId === d.id && styles.weekOptTextActive]}>Tag {d.day_index}: {d.focus}</Text>
+                    </TouchableOpacity>
+                  ))}
+                  <TouchableOpacity style={[styles.weekOpt, !dayId && styles.weekOptActive]} onPress={() => assignDay(i, null)} activeOpacity={0.7}>
+                    <Text style={[styles.weekOptText, !dayId && styles.weekOptTextActive]}>😌 Ruhetag</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          );
+        })}
+      </View>
+
       <Text style={styles.tapHint}>Tippe eine Übung an für Animation, Anleitung & Mitschreiben.</Text>
       {days.map((d) => (
         <View key={d.id} style={styles.dayCard}>
@@ -264,5 +319,18 @@ function makeStyles(c: Colors) {
     chev: { fontSize: 22, color: c.textMuted, marginLeft: 8 },
     tapHint: { fontSize: 12, color: c.textMuted, marginTop: -6, marginBottom: 12 },
     muted: { fontSize: 14, color: c.textMuted, fontStyle: 'italic' },
+    weekCard: { backgroundColor: c.card, borderRadius: 14, padding: 16, marginBottom: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    weekTitle: { fontSize: 16, fontWeight: '700', color: c.heading },
+    weekHint: { fontSize: 12, color: c.textMuted, marginTop: 2, marginBottom: 8, lineHeight: 16 },
+    weekRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 11, borderTopColor: c.border, borderTopWidth: StyleSheet.hairlineWidth },
+    weekRowToday: { backgroundColor: c.inputBg, borderRadius: 8, paddingHorizontal: 8, marginHorizontal: -8 },
+    weekDay: { fontSize: 15, color: c.text },
+    weekFocus: { fontSize: 14, color: c.heading, fontWeight: '600', flexShrink: 1, marginLeft: 12, textAlign: 'right' },
+    weekRest: { color: c.textMuted, fontWeight: '400', fontStyle: 'italic' },
+    weekPicker: { paddingVertical: 6, gap: 6 },
+    weekOpt: { paddingVertical: 10, paddingHorizontal: 12, borderRadius: 10, borderWidth: 1, borderColor: c.border, backgroundColor: c.inputBg },
+    weekOptActive: { backgroundColor: c.primary, borderColor: c.primary },
+    weekOptText: { fontSize: 14, color: c.text, fontWeight: '600' },
+    weekOptTextActive: { color: c.onPrimary },
   });
 }
