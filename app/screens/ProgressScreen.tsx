@@ -7,9 +7,11 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { LineChart, BarChart } from '../components/Charts';
+import ExerciseProgress from '../components/ExerciseProgress';
 import { WeightPoint, loadWeights, saveTodayWeight, deleteWeight, deltaOver, parseWeight, WEIGHT_MIN, WEIGHT_MAX } from '../lib/weight';
 
-type PR = { name: string; weight: number; reps: number | null };
+type PR = { id: string; name: string; weight: number; reps: number | null };
+type ExItem = { id: string; name: string; sessions: number; lastDate: string };
 type HistRow = { date: string; sets: number; volume: number };
 
 function dStr(d: Date): string {
@@ -53,6 +55,8 @@ export default function ProgressScreen() {
   const [weekly, setWeekly] = useState<{ label: string; value: number }[]>([]);
   const [records, setRecords] = useState<PR[]>([]);
   const [history, setHistory] = useState<HistRow[]>([]);
+  const [exList, setExList] = useState<ExItem[]>([]);
+  const [selExercise, setSelExercise] = useState<{ id: string; name: string } | null>(null);
 
   const [weightInput, setWeightInput] = useState('');
   const [savingW, setSavingW] = useState(false);
@@ -86,11 +90,12 @@ export default function ProgressScreen() {
     // 2) Saetze inkl. Uebung + Session-Datum
     const { data: sl } = await supabase
       .from('set_logs')
-      .select('reps, weight_kg, session_id, created_at, exercises(name), workout_sessions(performed_at)')
+      .select('reps, weight_kg, session_id, exercise_id, created_at, exercises(name), workout_sessions(performed_at)')
       .eq('user_id', userId);
     const sets = (sl ?? []) as any[];
 
     const exName = (row: any): string => unwrap<{ name: string }>(row.exercises)?.name ?? 'Übung';
+    const exId = (row: any): string => String(row.exercise_id);
     const perfDate = (row: any): string => {
       const s = unwrap<{ performed_at: string }>(row.workout_sessions);
       return String(s?.performed_at ?? row.created_at).slice(0, 10);
@@ -116,11 +121,23 @@ export default function ProgressScreen() {
     for (const r of sets) {
       const w = Number(r.weight_kg) || 0;
       if (w <= 0) continue;
-      const name = exName(r);
-      const cur = recMap.get(name);
-      if (!cur || w > cur.weight) recMap.set(name, { name, weight: w, reps: r.reps != null ? Number(r.reps) : null });
+      const id = exId(r);
+      const cur = recMap.get(id);
+      if (!cur || w > cur.weight) recMap.set(id, { id, name: exName(r), weight: w, reps: r.reps != null ? Number(r.reps) : null });
     }
     setRecords([...recMap.values()].sort((a, b) => b.weight - a.weight).slice(0, 6));
+
+    // 3b) Uebungsliste: alle Uebungen mit mitgeschriebenen Saetzen (auch ohne Gewicht)
+    const exMap = new Map<string, { id: string; name: string; sessions: Set<string>; lastDate: string }>();
+    for (const r of sets) {
+      const id = exId(r);
+      const e = exMap.get(id) ?? { id, name: exName(r), sessions: new Set<string>(), lastDate: '' };
+      e.sessions.add(String(r.session_id));
+      const d = perfDate(r);
+      if (d > e.lastDate) e.lastDate = d;
+      exMap.set(id, e);
+    }
+    setExList([...exMap.values()].map((e) => ({ id: e.id, name: e.name, sessions: e.sessions.size, lastDate: e.lastDate })).sort((a, b) => (a.lastDate < b.lastDate ? 1 : -1)));
 
     // 4) Volumen je Woche (letzte 8 Wochen)
     const weekKeys: string[] = [];
@@ -213,6 +230,10 @@ export default function ProgressScreen() {
     { icon: '🏆', label: 'Volumen gesamt', value: `${grp(stats.volume)} kg` },
     { icon: '🔥', label: 'Diese Woche', value: `${grp(stats.weekVolume)} kg` },
   ];
+
+  if (selExercise) {
+    return <ExerciseProgress exerciseId={selExercise.id} exerciseName={selExercise.name} c={c} onBack={() => setSelExercise(null)} />;
+  }
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 48 }}>
@@ -343,19 +364,29 @@ export default function ProgressScreen() {
             <Text style={styles.cardTitle}>🏆  Persönliche Rekorde</Text>
             {records.length > 0 ? (
               records.map((r, i) => (
-                <View key={r.name} style={[styles.row, i === records.length - 1 && styles.rowLast]}>
-                  <Text style={styles.rowName} numberOfLines={1}>
-                    {r.name}
-                  </Text>
-                  <Text style={styles.rowValue}>
-                    {r.weight} kg{r.reps ? ` · ${r.reps} Wdh` : ''}
-                  </Text>
-                </View>
+                <TouchableOpacity key={r.id} style={[styles.row, i === records.length - 1 && styles.rowLast]} onPress={() => setSelExercise({ id: r.id, name: r.name })} activeOpacity={0.7}>
+                  <Text style={styles.rowName} numberOfLines={1}>{r.name}</Text>
+                  <Text style={styles.rowValue}>{r.weight} kg{r.reps ? ` · ${r.reps} Wdh` : ''}  ›</Text>
+                </TouchableOpacity>
               ))
             ) : (
               <Text style={styles.hint}>Noch keine Rekorde – trag im Training Sätze mit Gewicht ein.</Text>
             )}
           </View>
+
+          {/* UEBUNGS-FORTSCHRITT */}
+          {exList.length > 0 && (
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>📈  Übungs-Fortschritt</Text>
+              <Text style={[styles.caption, { marginTop: 0, marginBottom: 8 }]}>Tippe eine Übung für Verlauf & Rekord.</Text>
+              {exList.slice(0, 12).map((e, i) => (
+                <TouchableOpacity key={e.id} style={[styles.row, i === Math.min(exList.length, 12) - 1 && styles.rowLast]} onPress={() => setSelExercise({ id: e.id, name: e.name })} activeOpacity={0.7}>
+                  <Text style={styles.rowName} numberOfLines={1}>{e.name}</Text>
+                  <Text style={styles.rowValue}>{e.sessions}×  ›</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
 
           {/* HISTORIE */}
           <View style={styles.card}>
