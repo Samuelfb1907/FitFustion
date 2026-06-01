@@ -1,6 +1,6 @@
 // Automatischer Trainingsplan (themed).
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
@@ -78,6 +78,11 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
   const [doneToday, setDoneToday] = useState<Set<string>>(new Set());
   const [schedule, setSchedule] = useState<Record<number, string>>({}); // Wochentag -> plan_day_id
   const [editWeekday, setEditWeekday] = useState<number | null>(null);
+  const [editMode, setEditMode] = useState(false);
+  const [addingToDay, setAddingToDay] = useState<string | null>(null);
+  const [candidates, setCandidates] = useState<{ id: string; name: string; difficulty: string; muscleName: string | null }[]>([]);
+  const [pickerSearch, setPickerSearch] = useState('');
+  const [pickerLoading, setPickerLoading] = useState(false);
 
   const allowedDiff = ALLOWED_DIFF[profile?.experience_level ?? 'beginner'] ?? ['beginner'];
   const allowedEquip = ALLOWED_EQUIP[profile?.training_environment ?? 'gym'] ?? ALLOWED_EQUIP.gym;
@@ -136,6 +141,37 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
     } else {
       await supabase.from('plan_schedule').delete().eq('user_id', userId).eq('weekday', weekday);
     }
+  }
+
+  async function removeExercise(dayId: string, rowId: string) {
+    setDays((prev) => prev.map((d) => (d.id === dayId ? { ...d, exercises: d.exercises.filter((e) => e.rowId !== rowId) } : d)));
+    await supabase.from('workout_plan_exercises').delete().eq('id', rowId);
+  }
+
+  async function updateSetsReps(dayId: string, rowId: string, sets: number, reps: number) {
+    setDays((prev) => prev.map((d) => (d.id === dayId ? { ...d, exercises: d.exercises.map((e) => (e.rowId === rowId ? { ...e, sets, reps } : e)) } : d)));
+    await supabase.from('workout_plan_exercises').update({ target_sets: sets, target_reps: reps }).eq('id', rowId);
+  }
+
+  async function openAddPicker(dayId: string) {
+    setAddingToDay(dayId);
+    setPickerSearch('');
+    setPickerLoading(true);
+    const { data: exRows } = await supabase.from('exercises').select('id, name, difficulty, primary_muscle_id').in('equipment', allowedEquip).in('difficulty', allowedDiff).order('name');
+    const { data: muscleRows } = await supabase.from('muscles').select('id, name_de');
+    const mById: Record<string, string> = {};
+    (muscleRows ?? []).forEach((m: any) => { mById[m.id] = m.name_de; });
+    setCandidates(((exRows ?? []) as any[]).map((e) => ({ id: e.id, name: e.name, difficulty: e.difficulty, muscleName: mById[e.primary_muscle_id] ?? null })));
+    setPickerLoading(false);
+  }
+
+  async function addExercise(exId: string) {
+    if (!userId || !addingToDay) return;
+    const day = days.find((d) => d.id === addingToDay);
+    const order = day ? day.exercises.length : 0;
+    await supabase.from('workout_plan_exercises').insert({ user_id: userId, plan_day_id: addingToDay, exercise_id: exId, target_sets: 3, target_reps: 10, order_index: order });
+    setAddingToDay(null);
+    await loadPlan();
   }
 
   async function loadDoneToday() {
@@ -198,6 +234,37 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
     );
   }
 
+  if (addingToDay) {
+    const day = days.find((d) => d.id === addingToDay);
+    const existing = new Set(day?.exercises.map((e) => e.exId) ?? []);
+    const q = pickerSearch.trim().toLowerCase();
+    const filtered = candidates.filter((e) => !existing.has(e.id) && (q ? e.name.toLowerCase().includes(q) : true));
+    return (
+      <View style={[styles.container, embedded && styles.embedded]}>
+        <TouchableOpacity onPress={() => setAddingToDay(null)}><Text style={styles.back}>‹ Zurück</Text></TouchableOpacity>
+        <Text style={styles.title}>Übung hinzufügen</Text>
+        <Text style={styles.subtitle}>{day?.focus ?? ''}</Text>
+        <TextInput style={styles.input} value={pickerSearch} onChangeText={setPickerSearch} placeholder="Suchen…" placeholderTextColor={c.textMuted} autoCorrect={false} />
+        {pickerLoading ? (
+          <ActivityIndicator color={c.primary} style={{ marginTop: 24 }} />
+        ) : (
+          <ScrollView contentContainerStyle={{ paddingBottom: 40, paddingTop: 10 }} keyboardShouldPersistTaps="handled">
+            {filtered.map((e) => (
+              <TouchableOpacity key={e.id} style={styles.pickRow} onPress={() => addExercise(e.id)} activeOpacity={0.7}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.exName}>{e.name}</Text>
+                  <Text style={styles.exMeta}>{DIFF_LABELS[e.difficulty] ?? e.difficulty}{e.muscleName ? ` · ${e.muscleName}` : ''}</Text>
+                </View>
+                <Text style={styles.pickAdd}>+ Hinzufügen</Text>
+              </TouchableOpacity>
+            ))}
+            {filtered.length === 0 && <Text style={styles.muted}>Keine weiteren passenden Übungen.</Text>}
+          </ScrollView>
+        )}
+      </View>
+    );
+  }
+
   if (loading) {
     return (<View style={[styles.container, embedded && styles.embedded]}>{!embedded && <Text style={styles.title}>Trainingsplan</Text>}<ActivityIndicator size="large" color={c.primary} style={{ marginTop: 40 }} /></View>);
   }
@@ -231,9 +298,15 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
     <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }}>
       {!embedded && <Text style={styles.title}>Dein Trainingsplan</Text>}
       <Text style={styles.subtitle}>{planName}</Text>
-      <TouchableOpacity style={styles.secondaryBtn} onPress={() => setMode('create')}>
-        <Text style={styles.secondaryText}>Neuen Plan erstellen</Text>
-      </TouchableOpacity>
+      <View style={styles.topBtns}>
+        <TouchableOpacity style={[styles.secondaryBtn, styles.topBtn]} onPress={() => { setEditMode(false); setMode('create'); }}>
+          <Text style={styles.secondaryText}>Neuer Plan</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.secondaryBtn, styles.topBtn, editMode && styles.editActive]} onPress={() => { setEditWeekday(null); setEditMode((v) => !v); }}>
+          <Text style={[styles.secondaryText, editMode && { color: c.onPrimary }]}>{editMode ? '✓ Fertig' : '✏️ Bearbeiten'}</Text>
+        </TouchableOpacity>
+      </View>
+      {!editMode && (
       <View style={styles.weekCard}>
         <Text style={styles.weekTitle}>📅 Wochenplan</Text>
         <Text style={styles.weekHint}>Tippe einen Wochentag, um ihm einen Trainingstag (oder Ruhetag) zuzuordnen.</Text>
@@ -263,32 +336,63 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
           );
         })}
       </View>
+      )}
 
-      <Text style={styles.tapHint}>Tippe eine Übung an für Animation, Anleitung & Mitschreiben.</Text>
+      <Text style={styles.tapHint}>{editMode ? 'Sätze/Wdh anpassen, Übungen entfernen 🗑 oder unten hinzufügen.' : 'Tippe eine Übung an für Animation, Anleitung & Mitschreiben.'}</Text>
       {days.map((d) => (
         <View key={d.id} style={styles.dayCard}>
           <Text style={styles.dayTitle}>Tag {d.day_index}</Text>
           <Text style={styles.dayFocus}>{d.focus}</Text>
-          {d.exercises.length === 0 ? (
+          {d.exercises.length === 0 && !editMode ? (
             <Text style={styles.muted}>Keine passenden Übungen – ggf. Umgebung/Level im Profil anpassen.</Text>
           ) : (
-            d.exercises.map((ex) => {
-              const done = doneToday.has(ex.exId);
-              return (
+            d.exercises.map((ex) =>
+              editMode ? (
+                <View key={ex.rowId} style={styles.exEditRow}>
+                  <View style={{ flex: 1, marginRight: 8 }}>
+                    <Text style={styles.exName} numberOfLines={1}>{ex.name}</Text>
+                    <View style={styles.editControls}>
+                      <Stepper label="Sätze" value={ex.sets} onDec={() => updateSetsReps(d.id, ex.rowId, Math.max(1, ex.sets - 1), ex.reps)} onInc={() => updateSetsReps(d.id, ex.rowId, Math.min(10, ex.sets + 1), ex.reps)} styles={styles} />
+                      <Stepper label="Wdh" value={ex.reps} onDec={() => updateSetsReps(d.id, ex.rowId, ex.sets, Math.max(1, ex.reps - 1))} onInc={() => updateSetsReps(d.id, ex.rowId, ex.sets, Math.min(50, ex.reps + 1))} styles={styles} />
+                    </View>
+                  </View>
+                  <TouchableOpacity onPress={() => removeExercise(d.id, ex.rowId)} style={styles.removeBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <Text style={styles.removeText}>🗑</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
                 <TouchableOpacity key={ex.rowId} style={styles.exItem} activeOpacity={0.7}
                   onPress={() => setSelected({ exercise: { id: ex.exId, name: ex.name, difficulty: ex.difficulty, equipment: ex.equipment, description: ex.description, instructions: ex.instructions }, muscleKey: ex.muscleKey, muscleName: ex.muscleName })}>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.exName, done && { color: c.success, fontWeight: '700' }]}>{done ? '✓ ' : ''}{ex.name}</Text>
+                    <Text style={[styles.exName, doneToday.has(ex.exId) && { color: c.success, fontWeight: '700' }]}>{doneToday.has(ex.exId) ? '✓ ' : ''}{ex.name}</Text>
                     <Text style={styles.exMeta}>{ex.sets} × {ex.reps} · {DIFF_LABELS[ex.difficulty] ?? ex.difficulty}{ex.muscleName ? ` · ${ex.muscleName}` : ''}</Text>
                   </View>
                   <Text style={styles.chev}>›</Text>
                 </TouchableOpacity>
-              );
-            })
+              )
+            )
+          )}
+          {editMode && (
+            <TouchableOpacity style={styles.addExBtn} onPress={() => openAddPicker(d.id)} activeOpacity={0.85}>
+              <Text style={styles.addExText}>+ Übung hinzufügen</Text>
+            </TouchableOpacity>
           )}
         </View>
       ))}
     </ScrollView>
+  );
+}
+
+function Stepper({ label, value, onDec, onInc, styles }: { label: string; value: number; onDec: () => void; onInc: () => void; styles: any }) {
+  return (
+    <View style={styles.stepperWrap}>
+      <Text style={styles.stepperLabel}>{label}</Text>
+      <View style={styles.stepper}>
+        <TouchableOpacity style={styles.stepBtn} onPress={onDec} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}><Text style={styles.stepBtnText}>−</Text></TouchableOpacity>
+        <Text style={styles.stepVal}>{value}</Text>
+        <TouchableOpacity style={styles.stepBtn} onPress={onInc} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}><Text style={styles.stepBtnText}>+</Text></TouchableOpacity>
+      </View>
+    </View>
   );
 }
 
@@ -298,6 +402,7 @@ function makeStyles(c: Colors) {
     embedded: { paddingTop: 8, paddingHorizontal: 0, backgroundColor: 'transparent' },
     title: { fontSize: 26, fontWeight: 'bold', color: c.heading },
     subtitle: { fontSize: 15, color: c.textMuted, marginTop: 2, marginBottom: 16 },
+    back: { color: c.primary, fontSize: 15, fontWeight: '600', marginBottom: 10 },
     dayPicker: { flexDirection: 'row', gap: 10, marginBottom: 24 },
     dayOpt: { width: 52, height: 52, borderRadius: 12, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center', backgroundColor: c.card },
     dayOptActive: { backgroundColor: c.primary, borderColor: c.primary },
@@ -332,5 +437,23 @@ function makeStyles(c: Colors) {
     weekOptActive: { backgroundColor: c.primary, borderColor: c.primary },
     weekOptText: { fontSize: 14, color: c.text, fontWeight: '600' },
     weekOptTextActive: { color: c.onPrimary },
+    topBtns: { flexDirection: 'row', gap: 10, marginBottom: 16 },
+    topBtn: { flex: 1, marginBottom: 0 },
+    editActive: { backgroundColor: c.primary, borderColor: c.primary },
+    input: { borderWidth: 1, borderColor: c.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, backgroundColor: c.inputBg, color: c.text },
+    pickRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 12, padding: 14, marginBottom: 8, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    pickAdd: { fontSize: 13, color: c.primary, fontWeight: '700', marginLeft: 8 },
+    exEditRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderTopColor: c.border, borderTopWidth: StyleSheet.hairlineWidth },
+    editControls: { flexDirection: 'row', gap: 16, marginTop: 8 },
+    stepperWrap: { alignItems: 'flex-start' },
+    stepperLabel: { fontSize: 11, color: c.textMuted, marginBottom: 4, fontWeight: '600' },
+    stepper: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    stepBtn: { width: 30, height: 30, borderRadius: 8, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center', backgroundColor: c.inputBg },
+    stepBtnText: { fontSize: 18, color: c.primary, fontWeight: '700' },
+    stepVal: { fontSize: 15, color: c.heading, fontWeight: '700', minWidth: 24, textAlign: 'center' },
+    removeBtn: { padding: 8 },
+    removeText: { fontSize: 18 },
+    addExBtn: { marginTop: 10, borderWidth: 1, borderColor: c.primary, borderRadius: 10, paddingVertical: 11, alignItems: 'center', backgroundColor: c.inputBg },
+    addExText: { color: c.primary, fontSize: 14, fontWeight: '700' },
   });
 }
