@@ -190,7 +190,7 @@ function makeStyles(c: Colors) {
   return StyleSheet.create({
     root: { flex: 1, backgroundColor: c.bg },
     flex: { flex: 1 },
-    scroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 26, paddingVertical: 48 },
+    scroll: { flexGrow: 1, justifyContent: 'flex-start', paddingHorizontal: 26, paddingTop: 70, paddingBottom: 48 },
 
     brand: { alignItems: 'center', marginBottom: 32 },
     wordmark: { fontSize: 30, fontWeight: '800', color: c.heading, letterSpacing: 0.5 },
