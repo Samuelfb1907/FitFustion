@@ -1,6 +1,7 @@
-// Login-/Registrierungs-Screen – Hero-oben + aufsteigendes Sheet-Layout.
-import { useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+// Login-/Registrierungs-Screen – professionell, mit dezentem Punkteraster-Hintergrund (SVG).
+import { useMemo, useState } from 'react';
+import { ActivityIndicator, Dimensions, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import Svg, { Circle } from 'react-native-svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { useColors, Colors } from '../contexts/ThemeContext';
@@ -15,6 +16,28 @@ function translateError(msg: string): string {
   if (m.includes('invalid email') || m.includes('unable to validate email')) return 'Bitte eine gültige E-Mail-Adresse eingeben.';
   if (m.includes('email not confirmed')) return 'Bitte bestätige zuerst deine E-Mail (Postfach prüfen).';
   return msg;
+}
+
+// Dezentes Punkteraster + zwei softe Akzent-Kreise als professioneller Hintergrund.
+function PatternBackground({ c }: { c: Colors }) {
+  const { width: W, height: H } = Dimensions.get('window');
+  const dots = useMemo(() => {
+    const arr: any[] = [];
+    const SP = 30;
+    for (let y = SP; y < H; y += SP) {
+      for (let x = SP; x < W; x += SP) {
+        arr.push(<Circle key={`${x}_${y}`} cx={x} cy={y} r={1.3} fill={c.textMuted} opacity={0.16} />);
+      }
+    }
+    return arr;
+  }, [W, H, c.textMuted]);
+  return (
+    <Svg style={StyleSheet.absoluteFill} width={W} height={H} pointerEvents="none">
+      <Circle cx={W * 0.92} cy={H * 0.07} r={140} fill={c.primary} opacity={0.06} />
+      <Circle cx={W * 0.04} cy={H * 0.93} r={160} fill={c.primary} opacity={0.05} />
+      {dots}
+    </Svg>
+  );
 }
 
 export default function AuthScreen() {
@@ -65,83 +88,83 @@ export default function AuthScreen() {
   const submitDisabled = loading || (mode === 'register' && !accepted);
 
   return (
-    <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      {/* HERO */}
-      <View style={styles.hero}>
-        <Text style={styles.heroKicker}>🏋️  FITFUSION</Text>
-        <Text style={styles.heroTitle}>Tracke dein Training{'\n'}& deinen Fortschritt.</Text>
-      </View>
-
-      {/* SHEET */}
-      <View style={styles.sheet}>
-        <ScrollView contentContainerStyle={styles.sheetContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          <View style={styles.tabs}>
-            <TouchableOpacity style={[styles.tab, mode === 'login' && styles.tabActive]} onPress={() => switchMode('login')} activeOpacity={0.7}>
-              <Text style={[styles.tabText, mode === 'login' && styles.tabTextActive]}>Login</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.tab, mode === 'register' && styles.tabActive]} onPress={() => switchMode('register')} activeOpacity={0.7}>
-              <Text style={[styles.tabText, mode === 'register' && styles.tabTextActive]}>Registrieren</Text>
-            </TouchableOpacity>
+    <View style={styles.root}>
+      <PatternBackground c={c} />
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <View style={styles.brand}>
+            <Text style={styles.wordmark}>FitFusion</Text>
+            <Text style={styles.tagline}>FITNESS · ERNÄHRUNG · FORTSCHRITT</Text>
           </View>
 
-          <Text style={styles.welcome}>{mode === 'login' ? 'Schön, dich wiederzusehen 👋' : 'Erstelle dein Konto'}</Text>
+          <View style={styles.form}>
+            <Text style={styles.heading}>{mode === 'login' ? 'Anmelden' : 'Konto erstellen'}</Text>
+            <Text style={styles.sub}>{mode === 'login' ? 'Melde dich an, um weiterzumachen.' : 'In unter einer Minute startklar.'}</Text>
 
-          <View style={styles.fieldWrap}>
-            <Text style={styles.fieldLabel}>E-MAIL</Text>
-            <TextInput
-              style={[styles.fieldInput, focused === 'email' && styles.fieldInputFocused]}
-              value={email}
-              onChangeText={setEmail}
-              onFocus={() => setFocused('email')}
-              onBlur={() => setFocused(null)}
-              placeholder="du@beispiel.de"
-              placeholderTextColor={c.textMuted}
-              autoCapitalize="none" autoCorrect={false} keyboardType="email-address" inputMode="email"
-            />
-          </View>
+            <View style={styles.fieldWrap}>
+              <Text style={styles.fieldLabel}>E-Mail</Text>
+              <TextInput
+                style={[styles.fieldInput, focused === 'email' && styles.fieldInputFocused]}
+                value={email}
+                onChangeText={setEmail}
+                onFocus={() => setFocused('email')}
+                onBlur={() => setFocused(null)}
+                placeholder="du@beispiel.de"
+                placeholderTextColor={c.textMuted}
+                autoCapitalize="none" autoCorrect={false} keyboardType="email-address" inputMode="email"
+              />
+            </View>
 
-          <View style={styles.fieldWrap}>
-            <Text style={styles.fieldLabel}>PASSWORT</Text>
-            <TextInput
-              style={[styles.fieldInput, focused === 'pw' && styles.fieldInputFocused]}
-              value={password}
-              onChangeText={setPassword}
-              onFocus={() => setFocused('pw')}
-              onBlur={() => setFocused(null)}
-              placeholder={mode === 'register' ? 'mindestens 8 Zeichen' : 'Passwort'}
-              placeholderTextColor={c.textMuted}
-              secureTextEntry autoCapitalize="none"
-            />
-          </View>
+            <View style={styles.fieldWrap}>
+              <Text style={styles.fieldLabel}>Passwort</Text>
+              <TextInput
+                style={[styles.fieldInput, focused === 'pw' && styles.fieldInputFocused]}
+                value={password}
+                onChangeText={setPassword}
+                onFocus={() => setFocused('pw')}
+                onBlur={() => setFocused(null)}
+                placeholder={mode === 'register' ? 'mindestens 8 Zeichen' : 'Passwort'}
+                placeholderTextColor={c.textMuted}
+                secureTextEntry autoCapitalize="none"
+              />
+            </View>
 
-          {mode === 'login' && (
-            <TouchableOpacity onPress={forgotPassword} disabled={loading} style={styles.forgotWrap} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
-              <Text style={styles.forgot}>Passwort vergessen?</Text>
+            {mode === 'login' && (
+              <TouchableOpacity onPress={forgotPassword} disabled={loading} style={styles.forgotWrap} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
+                <Text style={styles.forgot}>Passwort vergessen?</Text>
+              </TouchableOpacity>
+            )}
+
+            {mode === 'register' && (
+              <TouchableOpacity style={styles.acceptRow} onPress={() => setAccepted((a) => !a)} activeOpacity={0.7}>
+                <View style={[styles.checkbox, accepted && styles.checkboxOn]}>{accepted && <Text style={styles.checkmark}>✓</Text>}</View>
+                <Text style={styles.acceptText}>
+                  Ich habe den{' '}
+                  <Text style={styles.acceptLink} onPress={() => setShowLegal(true)}>Haftungsausschluss & Gesundheitshinweis</Text>
+                  {' '}gelesen und akzeptiere ihn.
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity style={[styles.button, submitDisabled && styles.buttonDisabled]} onPress={handleSubmit} disabled={submitDisabled} activeOpacity={0.85}>
+              {loading ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.buttonText}>{mode === 'login' ? 'Einloggen' : 'Konto erstellen'}</Text>}
             </TouchableOpacity>
-          )}
 
-          {mode === 'register' && (
-            <TouchableOpacity style={styles.acceptRow} onPress={() => setAccepted((a) => !a)} activeOpacity={0.7}>
-              <View style={[styles.checkbox, accepted && styles.checkboxOn]}>{accepted && <Text style={styles.checkmark}>✓</Text>}</View>
-              <Text style={styles.acceptText}>
-                Ich habe den{' '}
-                <Text style={styles.acceptLink} onPress={() => setShowLegal(true)}>Haftungsausschluss & Gesundheitshinweis</Text>
-                {' '}gelesen und akzeptiere ihn.
+            {info && (
+              <View style={[styles.infoBox, { borderLeftColor: isError ? c.danger : c.success }]}>
+                <Text style={[styles.info, { color: isError ? c.danger : c.success }]}>{info}</Text>
+              </View>
+            )}
+
+            <TouchableOpacity style={styles.switchWrap} onPress={() => switchMode(mode === 'login' ? 'register' : 'login')} activeOpacity={0.7}>
+              <Text style={styles.switchText}>
+                {mode === 'login' ? 'Noch kein Konto? ' : 'Schon ein Konto? '}
+                <Text style={styles.switchLink}>{mode === 'login' ? 'Jetzt registrieren' : 'Zum Login'}</Text>
               </Text>
             </TouchableOpacity>
-          )}
-
-          <TouchableOpacity style={[styles.button, submitDisabled && styles.buttonDisabled]} onPress={handleSubmit} disabled={submitDisabled} activeOpacity={0.85}>
-            {loading ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.buttonText}>{mode === 'login' ? 'Einloggen' : 'Konto erstellen'}</Text>}
-          </TouchableOpacity>
-
-          {info && (
-            <View style={[styles.infoBox, { borderLeftColor: isError ? c.danger : c.success }]}>
-              <Text style={[styles.info, { color: isError ? c.danger : c.success }]}>{info}</Text>
-            </View>
-          )}
+          </View>
         </ScrollView>
-      </View>
+      </KeyboardAvoidingView>
 
       <Modal visible={showLegal} animationType="slide" onRequestClose={() => setShowLegal(false)}>
         <View style={styles.modalRoot}>
@@ -157,48 +180,50 @@ export default function AuthScreen() {
           </TouchableOpacity>
         </View>
       </Modal>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
 function makeStyles(c: Colors) {
   return StyleSheet.create({
-    root: { flex: 1, backgroundColor: c.hero },
+    root: { flex: 1, backgroundColor: c.bg },
+    flex: { flex: 1 },
+    scroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 26, paddingVertical: 48 },
 
-    hero: { paddingTop: 78, paddingHorizontal: 28, paddingBottom: 54 },
-    heroKicker: { color: 'rgba(255,255,255,0.72)', fontSize: 13, fontWeight: '800', letterSpacing: 2.5, marginBottom: 14 },
-    heroTitle: { color: '#ffffff', fontSize: 30, fontWeight: '800', lineHeight: 38 },
+    brand: { alignItems: 'center', marginBottom: 32 },
+    wordmark: { fontSize: 30, fontWeight: '800', color: c.heading, letterSpacing: 0.5 },
+    tagline: { fontSize: 11, fontWeight: '700', letterSpacing: 2.5, color: c.textMuted, marginTop: 9 },
 
-    sheet: { flex: 1, backgroundColor: c.bg, borderTopLeftRadius: 30, borderTopRightRadius: 30, marginTop: -30 },
-    sheetContent: { paddingHorizontal: 26, paddingTop: 26, paddingBottom: 40 },
+    form: { width: '100%', maxWidth: 400, alignSelf: 'center' },
+    heading: { fontSize: 24, fontWeight: '800', color: c.heading },
+    sub: { fontSize: 14, color: c.textMuted, marginTop: 6 },
 
-    tabs: { flexDirection: 'row' },
-    tab: { flex: 1, alignItems: 'center', paddingVertical: 12, borderBottomWidth: 2, borderBottomColor: c.border },
-    tabActive: { borderBottomColor: c.primary },
-    tabText: { fontSize: 15, fontWeight: '700', color: c.textMuted },
-    tabTextActive: { color: c.primary },
+    fieldWrap: { marginTop: 16 },
+    fieldLabel: { fontSize: 12, fontWeight: '600', color: c.text, marginBottom: 7 },
+    fieldInput: {
+      backgroundColor: c.card, borderWidth: 1, borderColor: c.border, borderRadius: 12,
+      paddingHorizontal: 14, paddingVertical: 14, fontSize: 16, color: c.text,
+    },
+    fieldInputFocused: { borderColor: c.primary },
 
-    welcome: { fontSize: 18, fontWeight: '700', color: c.heading, marginTop: 24, marginBottom: 2 },
-
-    fieldWrap: { marginTop: 18 },
-    fieldLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1.2, color: c.textMuted, marginBottom: 2 },
-    fieldInput: { borderBottomWidth: 1.5, borderBottomColor: c.border, paddingVertical: 10, fontSize: 17, color: c.text },
-    fieldInputFocused: { borderBottomColor: c.primary },
-
-    forgotWrap: { alignSelf: 'flex-end', marginTop: 14 },
+    forgotWrap: { alignSelf: 'flex-end', marginTop: 12 },
     forgot: { color: c.primary, fontSize: 13, fontWeight: '600' },
 
     button: {
-      backgroundColor: c.primary, borderRadius: 30, paddingVertical: 17, alignItems: 'center', marginTop: 26,
-      shadowColor: c.primary, shadowOpacity: 0.32, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 5,
+      backgroundColor: c.primary, borderRadius: 12, paddingVertical: 16, alignItems: 'center', marginTop: 22,
+      shadowColor: c.primary, shadowOpacity: 0.28, shadowRadius: 12, shadowOffset: { width: 0, height: 5 }, elevation: 4,
     },
     buttonDisabled: { opacity: 0.5 },
     buttonText: { color: c.onPrimary, fontSize: 16, fontWeight: '800', letterSpacing: 0.3 },
 
-    infoBox: { backgroundColor: c.inputBg, borderLeftWidth: 3, borderRadius: 8, paddingVertical: 11, paddingHorizontal: 14, marginTop: 18 },
+    infoBox: { backgroundColor: c.inputBg, borderLeftWidth: 3, borderRadius: 8, paddingVertical: 11, paddingHorizontal: 14, marginTop: 16 },
     info: { fontSize: 14, lineHeight: 19 },
 
-    acceptRow: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 18 },
+    switchWrap: { marginTop: 22, alignItems: 'center' },
+    switchText: { fontSize: 14, color: c.textMuted },
+    switchLink: { color: c.primary, fontWeight: '700' },
+
+    acceptRow: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 16 },
     checkbox: { width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: c.border, alignItems: 'center', justifyContent: 'center', marginRight: 10, marginTop: 1 },
     checkboxOn: { backgroundColor: c.primary, borderColor: c.primary },
     checkmark: { color: c.onPrimary, fontSize: 15, fontWeight: '800' },
