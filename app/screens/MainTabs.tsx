@@ -23,22 +23,27 @@ function TabButton({ label, icon, active, onPress, c }: { label: string; icon: s
 
 export default function MainTabs() {
   const [tab, setTab] = useState<Tab>('home');
+  // nonce wechselt bei jedem Tab-Tipp -> der key des Screens aendert sich -> frischer Mount (zurueck zur Startansicht)
+  const [nonce, setNonce] = useState(0);
   const c = useColors();
+
+  const go = (t: Tab) => { setTab(t); setNonce((n) => n + 1); };
+
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <View style={{ flex: 1 }}>
-        {tab === 'home' ? <HomeScreen onNavigate={(t) => setTab(t as Tab)} /> : null}
-        {tab === 'training' ? <TrainingScreen /> : null}
-        {tab === 'essen' ? <EssenScreen /> : null}
-        {tab === 'progress' ? <ProgressScreen /> : null}
-        {tab === 'settings' ? <SettingsScreen /> : null}
+        {tab === 'home' ? <HomeScreen key={`home-${nonce}`} onNavigate={(t) => go(t as Tab)} /> : null}
+        {tab === 'training' ? <TrainingScreen key={`training-${nonce}`} /> : null}
+        {tab === 'essen' ? <EssenScreen key={`essen-${nonce}`} /> : null}
+        {tab === 'progress' ? <ProgressScreen key={`progress-${nonce}`} /> : null}
+        {tab === 'settings' ? <SettingsScreen key={`settings-${nonce}`} /> : null}
       </View>
       <View style={[styles.tabBar, { backgroundColor: c.card, borderTopColor: c.border }]}>
-        <TabButton label="Start" icon="🏠" active={tab === 'home'} onPress={() => setTab('home')} c={c} />
-        <TabButton label="Training" icon="💪" active={tab === 'training'} onPress={() => setTab('training')} c={c} />
-        <TabButton label="Essen" icon="🍽️" active={tab === 'essen'} onPress={() => setTab('essen')} c={c} />
-        <TabButton label="Fortschritt" icon="📈" active={tab === 'progress'} onPress={() => setTab('progress')} c={c} />
-        <TabButton label="Einstellungen" icon="⚙️" active={tab === 'settings'} onPress={() => setTab('settings')} c={c} />
+        <TabButton label="Start" icon="🏠" active={tab === 'home'} onPress={() => go('home')} c={c} />
+        <TabButton label="Training" icon="💪" active={tab === 'training'} onPress={() => go('training')} c={c} />
+        <TabButton label="Essen" icon="🍽️" active={tab === 'essen'} onPress={() => go('essen')} c={c} />
+        <TabButton label="Fortschritt" icon="📈" active={tab === 'progress'} onPress={() => go('progress')} c={c} />
+        <TabButton label="Einstellungen" icon="⚙️" active={tab === 'settings'} onPress={() => go('settings')} c={c} />
       </View>
     </View>
   );
