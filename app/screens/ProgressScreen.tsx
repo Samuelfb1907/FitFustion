@@ -221,7 +221,8 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
   }
 
   async function removeWeight(id: string) {
-    await deleteWeight(id);
+    const err = await deleteWeight(id);
+    if (err) { Alert.alert('Löschen fehlgeschlagen', err); return; }
     await load();
   }
   function confirmRemoveWeight(id: string) {

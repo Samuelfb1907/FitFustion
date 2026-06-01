@@ -15,7 +15,7 @@ export function errorMessage(e: unknown): string {
   ) {
     return 'Keine Internetverbindung. Bitte prüfe deine Verbindung und versuche es erneut.';
   }
-  return 'Die Daten konnten nicht geladen werden. Bitte versuche es erneut.';
+  return 'Es hat nicht geklappt. Bitte versuche es erneut.';
 }
 
 // true, wenn der Fehler nach einem Verbindungsproblem aussieht.

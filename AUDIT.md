@@ -59,7 +59,7 @@ Der **App-Code ist erstaunlich solide**: `tsc` ist fehlerfrei, alle 14 Screens s
 - [ ] **„Genau ein aktives Ziel" / 1 Gewicht pro Tag** absichern (partielles UNIQUE bzw. Upsert). *(db/schema.sql)*
 
 ### Code
-- [ ] **Fehlerbehandlung bei Supabase-Writes** – viele `insert/update/delete` ignorieren `error` (stille Fehlschläge, optimistischer State läuft mit DB auseinander). *(weight.ts, HomeScreen, WaterScreen, PlanScreen, TrainingScreen, FoodTrackerScreen)*
+- [x] **Fehlerbehandlung bei Supabase-Writes** ✅ ERLEDIGT (Schreibvorgänge prüfen jetzt `error` → freundlicher Hinweis/Alert via zentralem `errorMessage`, bei optimistischen Updates zusätzlich Resync mit der DB) – früher: viele `insert/update/delete` ignorieren `error` (stille Fehlschläge, optimistischer State läuft mit DB auseinander). *(weight.ts, HomeScreen, WaterScreen, PlanScreen, TrainingScreen, FoodTrackerScreen)*
 - [ ] **Duplikation zentralisieren** – Datums-Helfer (8 Dateien!), `KEY_TO_SLUGS`, `ALLOWED_DIFF/EQUIP`, `DIFF/EQUIP_LABELS`, `unwrap/ddmm/grp`, Wasser-Logik → `lib/date.ts`, `lib/muscles.ts`, `lib/training.ts`, `lib/water.ts`. *(diverse)*
 - [ ] **Nicht-atomare Delete→Insert** (Plan/Rezept/Ziel) → RPC-Transaktion oder „erst neu anlegen, dann altes deaktivieren". *(NutritionScreen, PlanScreen, RecipesScreen)*
 - [x] **Memoisierung** ✅ – ThemeContext-`value` per `useMemo` (verhindert App-weite Re-Renders); `makeStyles` per `useMemo` in den eingabe-intensiven Screens (FoodTracker, ExerciseDetail, Progress). *(Loader-`useCallback` in den übrigen Screens optional – greift kaum, da Bereiche jetzt gemountet bleiben.)*

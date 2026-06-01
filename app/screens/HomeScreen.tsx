@@ -168,7 +168,8 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
 
   async function endTraining() {
     if (!activeSession) return;
-    await supabase.from('workout_sessions').update({ ended_at: new Date().toISOString() }).eq('id', activeSession);
+    const { error } = await supabase.from('workout_sessions').update({ ended_at: new Date().toISOString() }).eq('id', activeSession);
+    if (error) { Alert.alert('Nicht möglich', errorMessage(error)); return; }
     setActiveSession(null);
     setActiveSets(0);
   }
@@ -184,12 +185,14 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
   async function addWater(ml: number) {
     const uid = session?.user?.id;
     if (!uid) return;
-    await supabase.from('water_logs').insert({ user_id: uid, amount_ml: ml, log_date: todayStr() });
+    const { error } = await supabase.from('water_logs').insert({ user_id: uid, amount_ml: ml, log_date: todayStr() });
+    if (error) { Alert.alert('Nicht gespeichert', errorMessage(error)); return; }
     await refreshWater();
   }
   async function undoWater() {
     if (!waterIds.length) return;
-    await supabase.from('water_logs').delete().eq('id', waterIds[waterIds.length - 1]);
+    const { error } = await supabase.from('water_logs').delete().eq('id', waterIds[waterIds.length - 1]);
+    if (error) { Alert.alert('Nicht möglich', errorMessage(error)); return; }
     await refreshWater();
   }
 

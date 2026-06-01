@@ -153,21 +153,22 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
       if (dayId) next[weekday] = dayId; else delete next[weekday];
       return next;
     });
-    if (dayId) {
-      await supabase.from('plan_schedule').upsert({ user_id: userId, weekday, plan_day_id: dayId }, { onConflict: 'user_id,weekday' });
-    } else {
-      await supabase.from('plan_schedule').delete().eq('user_id', userId).eq('weekday', weekday);
-    }
+    const { error } = dayId
+      ? await supabase.from('plan_schedule').upsert({ user_id: userId, weekday, plan_day_id: dayId }, { onConflict: 'user_id,weekday' })
+      : await supabase.from('plan_schedule').delete().eq('user_id', userId).eq('weekday', weekday);
+    if (error) { Alert.alert('Nicht gespeichert', errorMessage(error)); loadPlan(true); }
   }
 
   async function removeExercise(dayId: string, rowId: string) {
     setDays((prev) => prev.map((d) => (d.id === dayId ? { ...d, exercises: d.exercises.filter((e) => e.rowId !== rowId) } : d)));
-    await supabase.from('workout_plan_exercises').delete().eq('id', rowId);
+    const { error } = await supabase.from('workout_plan_exercises').delete().eq('id', rowId);
+    if (error) { Alert.alert('Nicht möglich', errorMessage(error)); loadPlan(true); }
   }
 
   async function updateSetsReps(dayId: string, rowId: string, sets: number, reps: number) {
     setDays((prev) => prev.map((d) => (d.id === dayId ? { ...d, exercises: d.exercises.map((e) => (e.rowId === rowId ? { ...e, sets, reps } : e)) } : d)));
-    await supabase.from('workout_plan_exercises').update({ target_sets: sets, target_reps: reps }).eq('id', rowId);
+    const { error } = await supabase.from('workout_plan_exercises').update({ target_sets: sets, target_reps: reps }).eq('id', rowId);
+    if (error) { Alert.alert('Nicht gespeichert', errorMessage(error)); loadPlan(true); }
   }
 
   async function openAddPicker(dayId: string) {

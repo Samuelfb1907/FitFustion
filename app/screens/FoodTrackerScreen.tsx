@@ -144,7 +144,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     if (!userId) return;
     setQuickMsg(null);
     const { error: e } = await supabase.from('food_logs').insert({ user_id: userId, food_id: qf.food.id, amount_g: qf.amount, log_date: todayStr(), meal_type: mealByHour() });
-    if (e) { setError(e.message); return; }
+    if (e) { setError(errorMessage(e)); return; }
     setQuickMsg(`✓ ${qf.food.name} (${qf.amount} g) hinzugefügt`);
     await loadLogs();
     await loadQuick();
@@ -157,14 +157,15 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     setSaving(true); setError(null);
     const { error: e } = await supabase.from('food_logs').insert({ user_id: userId, food_id: selectedFood.id, amount_g: a, log_date: todayStr(), meal_type: mealType });
     setSaving(false);
-    if (e) { setError(e.message); return; }
+    if (e) { setError(errorMessage(e)); return; }
     setSelectedFood(null); setAmount('100'); setSearch(''); setMode('diary');
     await loadLogs();
     await loadQuick();
   }
 
   async function deleteLog(id: string) {
-    await supabase.from('food_logs').delete().eq('id', id);
+    const { error } = await supabase.from('food_logs').delete().eq('id', id);
+    if (error) { Alert.alert('Nicht möglich', errorMessage(error)); return; }
     await loadLogs();
   }
 
