@@ -1,8 +1,11 @@
 // Login- und Registrierungs-Screen (themed).
 import { useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { useColors, Colors } from '../contexts/ThemeContext';
+import LegalText from '../components/LegalText';
+import { DISCLAIMER_VERSION } from '../lib/legal';
 
 function translateError(msg: string): string {
   const m = msg.toLowerCase();
@@ -23,12 +26,15 @@ export default function AuthScreen() {
   const [loading, setLoading] = useState(false);
   const [info, setInfo] = useState<string | null>(null);
   const [isError, setIsError] = useState(false);
+  const [accepted, setAccepted] = useState(false);
+  const [showLegal, setShowLegal] = useState(false);
 
   function show(message: string, error: boolean) { setInfo(message); setIsError(error); }
 
   async function handleSubmit() {
     setInfo(null);
     if (!email || !password) { show('Bitte E-Mail und Passwort eingeben.', true); return; }
+    if (mode === 'register' && !accepted) { show('Bitte bestätige den Haftungsausschluss & Gesundheitshinweis, um fortzufahren.', true); return; }
     setLoading(true);
     if (mode === 'login') {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -36,7 +42,11 @@ export default function AuthScreen() {
     } else {
       const { data, error } = await supabase.auth.signUp({ email, password });
       if (error) show(translateError(error.message), true);
-      else if (!data.session) { show('Fast geschafft! Bitte bestätige deine E-Mail und logge dich dann ein.', false); setMode('login'); }
+      else {
+        // Zustimmung zum Haftungsausschluss dokumentieren (Zeitpunkt + Version)
+        try { await AsyncStorage.setItem('fitfusion.disclaimerAccepted', JSON.stringify({ version: DISCLAIMER_VERSION, at: new Date().toISOString() })); } catch {}
+        if (!data.session) { show('Fast geschafft! Bitte bestätige deine E-Mail und logge dich dann ein.', false); setMode('login'); }
+      }
     }
     setLoading(false);
   }
@@ -53,7 +63,22 @@ export default function AuthScreen() {
         <Text style={styles.label}>Passwort</Text>
         <TextInput style={styles.input} value={password} onChangeText={setPassword} placeholder="mindestens 6 Zeichen" placeholderTextColor={c.textMuted} secureTextEntry autoCapitalize="none" />
 
-        <TouchableOpacity style={[styles.button, loading && styles.buttonDisabled]} onPress={handleSubmit} disabled={loading}>
+        {mode === 'register' && (
+          <TouchableOpacity style={styles.acceptRow} onPress={() => setAccepted((a) => !a)} activeOpacity={0.7}>
+            <View style={[styles.checkbox, accepted && styles.checkboxOn]}>{accepted && <Text style={styles.checkmark}>✓</Text>}</View>
+            <Text style={styles.acceptText}>
+              Ich habe den{' '}
+              <Text style={styles.acceptLink} onPress={() => setShowLegal(true)}>Haftungsausschluss & Gesundheitshinweis</Text>
+              {' '}gelesen und akzeptiere ihn.
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        <TouchableOpacity
+          style={[styles.button, (loading || (mode === 'register' && !accepted)) && styles.buttonDisabled]}
+          onPress={handleSubmit}
+          disabled={loading || (mode === 'register' && !accepted)}
+        >
           {loading ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.buttonText}>{mode === 'login' ? 'Einloggen' : 'Registrieren'}</Text>}
         </TouchableOpacity>
 
@@ -63,6 +88,21 @@ export default function AuthScreen() {
 
         {info && <Text style={[styles.info, { color: isError ? c.danger : c.success }]}>{info}</Text>}
       </View>
+
+      <Modal visible={showLegal} animationType="slide" onRequestClose={() => setShowLegal(false)}>
+        <View style={styles.modalRoot}>
+          <Text style={styles.modalTitle}>Haftungsausschluss & Gesundheitshinweis</Text>
+          <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+            <LegalText c={c} />
+          </ScrollView>
+          <TouchableOpacity style={styles.button} onPress={() => { setAccepted(true); setShowLegal(false); }}>
+            <Text style={styles.buttonText}>Gelesen & akzeptieren</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setShowLegal(false)}>
+            <Text style={styles.toggle}>Schließen</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -80,5 +120,13 @@ function makeStyles(c: Colors) {
     buttonText: { color: c.onPrimary, fontSize: 16, fontWeight: '700' },
     toggle: { color: c.primary, textAlign: 'center', marginTop: 18, fontSize: 14 },
     info: { marginTop: 16, fontSize: 14, textAlign: 'center' },
+    acceptRow: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 18 },
+    checkbox: { width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: c.border, alignItems: 'center', justifyContent: 'center', marginRight: 10, marginTop: 1 },
+    checkboxOn: { backgroundColor: c.primary, borderColor: c.primary },
+    checkmark: { color: c.onPrimary, fontSize: 15, fontWeight: '800' },
+    acceptText: { flex: 1, fontSize: 13, color: c.textMuted, lineHeight: 19 },
+    acceptLink: { color: c.primary, fontWeight: '700' },
+    modalRoot: { flex: 1, backgroundColor: c.bg, paddingHorizontal: 20, paddingTop: 60, paddingBottom: 24 },
+    modalTitle: { fontSize: 20, fontWeight: 'bold', color: c.heading, marginBottom: 14 },
   });
 }

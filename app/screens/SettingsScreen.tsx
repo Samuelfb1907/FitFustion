@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme, useColors, Colors } from '../contexts/ThemeContext';
 import ProfileScreen from './ProfileScreen';
+import LegalText from '../components/LegalText';
 import { loadReminderPrefs, saveReminderPrefs, applyReminders, ensurePermission, ReminderPrefs } from '../lib/reminders';
 
 export default function SettingsScreen() {
@@ -13,7 +14,7 @@ export default function SettingsScreen() {
   const c = useColors();
   const styles = makeStyles(c);
 
-  const [view, setView] = useState<'menu' | 'profile'>('menu');
+  const [view, setView] = useState<'menu' | 'profile' | 'legal'>('menu');
   const [rem, setRem] = useState<ReminderPrefs | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -51,6 +52,20 @@ export default function SettingsScreen() {
   // Unterseite: Profil bearbeiten
   if (view === 'profile') {
     return <ProfileScreen onBack={() => setView('menu')} />;
+  }
+
+  // Unterseite: Rechtliches
+  if (view === 'legal') {
+    return (
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+        <TouchableOpacity onPress={() => setView('menu')}><Text style={styles.link}>‹ Zurück</Text></TouchableOpacity>
+        <Text style={[styles.title, { marginTop: 10 }]}>Rechtliches</Text>
+        <View style={[styles.card, { padding: 16 }]}>
+          <LegalText c={c} />
+        </View>
+        <Text style={styles.hint}>Stand: Vorlage. Vor einer Veröffentlichung anwaltlich prüfen und um Impressum & Datenschutzerklärung ergänzen.</Text>
+      </ScrollView>
+    );
   }
 
   return (
@@ -114,6 +129,13 @@ export default function SettingsScreen() {
       <View style={styles.card}>
         <TouchableOpacity style={styles.linkRow} onPress={redoOnboarding}>
           <Text style={styles.link}>Onboarding erneut durchlaufen</Text>
+        </TouchableOpacity>
+      </View>
+
+      <Text style={styles.section}>RECHTLICHES</Text>
+      <View style={styles.card}>
+        <TouchableOpacity style={styles.linkRow} onPress={() => setView('legal')}>
+          <Text style={styles.link}>📄  Haftungsausschluss & Gesundheitshinweis</Text>
         </TouchableOpacity>
       </View>
 
