@@ -5,6 +5,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOp
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
+import { mealByHour } from '../lib/meals';
 
 type Food = { id: string; name: string; category: string | null; kcal: number; protein: number; carbs: number; fat: number };
 type Item = { food: Food; amount_g: number };
@@ -61,7 +62,8 @@ export default function RecipesScreen({ embedded }: { embedded?: boolean }) {
 
   async function trackRecipe(r: Recipe) {
     if (!userId) return;
-    const rows = r.items.filter((i) => i.food).map((i) => ({ user_id: userId, food_id: i.food!.id, amount_g: i.amount_g, log_date: todayStr() }));
+    const meal = mealByHour();
+    const rows = r.items.filter((i) => i.food).map((i) => ({ user_id: userId, food_id: i.food!.id, amount_g: i.amount_g, log_date: todayStr(), meal_type: meal }));
     if (!rows.length) return;
     const { error } = await supabase.from('food_logs').insert(rows);
     setMsg(error ? 'Fehler: ' + error.message : `„${r.name}" zum Tagebuch hinzugefügt ✓`);

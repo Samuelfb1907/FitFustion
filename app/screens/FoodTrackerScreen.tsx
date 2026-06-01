@@ -7,9 +7,10 @@ import { useColors, Colors } from '../contexts/ThemeContext';
 import { computeNutrition, ageFromBirthDate, Gender, ActivityLevel, GoalType } from '../lib/nutrition';
 import BarcodeScanner from '../components/BarcodeScanner';
 import { resolveBarcodeFood } from '../lib/barcodeFood';
+import { TRACKER_MEALS, MealType, mealByHour, normalizeMeal } from '../lib/meals';
 
 type Food = { id: string; name: string; category: string | null; kcal: number; protein: number; carbs: number; fat: number };
-type LogEntry = { id: string; amount_g: number; food: Food | null };
+type LogEntry = { id: string; amount_g: number; meal_type: string | null; food: Food | null };
 
 function todayStr(): string {
   const d = new Date();
@@ -33,6 +34,7 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
   const [search, setSearch] = useState('');
   const [selectedFood, setSelectedFood] = useState<Food | null>(null);
   const [amount, setAmount] = useState('100');
+  const [mealType, setMealType] = useState<MealType>(mealByHour());
   const [saving, setSaving] = useState(false);
   const [waterMl, setWaterMl] = useState(0);
   const [waterIds, setWaterIds] = useState<string[]>([]);
@@ -59,6 +61,7 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
     setFoods((prev) => (prev.some((f) => f.id === food.id) ? prev : [...prev, food].sort((a, b) => a.name.localeCompare(b.name))));
     setSelectedFood(food);
     setAmount('100');
+    setMealType(mealByHour());
     setMode('amount');
   }
 
@@ -103,8 +106,8 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
 
   async function loadLogs() {
     if (!userId) return;
-    const { data } = await supabase.from('food_logs').select('id, amount_g, foods(id, name, category, kcal, protein, carbs, fat)').eq('user_id', userId).eq('log_date', todayStr()).order('created_at');
-    setLogs((data ?? []).map((row: any) => ({ id: row.id, amount_g: row.amount_g, food: Array.isArray(row.foods) ? row.foods[0] : row.foods })));
+    const { data } = await supabase.from('food_logs').select('id, amount_g, meal_type, foods(id, name, category, kcal, protein, carbs, fat)').eq('user_id', userId).eq('log_date', todayStr()).order('created_at');
+    setLogs((data ?? []).map((row: any) => ({ id: row.id, amount_g: row.amount_g, meal_type: row.meal_type ?? null, food: Array.isArray(row.foods) ? row.foods[0] : row.foods })));
   }
 
   async function addLog() {
@@ -112,7 +115,7 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
     const a = Number(amount.replace(',', '.'));
     if (!a || a <= 0) { setError('Bitte gültige Menge in Gramm eingeben.'); return; }
     setSaving(true); setError(null);
-    const { error: e } = await supabase.from('food_logs').insert({ user_id: userId, food_id: selectedFood.id, amount_g: a, log_date: todayStr() });
+    const { error: e } = await supabase.from('food_logs').insert({ user_id: userId, food_id: selectedFood.id, amount_g: a, log_date: todayStr(), meal_type: mealType });
     setSaving(false);
     if (e) { setError(e.message); return; }
     setSelectedFood(null); setAmount('100'); setSearch(''); setMode('diary');
@@ -155,6 +158,14 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
         <Text style={styles.inputLabel}>Menge in Gramm</Text>
         <TextInput style={styles.input} value={amount} onChangeText={setAmount} keyboardType="numeric" placeholder="z. B. 150" placeholderTextColor={c.textMuted} />
         <Text style={styles.preview}>= {previewKcal} kcal</Text>
+        <Text style={styles.inputLabel}>Mahlzeit</Text>
+        <View style={styles.mealChips}>
+          {TRACKER_MEALS.map((m) => (
+            <TouchableOpacity key={m.key} style={[styles.mealChip, mealType === m.key && styles.mealChipActive]} onPress={() => setMealType(m.key)} activeOpacity={0.8}>
+              <Text style={[styles.mealChipText, mealType === m.key && styles.mealChipTextActive]}>{m.icon} {m.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
         <TouchableOpacity style={[styles.primaryBtn, saving && { opacity: 0.6 }]} onPress={addLog} disabled={saving}>
           {saving ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.primaryText}>Zum Tagebuch hinzufügen</Text>}
         </TouchableOpacity>
@@ -213,24 +224,41 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
       </View>
       <Text style={styles.macroLine}>{totalP} g Protein · {totalC} g KH · {totalF} g Fett</Text>
       <View style={styles.actionRow}>
-        <TouchableOpacity style={styles.addBtnRow} onPress={() => setMode('pick')}>
+        <TouchableOpacity style={styles.addBtnRow} onPress={() => { setMealType(mealByHour()); setError(null); setMode('pick'); }}>
           <Text style={styles.addText}>➕  Hinzufügen</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.scanBtn} onPress={() => { setError(null); setScannerOpen(true); }}>
           <Text style={styles.scanText}>📷  Scannen</Text>
         </TouchableOpacity>
       </View>
-      {logs.length === 0 ? (
-        <Text style={styles.empty}>Noch nichts getrackt. Füge deine erste Zutat hinzu! 🍽️</Text>
-      ) : (
-        logs.map((e) => (
-          <View key={e.id} style={styles.logRow}>
-            <View style={{ flex: 1 }}><Text style={styles.logName}>{e.food?.name ?? '—'}</Text><Text style={styles.logMeta}>{e.amount_g} g</Text></View>
-            <Text style={styles.logKcal}>{kcalOf(e)} kcal</Text>
-            <TouchableOpacity onPress={() => deleteLog(e.id)} style={styles.del}><Text style={styles.delText}>✕</Text></TouchableOpacity>
+      {TRACKER_MEALS.map((m) => {
+        const items = logs.filter((e) => normalizeMeal(e.meal_type) === m.key);
+        const mealKcal = items.reduce((s, e) => s + kcalOf(e), 0);
+        return (
+          <View key={m.key} style={styles.mealSection}>
+            <View style={styles.mealHeader}>
+              <Text style={styles.mealTitle}>{m.icon}  {m.label}</Text>
+              <View style={styles.mealHeaderRight}>
+                {mealKcal > 0 && <Text style={styles.mealKcal}>{mealKcal} kcal</Text>}
+                <TouchableOpacity style={styles.mealAdd} onPress={() => { setMealType(m.key); setError(null); setMode('pick'); }} activeOpacity={0.8}>
+                  <Text style={styles.mealAddText}>＋</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            {items.length === 0 ? (
+              <Text style={styles.mealEmpty}>Noch nichts</Text>
+            ) : (
+              items.map((e) => (
+                <View key={e.id} style={styles.logRow}>
+                  <View style={{ flex: 1 }}><Text style={styles.logName}>{e.food?.name ?? '—'}</Text><Text style={styles.logMeta}>{e.amount_g} g</Text></View>
+                  <Text style={styles.logKcal}>{kcalOf(e)} kcal</Text>
+                  <TouchableOpacity onPress={() => deleteLog(e.id)} style={styles.del}><Text style={styles.delText}>✕</Text></TouchableOpacity>
+                </View>
+              ))
+            )}
           </View>
-        ))
-      )}
+        );
+      })}
       {error && <Text style={styles.error}>{error}</Text>}
     </ScrollView>
     <BarcodeScanner visible={scannerOpen} c={c} onClose={() => setScannerOpen(false)} onScanned={handleScanned} />
@@ -274,6 +302,19 @@ function makeStyles(c: Colors) {
     logKcal: { fontSize: 15, fontWeight: '700', color: c.heading, marginRight: 12 },
     del: { padding: 4 },
     delText: { fontSize: 16, color: c.textMuted },
+    mealChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
+    mealChip: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, backgroundColor: c.inputBg, borderWidth: 1, borderColor: c.border },
+    mealChipActive: { backgroundColor: c.primary, borderColor: c.primary },
+    mealChipText: { fontSize: 14, fontWeight: '600', color: c.text },
+    mealChipTextActive: { color: c.onPrimary },
+    mealSection: { marginBottom: 14 },
+    mealHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+    mealTitle: { fontSize: 16, fontWeight: '700', color: c.heading },
+    mealHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    mealKcal: { fontSize: 13, fontWeight: '700', color: c.textMuted },
+    mealAdd: { width: 30, height: 30, borderRadius: 15, backgroundColor: c.inputBg, borderWidth: 1, borderColor: c.primary, alignItems: 'center', justifyContent: 'center' },
+    mealAddText: { fontSize: 16, color: c.primary, fontWeight: '700', lineHeight: 18 },
+    mealEmpty: { fontSize: 13, color: c.textMuted, fontStyle: 'italic', paddingVertical: 6, paddingLeft: 2 },
     inputLabel: { fontSize: 14, color: c.text, fontWeight: '600', marginTop: 8, marginBottom: 6 },
     input: { borderWidth: 1, borderColor: c.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, backgroundColor: c.inputBg, color: c.text },
     preview: { fontSize: 18, fontWeight: '700', color: c.heading, marginTop: 14 },
