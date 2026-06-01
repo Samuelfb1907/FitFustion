@@ -138,7 +138,7 @@ export default function NutritionScreen({ embedded }: { embedded?: boolean }) {
           <TouchableOpacity style={[styles.primaryBtn, generating && { opacity: 0.6 }]} onPress={generate} disabled={generating || !targets}>
             {generating ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.primaryText}>Plan für heute erstellen</Text>}
           </TouchableOpacity>
-          <Text style={styles.hint}>Die Mahlzeiten werden an deine Kalorien/Makros angepasst und schließen deine Allergien aus{allergies.length > 0 ? ` (${allergies.length} berücksichtigt)` : ''}.</Text>
+          <Text style={styles.hint}>Die Mahlzeiten werden an deine Kalorien/Makros angepasst. Gerichte mit deinen Allergenen werden nach Möglichkeit ausgeschlossen{allergies.length > 0 ? ` (${allergies.length} berücksichtigt)` : ''} – bitte die Zutaten trotzdem selbst prüfen.</Text>
         </>
       ) : (
         <>
@@ -155,6 +155,9 @@ export default function NutritionScreen({ embedded }: { embedded?: boolean }) {
               <Text style={styles.recipeLink}>Rezept ansehen ›</Text>
             </TouchableOpacity>
           ))}
+          {allergies.length > 0 && meals.length < 4 && (
+            <Text style={styles.hint}>Hinweis: Für manche Mahlzeiten gibt es mit deinen Allergien aktuell keine passende Option – sie wurden ausgelassen.</Text>
+          )}
           <View style={styles.totalCard}>
             <Text style={styles.totalLabel}>Tagessumme</Text>
             <Text style={styles.totalKcal}>{totals.kcal.toLocaleString('de-DE')} kcal</Text>

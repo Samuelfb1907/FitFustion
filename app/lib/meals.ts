@@ -1,5 +1,6 @@
 // Mahlzeiten-Bibliothek + Generator für den Tages-Ernährungsplan.
 // Reine Logik (kein UI/DB). Allergen-Tags nutzen dieselben Schlüssel wie das Onboarding.
+import { allergensForIngredients } from './allergens';
 
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
@@ -292,9 +293,15 @@ const MEALS: MealTemplate[] = [
     ingredients: [{ name: 'Erdnüsse', g: 40 }] },
 ];
 
+// Effektive Allergene einer Mahlzeit: manuell getaggte + automatisch aus den Zutaten abgeleitete.
+export function effectiveAllergens(m: MealTemplate): string[] {
+  return Array.from(new Set([...m.allergens, ...allergensForIngredients(m.ingredients)]));
+}
+
 // Alle allergikersicheren Optionen einer Mahlzeit-Kategorie.
 export function safeMealsFor(type: MealType, allergies: string[]): MealTemplate[] {
-  return MEALS.filter((m) => m.type === type && !m.allergens.some((a) => allergies.includes(a)));
+  if (!allergies.length) return MEALS.filter((m) => m.type === type);
+  return MEALS.filter((m) => m.type === type && !effectiveAllergens(m).some((a) => allergies.includes(a)));
 }
 
 // Kalorien-Anteil einer Mahlzeit am Tagesziel.
