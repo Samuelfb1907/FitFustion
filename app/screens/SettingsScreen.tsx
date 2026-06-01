@@ -1,11 +1,15 @@
 // Einstellungen: Profil-Unterseite, Dark-Mode-Schalter, Abmelden und übliche App-Einstellungen.
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme, useColors, Colors } from '../contexts/ThemeContext';
 import ProfileScreen from './ProfileScreen';
 import LegalText from '../components/LegalText';
+import { PRIVACY_SECTIONS } from '../lib/legal';
+import { exportUserData, deleteAccount } from '../lib/gdpr';
 import { loadReminderPrefs, saveReminderPrefs, applyReminders, ensurePermission, ReminderPrefs } from '../lib/reminders';
 import { useFocusTick } from '../lib/useFocusTick';
 
@@ -15,7 +19,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
   const c = useColors();
   const styles = makeStyles(c);
 
-  const [view, setView] = useState<'menu' | 'profile' | 'legal'>('menu');
+  const [view, setView] = useState<'menu' | 'profile' | 'legal' | 'privacy'>('menu');
   const [rem, setRem] = useState<ReminderPrefs | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -53,6 +57,47 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
     await supabase.auth.signOut();
   }
 
+  // DSGVO: Datenexport (Auskunft/Portabilität) als JSON-Datei teilen
+  async function exportData() {
+    const uid = session?.user?.id;
+    if (!uid) return;
+    setBusy(true); setMsg(null);
+    try {
+      const data = await exportUserData(uid);
+      const json = JSON.stringify(data, null, 2);
+      const uri = FileSystem.documentDirectory + 'fitfusion-datenexport.json';
+      await FileSystem.writeAsStringAsync(uri, json);
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri, { mimeType: 'application/json', dialogTitle: 'FitFusion Datenexport' });
+      } else {
+        setMsg('Teilen ist auf diesem Gerät nicht verfügbar.');
+      }
+    } catch (e: any) {
+      setMsg('Export fehlgeschlagen: ' + (e?.message ?? ''));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // DSGVO: Konto & alle Daten löschen (Recht auf Löschung)
+  function confirmDeleteAccount() {
+    Alert.alert(
+      'Konto & alle Daten löschen?',
+      'Dadurch werden ALLE deine Daten (Profil, Training, Ernährung, Fortschritt) unwiderruflich gelöscht. Dieser Schritt kann nicht rückgängig gemacht werden.',
+      [
+        { text: 'Abbrechen', style: 'cancel' },
+        { text: 'Endgültig löschen', style: 'destructive', onPress: doDeleteAccount },
+      ],
+    );
+  }
+  async function doDeleteAccount() {
+    const uid = session?.user?.id;
+    if (!uid) return;
+    setBusy(true); setMsg(null);
+    try { await deleteAccount(uid); } catch {}
+    await supabase.auth.signOut(); // beendet die Sitzung -> zurück zum Login
+  }
+
   // Unterseite: Profil bearbeiten
   if (view === 'profile') {
     return <ProfileScreen onBack={() => setView('menu')} />;
@@ -68,6 +113,20 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
           <LegalText c={c} />
         </View>
         <Text style={styles.hint}>Stand: Vorlage. Vor einer Veröffentlichung anwaltlich prüfen und um Impressum & Datenschutzerklärung ergänzen.</Text>
+      </ScrollView>
+    );
+  }
+
+  // Unterseite: Datenschutzerklärung
+  if (view === 'privacy') {
+    return (
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+        <TouchableOpacity onPress={() => setView('menu')}><Text style={styles.link}>‹ Zurück</Text></TouchableOpacity>
+        <Text style={[styles.title, { marginTop: 10 }]}>Datenschutzerklärung</Text>
+        <View style={[styles.card, { padding: 16 }]}>
+          <LegalText c={c} sections={PRIVACY_SECTIONS} />
+        </View>
+        <Text style={styles.hint}>Vorlage – Platzhalter [...] ausfüllen und vor Veröffentlichung anwaltlich prüfen (zusätzlich Impressum & AVV mit Supabase).</Text>
       </ScrollView>
     );
   }
@@ -133,6 +192,19 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
       <View style={styles.card}>
         <TouchableOpacity style={styles.linkRow} onPress={redoOnboarding}>
           <Text style={styles.link}>Onboarding erneut durchlaufen</Text>
+        </TouchableOpacity>
+      </View>
+
+      <Text style={styles.section}>DATENSCHUTZ (DSGVO)</Text>
+      <View style={styles.card}>
+        <TouchableOpacity style={styles.linkRow} onPress={exportData} disabled={busy}>
+          <Text style={styles.link}>📤  Meine Daten exportieren</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.linkRow} onPress={() => setView('privacy')}>
+          <Text style={styles.link}>🔒  Datenschutzerklärung</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.linkRow} onPress={confirmDeleteAccount} disabled={busy}>
+          <Text style={[styles.link, { color: c.danger }]}>🗑  Konto & alle Daten löschen</Text>
         </TouchableOpacity>
       </View>
 

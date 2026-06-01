@@ -4,10 +4,10 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Colors } from '../contexts/ThemeContext';
 import { DISCLAIMER_SECTIONS } from '../lib/legal';
 
-export default function LegalText({ c }: { c: Colors }) {
+export default function LegalText({ c, sections = DISCLAIMER_SECTIONS }: { c: Colors; sections?: { h: string; p: string }[] }) {
   return (
     <View>
-      {DISCLAIMER_SECTIONS.map((s, i) => (
+      {sections.map((s, i) => (
         <View key={i} style={styles.block}>
           <Text style={[styles.h, { color: c.heading }]}>{s.h}</Text>
           <Text style={[styles.p, { color: c.text }]}>{s.p}</Text>

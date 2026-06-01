@@ -45,3 +45,39 @@ export const DISCLAIMER_SECTIONS: { h: string; p: string }[] = [
     p: 'Mit der Nutzung von FitFusion bestätigst du, dass du diesen Hinweis gelesen und verstanden hast und die App eigenverantwortlich nutzt.',
   },
 ];
+
+// Datenschutzerklaerung (Vorlage – Platzhalter [...] ausfuellen, vor Release anwaltlich pruefen).
+export const PRIVACY_SECTIONS: { h: string; p: string }[] = [
+  {
+    h: 'Verantwortlicher',
+    p: 'Verantwortlich für die Datenverarbeitung in FitFusion ist: [Name], [Anschrift], E-Mail: [Kontakt-E-Mail]. (Bitte vor Veröffentlichung ausfüllen.)',
+  },
+  {
+    h: 'Welche Daten wir verarbeiten',
+    p: 'Konto: E-Mail-Adresse. Profil: Vorname, Alter/Geburtsjahr, Geschlecht, Größe, Gewicht, Aktivitätslevel, Erfahrungslevel, Trainingsumgebung, Allergie-Angaben. Nutzungsdaten: Trainingseinheiten & Sätze, Trainingspläne, Essens-Tagebuch, Wasser- und Gewichtsverlauf, Erfolge. Einige davon sind Gesundheitsdaten (besondere Kategorie nach Art. 9 DSGVO).',
+  },
+  {
+    h: 'Zwecke & Rechtsgrundlage',
+    p: 'Wir verarbeiten die Daten ausschließlich, um dir die App-Funktionen bereitzustellen (Tracking, Auswertungen) – Rechtsgrundlage Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung). Gesundheitsbezogene Daten verarbeiten wir auf Grundlage deiner ausdrücklichen Einwilligung (Art. 9 Abs. 2 lit. a DSGVO), die du mit der Nutzung/Eingabe erteilst und jederzeit widerrufen kannst.',
+  },
+  {
+    h: 'Hosting & Dienstleister',
+    p: 'Deine Daten werden bei Supabase gespeichert (Datenbank, Authentifizierung, Hosting) – als Auftragsverarbeiter. Für Übungs-Animationen wird ExerciseDB (RapidAPI) und für Lebensmitteldaten Open Food Facts genutzt. Mit Auftragsverarbeitern ist ein Auftragsverarbeitungsvertrag (AVV) abzuschließen. [Bitte AVV mit Supabase abschließen.]',
+  },
+  {
+    h: 'Speicherdauer',
+    p: 'Wir speichern deine Daten, solange dein Konto besteht. Löschst du dein Konto (Einstellungen → Datenschutz → „Konto & alle Daten löschen"), werden deine personenbezogenen Daten entfernt.',
+  },
+  {
+    h: 'Deine Rechte',
+    p: 'Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch sowie das Recht, eine erteilte Einwilligung zu widerrufen. Direkt in der App: „Meine Daten exportieren" (Auskunft/Portabilität) und „Konto & alle Daten löschen" (Löschung) unter Einstellungen → Datenschutz.',
+  },
+  {
+    h: 'Beschwerderecht',
+    p: 'Du kannst dich bei einer Datenschutz-Aufsichtsbehörde beschweren, wenn du der Ansicht bist, dass die Verarbeitung deiner Daten gegen die DSGVO verstößt.',
+  },
+  {
+    h: 'Keine Werbung / keine automatisierten Entscheidungen',
+    p: 'Wir geben deine Daten nicht zu Werbezwecken weiter und nutzen keine automatisierte Entscheidungsfindung oder Profiling mit rechtlicher Wirkung. Kontakt bei Fragen: [Kontakt-E-Mail].',
+  },
+];

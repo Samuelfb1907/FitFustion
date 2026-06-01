@@ -27,7 +27,7 @@ Der **App-Code ist erstaunlich solide**: `tsc` ist fehlerfrei, alle 14 Screens s
 ## 🟠 Wichtig (vor einer Veröffentlichung)
 
 ### Sicherheit & Datenschutz
-- [ ] **DSGVO: Konto- & Datenlöschung + Export** – Gesundheitsdaten (Art. 9) ohne jeden Self-Service für Art. 17/20. → Supabase Edge Function (service_role) `auth.admin.deleteUser` (Tabellen haben bereits `on delete cascade`) + „Konto & Daten löschen"-Button mit Bestätigung; optional JSON-Export. *(SettingsScreen.tsx)*
+- [x] **DSGVO: Konto- & Datenlöschung + Export** ✅ – In **Einstellungen → Datenschutz**: „Meine Daten exportieren" (JSON-Datei teilen, Art. 15/20), „Datenschutzerklärung" (Vorlage), „Konto & alle Daten löschen" (Art. 17, mit Bestätigung). Löschen wischt alle Datenzeilen client-seitig + meldet ab; optionale Edge Function `delete-account` (service_role) entfernt zusätzlich das Auth-Konto (Cascade). Migration 014 erlaubt Profil-Löschung. *Offen: Edge Function deployen (SUPABASE_FUNCTIONS.md), Platzhalter in Datenschutzerklärung/Impressum ausfüllen, anwaltliche Prüfung.* *(SettingsScreen.tsx, lib/gdpr.ts, db/014, supabase/functions/delete-account)*
 - [ ] **ExerciseDB/RapidAPI-Key aus dem Client nehmen** – `EXPO_PUBLIC_EXERCISEDB_KEY` wird ins Bundle gebacken → der **bezahlte** Key ist aus jeder App auslesbar. → GIF-Abruf über Proxy/Edge-Function (Key serverseitig) **und Key bei RapidAPI rotieren**; RapidAPI-Spend-Limit setzen. *(components/ExerciseGif.tsx, .env)*
 - [ ] **E-Mail-Bestätigung aktivieren** – aktuell aus → Registrierung mit fremden Adressen möglich, Reset untergraben. → In Supabase-Auth „Confirm email" an; Mindest-Passwortlänge erhöhen. *(Supabase-Einstellung, AuthScreen.tsx)*
 
