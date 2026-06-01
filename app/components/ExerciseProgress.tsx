@@ -7,17 +7,11 @@ import { useAuth } from '../contexts/AuthContext';
 import { Colors } from '../contexts/ThemeContext';
 import { LineChart, BarChart } from './Charts';
 import { localDateStr, ddmm } from '../lib/date';
+import { grp, unwrap } from '../lib/format';
 
 type DayStat = { date: string; maxWeight: number; bestReps: number; maxReps: number; volume: number };
 
-function unwrap<T>(rel: T | T[] | null | undefined): T | null {
-  if (!rel) return null;
-  return Array.isArray(rel) ? rel[0] ?? null : rel;
-}
-// ddmm -> lib/date.ts
-function grp(n: number): string {
-  return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-}
+// unwrap & grp -> lib/format.ts; ddmm -> lib/date.ts
 
 export default function ExerciseProgress({
   exerciseId, exerciseName, c, onBack,

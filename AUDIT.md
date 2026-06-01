@@ -60,11 +60,11 @@ Der **App-Code ist erstaunlich solide**: `tsc` ist fehlerfrei, alle 14 Screens s
 
 ### Code
 - [x] **Fehlerbehandlung bei Supabase-Writes** ✅ ERLEDIGT (Schreibvorgänge prüfen jetzt `error` → freundlicher Hinweis/Alert via zentralem `errorMessage`, bei optimistischen Updates zusätzlich Resync mit der DB) – früher: viele `insert/update/delete` ignorieren `error` (stille Fehlschläge, optimistischer State läuft mit DB auseinander). *(weight.ts, HomeScreen, WaterScreen, PlanScreen, TrainingScreen, FoodTrackerScreen)*
-- [~] **Duplikation zentralisieren** (teilweise ✅) – fertig: Anzeige-/Erlaubt-Konstanten (`DIFF/EQUIP_LABELS`, `ALLOWED_DIFF/EQUIP`) → neue `lib/training.ts`; Datums-Helfer `todayStr`/`startOfTodayISO`/`ddmm` → `lib/date.ts` (lokale Kopien aus 9 Dateien entfernt). Offen: restliche Datums-Helfer (mondayOf/dStr), `KEY_TO_SLUGS`, `ALLOWED_DIFF/EQUIP`, `DIFF/EQUIP_LABELS`, `unwrap/ddmm/grp`, Wasser-Logik → `lib/date.ts`, `lib/muscles.ts`, `lib/training.ts`, `lib/water.ts`. *(diverse)*
+- [~] **Duplikation zentralisieren** (teilweise ✅) – fertig: Anzeige-/Erlaubt-Konstanten (`DIFF/EQUIP_LABELS`, `ALLOWED_DIFF/EQUIP`) → neue `lib/training.ts`; Datums-Helfer `todayStr`/`startOfTodayISO`/`ddmm` → `lib/date.ts` (lokale Kopien aus 9 Dateien entfernt); zudem grp/unwrap -> neue `lib/format.ts`. Offen: restliche Datums-Helfer (mondayOf/dStr), `KEY_TO_SLUGS`, `ALLOWED_DIFF/EQUIP`, `DIFF/EQUIP_LABELS`, `unwrap/ddmm/grp`, Wasser-Logik → `lib/date.ts`, `lib/muscles.ts`, `lib/training.ts`, `lib/water.ts`. *(diverse)*
 - [ ] **Nicht-atomare Delete→Insert** (Plan/Rezept/Ziel) → RPC-Transaktion oder „erst neu anlegen, dann altes deaktivieren". *(NutritionScreen, PlanScreen, RecipesScreen)*
 - [x] **Memoisierung** ✅ – ThemeContext-`value` per `useMemo` (verhindert App-weite Re-Renders); `makeStyles` per `useMemo` in den eingabe-intensiven Screens (FoodTracker, ExerciseDetail, Progress). *(Loader-`useCallback` in den übrigen Screens optional – greift kaum, da Bereiche jetzt gemountet bleiben.)*
 - [ ] **`recipeFor`/`swapMeal` über stabilen Key statt Anzeigename**; Rezept-0g-Items validieren; Barcode-Konflikt zusätzlich per Barcode auflösen; `parseWeight` `Number.isNaN`. *(meals.ts, RecipesScreen, barcodeFood.ts, weight.ts)*
-- [ ] **Tote Styles entfernen** (FoodTrackerScreen, ProgressScreen, ExerciseDetail). *(diverse)*
+- [~] **Tote Styles entfernen** (✅ FoodTracker: 12 Redesign-Reste, ProgressScreen: 3 Delta-Styles entfernt; ExerciseDetail noch offen – minor). *(diverse)*
 
 ### UX / Barrierefreiheit
 - [ ] **Ernährungsplan ins Tagebuch übernehmen** – Plan-Gerichte haben keinen „Ins Tagebuch"-Button (Rezepte schon). *(NutritionScreen.tsx)*

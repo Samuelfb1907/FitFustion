@@ -12,6 +12,7 @@ import ErrorRetry from '../components/ErrorRetry';
 import { useFocusTick } from '../lib/useFocusTick';
 import { localDateStr, ddmm } from '../lib/date';
 import { errorMessage } from '../lib/errors';
+import { grp, unwrap } from '../lib/format';
 import { WeightPoint, loadWeights, saveTodayWeight, deleteWeight, deltaOver, parseWeight, WEIGHT_MIN, WEIGHT_MAX } from '../lib/weight';
 
 type PR = { id: string; name: string; weight: number; reps: number | null };
@@ -29,17 +30,10 @@ function mondayOf(d: Date): Date {
   x.setDate(x.getDate() - day);
   return x;
 }
-// 12530 -> "12.530" (deutsche Tausenderpunkte)
-function grp(n: number): string {
-  return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-}
+// grp -> lib/format.ts
 // ddmm -> lib/date.ts
 
-// Eingebettete Relation kann Objekt ODER Array sein -> sicher entpacken
-function unwrap<T>(rel: T | T[] | null | undefined): T | null {
-  if (!rel) return null;
-  return Array.isArray(rel) ? rel[0] ?? null : rel;
-}
+// unwrap -> lib/format.ts
 
 export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
   const { session } = useAuth();
@@ -462,9 +456,6 @@ function makeStyles(c: Colors) {
     bigWeight: { fontSize: 34, fontWeight: 'bold', color: c.heading },
     bigWeightMuted: { fontSize: 28, fontWeight: '700', color: c.textMuted },
     weightUnit: { fontSize: 12, color: c.textMuted, marginTop: 2 },
-    deltaChip: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6, alignItems: 'center' },
-    deltaText: { fontSize: 16, fontWeight: '700' },
-    deltaSub: { fontSize: 10, color: c.textMuted, marginTop: 1 },
 
     deltaGrid: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 14, gap: 8 },
     deltaCell: { flex: 1, backgroundColor: c.inputBg, borderRadius: 12, paddingVertical: 10, alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
