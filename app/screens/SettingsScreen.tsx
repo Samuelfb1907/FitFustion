@@ -7,8 +7,9 @@ import { useTheme, useColors, Colors } from '../contexts/ThemeContext';
 import ProfileScreen from './ProfileScreen';
 import LegalText from '../components/LegalText';
 import { loadReminderPrefs, saveReminderPrefs, applyReminders, ensurePermission, ReminderPrefs } from '../lib/reminders';
+import { useFocusTick } from '../lib/useFocusTick';
 
-export default function SettingsScreen() {
+export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
   const { session, refreshProfile } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const c = useColors();
@@ -22,6 +23,9 @@ export default function SettingsScreen() {
   useEffect(() => {
     loadReminderPrefs().then(setRem);
   }, []);
+
+  // Reiter erneut angetippt -> zurueck zum Einstellungs-Menue
+  useFocusTick(focusTick, () => setView('menu'));
   async function updateRem(next: ReminderPrefs) {
     if (next.enabled && !rem?.enabled) {
       const ok = await ensurePermission();

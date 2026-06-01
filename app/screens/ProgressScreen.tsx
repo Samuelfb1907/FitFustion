@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { LineChart, BarChart } from '../components/Charts';
 import ExerciseProgress from '../components/ExerciseProgress';
+import { useFocusTick } from '../lib/useFocusTick';
 import { WeightPoint, loadWeights, saveTodayWeight, deleteWeight, deltaOver, parseWeight, WEIGHT_MIN, WEIGHT_MAX } from '../lib/weight';
 
 type PR = { id: string; name: string; weight: number; reps: number | null };
@@ -40,7 +41,7 @@ function unwrap<T>(rel: T | T[] | null | undefined): T | null {
   return Array.isArray(rel) ? rel[0] ?? null : rel;
 }
 
-export default function ProgressScreen() {
+export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
   const { session } = useAuth();
   const c = useColors();
   const styles = makeStyles(c);
@@ -64,10 +65,10 @@ export default function ProgressScreen() {
   const [msgErr, setMsgErr] = useState(false);
   const [showHist, setShowHist] = useState(false);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (silent = false) => {
     const userId = session?.user?.id;
     if (!userId) return;
-    setLoading(true);
+    if (!silent) setLoading(true);
 
     // 1) Gewichtseintraege
     setWeights(await loadWeights(userId));
@@ -177,6 +178,9 @@ export default function ProgressScreen() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Reiter erneut angetippt -> Detailansicht schliessen + leise aktualisieren (ohne Spinner)
+  useFocusTick(focusTick, () => { setSelExercise(null); load(true); });
 
   async function saveWeight() {
     const userId = session?.user?.id;

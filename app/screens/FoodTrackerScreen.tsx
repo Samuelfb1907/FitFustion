@@ -9,6 +9,7 @@ import BarcodeScanner from '../components/BarcodeScanner';
 import { resolveBarcodeFood } from '../lib/barcodeFood';
 import { TRACKER_MEALS, MealType, mealByHour, normalizeMeal } from '../lib/meals';
 import { NUTRITION_DISCLAIMER, ALLERGY_HINT } from '../lib/legal';
+import { useFocusTick } from '../lib/useFocusTick';
 
 type Food = { id: string; name: string; category: string | null; kcal: number; protein: number; carbs: number; fat: number; user_id?: string | null };
 type LogEntry = { id: string; amount_g: number; meal_type: string | null; food: Food | null };
@@ -19,7 +20,7 @@ function todayStr(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) {
+export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: boolean; focusTick?: number }) {
   const { session } = useAuth();
   const userId = session?.user?.id;
   const c = useColors();
@@ -46,6 +47,12 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
   const [foodErr, setFoodErr] = useState<string | null>(null);
 
   useEffect(() => { init(); }, [userId]);
+
+  // Reiter erneut angetippt -> zurueck zum Tagebuch + leise aktualisieren (ohne Spinner)
+  useFocusTick(focusTick, () => {
+    setMode('diary'); setSelectedFood(null); setSearch(''); setError(null); setScannerOpen(false);
+    loadLogs(); loadQuick();
+  });
 
   async function handleScanned(code: string) {
     setScannerOpen(false);

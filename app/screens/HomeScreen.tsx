@@ -43,7 +43,7 @@ async function countRows(table: string, userId: string): Promise<number> {
 type Eaten = { kcal: number; p: number; c: number; f: number };
 const WATER_GOAL = 2500; // Tagesziel in ml
 
-export default function HomeScreen({ onNavigate }: { onNavigate?: (tab: string) => void }) {
+export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (tab: string) => void; focusTick?: number }) {
   const { session, profile } = useAuth();
   const c = useColors();
   const styles = makeStyles(c);
@@ -147,7 +147,8 @@ export default function HomeScreen({ onNavigate }: { onNavigate?: (tab: string) 
       setLoading(false);
     }
     load();
-  }, [session?.user?.id]);
+    // focusTick: beim erneuten Antippen des Start-Reiters leise neu laden (load setzt keinen Spinner)
+  }, [session?.user?.id, focusTick]);
 
   async function endTraining() {
     if (!activeSession) return;

@@ -4,6 +4,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
+import { useFocusTick } from '../lib/useFocusTick';
 
 type WaterRow = { id: string; amount_ml: number; created_at: string };
 
@@ -19,7 +20,7 @@ function hhmm(iso: string): string {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
-export default function WaterScreen({ embedded }: { embedded?: boolean }) {
+export default function WaterScreen({ embedded, focusTick }: { embedded?: boolean; focusTick?: number }) {
   const { session } = useAuth();
   const userId = session?.user?.id;
   const c = useColors();
@@ -30,12 +31,20 @@ export default function WaterScreen({ embedded }: { embedded?: boolean }) {
 
   useEffect(() => { load(); }, [userId]);
 
-  async function load() {
-    if (!userId) { setLoading(false); return; }
+  // Reiter erneut angetippt -> leise aktualisieren (ohne Spinner)
+  useFocusTick(focusTick, () => { fetchRows(); });
+
+  async function fetchRows() {
+    if (!userId) return;
     const { data } = await supabase
       .from('water_logs').select('id, amount_ml, created_at')
       .eq('user_id', userId).eq('log_date', todayStr()).order('created_at');
     setRows((data ?? []) as WaterRow[]);
+  }
+
+  async function load() {
+    if (!userId) { setLoading(false); return; }
+    await fetchRows();
     setLoading(false);
   }
 

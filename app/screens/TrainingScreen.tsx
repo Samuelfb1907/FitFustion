@@ -9,6 +9,7 @@ import ExerciseDetail from '../components/ExerciseDetail';
 import BodyMuscleMap from '../components/BodyMuscleMap';
 import Segmented from '../components/Segmented';
 import PlanScreen from './PlanScreen';
+import { useFocusTick } from '../lib/useFocusTick';
 
 type Muscle = { id: string; key: string; name_de: string; body_region: string | null };
 type Exercise = { id: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null };
@@ -28,7 +29,7 @@ const ALLOWED_EQUIP: Record<string, string[]> = {
   no_equipment: ['bodyweight', 'none'],
 };
 
-export default function TrainingScreen() {
+export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
   const { profile } = useAuth();
   const c = useColors();
   const styles = makeStyles(c);
@@ -49,6 +50,14 @@ export default function TrainingScreen() {
       setMuscles(data ?? []);
     });
   }, []);
+
+  // Reiter erneut angetippt -> zurueck zur Startansicht (Muskel-Auswahl, Freies Training)
+  useFocusTick(focusTick, () => {
+    setSeg('free');
+    setSelectedExercise(null);
+    setSelectedMuscle(null);
+    setPickedMuscle(null);
+  });
 
   async function openMuscle(m: Muscle) {
     setSelectedMuscle(m);

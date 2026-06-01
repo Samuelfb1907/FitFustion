@@ -46,7 +46,7 @@ Der **App-Code ist erstaunlich solide**: `tsc` ist fehlerfrei, alle 14 Screens s
 
 ### Performance
 - [x] **Lange Listen virtualisieren** ✅ – Lebensmittel-Auswahl auf `FlatList` umgestellt (nur sichtbare Zeilen, `initialNumToRender`/`windowSize`/`removeClippedSubviews`), `filteredFoods` + `makeStyles` per `useMemo`. Behebt die ~1s-Verzögerung beim „+". *(FoodTrackerScreen.tsx)*
-- [ ] **Tab-Remount entschärfen** – `key={tab-${nonce}}` lädt bei jedem Tab-Tipp ALLE Daten neu. → Reset nur des View-States (statt voller Remount) oder Daten cachen (Context/React Query). *(MainTabs.tsx)*
+- [x] **Tab-Remount entschärft** ✅ – Bereiche bleiben gemountet (Sichtbarkeits-Umschaltung, faul nachgeladen) → Wechsel ist sofort. Per `focusTick` (lib/useFocusTick) springt der Reiter beim Antippen auf seine Startansicht zurück und lädt die Daten **leise** neu (kein Spinner). *(MainTabs.tsx + alle Screens)*
 - [ ] **HomeScreen-Queries reduzieren** – ~12 sequentielle Queries inkl. 2 Voll-Scans + 3 counts. → `Promise.all` parallel, Aggregation server-seitig (RPC/View) oder Zeitfenster `.gte()`. *(HomeScreen.tsx)*
 
 ## 🟡 Qualität & Wartbarkeit (mittelfristig)
