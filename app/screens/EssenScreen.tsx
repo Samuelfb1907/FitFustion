@@ -1,13 +1,12 @@
-// Essen-Hub: oben umschalten zwischen Tracker (Tagebuch), Wasser und Rezepten.
+// Essen-Hub: oben umschalten zwischen Tracker (Tagebuch) und Wasser.
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import Segmented from '../components/Segmented';
 import FoodTrackerScreen from './FoodTrackerScreen';
-import RecipesScreen from './RecipesScreen';
 import WaterScreen from './WaterScreen';
 
-type Seg = 'tracker' | 'water' | 'recipes';
+type Seg = 'tracker' | 'water';
 
 export default function EssenScreen() {
   const c = useColors();
@@ -22,16 +21,13 @@ export default function EssenScreen() {
         options={[
           { key: 'tracker', label: 'Tracker' },
           { key: 'water', label: 'Wasser' },
-          { key: 'recipes', label: 'Rezepte' },
         ]}
         value={seg}
         onChange={(k) => setSeg(k as Seg)}
         c={c}
       />
       <View style={{ flex: 1, marginTop: 14 }}>
-        {seg === 'tracker' ? <FoodTrackerScreen embedded />
-          : seg === 'water' ? <WaterScreen embedded />
-          : <RecipesScreen embedded />}
+        {seg === 'tracker' ? <FoodTrackerScreen embedded /> : <WaterScreen embedded />}
       </View>
     </View>
   );

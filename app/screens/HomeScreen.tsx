@@ -11,6 +11,7 @@ import CalorieGauge from '../components/CalorieGauge';
 import { dailyGoals, weeklyChallenges, Goal } from '../lib/goals';
 import { saveTodayWeight, parseWeight, WEIGHT_MIN, WEIGHT_MAX } from '../lib/weight';
 import { todayWeekday } from '../lib/weekdays';
+import { NUTRITION_DISCLAIMER } from '../lib/legal';
 
 const GOAL_LABELS: Record<string, string> = {
   lose_weight: 'Abnehmen', build_muscle: 'Muskelaufbau', gain_strength: 'Kraft steigern',
@@ -253,6 +254,7 @@ export default function HomeScreen({ onNavigate }: { onNavigate?: (tab: string) 
                     <Macro label="Fett" eaten={eaten.f} target={nutrition.fatG} color={c.danger} styles={styles} />
                   </View>
                 </View>
+                <Text style={styles.nutriNote}>{NUTRITION_DISCLAIMER}</Text>
               </>
             )}
 
@@ -416,6 +418,7 @@ function makeStyles(c: Colors) {
     bannerBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
 
     section: { fontSize: 12, fontWeight: '700', letterSpacing: 0.8, color: c.textMuted, marginTop: 8, marginBottom: 8, marginLeft: 4 },
+    nutriNote: { fontSize: 11, color: c.textMuted, lineHeight: 16, marginTop: 8, marginBottom: 2, paddingHorizontal: 2 },
 
     card: { backgroundColor: c.card, borderRadius: 16, padding: 20, alignItems: 'center', marginBottom: 6, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     macros: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 18 },

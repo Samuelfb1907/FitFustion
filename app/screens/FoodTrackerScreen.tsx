@@ -8,6 +8,7 @@ import { computeNutrition, ageFromBirthDate, Gender, ActivityLevel, GoalType } f
 import BarcodeScanner from '../components/BarcodeScanner';
 import { resolveBarcodeFood } from '../lib/barcodeFood';
 import { TRACKER_MEALS, MealType, mealByHour, normalizeMeal } from '../lib/meals';
+import { NUTRITION_DISCLAIMER, ALLERGY_HINT } from '../lib/legal';
 
 type Food = { id: string; name: string; category: string | null; kcal: number; protein: number; carbs: number; fat: number; user_id?: string | null };
 type LogEntry = { id: string; amount_g: number; meal_type: string | null; food: Food | null };
@@ -275,6 +276,7 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
       <View style={[styles.container, embedded && styles.embedded]}>
         <TouchableOpacity onPress={() => { setMode('diary'); setSearch(''); }}><Text style={styles.back}>‹ Zurück</Text></TouchableOpacity>
         <Text style={styles.title}>Zutat auswählen</Text>
+        <View style={styles.allergyNote}><Text style={styles.allergyText}>{ALLERGY_HINT}</Text></View>
         <TextInput style={styles.input} value={search} onChangeText={setSearch} placeholder="Suchen (z. B. Banane)…" placeholderTextColor={c.textMuted} autoCorrect={false} />
         <TouchableOpacity style={styles.newFoodBtn} onPress={openNewFood} activeOpacity={0.85}>
           <Text style={styles.newFoodText}>➕  Eigenes Lebensmittel anlegen</Text>
@@ -333,6 +335,8 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
         </View>
       </View>
 
+      <Text style={styles.disclaimer}>{NUTRITION_DISCLAIMER}</Text>
+
       {/* Aktionen */}
       <View style={styles.actionRow}>
         <TouchableOpacity style={styles.addBtnRow} onPress={() => { setMealType(mealByHour()); setError(null); setMode('pick'); }} activeOpacity={0.85}>
@@ -342,6 +346,8 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
           <Text style={styles.scanText}>📷  Scannen</Text>
         </TouchableOpacity>
       </View>
+
+      <View style={styles.allergyNote}><Text style={styles.allergyText}>{ALLERGY_HINT}</Text></View>
 
       {/* Schnellzugriff */}
       {quickFoods.length > 0 && (
@@ -404,6 +410,9 @@ function makeStyles(c: Colors) {
     embedded: { paddingTop: 8, paddingHorizontal: 0, backgroundColor: 'transparent' },
     title: { fontSize: 26, fontWeight: 'bold', color: c.heading },
     subtitle: { fontSize: 15, color: c.textMuted, marginTop: 2, marginBottom: 16 },
+    disclaimer: { fontSize: 12, color: c.textMuted, lineHeight: 17, marginTop: 2, marginBottom: 14 },
+    allergyNote: { backgroundColor: c.inputBg, borderRadius: 10, padding: 10, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border, marginBottom: 14 },
+    allergyText: { fontSize: 13, color: c.text, lineHeight: 18, fontWeight: '600' },
     back: { color: c.primary, fontSize: 15, fontWeight: '600', marginBottom: 10 },
     summary: { flexDirection: 'row', backgroundColor: c.card, borderRadius: 16, paddingVertical: 18, marginBottom: 8, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     sumCol: { flex: 1, alignItems: 'center' },

@@ -5,6 +5,12 @@ export const DISCLAIMER_VERSION = '1.0';
 export const DISCLAIMER_SHORT =
   'FitFusion ersetzt keine ärztliche, ernährungs- oder trainingsbezogene Beratung. Nutzung auf eigene Gefahr. Bei Allergien immer die Zutaten selbst prüfen. Bei Beschwerden Training/Ernährung abbrechen und ärztlichen Rat einholen.';
 
+// Kurz-Hinweise fuer den Essens-Tracker (mehrfach eingeblendet).
+export const NUTRITION_DISCLAIMER =
+  'Kalorien & Nährwerte sind geschätzte Richtwerte – keine Ernährungsberatung. FitFusion schlägt dir keine Lebensmittel vor; du trackst nur selbst.';
+export const ALLERGY_HINT =
+  '⚠️ Achte bei Allergien & Unverträglichkeiten immer selbst auf die Zutaten und Verpackungsangaben.';
+
 export const DISCLAIMER_SECTIONS: { h: string; p: string }[] = [
   {
     h: '1. Keine medizinische oder professionelle Beratung',
