@@ -292,28 +292,52 @@ const MEALS: MealTemplate[] = [
     ingredients: [{ name: 'Erdnüsse', g: 40 }] },
 ];
 
+// Alle allergikersicheren Optionen einer Mahlzeit-Kategorie.
+export function safeMealsFor(type: MealType, allergies: string[]): MealTemplate[] {
+  return MEALS.filter((m) => m.type === type && !m.allergens.some((a) => allergies.includes(a)));
+}
+
+// Kalorien-Anteil einer Mahlzeit am Tagesziel.
+export function mealTargetKcal(type: MealType, dayTargetKcal: number): number {
+  return dayTargetKcal * SHARE[type];
+}
+
+// Skaliert eine Vorlage auf das Mahlzeit-Kalorienziel (Portion 0.5–2.5).
+function buildPlanned(tpl: MealTemplate, mealKcal: number): PlannedMeal {
+  let portion = mealKcal / tpl.kcal;
+  portion = Math.max(0.5, Math.min(2.5, Math.round(portion * 10) / 10));
+  return {
+    type: tpl.type,
+    name: tpl.name,
+    kcal: Math.round(tpl.kcal * portion),
+    protein: Math.round(tpl.protein * portion),
+    carbs: Math.round(tpl.carbs * portion),
+    fat: Math.round(tpl.fat * portion),
+    portion,
+  };
+}
+
 // Erstellt einen Tagesplan: pro Mahlzeit eine allergikersichere Option,
 // portioniert auf den jeweiligen Kalorien-Anteil des Tagesziels.
 export function generateMealPlan(targetKcal: number, allergies: string[]): PlannedMeal[] {
   const out: PlannedMeal[] = [];
   for (const type of ORDER) {
-    const safe = MEALS.filter((m) => m.type === type && !m.allergens.some((a) => allergies.includes(a)));
+    const safe = safeMealsFor(type, allergies);
     if (safe.length === 0) continue; // keine sichere Option -> Mahlzeit auslassen
     const pick = safe[Math.floor(Math.random() * safe.length)];
-    const mealTarget = targetKcal * SHARE[type];
-    let portion = mealTarget / pick.kcal;
-    portion = Math.max(0.5, Math.min(2.5, Math.round(portion * 10) / 10));
-    out.push({
-      type,
-      name: pick.name,
-      kcal: Math.round(pick.kcal * portion),
-      protein: Math.round(pick.protein * portion),
-      carbs: Math.round(pick.carbs * portion),
-      fat: Math.round(pick.fat * portion),
-      portion,
-    });
+    out.push(buildPlanned(pick, mealTargetKcal(type, targetKcal)));
   }
   return out;
+}
+
+// Tauscht ein Gericht gegen ein anderes (zufaellig, moeglichst nicht dasselbe) der gleichen Kategorie.
+export function swapMeal(type: MealType, dayTargetKcal: number, allergies: string[], excludeName: string): PlannedMeal | null {
+  const safe = safeMealsFor(type, allergies);
+  if (safe.length === 0) return null;
+  const others = safe.filter((m) => m.name !== excludeName);
+  const pool = others.length ? others : safe;
+  const pick = pool[Math.floor(Math.random() * pool.length)];
+  return buildPlanned(pick, mealTargetKcal(type, dayTargetKcal));
 }
 
 // ----------------------------------------------------------------------------

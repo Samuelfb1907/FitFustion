@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { computeNutrition, ageFromBirthDate, NutritionResult, Gender, ActivityLevel, GoalType } from '../lib/nutrition';
-import { generateMealPlan, recipeFor, MEAL_TYPE_LABELS, MealType } from '../lib/meals';
+import { generateMealPlan, recipeFor, swapMeal, MEAL_TYPE_LABELS, MealType } from '../lib/meals';
 
 type LoadedMeal = { id: string; meal_type: string; name: string; calories: number; protein_g: number; carbs_g: number; fat_g: number };
 const TYPE_RANK: Record<string, number> = { breakfast: 0, lunch: 1, dinner: 2, snack: 3 };
@@ -23,6 +23,7 @@ export default function NutritionScreen({ embedded }: { embedded?: boolean }) {
   const [allergies, setAllergies] = useState<string[]>([]);
   const [meals, setMeals] = useState<LoadedMeal[]>([]);
   const [selMeal, setSelMeal] = useState<LoadedMeal | null>(null);
+  const [swapping, setSwapping] = useState<string | null>(null);
 
   useEffect(() => { loadAll(); }, [userId]);
 
@@ -72,6 +73,24 @@ export default function NutritionScreen({ embedded }: { embedded?: boolean }) {
     } finally {
       setGenerating(false);
     }
+  }
+
+  async function swapDish(m: LoadedMeal) {
+    if (!targets || swapping) return;
+    setSwapping(m.id);
+    const next = swapMeal(m.meal_type as MealType, targets.targetCalories, allergies, m.name);
+    if (!next) { setSwapping(null); setError('Keine andere passende Option (Allergien) gefunden.'); return; }
+    const { error: uErr } = await supabase.from('meals')
+      .update({ name: next.name, calories: next.kcal, protein_g: next.protein, carbs_g: next.carbs, fat_g: next.fat })
+      .eq('id', m.id);
+    if (!uErr) {
+      setMeals((prev) => prev.map((x) => (x.id === m.id
+        ? { ...x, name: next.name, calories: next.kcal, protein_g: next.protein, carbs_g: next.carbs, fat_g: next.fat }
+        : x)));
+    } else {
+      setError('Austausch fehlgeschlagen: ' + uErr.message);
+    }
+    setSwapping(null);
   }
 
   const totals = meals.reduce((acc, m) => ({ kcal: acc.kcal + (m.calories ?? 0), p: acc.p + (m.protein_g ?? 0), c: acc.c + (m.carbs_g ?? 0), f: acc.f + (m.fat_g ?? 0) }), { kcal: 0, p: 0, c: 0, f: 0 });
@@ -125,7 +144,12 @@ export default function NutritionScreen({ embedded }: { embedded?: boolean }) {
         <>
           {meals.map((m) => (
             <TouchableOpacity key={m.id} style={styles.mealCard} onPress={() => setSelMeal(m)} activeOpacity={0.7}>
-              <Text style={styles.mealType}>{MEAL_TYPE_LABELS[m.meal_type as MealType] ?? m.meal_type}</Text>
+              <View style={styles.mealHeaderRow}>
+                <Text style={styles.mealType}>{MEAL_TYPE_LABELS[m.meal_type as MealType] ?? m.meal_type}</Text>
+                <TouchableOpacity style={styles.swapBtn} onPress={() => swapDish(m)} disabled={!!swapping} activeOpacity={0.7} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  {swapping === m.id ? <ActivityIndicator size="small" color={c.primary} /> : <Text style={styles.swapText}>🔄 Tauschen</Text>}
+                </TouchableOpacity>
+              </View>
               <Text style={styles.mealName}>{m.name}</Text>
               <Text style={styles.mealMeta}>{m.calories} kcal · {m.protein_g} g P · {m.carbs_g} g KH · {m.fat_g} g F</Text>
               <Text style={styles.recipeLink}>Rezept ansehen ›</Text>
@@ -163,6 +187,9 @@ function makeStyles(c: Colors) {
     hint: { fontSize: 13, color: c.textMuted, marginTop: 14, lineHeight: 18 },
     mealCard: { backgroundColor: c.card, borderRadius: 14, padding: 16, marginBottom: 10, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     mealType: { fontSize: 12, color: c.textMuted, fontWeight: '700', letterSpacing: 0.5 },
+    mealHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    swapBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.inputBg, borderWidth: 1, borderColor: c.border, borderRadius: 16, paddingHorizontal: 10, paddingVertical: 5, minHeight: 28 },
+    swapText: { fontSize: 12, color: c.primary, fontWeight: '700' },
     mealName: { fontSize: 17, fontWeight: '600', color: c.text, marginTop: 2 },
     mealMeta: { fontSize: 13, color: c.textMuted, marginTop: 4 },
     recipeLink: { fontSize: 13, color: c.primary, fontWeight: '700', marginTop: 8 },
