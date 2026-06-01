@@ -8,23 +8,10 @@ import ExerciseDetail from '../components/ExerciseDetail';
 import { WEEKDAYS, todayWeekday } from '../lib/weekdays';
 import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
+import { startOfTodayISO } from '../lib/date';
+import { DIFF_LABELS, ALLOWED_DIFF, ALLOWED_EQUIP } from '../lib/training';
 
-function startOfTodayISO(): string {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d.toISOString();
-}
-
-const DIFF_LABELS: Record<string, string> = { beginner: 'Anfänger', intermediate: 'Fortgeschritten', advanced: 'Profi' };
-const ALLOWED_DIFF: Record<string, string[]> = {
-  beginner: ['beginner'], some: ['beginner', 'intermediate'],
-  advanced: ['beginner', 'intermediate', 'advanced'], pro: ['beginner', 'intermediate', 'advanced'],
-};
-const ALLOWED_EQUIP: Record<string, string[]> = {
-  gym: ['barbell', 'dumbbell', 'machine', 'cable', 'bodyweight', 'none', 'other'],
-  home_gym: ['dumbbell', 'bodyweight', 'none', 'other'],
-  no_equipment: ['bodyweight', 'none'],
-};
+// startOfTodayISO -> lib/date.ts; Schwierigkeits-/Equipment-Konstanten -> lib/training.ts
 const SPLITS: Record<number, { focus: string; muscles: string[] }[]> = {
   2: [
     { focus: 'Ganzkörper A', muscles: ['chest', 'back', 'legs', 'abs'] },

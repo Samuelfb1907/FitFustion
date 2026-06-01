@@ -12,7 +12,7 @@ import { dailyGoals, weeklyChallenges, Goal } from '../lib/goals';
 import { saveTodayWeight, parseWeight, WEIGHT_MIN, WEIGHT_MAX } from '../lib/weight';
 import { todayWeekday } from '../lib/weekdays';
 import { NUTRITION_DISCLAIMER } from '../lib/legal';
-import { localDateStr } from '../lib/date';
+import { localDateStr, todayStr, startOfTodayISO } from '../lib/date';
 import { useFocusTick } from '../lib/useFocusTick';
 import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
@@ -22,15 +22,7 @@ const GOAL_LABELS: Record<string, string> = {
   endurance: 'Ausdauer', general_fitness: 'Allgemeine Fitness', get_defined: 'Definieren',
 };
 
-function todayStr(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-function startOfTodayISO(): string {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d.toISOString();
-}
+// todayStr & startOfTodayISO -> lib/date.ts
 function mondayStr(): string {
   const d = new Date();
   d.setHours(0, 0, 0, 0);

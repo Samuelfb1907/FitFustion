@@ -7,16 +7,14 @@ import { useColors, Colors } from '../contexts/ThemeContext';
 import { useFocusTick } from '../lib/useFocusTick';
 import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
+import { todayStr } from '../lib/date';
 
 type WaterRow = { id: string; amount_ml: number; created_at: string };
 
 const WATER_GOAL = 2500; // Tagesziel in ml
 const GLASS = 250;
 
-function todayStr(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
+// todayStr -> lib/date.ts
 function hhmm(iso: string): string {
   const d = new Date(iso);
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;

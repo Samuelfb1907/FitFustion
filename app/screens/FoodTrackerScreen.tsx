@@ -12,15 +12,13 @@ import { NUTRITION_DISCLAIMER, ALLERGY_HINT } from '../lib/legal';
 import { useFocusTick } from '../lib/useFocusTick';
 import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
+import { todayStr } from '../lib/date';
 
 type Food = { id: string; name: string; category: string | null; kcal: number; protein: number; carbs: number; fat: number; user_id?: string | null };
 type LogEntry = { id: string; amount_g: number; meal_type: string | null; food: Food | null };
 type QuickFood = { food: Food; amount: number; count: number };
 
-function todayStr(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
+// todayStr -> lib/date.ts
 
 export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: boolean; focusTick?: number }) {
   const { session } = useAuth();

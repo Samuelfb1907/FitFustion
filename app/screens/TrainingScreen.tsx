@@ -12,24 +12,12 @@ import PlanScreen from './PlanScreen';
 import { useFocusTick } from '../lib/useFocusTick';
 import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
+import { DIFF_LABELS, EQUIP_LABELS, ALLOWED_DIFF, ALLOWED_EQUIP } from '../lib/training';
 
 type Muscle = { id: string; key: string; name_de: string; body_region: string | null };
 type Exercise = { id: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null };
 
-const DIFF_LABELS: Record<string, string> = { beginner: 'Anfänger', intermediate: 'Fortgeschritten', advanced: 'Profi' };
-const EQUIP_LABELS: Record<string, string> = {
-  barbell: 'Langhantel', dumbbell: 'Kurzhantel', machine: 'Maschine', cable: 'Kabelzug',
-  bodyweight: 'Körpergewicht', none: 'Kein Gerät', other: 'Sonstiges',
-};
-const ALLOWED_DIFF: Record<string, string[]> = {
-  beginner: ['beginner'], some: ['beginner', 'intermediate'],
-  advanced: ['beginner', 'intermediate', 'advanced'], pro: ['beginner', 'intermediate', 'advanced'],
-};
-const ALLOWED_EQUIP: Record<string, string[]> = {
-  gym: ['barbell', 'dumbbell', 'machine', 'cable', 'bodyweight', 'none', 'other'],
-  home_gym: ['dumbbell', 'bodyweight', 'none', 'other'],
-  no_equipment: ['bodyweight', 'none'],
-};
+// Schwierigkeits-/Equipment-Konstanten -> lib/training.ts
 
 export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
   const { profile } = useAuth();

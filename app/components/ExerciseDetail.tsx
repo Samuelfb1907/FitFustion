@@ -8,21 +8,13 @@ import ExerciseFigure from './ExerciseFigure';
 import ExerciseGif from './ExerciseGif';
 import RestTimer from './RestTimer';
 import { exerciseGifId } from '../lib/exerciseMedia';
+import { startOfTodayISO } from '../lib/date';
+import { DIFF_LABELS, EQUIP_LABELS } from '../lib/training';
 
 type Exercise = { id: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null };
 type SetLog = { id: string; set_index: number; reps: number | null; weight_kg: number | null };
 
-const DIFF_LABELS: Record<string, string> = { beginner: 'Anfänger', intermediate: 'Fortgeschritten', advanced: 'Profi' };
-const EQUIP_LABELS: Record<string, string> = {
-  barbell: 'Langhantel', dumbbell: 'Kurzhantel', machine: 'Maschine', cable: 'Kabelzug',
-  bodyweight: 'Körpergewicht', none: 'Kein Gerät', other: 'Sonstiges',
-};
-
-function startOfTodayISO(): string {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d.toISOString();
-}
+// Konstanten -> lib/training.ts, startOfTodayISO -> lib/date.ts
 
 // "1. ... 2. ... 3. ..." -> ["...", "...", "..."]
 function parseSteps(instr: string | null): string[] {

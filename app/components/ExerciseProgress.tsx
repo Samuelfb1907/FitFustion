@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Colors } from '../contexts/ThemeContext';
 import { LineChart, BarChart } from './Charts';
-import { localDateStr } from '../lib/date';
+import { localDateStr, ddmm } from '../lib/date';
 
 type DayStat = { date: string; maxWeight: number; bestReps: number; maxReps: number; volume: number };
 
@@ -14,10 +14,7 @@ function unwrap<T>(rel: T | T[] | null | undefined): T | null {
   if (!rel) return null;
   return Array.isArray(rel) ? rel[0] ?? null : rel;
 }
-function ddmm(iso: string): string {
-  const d = new Date(iso);
-  return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}`;
-}
+// ddmm -> lib/date.ts
 function grp(n: number): string {
   return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }

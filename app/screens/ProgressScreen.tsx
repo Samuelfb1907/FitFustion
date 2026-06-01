@@ -10,7 +10,7 @@ import { LineChart, BarChart } from '../components/Charts';
 import ExerciseProgress from '../components/ExerciseProgress';
 import ErrorRetry from '../components/ErrorRetry';
 import { useFocusTick } from '../lib/useFocusTick';
-import { localDateStr } from '../lib/date';
+import { localDateStr, ddmm } from '../lib/date';
 import { errorMessage } from '../lib/errors';
 import { WeightPoint, loadWeights, saveTodayWeight, deleteWeight, deltaOver, parseWeight, WEIGHT_MIN, WEIGHT_MAX } from '../lib/weight';
 
@@ -33,10 +33,7 @@ function mondayOf(d: Date): Date {
 function grp(n: number): string {
   return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
-function ddmm(iso: string): string {
-  const d = new Date(iso);
-  return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}`;
-}
+// ddmm -> lib/date.ts
 
 // Eingebettete Relation kann Objekt ODER Array sein -> sicher entpacken
 function unwrap<T>(rel: T | T[] | null | undefined): T | null {
