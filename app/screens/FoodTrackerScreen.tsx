@@ -1,6 +1,6 @@
 // Kalorien-Tracker / Tagebuch (themed): eigene Zutaten auswählen, Menge angeben, Tag tracken.
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Alert, FlatList, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
@@ -23,7 +23,7 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
   const { session } = useAuth();
   const userId = session?.user?.id;
   const c = useColors();
-  const styles = makeStyles(c);
+  const styles = useMemo(() => makeStyles(c), [c]);
 
   const [loading, setLoading] = useState(true);
   const [foods, setFoods] = useState<Food[]>([]);
@@ -195,7 +195,10 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
   const totalKcal = logs.reduce((s, e) => s + kcalOf(e), 0);
   const totalP = sumMacro((f) => f.protein), totalC = sumMacro((f) => f.carbs), totalF = sumMacro((f) => f.fat);
   const remaining = targetKcal != null ? targetKcal - totalKcal : null;
-  const filteredFoods = search.trim() ? foods.filter((f) => f.name.toLowerCase().includes(search.trim().toLowerCase())) : foods;
+  const filteredFoods = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return q ? foods.filter((f) => f.name.toLowerCase().includes(q)) : foods;
+  }, [foods, search]);
 
   if (loading) {
     return (<View style={[styles.container, embedded && styles.embedded]}>{!embedded && <Text style={styles.title}>Tracker</Text>}<ActivityIndicator size="large" color={c.primary} style={{ marginTop: 40 }} /></View>);
@@ -282,11 +285,20 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
           <Text style={styles.newFoodText}>➕  Eigenes Lebensmittel anlegen</Text>
         </TouchableOpacity>
         <Text style={styles.countHint}>{filteredFoods.length} Zutaten</Text>
-        <ScrollView contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
-          {filteredFoods.map((f) => {
+        <FlatList
+          style={{ flex: 1 }}
+          data={filteredFoods}
+          keyExtractor={(f) => f.id}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ paddingBottom: 40 }}
+          initialNumToRender={15}
+          maxToRenderPerBatch={20}
+          windowSize={10}
+          removeClippedSubviews
+          renderItem={({ item: f }) => {
             const own = !!userId && f.user_id === userId;
             return (
-              <TouchableOpacity key={f.id} style={styles.foodRow} onPress={() => { setSelectedFood(f); setAmount('100'); setError(null); setMode('amount'); }} activeOpacity={0.7}>
+              <TouchableOpacity style={styles.foodRow} onPress={() => { setSelectedFood(f); setAmount('100'); setError(null); setMode('amount'); }} activeOpacity={0.7}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.foodName}>{f.name}</Text>
                   <Text style={styles.foodMeta}>{f.category}{own ? '  ·  eigenes' : ''}</Text>
@@ -299,11 +311,9 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
                 )}
               </TouchableOpacity>
             );
-          })}
-          {filteredFoods.length === 0 && (
-            <Text style={styles.noResult}>Kein Treffer{search.trim() ? ` für „${search.trim()}"` : ''}. Leg es als eigenes Lebensmittel an ☝️</Text>
-          )}
-        </ScrollView>
+          }}
+          ListEmptyComponent={<Text style={styles.noResult}>Kein Treffer{search.trim() ? ` für „${search.trim()}"` : ''}. Leg es als eigenes Lebensmittel an ☝️</Text>}
+        />
       </View>
     );
   }

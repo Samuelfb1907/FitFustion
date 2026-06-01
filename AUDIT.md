@@ -45,7 +45,7 @@ Der **App-Code ist erstaunlich solide**: `tsc` ist fehlerfrei, alle 14 Screens s
 - [ ] **Doppelter Satz möglich (Race Condition)** – `set_index = sets.length+1` aus State + nur `saving`-Flag → schneller Doppeltipp erzeugt zwei „Satz 1". → `useRef`-Lock + `unique(session_id, exercise_id, set_index)`. *(ExerciseDetail.tsx, db/schema.sql)*
 
 ### Performance
-- [ ] **Lange Listen virtualisieren** – ~570+ Lebensmittel in `ScrollView + .map()` → Ruckeln/Speicher. → `FlatList` (memoisierte Zeile, `keyExtractor`), Suche debouncen + `useMemo`. *(FoodTrackerScreen.tsx)*
+- [x] **Lange Listen virtualisieren** ✅ – Lebensmittel-Auswahl auf `FlatList` umgestellt (nur sichtbare Zeilen, `initialNumToRender`/`windowSize`/`removeClippedSubviews`), `filteredFoods` + `makeStyles` per `useMemo`. Behebt die ~1s-Verzögerung beim „+". *(FoodTrackerScreen.tsx)*
 - [ ] **Tab-Remount entschärfen** – `key={tab-${nonce}}` lädt bei jedem Tab-Tipp ALLE Daten neu. → Reset nur des View-States (statt voller Remount) oder Daten cachen (Context/React Query). *(MainTabs.tsx)*
 - [ ] **HomeScreen-Queries reduzieren** – ~12 sequentielle Queries inkl. 2 Voll-Scans + 3 counts. → `Promise.all` parallel, Aggregation server-seitig (RPC/View) oder Zeitfenster `.gte()`. *(HomeScreen.tsx)*
 
