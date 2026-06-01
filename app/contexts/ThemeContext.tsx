@@ -23,17 +23,18 @@ export type Colors = {
   muscle: string;    // Grundfarbe der Muskeln im Koerper-Diagramm
 };
 
+// Modernes Indigo/Violett-Farbsystem (frisch & einladend).
 const LIGHT: Colors = {
-  bg: '#F1F4FA', card: '#FFFFFF', text: '#1A2230', textMuted: '#7C8AA0', heading: '#16224A',
-  primary: '#2B50D8', onPrimary: '#FFFFFF', border: '#E4EAF3', inputBg: '#F6F8FC',
-  danger: '#D92D20', success: '#1F9D55', track: '#E4EAF3',
-  accent: '#12B886', hero: '#22357F', muscle: '#C3D0E8',
+  bg: '#F4F5FB', card: '#FFFFFF', text: '#1E2433', textMuted: '#79839B', heading: '#1E1B4B',
+  primary: '#6366F1', onPrimary: '#FFFFFF', border: '#E6E8F2', inputBg: '#F1F2FA',
+  danger: '#EF4444', success: '#10B981', track: '#E6E8F2',
+  accent: '#8B5CF6', hero: '#312E81', muscle: '#CBD2EC',
 };
 const DARK: Colors = {
-  bg: '#0E1117', card: '#181F2A', text: '#E6EAF0', textMuted: '#94A1B4', heading: '#EAF1FF',
-  primary: '#5B86F0', onPrimary: '#FFFFFF', border: '#283242', inputBg: '#1E2735',
-  danger: '#FF6B6B', success: '#5BD18A', track: '#283242',
-  accent: '#38D9A9', hero: '#1A2A66', muscle: '#33445E',
+  bg: '#0E1116', card: '#181B26', text: '#E7E9F0', textMuted: '#8B93A7', heading: '#EEF0FF',
+  primary: '#7C83F7', onPrimary: '#FFFFFF', border: '#272C3A', inputBg: '#1E2230',
+  danger: '#FF6B6B', success: '#34D399', track: '#272C3A',
+  accent: '#A78BFA', hero: '#26235C', muscle: '#33445E',
 };
 
 type ThemeCtx = {

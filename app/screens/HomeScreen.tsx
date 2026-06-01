@@ -435,7 +435,7 @@ function makeStyles(c: Colors) {
     heroChip: { backgroundColor: 'rgba(255,255,255,0.16)', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 },
     heroChipText: { color: '#fff', fontSize: 13, fontWeight: '600' },
     xpTrack: { height: 10, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 5, marginTop: 14, overflow: 'hidden' },
-    xpFill: { height: 10, backgroundColor: '#7FA6FF', borderRadius: 5 },
+    xpFill: { height: 10, backgroundColor: '#A5B4FC', borderRadius: 5 },
     xpText: { color: 'rgba(255,255,255,0.8)', fontSize: 12, marginTop: 6 },
 
     planToday: { ...shadow, flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },

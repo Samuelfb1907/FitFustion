@@ -14,6 +14,7 @@ type Tab = 'home' | 'training' | 'essen' | 'progress' | 'settings';
 function TabButton({ label, icon, active, onPress, c }: { label: string; icon: string; active: boolean; onPress: () => void; c: Colors }) {
   return (
     <TouchableOpacity style={styles.tabBtn} onPress={onPress} activeOpacity={0.7} accessibilityRole="tab" accessibilityState={{ selected: active }} accessibilityLabel={label}>
+      <View style={[styles.indicator, active && { backgroundColor: c.primary }]} />
       <Text style={[styles.tabIcon, { opacity: active ? 1 : 0.45 }]}>{icon}</Text>
       <Text style={[styles.tabLabel, { color: active ? c.primary : c.textMuted, fontWeight: active ? '700' : '500' }]} numberOfLines={1}>
         {label}
@@ -63,8 +64,9 @@ export default function MainTabs() {
 const styles = StyleSheet.create({
   page: { flex: 1 },
   pageHidden: { flex: 1, display: 'none' },
-  tabBar: { flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 8, paddingBottom: Platform.OS === 'ios' ? 30 : 12 },
+  tabBar: { flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 6, paddingBottom: Platform.OS === 'ios' ? 30 : 12, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 14, shadowOffset: { width: 0, height: -3 }, elevation: 16 },
   tabBtn: { flex: 1, alignItems: 'center', paddingHorizontal: 2 },
-  tabIcon: { fontSize: 19 },
-  tabLabel: { fontSize: 10, marginTop: 3 },
+  indicator: { width: 26, height: 3, borderRadius: 2, backgroundColor: 'transparent', marginBottom: 6 },
+  tabIcon: { fontSize: 20 },
+  tabLabel: { fontSize: 10, marginTop: 4 },
 });
