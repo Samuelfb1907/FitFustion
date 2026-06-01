@@ -64,7 +64,7 @@ Der **App-Code ist erstaunlich solide**: `tsc` ist fehlerfrei, alle 14 Screens s
 - [ ] **Nicht-atomare Delete→Insert** (Plan/Rezept/Ziel) → RPC-Transaktion oder „erst neu anlegen, dann altes deaktivieren". *(NutritionScreen, PlanScreen, RecipesScreen)*
 - [x] **Memoisierung** ✅ – ThemeContext-`value` per `useMemo` (verhindert App-weite Re-Renders); `makeStyles` per `useMemo` in den eingabe-intensiven Screens (FoodTracker, ExerciseDetail, Progress). *(Loader-`useCallback` in den übrigen Screens optional – greift kaum, da Bereiche jetzt gemountet bleiben.)*
 - [ ] **`recipeFor`/`swapMeal` über stabilen Key statt Anzeigename**; Rezept-0g-Items validieren; Barcode-Konflikt zusätzlich per Barcode auflösen; `parseWeight` `Number.isNaN`. *(meals.ts, RecipesScreen, barcodeFood.ts, weight.ts)*
-- [~] **Tote Styles entfernen** (✅ FoodTracker: 12 Redesign-Reste, ProgressScreen: 3 Delta-Styles entfernt; ExerciseDetail noch offen – minor). *(diverse)*
+- [x] **Tote Styles entfernen** ✅ (FoodTracker: 12 Redesign-Reste, ProgressScreen: 3 Delta-Styles, ExerciseDetail: 1× ungenutztes `instr`). *(diverse)*
 
 ### UX / Barrierefreiheit
 - [ ] **Ernährungsplan ins Tagebuch übernehmen** – Plan-Gerichte haben keinen „Ins Tagebuch"-Button (Rezepte schon). *(NutritionScreen.tsx)*

@@ -252,7 +252,6 @@ function makeStyles(c: Colors) {
     badge: { backgroundColor: c.inputBg, color: c.primary, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, fontSize: 13, overflow: 'hidden' },
     desc: { fontSize: 15, color: c.text, lineHeight: 22, marginBottom: 16 },
     h2: { fontSize: 17, fontWeight: '700', color: c.heading, marginBottom: 8 },
-    instr: { fontSize: 15, color: c.text, lineHeight: 24, marginBottom: 8 },
     illusCard: { backgroundColor: c.card, borderRadius: 16, paddingVertical: 16, paddingHorizontal: 14, alignItems: 'center', marginBottom: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     illusCaption: { fontSize: 13, color: c.textMuted, marginTop: 8, fontWeight: '600' },
     stepRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10 },
