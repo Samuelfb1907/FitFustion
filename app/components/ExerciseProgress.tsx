@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Colors } from '../contexts/ThemeContext';
 import { LineChart, BarChart } from './Charts';
+import { localDateStr } from '../lib/date';
 
 type DayStat = { date: string; maxWeight: number; bestReps: number; maxReps: number; volume: number };
 
@@ -52,7 +53,7 @@ export default function ExerciseProgress({
       const w = Number(s.weight_kg) || 0;
       const r = Number(s.reps) || 0;
       const perf = unwrap<{ performed_at: string }>(s.workout_sessions);
-      const date = String(perf?.performed_at ?? s.created_at).slice(0, 10);
+      const date = localDateStr(perf?.performed_at ?? s.created_at);
       const cur = map.get(date) ?? { date, maxWeight: 0, bestReps: 0, maxReps: 0, volume: 0 };
       if (w > cur.maxWeight) { cur.maxWeight = w; cur.bestReps = r; }
       if (r > cur.maxReps) cur.maxReps = r;

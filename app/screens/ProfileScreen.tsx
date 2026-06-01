@@ -60,6 +60,7 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
   const [environment, setEnvironment] = useState('');
   const [goal, setGoal] = useState('');
   const [targetWeight, setTargetWeight] = useState('');
+  const [origBirthDate, setOrigBirthDate] = useState<string | null>(null);
 
   const num = (v: string) => Number(v.replace(',', '.'));
 
@@ -82,6 +83,7 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
         .maybeSingle();
       if (prof) {
         setFirstName(prof.first_name ?? '');
+        setOrigBirthDate(prof.birth_date ?? null);
         setAge(prof.birth_date ? String(ageFromBirthDate(prof.birth_date)) : '');
         setGender(prof.gender ?? '');
         setWeight(prof.weight_kg != null ? String(prof.weight_kg) : '');
@@ -102,19 +104,29 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
   async function save() {
     const userId = session?.user?.id;
     if (!userId) return;
-    if (!firstName.trim() || num(age) < 10 || num(age) > 100 || !gender || num(weight) < 30 || num(weight) > 300 || num(height) < 100 || num(height) > 250 || !goal || !experience || !environment) {
-      setMsg('Bitte alle Felder gültig ausfüllen.');
-      setIsError(true);
-      return;
-    }
+    // feldspezifische Validierung mit klaren Meldungen
+    let err = '';
+    if (!firstName.trim()) err = 'Bitte einen Vornamen eingeben.';
+    else if (!(num(age) >= 10 && num(age) <= 100)) err = 'Alter muss zwischen 10 und 100 liegen.';
+    else if (!gender) err = 'Bitte wähle dein Geschlecht.';
+    else if (!(num(weight) >= 30 && num(weight) <= 300)) err = 'Gewicht muss zwischen 30 und 300 kg liegen.';
+    else if (!(num(height) >= 100 && num(height) <= 250)) err = 'Größe muss zwischen 100 und 250 cm liegen.';
+    else if (!experience) err = 'Bitte wähle dein Erfahrungslevel.';
+    else if (!environment) err = 'Bitte wähle deine Trainingsumgebung.';
+    else if (!goal) err = 'Bitte wähle ein Ziel.';
+    if (err) { setMsg(err); setIsError(true); return; }
     setSaving(true);
     setMsg(null);
-    const birthYear = new Date().getFullYear() - Math.round(num(age));
+    // Geburtsdatum erhalten: nur wenn sich das Alter geändert hat, neu setzen (sonst Monat/Tag bewahren)
+    const enteredAge = Math.round(num(age));
+    const birth_date = origBirthDate && ageFromBirthDate(origBirthDate) === enteredAge
+      ? origBirthDate
+      : `${new Date().getFullYear() - enteredAge}-01-01`;
 
     const { error: pErr } = await supabase.from('profiles').upsert({
       id: userId,
       first_name: firstName.trim(),
-      birth_date: `${birthYear}-01-01`,
+      birth_date,
       gender,
       weight_kg: num(weight),
       height_cm: num(height),

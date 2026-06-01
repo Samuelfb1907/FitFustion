@@ -40,8 +40,8 @@ Der **App-Code ist erstaunlich solide**: `tsc` ist fehlerfrei, alle 14 Screens s
 - [~] **Allergien im Profil editierbar** – hinfällig: Ernährungsplan entfernt, Allergie-Angaben werden aktuell nirgends mehr verwendet. *(ggf. Allergie-Schritt im Onboarding später ganz entfernen)*
 
 ### Korrektheit
-- [ ] **Zeitzonen-Bug (Streak/Heute/Woche)** – UTC-`performed_at` wird per `slice(0,10)` mit lokal gebildeten Datumsstrings verglichen → Trainings kurz nach Mitternacht zählen für den Vortag. → lokale Datumsableitung (`new Date(iso)` + getFullYear/Month/Date) zentral. *(HomeScreen, gamification.ts, ProgressScreen, ExerciseProgress)*
-- [ ] **Profil-Speichern überschreibt Geburtsdatum auf 01.01.** – Alter→`${jahr}-01-01` verändert das Kalorienziel beim bloßen Gewicht-Update. → Monat/Tag erhalten bzw. nur bei Änderung umrechnen. *(ProfileScreen.tsx, OnboardingScreen.tsx)*
+- [x] **Zeitzonen-Bug behoben** ✅ – neuer `lib/date.ts` mit `localDateStr()`; UTC-`performed_at` wird vor dem Vergleich in die lokale Zeitzone umgerechnet (HomeScreen, ProgressScreen, ExerciseProgress). Streak/Heute/Woche stimmen jetzt um Mitternacht. *(lib/date.ts)*
+- [x] **Profil-Geburtsdatum erhalten** ✅ – beim Speichern bleibt das ursprüngliche Datum erhalten, wenn das Alter unverändert ist (kein Sprung auf 01.01., kein Kalorienziel-Drift). *(ProfileScreen.tsx)*
 - [x] **Doppelter Satz verhindert** ✅ – synchroner `useRef`-Lock in `saveSet` (greift sofort beim Doppel-Tipp, vor dem async-State). *(Optionaler DB-`unique(session_id,exercise_id,set_index)` nicht gesetzt, da bestehende Daten kollidieren könnten.)* *(ExerciseDetail.tsx)*
 
 ### Performance
@@ -72,7 +72,7 @@ Der **App-Code ist erstaunlich solide**: `tsc` ist fehlerfrei, alle 14 Screens s
 - [ ] **Touch-Ziele ≥44px + `hitSlop`** (Tab-Leiste, Löschen in Progress/Water/Recipes). *(MainTabs u.a.)*
 - [x] **Fehlermeldungen-Farbe** ✅ – SettingsScreen nutzt jetzt ein `msgErr`-Flag (rot bei Fehler, grün bei Erfolg). *(Rezepte entfernt.)* *(SettingsScreen)*
 - [x] **„Onboarding erneut" warnen** ✅ – Bestätigungsdialog + altes aktives Ziel wird deaktiviert (keine doppelten aktiven Ziele). *(SettingsScreen)*
-- [ ] **Feldspezifische Validierungsmeldungen** (Onboarding/Profil statt „alle Felder gültig"). *(OnboardingScreen, ProfileScreen)*
+- [~] **Feldspezifische Validierungsmeldungen** – ProfileScreen ✅ (klare Meldungen je Feld); Onboarding noch offen. *(OnboardingScreen)*
 - [ ] **Gesperrte Achievements**: Bedingung/Fortschritt anzeigen (description wird nicht gerendert). *(HomeScreen, gamification.ts)*
 - [ ] **Satz nachträglich bearbeiten/löschen** beim Mitschreiben (Tippfehler verfälscht PRs dauerhaft). *(ExerciseDetail.tsx)*
 - [ ] **OpenFoodFacts-Timeout + Abbrechen** beim Barcode-Scan. *(openFoodFacts.ts, FoodTrackerScreen)*

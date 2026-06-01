@@ -9,6 +9,7 @@ import { useColors, Colors } from '../contexts/ThemeContext';
 import { LineChart, BarChart } from '../components/Charts';
 import ExerciseProgress from '../components/ExerciseProgress';
 import { useFocusTick } from '../lib/useFocusTick';
+import { localDateStr } from '../lib/date';
 import { WeightPoint, loadWeights, saveTodayWeight, deleteWeight, deltaOver, parseWeight, WEIGHT_MIN, WEIGHT_MAX } from '../lib/weight';
 
 type PR = { id: string; name: string; weight: number; reps: number | null };
@@ -99,7 +100,7 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
     const exId = (row: any): string => String(row.exercise_id);
     const perfDate = (row: any): string => {
       const s = unwrap<{ performed_at: string }>(row.workout_sessions);
-      return String(s?.performed_at ?? row.created_at).slice(0, 10);
+      return localDateStr(s?.performed_at ?? row.created_at);
     };
     const vol = (row: any): number => (Number(row.reps) || 0) * (Number(row.weight_kg) || 0);
 

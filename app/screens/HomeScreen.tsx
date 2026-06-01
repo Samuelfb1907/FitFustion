@@ -12,6 +12,7 @@ import { dailyGoals, weeklyChallenges, Goal } from '../lib/goals';
 import { saveTodayWeight, parseWeight, WEIGHT_MIN, WEIGHT_MAX } from '../lib/weight';
 import { todayWeekday } from '../lib/weekdays';
 import { NUTRITION_DISCLAIMER } from '../lib/legal';
+import { localDateStr } from '../lib/date';
 
 const GOAL_LABELS: Record<string, string> = {
   lose_weight: 'Abnehmen', build_muscle: 'Muskelaufbau', gain_strength: 'Kraft steigern',
@@ -120,7 +121,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
       const foodLogs = await countRows('food_logs', userId);
       const { data: sd } = await supabase.from('workout_sessions').select('performed_at').eq('user_id', userId);
       const fd = await supabase.from('food_logs').select('log_date').eq('user_id', userId);
-      const sdDates = ((sd ?? []) as any[]).map((r) => String(r.performed_at).slice(0, 10));
+      const sdDates = ((sd ?? []) as any[]).map((r) => localDateStr(r.performed_at));
       const fdDates = fd.error ? [] : ((fd.data ?? []) as any[]).map((r) => String(r.log_date).slice(0, 10));
       const dates = [...sdDates, ...fdDates];
       setStats({ sessions, sets, foodLogs, streak: computeStreak(dates), goalSet: !!goal });
