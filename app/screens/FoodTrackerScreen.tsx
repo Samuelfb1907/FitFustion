@@ -1,6 +1,6 @@
 // Kalorien-Tracker / Tagebuch (themed): eigene Zutaten auswählen, Menge angeben, Tag tracken.
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
@@ -9,7 +9,7 @@ import BarcodeScanner from '../components/BarcodeScanner';
 import { resolveBarcodeFood } from '../lib/barcodeFood';
 import { TRACKER_MEALS, MealType, mealByHour, normalizeMeal } from '../lib/meals';
 
-type Food = { id: string; name: string; category: string | null; kcal: number; protein: number; carbs: number; fat: number };
+type Food = { id: string; name: string; category: string | null; kcal: number; protein: number; carbs: number; fat: number; user_id?: string | null };
 type LogEntry = { id: string; amount_g: number; meal_type: string | null; food: Food | null };
 
 function todayStr(): string {
@@ -28,7 +28,7 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [targetKcal, setTargetKcal] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [mode, setMode] = useState<'diary' | 'pick' | 'amount'>('diary');
+  const [mode, setMode] = useState<'diary' | 'pick' | 'amount' | 'newfood'>('diary');
   const [search, setSearch] = useState('');
   const [selectedFood, setSelectedFood] = useState<Food | null>(null);
   const [amount, setAmount] = useState('100');
@@ -36,6 +36,10 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
   const [saving, setSaving] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scanning, setScanning] = useState(false);
+  // Formular "Eigenes Lebensmittel anlegen"
+  const [nf, setNf] = useState({ name: '', cat: '', kcal: '', protein: '', carbs: '', fat: '' });
+  const [savingFood, setSavingFood] = useState(false);
+  const [foodErr, setFoodErr] = useState<string | null>(null);
 
   useEffect(() => { init(); }, [userId]);
 
@@ -64,7 +68,7 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
   async function init() {
     if (!userId) { setLoading(false); return; }
     setLoading(true);
-    const { data: foodData } = await supabase.from('foods').select('id, name, category, kcal, protein, carbs, fat').order('name');
+    const { data: foodData } = await supabase.from('foods').select('id, name, category, kcal, protein, carbs, fat, user_id').order('name');
     setFoods((foodData ?? []) as Food[]);
     const { data: prof } = await supabase.from('profiles').select('weight_kg, height_cm, birth_date, gender, activity_level').eq('id', userId).maybeSingle();
     const { data: goal } = await supabase.from('goals').select('goal_type').eq('user_id', userId).eq('is_active', true).order('created_at', { ascending: false }).limit(1).maybeSingle();
@@ -100,6 +104,52 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
   async function deleteLog(id: string) {
     await supabase.from('food_logs').delete().eq('id', id);
     await loadLogs();
+  }
+
+  function openNewFood() {
+    setNf({ name: search.trim(), cat: '', kcal: '', protein: '', carbs: '', fat: '' });
+    setFoodErr(null);
+    setMode('newfood');
+  }
+
+  async function saveFood() {
+    if (!userId) return;
+    const name = nf.name.trim();
+    const kcal = Number(nf.kcal.replace(',', '.'));
+    if (!name) { setFoodErr('Bitte einen Namen eingeben.'); return; }
+    if (!kcal || kcal <= 0) { setFoodErr('Bitte gültige Kalorien (pro 100 g) eingeben.'); return; }
+    const num = (s: string) => Math.max(0, Number(s.replace(',', '.')) || 0);
+    setSavingFood(true); setFoodErr(null);
+    const { data, error } = await supabase
+      .from('foods')
+      .insert({ name, category: nf.cat.trim() || 'Eigene', kcal, protein: num(nf.protein), carbs: num(nf.carbs), fat: num(nf.fat), user_id: userId })
+      .select('id, name, category, kcal, protein, carbs, fat, user_id')
+      .single();
+    setSavingFood(false);
+    if (error || !data) {
+      setFoodErr((error as any)?.code === '23505'
+        ? 'Es gibt bereits ein Lebensmittel mit diesem Namen.'
+        : 'Speichern fehlgeschlagen: ' + (error?.message ?? ''));
+      return;
+    }
+    const food = data as Food;
+    setFoods((prev) => [...prev, food].sort((a, b) => a.name.localeCompare(b.name)));
+    setSelectedFood(food); setAmount('100'); setError(null); setMode('amount');
+  }
+
+  function confirmDeleteFood(food: Food) {
+    Alert.alert('Lebensmittel löschen?', `„${food.name}" wirklich löschen?`, [
+      { text: 'Abbrechen', style: 'cancel' },
+      { text: 'Löschen', style: 'destructive', onPress: () => doDeleteFood(food.id) },
+    ]);
+  }
+  async function doDeleteFood(id: string) {
+    const { error } = await supabase.from('foods').delete().eq('id', id);
+    if (error) {
+      Alert.alert('Nicht möglich', 'Dieses Lebensmittel wird noch in Tagebuch-Einträgen oder Rezepten verwendet und kann darum nicht gelöscht werden.');
+      return;
+    }
+    setFoods((prev) => prev.filter((f) => f.id !== id));
   }
 
   const kcalOf = (e: LogEntry) => (e.food ? Math.round((e.food.kcal * e.amount_g) / 100) : 0);
@@ -149,23 +199,71 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
     );
   }
 
+  if (mode === 'newfood') {
+    return (
+      <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+        <TouchableOpacity onPress={() => setMode('pick')}><Text style={styles.back}>‹ Zurück</Text></TouchableOpacity>
+        <Text style={styles.title}>Neues Lebensmittel</Text>
+        <Text style={styles.subtitle}>Nährwerte pro 100 g</Text>
+        <Text style={styles.inputLabel}>Name</Text>
+        <TextInput style={styles.input} value={nf.name} onChangeText={(v) => setNf({ ...nf, name: v })} placeholder="z. B. Mein Proteinriegel" placeholderTextColor={c.textMuted} />
+        <Text style={styles.inputLabel}>Kategorie (optional)</Text>
+        <TextInput style={styles.input} value={nf.cat} onChangeText={(v) => setNf({ ...nf, cat: v })} placeholder="z. B. Snacks & Süßes" placeholderTextColor={c.textMuted} />
+        <Text style={styles.inputLabel}>Kalorien (kcal)</Text>
+        <TextInput style={styles.input} value={nf.kcal} onChangeText={(v) => setNf({ ...nf, kcal: v })} keyboardType="numeric" placeholder="pro 100 g" placeholderTextColor={c.textMuted} />
+        <View style={styles.macroRow}>
+          <View style={styles.macroCol}>
+            <Text style={styles.inputLabel}>Eiweiß (g)</Text>
+            <TextInput style={styles.input} value={nf.protein} onChangeText={(v) => setNf({ ...nf, protein: v })} keyboardType="numeric" placeholder="0" placeholderTextColor={c.textMuted} />
+          </View>
+          <View style={styles.macroCol}>
+            <Text style={styles.inputLabel}>KH (g)</Text>
+            <TextInput style={styles.input} value={nf.carbs} onChangeText={(v) => setNf({ ...nf, carbs: v })} keyboardType="numeric" placeholder="0" placeholderTextColor={c.textMuted} />
+          </View>
+          <View style={styles.macroCol}>
+            <Text style={styles.inputLabel}>Fett (g)</Text>
+            <TextInput style={styles.input} value={nf.fat} onChangeText={(v) => setNf({ ...nf, fat: v })} keyboardType="numeric" placeholder="0" placeholderTextColor={c.textMuted} />
+          </View>
+        </View>
+        <TouchableOpacity style={[styles.primaryBtn, savingFood && { opacity: 0.6 }]} onPress={saveFood} disabled={savingFood}>
+          {savingFood ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.primaryText}>Speichern & auswählen</Text>}
+        </TouchableOpacity>
+        {foodErr && <Text style={styles.error}>{foodErr}</Text>}
+      </ScrollView>
+    );
+  }
+
   if (mode === 'pick') {
     return (
       <View style={[styles.container, embedded && styles.embedded]}>
         <TouchableOpacity onPress={() => { setMode('diary'); setSearch(''); }}><Text style={styles.back}>‹ Zurück</Text></TouchableOpacity>
         <Text style={styles.title}>Zutat auswählen</Text>
         <TextInput style={styles.input} value={search} onChangeText={setSearch} placeholder="Suchen (z. B. Banane)…" placeholderTextColor={c.textMuted} autoCorrect={false} />
+        <TouchableOpacity style={styles.newFoodBtn} onPress={openNewFood} activeOpacity={0.85}>
+          <Text style={styles.newFoodText}>➕  Eigenes Lebensmittel anlegen</Text>
+        </TouchableOpacity>
         <Text style={styles.countHint}>{filteredFoods.length} Zutaten</Text>
         <ScrollView contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
-          {filteredFoods.map((f) => (
-            <TouchableOpacity key={f.id} style={styles.foodRow} onPress={() => { setSelectedFood(f); setAmount('100'); setError(null); setMode('amount'); }} activeOpacity={0.7}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.foodName}>{f.name}</Text>
-                <Text style={styles.foodMeta}>{f.category}</Text>
-              </View>
-              <Text style={styles.foodKcal}>{f.kcal} kcal</Text>
-            </TouchableOpacity>
-          ))}
+          {filteredFoods.map((f) => {
+            const own = !!userId && f.user_id === userId;
+            return (
+              <TouchableOpacity key={f.id} style={styles.foodRow} onPress={() => { setSelectedFood(f); setAmount('100'); setError(null); setMode('amount'); }} activeOpacity={0.7}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.foodName}>{f.name}</Text>
+                  <Text style={styles.foodMeta}>{f.category}{own ? '  ·  eigenes' : ''}</Text>
+                </View>
+                <Text style={styles.foodKcal}>{f.kcal} kcal</Text>
+                {own && (
+                  <TouchableOpacity onPress={() => confirmDeleteFood(f)} style={styles.foodDel} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <Text style={styles.foodDelText}>🗑</Text>
+                  </TouchableOpacity>
+                )}
+              </TouchableOpacity>
+            );
+          })}
+          {filteredFoods.length === 0 && (
+            <Text style={styles.noResult}>Kein Treffer{search.trim() ? ` für „${search.trim()}"` : ''}. Leg es als eigenes Lebensmittel an ☝️</Text>
+          )}
         </ScrollView>
       </View>
     );
@@ -274,6 +372,13 @@ function makeStyles(c: Colors) {
     foodName: { fontSize: 16, color: c.text, fontWeight: '600' },
     foodMeta: { fontSize: 12, color: c.textMuted, marginTop: 2 },
     foodKcal: { fontSize: 14, color: c.primary, fontWeight: '700', marginLeft: 8 },
+    foodDel: { paddingHorizontal: 6, paddingVertical: 4, marginLeft: 6 },
+    foodDelText: { fontSize: 16 },
+    newFoodBtn: { borderWidth: 1, borderColor: c.primary, borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginTop: 10, backgroundColor: c.card },
+    newFoodText: { color: c.primary, fontSize: 15, fontWeight: '700' },
+    noResult: { fontSize: 14, color: c.textMuted, textAlign: 'center', marginTop: 18, lineHeight: 20 },
+    macroRow: { flexDirection: 'row', gap: 10 },
+    macroCol: { flex: 1 },
     error: { color: c.danger, fontSize: 14, marginTop: 14, textAlign: 'center' },
   });
 }
