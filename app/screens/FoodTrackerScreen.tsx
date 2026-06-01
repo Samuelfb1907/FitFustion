@@ -11,6 +11,7 @@ import { TRACKER_MEALS, MealType, mealByHour, normalizeMeal } from '../lib/meals
 
 type Food = { id: string; name: string; category: string | null; kcal: number; protein: number; carbs: number; fat: number; user_id?: string | null };
 type LogEntry = { id: string; amount_g: number; meal_type: string | null; food: Food | null };
+type QuickFood = { food: Food; amount: number; count: number };
 
 function todayStr(): string {
   const d = new Date();
@@ -36,6 +37,8 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
   const [saving, setSaving] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scanning, setScanning] = useState(false);
+  const [quickFoods, setQuickFoods] = useState<QuickFood[]>([]);
+  const [quickMsg, setQuickMsg] = useState<string | null>(null);
   // Formular "Eigenes Lebensmittel anlegen"
   const [nf, setNf] = useState({ name: '', cat: '', kcal: '', protein: '', carbs: '', fat: '' });
   const [savingFood, setSavingFood] = useState(false);
@@ -80,6 +83,7 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
       setTargetKcal(t.targetCalories);
     }
     await loadLogs();
+    await loadQuick();
     setLoading(false);
   }
 
@@ -87,6 +91,38 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
     if (!userId) return;
     const { data } = await supabase.from('food_logs').select('id, amount_g, meal_type, foods(id, name, category, kcal, protein, carbs, fat)').eq('user_id', userId).eq('log_date', todayStr()).order('created_at');
     setLogs((data ?? []).map((row: any) => ({ id: row.id, amount_g: row.amount_g, meal_type: row.meal_type ?? null, food: Array.isArray(row.foods) ? row.foods[0] : row.foods })));
+  }
+
+  // Haeufigste/zuletzt genutzte Lebensmittel aus der Historie fuer den Schnellzugriff
+  async function loadQuick() {
+    if (!userId) return;
+    const { data } = await supabase
+      .from('food_logs')
+      .select('amount_g, foods(id, name, category, kcal, protein, carbs, fat, user_id)')
+      .eq('user_id', userId).order('created_at', { ascending: false }).limit(120);
+    const map = new Map<string, { food: Food; amount: number; count: number; order: number }>();
+    ((data ?? []) as any[]).forEach((row, idx) => {
+      const food = Array.isArray(row.foods) ? row.foods[0] : row.foods;
+      if (!food) return;
+      const ex = map.get(food.id);
+      if (ex) ex.count += 1;
+      else map.set(food.id, { food, amount: row.amount_g ?? 100, count: 1, order: idx });
+    });
+    const list = [...map.values()]
+      .sort((a, b) => b.count - a.count || a.order - b.order)
+      .slice(0, 8)
+      .map((x) => ({ food: x.food, amount: x.amount, count: x.count }));
+    setQuickFoods(list);
+  }
+
+  async function quickAdd(qf: QuickFood) {
+    if (!userId) return;
+    setQuickMsg(null);
+    const { error: e } = await supabase.from('food_logs').insert({ user_id: userId, food_id: qf.food.id, amount_g: qf.amount, log_date: todayStr(), meal_type: mealByHour() });
+    if (e) { setError(e.message); return; }
+    setQuickMsg(`✓ ${qf.food.name} (${qf.amount} g) hinzugefügt`);
+    await loadLogs();
+    await loadQuick();
   }
 
   async function addLog() {
@@ -99,6 +135,7 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
     if (e) { setError(e.message); return; }
     setSelectedFood(null); setAmount('100'); setSearch(''); setMode('diary');
     await loadLogs();
+    await loadQuick();
   }
 
   async function deleteLog(id: string) {
@@ -289,6 +326,22 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
           <Text style={styles.scanText}>📷  Scannen</Text>
         </TouchableOpacity>
       </View>
+
+      {quickFoods.length > 0 && (
+        <View style={styles.quickWrap}>
+          <Text style={styles.quickHead}>SCHNELLZUGRIFF · 1 TIPP</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2, paddingRight: 4 }} keyboardShouldPersistTaps="handled">
+            {quickFoods.map((qf) => (
+              <TouchableOpacity key={qf.food.id} style={styles.quickChip} onPress={() => quickAdd(qf)} activeOpacity={0.8}>
+                <Text style={styles.quickName} numberOfLines={1}>{qf.food.name}</Text>
+                <Text style={styles.quickMeta}>+{qf.amount} g · {Math.round((qf.food.kcal * qf.amount) / 100)} kcal</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+          {quickMsg && <Text style={styles.quickMsg}>{quickMsg}</Text>}
+        </View>
+      )}
+
       {TRACKER_MEALS.map((m) => {
         const items = logs.filter((e) => normalizeMeal(e.meal_type) === m.key);
         const mealKcal = items.reduce((s, e) => s + kcalOf(e), 0);
@@ -342,6 +395,12 @@ function makeStyles(c: Colors) {
     addBtnRow: { flex: 1, backgroundColor: c.primary, borderRadius: 10, paddingVertical: 14, alignItems: 'center' },
     scanBtn: { flex: 1, backgroundColor: c.card, borderWidth: 1, borderColor: c.primary, borderRadius: 10, paddingVertical: 14, alignItems: 'center' },
     scanText: { color: c.primary, fontSize: 16, fontWeight: '700' },
+    quickWrap: { marginBottom: 16 },
+    quickHead: { fontSize: 12, fontWeight: '700', letterSpacing: 0.8, color: c.textMuted, marginBottom: 8, marginLeft: 2 },
+    quickChip: { backgroundColor: c.card, borderWidth: 1, borderColor: c.primary, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, maxWidth: 200 },
+    quickName: { fontSize: 14, fontWeight: '700', color: c.heading },
+    quickMeta: { fontSize: 12, color: c.textMuted, marginTop: 2 },
+    quickMsg: { fontSize: 13, color: c.success, marginTop: 10, fontWeight: '600' },
     empty: { fontSize: 14, color: c.textMuted, textAlign: 'center', marginTop: 16 },
     logRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 12, padding: 14, marginBottom: 8, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     logName: { fontSize: 16, color: c.text, fontWeight: '600' },
