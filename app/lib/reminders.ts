@@ -11,8 +11,8 @@ const WATER_TIMES: [number, number][] = [[10, 0], [13, 0], [16, 0], [19, 0]];
 
 // Hinweise auch im Vordergrund anzeigen (greift im Dev-Build)
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({ shouldShowAlert: true, shouldPlaySound: true, shouldSetBadge: false }),
-} as any);
+  handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false }),
+});
 
 export async function loadReminderPrefs(): Promise<ReminderPrefs> {
   try {

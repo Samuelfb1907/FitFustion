@@ -21,7 +21,7 @@ Der **App-Code ist erstaunlich solide**: `tsc` ist fehlerfrei, alle 14 Screens s
 ## 🔴 Sofort (vor weiterem Ausbau – klein & wirkungsvoll)
 
 - [ ] **Setup-Doku korrigieren** – README Schritt 3 + HANDOVER listen nur Migrationen bis 007/009. Der Code braucht **008–013** zwingend. Wer dem Setup folgt, bekommt eine teils leere/kaputte App (Tracker, Wasser, Rezepte, Barcode, Wochenplan). → Migrationsliste auf `schema.sql → 005 → 006 → 007 → 009 → 010 → 011 → 012 → 013` ergänzen (008 = optionale Übungs-Seeds). *(README.md, HANDOVER.md)*
-- [ ] **foods-Lese-Policy einschränken** – `foods_read_all = using(true)` macht **eigene/gescannte Lebensmittel inkl. Besitzer-UUID für ALLE Nutzer sichtbar**. → `using (user_id is null or auth.uid() = user_id)` (+ `to authenticated`). Kleine SQL-Migration. *(db/011_barcode.sql, FoodTrackerScreen.tsx)*
+- [x] **foods-Lese-Policy eingeschränkt** ✅ – Migration 015: `foods_read_global_or_own` (`user_id is null or auth.uid() = user_id`, nur `authenticated`). Eigene/gescannte Lebensmittel sind nicht mehr für fremde Nutzer sichtbar. *(db/015_privacy_indexes.sql)*
 - [x] **Allergie-Versprechen gelöst** ✅ – Allergene werden jetzt **automatisch aus den Zutaten** abgeleitet (`lib/allergens.ts`, Zutat→Allergen-Map) und mit den manuellen Tags vereinigt; `safeMealsFor` filtert darüber. Damit greifen auch zutatenbasierte Allergene wie Banane/Apfel/Weizen/Mais/Soja/Nüsse/Fisch/Kokos/Sesam/Zitrus/Nachtschatten. UI-Text ehrlich gemacht („nach Möglichkeit ausgeschlossen – bitte Zutaten selbst prüfen") + Hinweis, wenn eine Mahlzeit wegen Allergien wegfällt. *(Rein zutatenferne Intoleranzen wie Histamin/Fruktose/Sulfite bleiben naturgemäß ungefiltert.)* *(lib/allergens.ts, lib/meals.ts, NutritionScreen.tsx)*
 
 ## 🟠 Wichtig (vor einer Veröffentlichung)
@@ -33,16 +33,16 @@ Der **App-Code ist erstaunlich solide**: `tsc` ist fehlerfrei, alle 14 Screens s
 
 ### Robustheit & UX
 - [ ] **Offline-/Fehler-Konzept** – Ladefunktionen ohne `try/catch/finally` → bei Netzfehler **endloser Spinner** ohne Meldung/Retry (Home, Tracker, Progress, Water, Training, Plan). → in `try/finally` kapseln (`setLoading(false)` im finally), Fehlerzustand + „Erneut versuchen", **Pull-to-Refresh** (RefreshControl). *(HomeScreen, FoodTrackerScreen, ProgressScreen, WaterScreen, TrainingScreen, PlanScreen)*
-- [ ] **Destruktive Aktionen bestätigen** – „Neuen Plan erstellen" löscht Wochenplan + macht den angepassten Plan unerreichbar **ohne Rückfrage**; Rezept-/Übungs-/Gewichts-/Tagebuch-Löschen ohne Bestätigung/Undo. → `Alert.alert`-Bestätigung (Muster `confirmDeleteFood` existiert schon) bzw. Undo. *(PlanScreen, RecipesScreen, ProgressScreen, FoodTrackerScreen)*
-- [ ] **App-Anzeigename „FitFusion"** – `app.json` `name`/`slug` sind „app" → Home-Screen/App-Switcher zeigen „app". *(app.json)*
-- [ ] **Dark Mode durchziehen** – `userInterfaceStyle: "light"` → native Dialoge/Tastatur bleiben hell trotz Dunkelmodus. → auf `"automatic"`, `keyboardAppearance` ans Theme koppeln. *(app.json)*
-- [ ] **„Passwort vergessen?" im Login** – Reset ist nur nach Login erreichbar; wer ausgesperrt ist, kommt nicht rein. *(AuthScreen.tsx)*
-- [ ] **Allergien im Profil editierbar** – aktuell nur im Onboarding setzbar, steuern aber den ganzen Ernährungsplan. → MultiChoice in ProfileScreen (ALLERGIES-Liste teilen). *(ProfileScreen.tsx)*
+- [x] **Destruktive Aktionen bestätigt** ✅ – „Neuen Plan erstellen" fragt jetzt nach, wenn ein Plan existiert (ersetzt Plan+Wochenzuordnung); Gewichts-Eintrag-Löschen mit Bestätigung. *(Tagebuch-Einträge bleiben bewusst ohne Rückfrage – einzeln & leicht neu eintragbar; Rezepte entfernt.)* *(PlanScreen, ProgressScreen)*
+- [x] **App-Anzeigename „FitFusion"** ✅ – `app.json` `name` = „FitFusion". *(app.json)*
+- [x] **Dark Mode durchziehen** ✅ – `userInterfaceStyle: "automatic"` (native Dialoge folgen dem System). *(app.json)*
+- [x] **„Passwort vergessen?" im Login** ✅ – Link im AuthScreen (sendet Reset-Mail an die eingegebene Adresse). *(AuthScreen.tsx)*
+- [~] **Allergien im Profil editierbar** – hinfällig: Ernährungsplan entfernt, Allergie-Angaben werden aktuell nirgends mehr verwendet. *(ggf. Allergie-Schritt im Onboarding später ganz entfernen)*
 
 ### Korrektheit
 - [ ] **Zeitzonen-Bug (Streak/Heute/Woche)** – UTC-`performed_at` wird per `slice(0,10)` mit lokal gebildeten Datumsstrings verglichen → Trainings kurz nach Mitternacht zählen für den Vortag. → lokale Datumsableitung (`new Date(iso)` + getFullYear/Month/Date) zentral. *(HomeScreen, gamification.ts, ProgressScreen, ExerciseProgress)*
 - [ ] **Profil-Speichern überschreibt Geburtsdatum auf 01.01.** – Alter→`${jahr}-01-01` verändert das Kalorienziel beim bloßen Gewicht-Update. → Monat/Tag erhalten bzw. nur bei Änderung umrechnen. *(ProfileScreen.tsx, OnboardingScreen.tsx)*
-- [ ] **Doppelter Satz möglich (Race Condition)** – `set_index = sets.length+1` aus State + nur `saving`-Flag → schneller Doppeltipp erzeugt zwei „Satz 1". → `useRef`-Lock + `unique(session_id, exercise_id, set_index)`. *(ExerciseDetail.tsx, db/schema.sql)*
+- [x] **Doppelter Satz verhindert** ✅ – synchroner `useRef`-Lock in `saveSet` (greift sofort beim Doppel-Tipp, vor dem async-State). *(Optionaler DB-`unique(session_id,exercise_id,set_index)` nicht gesetzt, da bestehende Daten kollidieren könnten.)* *(ExerciseDetail.tsx)*
 
 ### Performance
 - [x] **Lange Listen virtualisieren** ✅ – Lebensmittel-Auswahl auf `FlatList` umgestellt (nur sichtbare Zeilen, `initialNumToRender`/`windowSize`/`removeClippedSubviews`), `filteredFoods` + `makeStyles` per `useMemo`. Behebt die ~1s-Verzögerung beim „+". *(FoodTrackerScreen.tsx)*
@@ -52,7 +52,7 @@ Der **App-Code ist erstaunlich solide**: `tsc` ist fehlerfrei, alle 14 Screens s
 ## 🟡 Qualität & Wartbarkeit (mittelfristig)
 
 ### Daten/DB
-- [ ] **Indizes ergänzen**: `food_logs(food_id)`, `recipe_items(food_id)`, `progress_entries(user_id, entry_date)`, optional `foods(category)`. *(Folge-Migration)*
+- [x] **Indizes ergänzt** ✅ – Migration 015: `food_logs(food_id)`, `progress_entries(user_id, entry_date)`, `foods(category)`. *(recipe_items entfällt – Rezepte raus)*
 - [ ] **FK `ON DELETE` explizit machen** (`food_logs.food_id`, `recipe_items.food_id`, `set_logs.exercise_id`, `workout_plan_exercises.exercise_id` → `on delete restrict`); `foods.user_id` beim Nutzer-Löschen: cascade statt verwaisen. *(db/005, 010, schema.sql, 011)*
 - [ ] **`foods.name` UNIQUE überdenken** – global eindeutig kollidiert mit nutzereigenen Einträgen. → partielle Indizes (global `where user_id is null`, eigen `(user_id, name)`). *(db/005/006/011)*
 - [ ] **`exercises.name` UNIQUE + `on conflict`** (Seed race-/wiederholungssicher). *(db/schema.sql, 003, 008)*
@@ -70,8 +70,8 @@ Der **App-Code ist erstaunlich solide**: `tsc` ist fehlerfrei, alle 14 Screens s
 - [ ] **Ernährungsplan ins Tagebuch übernehmen** – Plan-Gerichte haben keinen „Ins Tagebuch"-Button (Rezepte schon). *(NutritionScreen.tsx)*
 - [ ] **`accessibilityLabel`/`Role` ergänzen** – 0 im ganzen Projekt; Icon-Buttons (✕, 🗑, ↩, ＋, Stepper) für Screenreader stumm; Gauge/Balken ohne Wert. *(alle Screens, MainTabs, CalorieGauge)*
 - [ ] **Touch-Ziele ≥44px + `hitSlop`** (Tab-Leiste, Löschen in Progress/Water/Recipes). *(MainTabs u.a.)*
-- [ ] **Fehlermeldungen-Farbe** – in Settings/Rezepte erscheinen Fehler **grün** (`styles.msg = success`). → isError-Flag wie in ProfileScreen. *(SettingsScreen, RecipesScreen)*
-- [ ] **„Onboarding erneut" warnen** + altes Ziel deaktivieren (sonst mehrere aktive Ziele). *(SettingsScreen, OnboardingScreen)*
+- [x] **Fehlermeldungen-Farbe** ✅ – SettingsScreen nutzt jetzt ein `msgErr`-Flag (rot bei Fehler, grün bei Erfolg). *(Rezepte entfernt.)* *(SettingsScreen)*
+- [x] **„Onboarding erneut" warnen** ✅ – Bestätigungsdialog + altes aktives Ziel wird deaktiviert (keine doppelten aktiven Ziele). *(SettingsScreen)*
 - [ ] **Feldspezifische Validierungsmeldungen** (Onboarding/Profil statt „alle Felder gültig"). *(OnboardingScreen, ProfileScreen)*
 - [ ] **Gesperrte Achievements**: Bedingung/Fortschritt anzeigen (description wird nicht gerendert). *(HomeScreen, gamification.ts)*
 - [ ] **Satz nachträglich bearbeiten/löschen** beim Mitschreiben (Tippfehler verfälscht PRs dauerhaft). *(ExerciseDetail.tsx)*
@@ -84,7 +84,7 @@ Der **App-Code ist erstaunlich solide**: `tsc` ist fehlerfrei, alle 14 Screens s
 - [ ] **PlanScreen**: `muscles` einmal cachen; `addExercise` optimistisch statt voller `loadPlan`. *(PlanScreen.tsx)*
 
 ## 🔵 Kleinigkeiten / Doku
-- [ ] **Erinnerungs-Handler** auf aktuelles Schema (`shouldShowBanner`/`shouldShowList`) umstellen, `as any` entfernen. *(lib/reminders.ts)*
+- [x] **Erinnerungs-Handler** ✅ – auf `shouldShowBanner`/`shouldShowList` umgestellt, `as any` entfernt. *(lib/reminders.ts)*
 - [ ] **`exercise_muscles`** (Sekundärmuskeln) befüllen & anzeigen ODER aus Schema/Konzept entfernen (aktuell totes Schema). *(db/schema.sql)*
 - [ ] **README/HANDOVER aktualisieren** – umgesetzte Features (Rezepte, Tagesziele/Challenges, Barcode, Wasser, Wochenkalender, Pausen-Timer) stehen z. T. noch unter „geplant"; Projektstruktur/Migrationsliste veraltet. *(README.md, HANDOVER.md)*
 - [ ] **008-Kommentar klarstellen** („GIFs via lib/exerciseMedia.ts über den Namen, keine GIF-Spalte"). *(db/008)*

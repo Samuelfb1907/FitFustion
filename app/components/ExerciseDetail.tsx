@@ -1,5 +1,5 @@
 // Übungsdetail (themed) mit "Training mitschreiben": Sätze (Wdh + Gewicht) speichern.
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -66,6 +66,7 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
   const [ended, setEnded] = useState(false);
   const [gifFailed, setGifFailed] = useState(false);
   const [restSignal, setRestSignal] = useState(0);
+  const savingRef = useRef(false);
 
   useEffect(() => {
     let active = true;
@@ -109,21 +110,27 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
     if (!r || r <= 0) { setError('Bitte gültige Wiederholungen eingeben.'); return; }
     const w = weight.trim() ? Number(weight.replace(',', '.')) : null;
     if (!userId) return;
+    if (savingRef.current) return; // synchroner Lock gegen schnellen Doppel-Tipp
+    savingRef.current = true;
     setSaving(true);
-    let sid = sessionId;
-    if (!sid) {
-      const { data: created, error: cErr } = await supabase.from('workout_sessions').insert({ user_id: userId }).select('id').single();
-      if (cErr || !created) { setError(cErr?.message ?? 'Session konnte nicht angelegt werden.'); setSaving(false); return; }
-      sid = created.id;
-      setSessionId(sid);
+    try {
+      let sid = sessionId;
+      if (!sid) {
+        const { data: created, error: cErr } = await supabase.from('workout_sessions').insert({ user_id: userId }).select('id').single();
+        if (cErr || !created) { setError(cErr?.message ?? 'Session konnte nicht angelegt werden.'); return; }
+        sid = created.id;
+        setSessionId(sid);
+      }
+      if (!sid) return;
+      const { error: iErr } = await supabase.from('set_logs').insert({
+        user_id: userId, session_id: sid, exercise_id: exercise.id, set_index: sets.length + 1, reps: r, weight_kg: w,
+      });
+      if (iErr) setError(iErr.message);
+      else { await refreshSets(sid); setReps(''); setEnded(false); setRestSignal((n) => n + 1); }
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
     }
-    if (!sid) { setSaving(false); return; }
-    const { error: iErr } = await supabase.from('set_logs').insert({
-      user_id: userId, session_id: sid, exercise_id: exercise.id, set_index: sets.length + 1, reps: r, weight_kg: w,
-    });
-    if (iErr) setError(iErr.message);
-    else { await refreshSets(sid); setReps(''); setEnded(false); setRestSignal((n) => n + 1); }
-    setSaving(false);
   }
 
   async function endTraining() {

@@ -22,7 +22,10 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
   const [view, setView] = useState<'menu' | 'profile' | 'legal' | 'privacy'>('menu');
   const [rem, setRem] = useState<ReminderPrefs | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const [msgErr, setMsgErr] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  function showMsg(text: string, err: boolean) { setMsg(text); setMsgErr(err); }
 
   useEffect(() => {
     loadReminderPrefs().then(setRem);
@@ -33,7 +36,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
   async function updateRem(next: ReminderPrefs) {
     if (next.enabled && !rem?.enabled) {
       const ok = await ensurePermission();
-      if (!ok) { setMsg('Bitte Benachrichtigungen für die App erlauben (Handy-Einstellungen).'); next = { ...next, enabled: false }; }
+      if (!ok) { showMsg('Bitte Benachrichtigungen für die App erlauben (Handy-Einstellungen).', true); next = { ...next, enabled: false }; }
     }
     setRem(next);
     await saveReminderPrefs(next);
@@ -46,10 +49,22 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
     setMsg(null);
     const { error } = await supabase.auth.resetPasswordForEmail(session.user.email);
     setBusy(false);
-    setMsg(error ? 'Fehler: ' + error.message : 'E-Mail zum Zurücksetzen wurde gesendet (Postfach prüfen).');
+    showMsg(error ? 'Fehler: ' + error.message : 'E-Mail zum Zurücksetzen wurde gesendet (Postfach prüfen).', !!error);
+  }
+  function confirmRedoOnboarding() {
+    Alert.alert(
+      'Onboarding erneut durchlaufen?',
+      'Du gibst deine Profilangaben neu ein. Deine bisherigen Trainings- und Essensdaten bleiben erhalten.',
+      [
+        { text: 'Abbrechen', style: 'cancel' },
+        { text: 'Fortfahren', onPress: redoOnboarding },
+      ],
+    );
   }
   async function redoOnboarding() {
     if (!session?.user) return;
+    // altes aktives Ziel deaktivieren, damit nicht mehrere aktive Ziele entstehen
+    await supabase.from('goals').update({ is_active: false }).eq('user_id', session.user.id).eq('is_active', true);
     await supabase.from('profiles').update({ experience_level: null }).eq('id', session.user.id);
     await refreshProfile();
   }
@@ -70,10 +85,10 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(uri, { mimeType: 'application/json', dialogTitle: 'FitFusion Datenexport' });
       } else {
-        setMsg('Teilen ist auf diesem Gerät nicht verfügbar.');
+        showMsg('Teilen ist auf diesem Gerät nicht verfügbar.', true);
       }
     } catch (e: any) {
-      setMsg('Export fehlgeschlagen: ' + (e?.message ?? ''));
+      showMsg('Export fehlgeschlagen: ' + (e?.message ?? ''), true);
     } finally {
       setBusy(false);
     }
@@ -190,7 +205,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
 
       <Text style={styles.section}>DATEN</Text>
       <View style={styles.card}>
-        <TouchableOpacity style={styles.linkRow} onPress={redoOnboarding}>
+        <TouchableOpacity style={styles.linkRow} onPress={confirmRedoOnboarding}>
           <Text style={styles.link}>Onboarding erneut durchlaufen</Text>
         </TouchableOpacity>
       </View>
@@ -222,7 +237,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
       </View>
 
       {busy && <ActivityIndicator color={c.primary} style={{ marginTop: 14 }} />}
-      {msg && <Text style={styles.msg}>{msg}</Text>}
+      {msg && <Text style={[styles.msg, { color: msgErr ? c.danger : c.success }]}>{msg}</Text>}
 
       <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
         <Text style={styles.logoutText}>Abmelden</Text>

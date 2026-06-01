@@ -2,7 +2,7 @@
 // persoenliche Rekorde und Trainingshistorie. Liest aus set_logs / workout_sessions
 // / progress_entries. Keine DB-Aenderung noetig.
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Dimensions, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Dimensions, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
@@ -210,6 +210,12 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
     await deleteWeight(id);
     await load();
   }
+  function confirmRemoveWeight(id: string) {
+    Alert.alert('Eintrag löschen?', 'Dieser Gewichtseintrag wird dauerhaft entfernt und verändert deine Verlaufskurve.', [
+      { text: 'Abbrechen', style: 'cancel' },
+      { text: 'Löschen', style: 'destructive', onPress: () => removeWeight(id) },
+    ]);
+  }
 
   const current = weights.length ? weights[weights.length - 1].kg : profileWeight;
   const start = weights.length ? weights[0].kg : null;
@@ -321,7 +327,7 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
                     <View key={w.id} style={styles.histRow}>
                       <Text style={styles.histDate}>{ddmm(w.date)}</Text>
                       <Text style={styles.histKg}>{w.kg} kg</Text>
-                      <TouchableOpacity onPress={() => removeWeight(w.id)} style={styles.histDel}>
+                      <TouchableOpacity onPress={() => confirmRemoveWeight(w.id)} style={styles.histDel}>
                         <Text style={styles.histDelText}>✕</Text>
                       </TouchableOpacity>
                     </View>

@@ -1,6 +1,6 @@
 // Automatischer Trainingsplan (themed).
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
@@ -223,6 +223,15 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
     }
   }
 
+  // Vor dem Neu-Erstellen warnen, falls bereits ein Plan + Wochenzuordnung existiert
+  function confirmGenerate(n: number) {
+    if (!planName) { generatePlan(n); return; }
+    Alert.alert('Neuen Plan erstellen?', 'Dein aktueller Plan und die Wochenzuordnung werden ersetzt. Fortfahren?', [
+      { text: 'Abbrechen', style: 'cancel' },
+      { text: 'Ersetzen', style: 'destructive', onPress: () => generatePlan(n) },
+    ]);
+  }
+
   if (selected) {
     return (
       <ExerciseDetail
@@ -284,7 +293,7 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
             );
           })}
         </View>
-        <TouchableOpacity style={[styles.primaryBtn, generating && { opacity: 0.6 }]} onPress={() => generatePlan(selectedDays)} disabled={generating}>
+        <TouchableOpacity style={[styles.primaryBtn, generating && { opacity: 0.6 }]} onPress={() => confirmGenerate(selectedDays)} disabled={generating}>
           {generating ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.primaryText}>Plan automatisch erstellen</Text>}
         </TouchableOpacity>
         {planName && !generating && (<TouchableOpacity onPress={() => setMode('view')}><Text style={styles.link}>Abbrechen</Text></TouchableOpacity>)}

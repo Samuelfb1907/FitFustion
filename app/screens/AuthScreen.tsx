@@ -51,6 +51,14 @@ export default function AuthScreen() {
     setLoading(false);
   }
 
+  async function forgotPassword() {
+    if (!email) { show('Bitte zuerst deine E-Mail-Adresse oben eingeben.', true); return; }
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    setLoading(false);
+    show(error ? translateError(error.message) : 'E-Mail zum Zurücksetzen gesendet – bitte Postfach prüfen.', !!error);
+  }
+
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.card}>
@@ -86,6 +94,12 @@ export default function AuthScreen() {
           <Text style={styles.toggle}>{mode === 'login' ? 'Noch kein Konto? Jetzt registrieren' : 'Schon ein Konto? Zum Login'}</Text>
         </TouchableOpacity>
 
+        {mode === 'login' && (
+          <TouchableOpacity onPress={forgotPassword} disabled={loading}>
+            <Text style={styles.forgot}>Passwort vergessen?</Text>
+          </TouchableOpacity>
+        )}
+
         {info && <Text style={[styles.info, { color: isError ? c.danger : c.success }]}>{info}</Text>}
       </View>
 
@@ -119,6 +133,7 @@ function makeStyles(c: Colors) {
     buttonDisabled: { opacity: 0.6 },
     buttonText: { color: c.onPrimary, fontSize: 16, fontWeight: '700' },
     toggle: { color: c.primary, textAlign: 'center', marginTop: 18, fontSize: 14 },
+    forgot: { color: c.textMuted, textAlign: 'center', marginTop: 12, fontSize: 13 },
     info: { marginTop: 16, fontSize: 14, textAlign: 'center' },
     acceptRow: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 18 },
     checkbox: { width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: c.border, alignItems: 'center', justifyContent: 'center', marginRight: 10, marginTop: 1 },

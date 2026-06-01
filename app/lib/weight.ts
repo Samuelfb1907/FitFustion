@@ -23,7 +23,7 @@ function daysAgoStr(days: number): string {
 // Parst eine Eingabe ("82,5" -> 82.5) und prueft die Grenzen. null = ungueltig.
 export function parseWeight(input: string): number | null {
   const w = Number(String(input).replace(',', '.'));
-  if (!w || w < WEIGHT_MIN || w > WEIGHT_MAX) return null;
+  if (Number.isNaN(w) || w < WEIGHT_MIN || w > WEIGHT_MAX) return null;
   return Math.round(w * 10) / 10;
 }
 
