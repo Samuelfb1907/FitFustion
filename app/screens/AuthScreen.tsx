@@ -112,6 +112,7 @@ export default function AuthScreen() {
                 placeholder="du@beispiel.de"
                 placeholderTextColor={c.textMuted}
                 autoCapitalize="none" autoCorrect={false} keyboardType="email-address" inputMode="email"
+                underlineColorAndroid="transparent"
               />
             </View>
 
@@ -126,6 +127,7 @@ export default function AuthScreen() {
                 placeholder={mode === 'register' ? 'mindestens 8 Zeichen' : 'Passwort'}
                 placeholderTextColor={c.textMuted}
                 secureTextEntry autoCapitalize="none"
+                underlineColorAndroid="transparent"
               />
             </View>
 
