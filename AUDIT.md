@@ -53,10 +53,10 @@ Der **App-Code ist erstaunlich solide**: `tsc` ist fehlerfrei, alle 14 Screens s
 
 ### Daten/DB
 - [x] **Indizes ergänzt** ✅ – Migration 015: `food_logs(food_id)`, `progress_entries(user_id, entry_date)`, `foods(category)`. *(recipe_items entfällt – Rezepte raus)*
-- [ ] **FK `ON DELETE` explizit machen** (`food_logs.food_id`, `recipe_items.food_id`, `set_logs.exercise_id`, `workout_plan_exercises.exercise_id` → `on delete restrict`); `foods.user_id` beim Nutzer-Löschen: cascade statt verwaisen. *(db/005, 010, schema.sql, 011)*
-- [ ] **`foods.name` UNIQUE überdenken** – global eindeutig kollidiert mit nutzereigenen Einträgen. → partielle Indizes (global `where user_id is null`, eigen `(user_id, name)`). *(db/005/006/011)*
-- [ ] **`exercises.name` UNIQUE + `on conflict`** (Seed race-/wiederholungssicher). *(db/schema.sql, 003, 008)*
-- [ ] **„Genau ein aktives Ziel" / 1 Gewicht pro Tag** absichern (partielles UNIQUE bzw. Upsert). *(db/schema.sql)*
+- [x] **FK `ON DELETE` explizit machen** ✅ (Migration 016) (`food_logs.food_id`, `recipe_items.food_id`, `set_logs.exercise_id`, `workout_plan_exercises.exercise_id` → `on delete restrict`); `foods.user_id` beim Nutzer-Löschen: cascade statt verwaisen. *(db/005, 010, schema.sql, 011)*
+- [~] **`foods.name` UNIQUE überdenken** (bewusst aufgeschoben – Seeds 005/006 nutzen `on conflict (name)`, müsste zuerst angepasst werden; Hinweis in db/016) – global eindeutig kollidiert mit nutzereigenen Einträgen. → partielle Indizes (global `where user_id is null`, eigen `(user_id, name)`). *(db/005/006/011)*
+- [x] **`exercises.name` UNIQUE** ✅ (Migration 016 – Unique-Index, übersprungen falls Altdaten kollidieren) (Seed race-/wiederholungssicher). *(db/schema.sql, 003, 008)*
+- [x] **„Genau ein aktives Ziel" / 1 Gewicht pro Tag** ✅ (Migration 016: partielle Unique-Indizes `goals_one_active_per_user` + `progress_one_per_day`; doppelte aktive Ziele werden vorher bereinigt). *(db/016)*
 
 ### Code
 - [x] **Fehlerbehandlung bei Supabase-Writes** ✅ ERLEDIGT (Schreibvorgänge prüfen jetzt `error` → freundlicher Hinweis/Alert via zentralem `errorMessage`, bei optimistischen Updates zusätzlich Resync mit der DB) – früher: viele `insert/update/delete` ignorieren `error` (stille Fehlschläge, optimistischer State läuft mit DB auseinander). *(weight.ts, HomeScreen, WaterScreen, PlanScreen, TrainingScreen, FoodTrackerScreen)*
