@@ -4,30 +4,35 @@
 > weiterarbeiten kann. Im neuen Chat einfügen oder darauf verweisen.
 >
 > *Stand: 5-Tab-App (Expo SDK 54 + Supabase). Training-Hub (klickbarer Körper → Übungen mit
-> animierten GIFs → Detail/Logging), aufgewerteter Trainingsplan, Essen-Hub (Tracker + Plan),
-> Wasser-Tracker, Fortschritts-Dashboard, Tagesziele & Challenges, Gamification, Dark Mode,
-> Erinnerungen (startklar, brauchen Dev-Build). Läuft im Browser UND auf dem iPhone (Expo Go).*
+> animierten GIFs → Detail/Logging + Pausen-Timer), Trainingsplan mit Wochenkalender & Tag-Bearbeiten,
+> Essen-Hub (Kalorien-Tracker mit Mahlzeiten/Schnellzugriff/Barcode/eigene Lebensmittel + Wasser-Tracker),
+> Fortschritt (inkl. Übungs-Verlauf), Tagesziele & Challenges, Gamification, Dark Mode, Erinnerungen
+> (startklar), **DSGVO (Export/Konto löschen) + Haftungsausschluss**. **Ernährungsplan & Rezepte wurden
+> auf Wunsch entfernt** (Essen = Tracker + Wasser). Läuft im Browser UND auf dem iPhone (Expo Go).
+> Offene To-dos: siehe `AUDIT.md`.*
 
 ---
 
 ## 0. Aktueller Stand & Wiedereinstieg
 - **Zuletzt gebaut (neueste zuerst):**
-  - **Erinnerungen** (`lib/reminders.ts`, `expo-notifications`): Einstellungen → **ERINNERUNGEN**
-    (Wasser 10/13/16/19 Uhr, Training mit Uhrzeit). **Funktioniert NICHT in Expo Go** – Code ist
-    startklar; echte Benachrichtigungen erst mit **Development-Build**. iOS-Dev-Build braucht ein
-    **Apple-Entwickler-Konto (99 $/Jahr)**; Nutzer (iPhone + Windows) hat das noch nicht → „später aktivieren".
-  - **Wasser-Tracker** (Home + Tracker, synchron): Tabelle `water_logs` (**Migration 009**).
-  - **Tagesziele & Challenges** auf dem Start-Screen (`lib/goals.ts`).
-  - **Trainingsplan aufgewertet** (`PlanScreen`): Übungen antippbar → Detail mit GIF/Anleitung/Mitschreiben,
-    ✓ wenn heute trainiert, Zielmuskel; robustere Generierung.
-- **⚠️ OFFENE DB-SCHRITTE (im Supabase SQL Editor ausführen, idempotent):**
-  - **`008_more_exercises_gifs.sql`** – 64 zusätzliche Übungen (≥5 je Muskel & Umgebung, ≥5 Anfänger; Theraband für Bizeps/Schultern „kein Equipment").
-  - **`009_water.sql`** – Tabelle `water_logs` für den Wasser-Tracker.
-  - Schnell-Check: Hat das Training viele Übungen pro Muskel? Lässt sich Wasser hinzufügen? Wenn nein → 008/009 ausführen.
-- **⚠️ API-Keys in `app/.env`** (gitignored): `EXPO_PUBLIC_SUPABASE_URL/_ANON_KEY`, `EXPO_PUBLIC_EXERCISEDB_KEY` (bezahlter Plan, für GIFs).
-- **Handy:** in `app/` → `npx expo start` (nach `.env`/Versions-Wechsel `-c`), QR scannen. SDK bleibt **54**.
-- **Browser:** `build\Start-FitFusion-Web.cmd` oder `npx expo start --web`. **Build-Check:** `npx tsc --noEmit`.
-- **Nächste Idee (offen):** eigene Rezepte/Mahlzeiten; Erfolge dauerhaft speichern; Dev-Build für echte Erinnerungen.
+  - **Audit-Abbau in Batches** (`AUDIT.md`): foods-Leseregel + Indizes (**Migration 015**), Zeitzonen-Fix
+    (`lib/date.ts` `localDateStr`), Bestätigungs-Dialoge, Barrierefreiheit (accessibilityLabel), Performance
+    (**Tabs bleiben gemountet** via `lib/useFocusTick` → sofortiger Wechsel; **FlatList** für Lebensmittel;
+    HomeScreen `Promise.all`; **expo-image**-Disk-Cache für GIFs), Geburtsdatum-Fix, Race-Lock beim Satz-Speichern u. v. m.
+  - **DSGVO** (`lib/gdpr.ts`): Einstellungen → **Datenschutz** = Datenexport (JSON teilen), „Konto & alle Daten
+    löschen", Datenschutzerklärung-Vorlage. **Migration 014** (`profiles_delete_own`). Optionale Edge Function
+    `supabase/functions/delete-account` (echtes Auth-Konto-Löschen) – siehe `SUPABASE_FUNCTIONS.md`.
+  - **Haftungsausschluss** (`lib/legal.ts`, 15 Abschnitte) + Pflicht-Zustimmung bei der Registrierung; `RECHTLICHES.md`.
+  - **Ernährungsplan & Rezepte auf Wunsch ENTFERNT** (Essen = Tracker + Wasser); `NutritionScreen`/`RecipesScreen`/`lib/allergens.ts` gelöscht.
+- **⚠️ OFFENE DB-SCHRITTE (idempotent, im SQL Editor, Reihenfolge s. Abschnitt 6):** Migrationen **008–015**
+  müssen ausgeführt sein – sonst fehlen Übungen / Wasser / Barcode-Spalten / Mahlzeiten-Typ / Wochenplan /
+  DSGVO-Lösch-Policy / Indizes. (DB-Tabellen `nutrition_plans`,`meals`,`recipes`,`recipe_items` bleiben ungenutzt bestehen.)
+- **⚠️ API-Keys in `app/.env`** (gitignored): `EXPO_PUBLIC_SUPABASE_URL/_ANON_KEY`, `EXPO_PUBLIC_EXERCISEDB_KEY`
+  (bezahlt, für GIFs – sollte vor Release hinter einen Proxy/Edge-Function).
+- **Handy:** in `app/` → `npx expo start` (nach `.env`/Modul/`app.json`-Wechsel `-c`), QR scannen. SDK bleibt **54**.
+- **Browser/Build-Check:** `npx expo start --web` · `npx tsc --noEmit`.
+- **Offene To-dos:** siehe **`AUDIT.md`** – u. a. ExerciseDB-Key serverseitig, **E-Mail-Bestätigung aktivieren**
+  (Supabase), Impressum + Datenschutz-Platzhalter ausfüllen, Dev-Build für echte Erinnerungen, anwaltliche Prüfung.
 
 ---
 
@@ -62,8 +67,11 @@
 
 ## 6. Datenbank + Migrationen (im SQL Editor, in Reihenfolge)
 `schema.sql` → `002_allergies` → `003_more_exercises` → `004_more_exercises` → `005_food_tracking`
-→ `006_foods_500plus` → `007_session_end` (`workout_sessions.ended_at`) → **`008_more_exercises_gifs`**
-(64 Übungen) → **`009_water`** (`water_logs`). Alle idempotent. RLS überall (`auth.uid()=user_id`).
+→ `006_foods_500plus` → `007_session_end` (`workout_sessions.ended_at`) → `008_more_exercises_gifs`
+(Übungs-Seeds, optional) → `009_water` (`water_logs`) → `010_recipes` (recipes/recipe_items – ungenutzt)
+→ `011_barcode` (`foods.barcode`+`user_id`) → `012_meal_types` (`food_logs.meal_type`)
+→ `013_plan_schedule` (Wochenplan) → `014_gdpr` (`profiles_delete_own`) → `015_privacy_indexes`
+(foods-Leseregel `foods_read_global_or_own` + Indizes). Alle idempotent. RLS überall (`auth.uid()=user_id`).
 - Muskel-Keys: chest, back, shoulders, biceps, triceps, abs, legs, calves, glutes.
 - `water_logs`: id, user_id, log_date, amount_ml, created_at (RLS own).
 

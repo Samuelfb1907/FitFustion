@@ -107,7 +107,23 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
     if (step === 5) { if (!goal) return false; if (goal === 'lose_weight') return num(targetWeight) >= 30 && num(targetWeight) <= 300; return true; }
     return false;
   }
-  function next() { setError(null); if (!stepValid()) { setError('Bitte fülle alle Felder gültig aus.'); return; } if (step < totalSteps) setStep(step + 1); else finish(); }
+  function stepError(): string | null {
+    if (step === 1) {
+      if (!firstName.trim()) return 'Bitte einen Vornamen eingeben.';
+      if (!(num(age) >= 10 && num(age) <= 100)) return 'Alter muss zwischen 10 und 100 liegen.';
+      if (!gender) return 'Bitte wähle dein Geschlecht.';
+      if (!(num(weight) >= 30 && num(weight) <= 300)) return 'Gewicht muss zwischen 30 und 300 kg liegen.';
+      if (!(num(height) >= 100 && num(height) <= 250)) return 'Größe muss zwischen 100 und 250 cm liegen.';
+    }
+    if (step === 3 && !experience) return 'Bitte wähle dein Erfahrungslevel.';
+    if (step === 4 && !environment) return 'Bitte wähle deine Trainingsumgebung.';
+    if (step === 5) {
+      if (!goal) return 'Bitte wähle ein Ziel.';
+      if (goal === 'lose_weight' && !(num(targetWeight) >= 30 && num(targetWeight) <= 300)) return 'Bitte ein gültiges Traumgewicht (30–300 kg) eingeben.';
+    }
+    return null;
+  }
+  function next() { const e = stepError(); if (e) { setError(e); return; } setError(null); if (step < totalSteps) setStep(step + 1); else finish(); }
   function back() { setError(null); if (step > 1) setStep(step - 1); }
 
   async function finish() {

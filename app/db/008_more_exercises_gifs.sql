@@ -1,6 +1,9 @@
 -- ============================================================================
---  Migration 008 - Mehr Uebungen je Muskelgruppe (mit GIF), >= 5 je Umgebung
---  Im Supabase SQL Editor ausfuehren. Idempotent (fuegt nur fehlende ein).
+--  Migration 008 - Mehr Uebungen je Muskelgruppe, >= 5 je Umgebung
+--  HINWEIS: Diese Migration legt KEINE GIF-Spalte an. Die animierten GIFs werden
+--  client-seitig ueber app/lib/exerciseMedia.ts anhand des Uebungs-NAMENS aufgeloest
+--  und von ExerciseDB geladen. Hier werden nur Uebungs-Datensaetze eingefuegt.
+--  Im Supabase SQL Editor ausfuehren. Idempotent (fuegt nur fehlende ein). Optional (nur Seeds).
 -- ============================================================================
 insert into public.exercises (name, difficulty, equipment, primary_muscle_id, description, instructions)
 select e.name, e.difficulty, e.equipment, m.id, e.description, e.instructions

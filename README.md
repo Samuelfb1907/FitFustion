@@ -8,21 +8,19 @@ auf Basis deiner persönlichen Daten und Ziele. Läuft im **Browser** und auf de
 ---
 
 ## ✨ Features (umgesetzt)
-- 🔐 **Registrierung & Login** (Supabase Auth, Session bleibt erhalten)
-- 🧭 **Onboarding** in 5 Schritten: persönliche Daten, **39 Allergien**, Erfahrung, Umgebung, Ziel
-- 🔥 **Täglicher Kalorien- & Makrobedarf** aus dem Profil (Mifflin-St-Jeor-Formel)
-- 💪 **Training-Hub**: **Freies Training** mit **realistischem, klickbarem Körper** (männlich/weiblich je
-  Geschlecht, Vorder-/Rückseite) → Übungen (nach Level & Equipment) → Detail · **+ automatischer Trainingsplan**
-- 📝 **Training mitschreiben**: Sätze (Wiederholungen + Gewicht) + **„Training beenden"**
-- 🍽️ **Essen-Hub**: **Kalorien-Tracker** (540+ Zutaten) **+ Ernährungsplan** (trifft Makros, allergikersicher)
-- 📈 **Fortschritts-Dashboard**: Gewichtsverlauf, Wochenvolumen, persönliche Rekorde, Trainingshistorie
-- 🎮 **Gamification**: Level/XP, Streak & Erfolge + **animierte Kalorien-Gauge**
-- 🌙 **Dark Mode** & ⚙️ **Einstellungen** (Profil bearbeiten, Abmelden, Passwort-Reset)
+- 🔐 **Registrierung & Login** (Supabase Auth) inkl. **Haftungsausschluss-Bestätigung** & „Passwort vergessen?"
+- 🧭 **Onboarding** in 5 Schritten (persönliche Daten, Erfahrung, Umgebung, Ziel)
+- 🔥 **Täglicher Kalorien- & Makrobedarf** aus dem Profil (Mifflin-St-Jeor)
+- 💪 **Training-Hub**: Freies Training mit **realistischem, klickbarem Körper** (m/w) → Übungen (nach Level & Equipment) → Detail mit **animiertem GIF**, Anleitung, **Mitschreiben** & **Pausen-Timer** · **automatischer Trainingsplan** mit **Wochenkalender** & Tag-Bearbeiten
+- 🍽️ **Essen-Hub**: **Kalorien-Tracker** (Mahlzeiten Frühstück/Mittag/Abend/Snack, **Schnellzugriff**), **Barcode-Scanner** (Open Food Facts), **eigene Lebensmittel** · **Wasser-Tracker**
+- 📈 **Fortschritt**: Gewichtsverlauf, Wochenvolumen, persönliche Rekorde (+ geschätztes 1RM), **Übungs-Fortschritt**, Historie
+- 🎮 **Gamification**: Level/XP, Streak, Erfolge · 🎯 **Tagesziele & Challenges**
+- 🌙 **Dark Mode** · ⚙️ **Einstellungen** (Profil, Erinnerungen, **Datenschutz: Datenexport & Konto löschen**, Rechtliches)
 - 🧭 Navigation über **5 Tabs**: **Start · Training · Essen · Fortschritt · Einstellungen**
 
-## 🔭 Geplant
-- 🎯 Tagesziele & Challenges · 🍳 eigene Rezepte/Mahlzeiten speichern
-- 💎 Premium-Funktionen · 🎬 Übungs-Animationen · 📦 Standalone-App (Dev-Build via EAS)
+## 🔭 Geplant / offen
+- 💎 Premium-Funktionen · 📦 Standalone-App (Dev-Build via EAS) · 🔔 echte Erinnerungen (nur im Dev-Build)
+- 🔑 ExerciseDB-Key serverseitig (Proxy) · ✉️ E-Mail-Bestätigung aktivieren · 📜 Impressum + Datenschutz-Platzhalter ausfüllen (vor Release)
 
 ---
 
@@ -41,13 +39,15 @@ fitness-app/
 ├─ app/                          Expo-App
 │  ├─ App.tsx                    Routing (Auth / Onboarding / MainTabs)
 │  ├─ contexts/                  AuthContext (Session+Profil), ThemeContext (Dark Mode)
-│  ├─ components/                ExerciseDetail, CalorieGauge, Charts, Segmented, BodyMuscleMap
-│  ├─ lib/                       supabase, nutrition, meals, gamification
+│  ├─ components/                ExerciseDetail, ExerciseGif, ExerciseFigure, RestTimer,
+│  │                             BarcodeScanner, BodyMuscleMap, Charts, CalorieGauge, Segmented, LegalText
+│  ├─ lib/                       supabase, nutrition, meals, gamification, goals, weight, date,
+│  │                             weekdays, reminders, openFoodFacts, barcodeFood, exerciseMedia, gdpr, legal, useFocusTick
 │  ├─ screens/                   Auth, Onboarding, MainTabs, Home, Training-/Essen-Hub,
-│  │                             Plan, Nutrition, FoodTracker, Progress, Settings, Profile
-│  └─ db/                        schema.sql + Migrationen 002–007
-├─ build/                        Hilfsskripte (Start, Tools)
-├─ FitFusion-Masterfile.docx     Produktvision/Konzept
+│  │                             Plan, FoodTracker, Water, Progress, Settings, Profile
+│  └─ db/                        schema.sql + Migrationen 002–015
+├─ supabase/functions/           Edge Function delete-account (DSGVO, optional)
+├─ AUDIT.md · RECHTLICHES.md · SUPABASE_FUNCTIONS.md   Audit/To-dos, Rechtstexte, Function-Doku
 ├─ HANDOVER.md                   Detaillierter Projektstand
 └─ README.md
 ```
@@ -64,10 +64,14 @@ fitness-app/
 2. **Umgebungsvariablen:** `.env` in `app/` anlegen (Supabase → *Project Settings → API Keys*):
    - `EXPO_PUBLIC_SUPABASE_URL`
    - `EXPO_PUBLIC_SUPABASE_ANON_KEY`
-3. **Datenbank einrichten:** Im Supabase **SQL Editor** der Reihe nach ausführen:
-   `app/db/schema.sql`, dann `002_allergies.sql`, `003_more_exercises.sql`,
-   `004_more_exercises.sql`, `005_food_tracking.sql`, `006_foods_500plus.sql`, `007_session_end.sql`.
-4. **(Dev-Tipp)** Supabase → *Authentication → Providers → Email* → „Confirm email" deaktivieren.
+   - `EXPO_PUBLIC_EXERCISEDB_KEY` *(optional – ohne ihn werden statt animierter GIFs nur statische Muskelgrafiken gezeigt; RapidAPI „ExerciseDB")*
+3. **Datenbank einrichten:** Im Supabase **SQL Editor** **in dieser Reihenfolge** ausführen:
+   `schema.sql` → `002_allergies.sql` → `003_more_exercises.sql` → `004_more_exercises.sql` →
+   `005_food_tracking.sql` → `006_foods_500plus.sql` → `007_session_end.sql` → `008_more_exercises_gifs.sql` →
+   `009_water.sql` → `010_recipes.sql` → `011_barcode.sql` → `012_meal_types.sql` →
+   `013_plan_schedule.sql` → `014_gdpr.sql` → `015_privacy_indexes.sql`.
+   *(Alle idempotent. 008 ist optional – nur zusätzliche Übungs-Seeds. 010 legt ungenutzte recipes-Tabellen an, schadet aber nicht.)*
+4. **E-Mail-Bestätigung:** Für die Entwicklung kann unter Supabase → *Authentication → Email* „Confirm email" aus bleiben. **Für eine Veröffentlichung unbedingt aktivieren.**
 5. **Starten:**
    - **Browser:** `npm run web`
    - **Handy:** `npx expo start` → mit **Expo Go** den QR-Code scannen (App-SDK muss zur Expo-Go-Version passen)

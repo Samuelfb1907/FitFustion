@@ -20,7 +20,7 @@ Der **App-Code ist erstaunlich solide**: `tsc` ist fehlerfrei, alle 14 Screens s
 
 ## 🔴 Sofort (vor weiterem Ausbau – klein & wirkungsvoll)
 
-- [ ] **Setup-Doku korrigieren** – README Schritt 3 + HANDOVER listen nur Migrationen bis 007/009. Der Code braucht **008–013** zwingend. Wer dem Setup folgt, bekommt eine teils leere/kaputte App (Tracker, Wasser, Rezepte, Barcode, Wochenplan). → Migrationsliste auf `schema.sql → 005 → 006 → 007 → 009 → 010 → 011 → 012 → 013` ergänzen (008 = optionale Übungs-Seeds). *(README.md, HANDOVER.md)*
+- [x] **Setup-Doku korrigiert** ✅ – README & HANDOVER listen jetzt die vollständige Migrationskette **002–015** in Reihenfolge; `EXPO_PUBLIC_EXERCISEDB_KEY` (optional) im Setup ergänzt. *(README.md, HANDOVER.md)*
 - [x] **foods-Lese-Policy eingeschränkt** ✅ – Migration 015: `foods_read_global_or_own` (`user_id is null or auth.uid() = user_id`, nur `authenticated`). Eigene/gescannte Lebensmittel sind nicht mehr für fremde Nutzer sichtbar. *(db/015_privacy_indexes.sql)*
 - [x] **Allergie-Versprechen gelöst** ✅ – Allergene werden jetzt **automatisch aus den Zutaten** abgeleitet (`lib/allergens.ts`, Zutat→Allergen-Map) und mit den manuellen Tags vereinigt; `safeMealsFor` filtert darüber. Damit greifen auch zutatenbasierte Allergene wie Banane/Apfel/Weizen/Mais/Soja/Nüsse/Fisch/Kokos/Sesam/Zitrus/Nachtschatten. UI-Text ehrlich gemacht („nach Möglichkeit ausgeschlossen – bitte Zutaten selbst prüfen") + Hinweis, wenn eine Mahlzeit wegen Allergien wegfällt. *(Rein zutatenferne Intoleranzen wie Histamin/Fruktose/Sulfite bleiben naturgemäß ungefiltert.)* *(lib/allergens.ts, lib/meals.ts, NutritionScreen.tsx)*
 
@@ -72,7 +72,7 @@ Der **App-Code ist erstaunlich solide**: `tsc` ist fehlerfrei, alle 14 Screens s
 - [x] **`hitSlop` ergänzt** ✅ – an den kleinen Lösch-/Undo-Buttons (Progress/Water/FoodTracker). *(Tab-Höhe iOS via paddingBottom ok.)*
 - [x] **Fehlermeldungen-Farbe** ✅ – SettingsScreen nutzt jetzt ein `msgErr`-Flag (rot bei Fehler, grün bei Erfolg). *(Rezepte entfernt.)* *(SettingsScreen)*
 - [x] **„Onboarding erneut" warnen** ✅ – Bestätigungsdialog + altes aktives Ziel wird deaktiviert (keine doppelten aktiven Ziele). *(SettingsScreen)*
-- [~] **Feldspezifische Validierungsmeldungen** – ProfileScreen ✅ (klare Meldungen je Feld); Onboarding noch offen. *(OnboardingScreen)*
+- [x] **Feldspezifische Validierungsmeldungen** ✅ – klare Meldungen je Feld in ProfileScreen **und** Onboarding (statt „alle Felder gültig"). *(OnboardingScreen, ProfileScreen)*
 - [x] **Achievements antippbar** ✅ – Tippen zeigt Bedingung/Beschreibung + ob freigeschaltet (Alert). *(HomeScreen)*
 - [x] **Satz nachträglich löschen** ✅ – ✕ pro Satz-Zeile beim Mitschreiben (löscht aus set_logs). *(ExerciseDetail.tsx)*
 - [x] **OpenFoodFacts-Timeout** ✅ – `AbortController` mit 8 s, bricht ab statt ewig zu hängen (danach klare „nicht gefunden"-Meldung). *(openFoodFacts.ts)*
@@ -86,8 +86,8 @@ Der **App-Code ist erstaunlich solide**: `tsc` ist fehlerfrei, alle 14 Screens s
 ## 🔵 Kleinigkeiten / Doku
 - [x] **Erinnerungs-Handler** ✅ – auf `shouldShowBanner`/`shouldShowList` umgestellt, `as any` entfernt. *(lib/reminders.ts)*
 - [ ] **`exercise_muscles`** (Sekundärmuskeln) befüllen & anzeigen ODER aus Schema/Konzept entfernen (aktuell totes Schema). *(db/schema.sql)*
-- [ ] **README/HANDOVER aktualisieren** – umgesetzte Features (Rezepte, Tagesziele/Challenges, Barcode, Wasser, Wochenkalender, Pausen-Timer) stehen z. T. noch unter „geplant"; Projektstruktur/Migrationsliste veraltet. *(README.md, HANDOVER.md)*
-- [ ] **008-Kommentar klarstellen** („GIFs via lib/exerciseMedia.ts über den Namen, keine GIF-Spalte"). *(db/008)*
+- [x] **README/HANDOVER aktualisiert** ✅ – Features, Projektstruktur, Migrationsliste (002–015) und Stand aktualisiert; entfernte Features (Ernährungsplan/Rezepte) vermerkt. *(README.md, HANDOVER.md)*
+- [x] **008-Kommentar klargestellt** ✅ – Hinweis ergänzt: GIFs kommen client-seitig via `lib/exerciseMedia.ts` über den Namen, keine GIF-Spalte. *(db/008)*
 
 ---
 
