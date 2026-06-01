@@ -1,10 +1,12 @@
 // Eigener Wasser-Tracker (Reiter unter "Essen"). Liest/schreibt water_logs.
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { useFocusTick } from '../lib/useFocusTick';
+import ErrorRetry from '../components/ErrorRetry';
+import { errorMessage } from '../lib/errors';
 
 type WaterRow = { id: string; amount_ml: number; created_at: string };
 
@@ -27,35 +29,53 @@ export default function WaterScreen({ embedded, focusTick }: { embedded?: boolea
   const styles = makeStyles(c);
 
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const [rows, setRows] = useState<WaterRow[]>([]);
 
   useEffect(() => { load(); }, [userId]);
 
   // Reiter erneut angetippt -> leise aktualisieren (ohne Spinner)
-  useFocusTick(focusTick, () => { fetchRows(); });
+  useFocusTick(focusTick, () => { load(true); });
 
   async function fetchRows() {
     if (!userId) return;
-    const { data } = await supabase
+    const { data, error: e } = await supabase
       .from('water_logs').select('id, amount_ml, created_at')
       .eq('user_id', userId).eq('log_date', todayStr()).order('created_at');
+    if (e) throw e;
     setRows((data ?? []) as WaterRow[]);
   }
 
-  async function load() {
+  async function load(silent = false) {
     if (!userId) { setLoading(false); return; }
-    await fetchRows();
-    setLoading(false);
+    if (!silent) setLoading(true);
+    try {
+      await fetchRows();
+      setError(null);
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }
+
+  function onRefresh() {
+    setRefreshing(true);
+    load(true);
   }
 
   async function add(ml: number) {
     if (!userId) return;
-    await supabase.from('water_logs').insert({ user_id: userId, amount_ml: ml, log_date: todayStr() });
-    await load();
+    const { error: e } = await supabase.from('water_logs').insert({ user_id: userId, amount_ml: ml, log_date: todayStr() });
+    if (e) { setError(errorMessage(e)); return; }
+    await load(true);
   }
   async function removeOne(id: string) {
-    await supabase.from('water_logs').delete().eq('id', id);
-    await load();
+    const { error: e } = await supabase.from('water_logs').delete().eq('id', id);
+    if (e) { setError(errorMessage(e)); return; }
+    await load(true);
   }
   async function undoLast() {
     if (!rows.length) return;
@@ -78,9 +98,17 @@ export default function WaterScreen({ embedded, focusTick }: { embedded?: boolea
   }
 
   return (
-    <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }}>
+    <ScrollView
+      style={[styles.container, embedded && styles.embedded]}
+      contentContainerStyle={{ paddingBottom: 40 }}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
+    >
       {!embedded && <Text style={styles.title}>Wasser</Text>}
 
+      {error ? (
+        <ErrorRetry message={error} onRetry={() => load()} embedded={embedded} />
+      ) : (
+      <>
       <View style={styles.hero}>
         <Text style={styles.bigMl}>{total} <Text style={styles.bigUnit}>ml</Text></Text>
         <Text style={styles.goalLine}>Ziel: {WATER_GOAL} ml{reached ? '  ·  erreicht 🎉' : ''}</Text>
@@ -120,6 +148,8 @@ export default function WaterScreen({ embedded, focusTick }: { embedded?: boolea
             <TouchableOpacity onPress={() => removeOne(r.id)} style={styles.del} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`Wasser-Eintrag ${r.amount_ml} ml entfernen`}><Text style={styles.delText}>✕</Text></TouchableOpacity>
           </View>
         ))
+      )}
+      </>
       )}
     </ScrollView>
   );

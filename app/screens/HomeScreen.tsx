@@ -1,7 +1,7 @@
 // Start-Screen / Dashboard (themed, aufgeraeumt): Hero mit Level/Streak,
 // "Training laeuft"-Banner zum Beenden, Tages-Kalorien (Gauge), Schnellzugriff, Erfolge.
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
@@ -13,6 +13,9 @@ import { saveTodayWeight, parseWeight, WEIGHT_MIN, WEIGHT_MAX } from '../lib/wei
 import { todayWeekday } from '../lib/weekdays';
 import { NUTRITION_DISCLAIMER } from '../lib/legal';
 import { localDateStr } from '../lib/date';
+import { useFocusTick } from '../lib/useFocusTick';
+import ErrorRetry from '../components/ErrorRetry';
+import { errorMessage } from '../lib/errors';
 
 const GOAL_LABELS: Record<string, string> = {
   lose_weight: 'Abnehmen', build_muscle: 'Muskelaufbau', gain_strength: 'Kraft steigern',
@@ -50,6 +53,8 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
   const styles = makeStyles(c);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const [nutrition, setNutrition] = useState<NutritionResult | null>(null);
   const [goalLabel, setGoalLabel] = useState('');
   const [stats, setStats] = useState<GameStats | null>(null);
@@ -65,11 +70,12 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
   const [savingW, setSavingW] = useState(false);
   const [weightMsg, setWeightMsg] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function load() {
+  const load = useCallback(async (silent = false) => {
       const userId = session?.user?.id;
       if (!userId) return;
+      if (!silent) setLoading(true);
 
+      try {
       // unabhängige Abfragen parallel (statt nacheinander) -> deutlich schnellerer Aufbau
       const [profRes, goalRes, fdt, actRes, sessions, sets, foodLogs, sdRes, fd, schedRes] = await Promise.all([
         supabase.from('profiles').select('weight_kg, height_cm, birth_date, gender, activity_level').eq('id', userId).maybeSingle(),
@@ -145,11 +151,20 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
         setPlanToday(null);
       }
 
-      setLoading(false);
-    }
-    load();
-    // focusTick: beim erneuten Antippen des Start-Reiters leise neu laden (load setzt keinen Spinner)
-  }, [session?.user?.id, focusTick]);
+      setLoadError(null);
+      } catch (e) {
+        setLoadError(errorMessage(e));
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+  }, [session?.user?.id]);
+
+  useEffect(() => { load(); }, [load]);
+  // Start-Reiter erneut angetippt -> leise neu laden (ohne Spinner)
+  useFocusTick(focusTick, () => { load(true); });
+
+  const onRefresh = useCallback(() => { setRefreshing(true); load(true); }, [load]);
 
   async function endTraining() {
     if (!activeSession) return;
@@ -199,9 +214,15 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
+      >
         {loading ? (
           <ActivityIndicator size="large" color={c.primary} style={{ marginTop: 80 }} />
+        ) : loadError ? (
+          <ErrorRetry message={loadError} onRetry={() => load()} />
         ) : (
           <>
             {/* HERO */}

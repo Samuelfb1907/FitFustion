@@ -1,6 +1,6 @@
 // Kalorien-Tracker / Tagebuch (themed): eigene Zutaten auswählen, Menge angeben, Tag tracken.
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
@@ -10,6 +10,8 @@ import { resolveBarcodeFood } from '../lib/barcodeFood';
 import { TRACKER_MEALS, MealType, mealByHour, normalizeMeal } from '../lib/meals';
 import { NUTRITION_DISCLAIMER, ALLERGY_HINT } from '../lib/legal';
 import { useFocusTick } from '../lib/useFocusTick';
+import ErrorRetry from '../components/ErrorRetry';
+import { errorMessage } from '../lib/errors';
 
 type Food = { id: string; name: string; category: string | null; kcal: number; protein: number; carbs: number; fat: number; user_id?: string | null };
 type LogEntry = { id: string; amount_g: number; meal_type: string | null; food: Food | null };
@@ -45,6 +47,8 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   const [nf, setNf] = useState({ name: '', cat: '', kcal: '', protein: '', carbs: '', fat: '' });
   const [savingFood, setSavingFood] = useState(false);
   const [foodErr, setFoodErr] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => { init(); }, [userId]);
 
@@ -76,10 +80,12 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     setMode('amount');
   }
 
-  async function init() {
+  async function init(silent = false) {
     if (!userId) { setLoading(false); return; }
-    setLoading(true);
-    const { data: foodData } = await supabase.from('foods').select('id, name, category, kcal, protein, carbs, fat, user_id').order('name');
+    if (!silent) setLoading(true);
+    try {
+    const { data: foodData, error: fErr } = await supabase.from('foods').select('id, name, category, kcal, protein, carbs, fat, user_id').order('name');
+    if (fErr) throw fErr;
     setFoods((foodData ?? []) as Food[]);
     const { data: prof } = await supabase.from('profiles').select('weight_kg, height_cm, birth_date, gender, activity_level').eq('id', userId).maybeSingle();
     const { data: goal } = await supabase.from('goals').select('goal_type').eq('user_id', userId).eq('is_active', true).order('created_at', { ascending: false }).limit(1).maybeSingle();
@@ -92,7 +98,18 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     }
     await loadLogs();
     await loadQuick();
-    setLoading(false);
+    setLoadError(null);
+    } catch (e) {
+      setLoadError(errorMessage(e));
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }
+
+  function onRefresh() {
+    setRefreshing(true);
+    init(true);
   }
 
   async function loadLogs() {
@@ -211,6 +228,15 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     return (<View style={[styles.container, embedded && styles.embedded]}>{!embedded && <Text style={styles.title}>Tracker</Text>}<ActivityIndicator size="large" color={c.primary} style={{ marginTop: 40 }} /></View>);
   }
 
+  if (loadError) {
+    return (
+      <View style={[styles.container, embedded && styles.embedded]}>
+        {!embedded && <Text style={styles.title}>Tracker</Text>}
+        <ErrorRetry message={loadError} onRetry={() => init()} embedded={embedded} />
+      </View>
+    );
+  }
+
   if (scanning) {
     return (
       <View style={[styles.container, embedded && styles.embedded]}>
@@ -327,7 +353,11 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
 
   return (
     <>
-    <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }}>
+    <ScrollView
+      style={[styles.container, embedded && styles.embedded]}
+      contentContainerStyle={{ paddingBottom: 40 }}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
+    >
       {!embedded && <Text style={styles.title}>Tracker</Text>}
       {!embedded && <Text style={styles.subtitle}>Dein Essens-Tagebuch für heute</Text>}
 

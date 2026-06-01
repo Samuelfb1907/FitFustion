@@ -1,11 +1,13 @@
 // Automatischer Trainingsplan (themed).
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import ExerciseDetail from '../components/ExerciseDetail';
 import { WEEKDAYS, todayWeekday } from '../lib/weekdays';
+import ErrorRetry from '../components/ErrorRetry';
+import { errorMessage } from '../lib/errors';
 
 function startOfTodayISO(): string {
   const d = new Date();
@@ -70,6 +72,8 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const [planName, setPlanName] = useState<string | null>(null);
   const [days, setDays] = useState<DayView[]>([]);
   const [mode, setMode] = useState<'view' | 'create'>('create');
@@ -89,13 +93,15 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
 
   useEffect(() => { loadPlan(); }, [userId]);
 
-  async function loadPlan() {
+  async function loadPlan(silent = false) {
     if (!userId) { setLoading(false); return; }
-    setLoading(true);
-    const { data: plan } = await supabase
+    if (!silent) setLoading(true);
+    try {
+    const { data: plan, error: planErr } = await supabase
       .from('workout_plans').select('id, name').eq('user_id', userId).eq('is_active', true)
       .order('created_at', { ascending: false }).limit(1).maybeSingle();
-    if (!plan) { setPlanName(null); setDays([]); setMode('create'); setLoading(false); return; }
+    if (planErr) throw planErr;
+    if (!plan) { setPlanName(null); setDays([]); setMode('create'); setLoadError(null); return; }
     const { data: dayRows } = await supabase.from('workout_plan_days').select('id, day_index, focus').eq('plan_id', plan.id).order('day_index');
     const dayIds = (dayRows ?? []).map((d: any) => d.id);
     let peRows: any[] = [];
@@ -125,7 +131,18 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
     (schedRows ?? []).forEach((r: any) => { if (dayIdSet.has(r.plan_day_id)) sched[r.weekday] = r.plan_day_id; });
     setSchedule(sched);
     await loadDoneToday();
-    setLoading(false);
+    setLoadError(null);
+    } catch (e) {
+      setLoadError(errorMessage(e));
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }
+
+  function onRefresh() {
+    setRefreshing(true);
+    loadPlan(true);
   }
 
   async function assignDay(weekday: number, dayId: string | null) {
@@ -292,6 +309,15 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
     return (<View style={[styles.container, embedded && styles.embedded]}>{!embedded && <Text style={styles.title}>Trainingsplan</Text>}<ActivityIndicator size="large" color={c.primary} style={{ marginTop: 40 }} /></View>);
   }
 
+  if (loadError) {
+    return (
+      <View style={[styles.container, embedded && styles.embedded]}>
+        {!embedded && <Text style={styles.title}>Trainingsplan</Text>}
+        <ErrorRetry message={loadError} onRetry={() => loadPlan()} embedded={embedded} />
+      </View>
+    );
+  }
+
   if (mode === 'create') {
     return (
       <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }}>
@@ -318,7 +344,11 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
   }
 
   return (
-    <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }}>
+    <ScrollView
+      style={[styles.container, embedded && styles.embedded]}
+      contentContainerStyle={{ paddingBottom: 40 }}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
+    >
       {!embedded && <Text style={styles.title}>Dein Trainingsplan</Text>}
       <Text style={styles.subtitle}>{planName}</Text>
       <View style={styles.topBtns}>

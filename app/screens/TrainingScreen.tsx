@@ -1,7 +1,7 @@
 // Training-Hub (themed): oben umschalten zwischen Freiem Training und Trainingsplan.
 // Freies Training: Muskel am Koerper antippen (oder Liste) -> gefilterte Uebungen -> Detail.
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
@@ -10,6 +10,8 @@ import BodyMuscleMap from '../components/BodyMuscleMap';
 import Segmented from '../components/Segmented';
 import PlanScreen from './PlanScreen';
 import { useFocusTick } from '../lib/useFocusTick';
+import ErrorRetry from '../components/ErrorRetry';
+import { errorMessage } from '../lib/errors';
 
 type Muscle = { id: string; key: string; name_de: string; body_region: string | null };
 type Exercise = { id: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null };
@@ -41,15 +43,35 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
   const [loadingExercises, setLoadingExercises] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [pickedMuscle, setPickedMuscle] = useState<Muscle | null>(null);
+  const [mLoading, setMLoading] = useState(true);
+  const [mError, setMError] = useState<string | null>(null);
+  const [exError, setExError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const allowedDiff = ALLOWED_DIFF[profile?.experience_level ?? 'beginner'] ?? ['beginner'];
   const allowedEquip = ALLOWED_EQUIP[profile?.training_environment ?? 'gym'] ?? ALLOWED_EQUIP.gym;
 
-  useEffect(() => {
-    supabase.from('muscles').select('id, key, name_de, body_region').order('name_de').then(({ data }) => {
+  const loadMuscles = useCallback(async (silent = false) => {
+    if (!silent) setMLoading(true);
+    try {
+      const { data, error } = await supabase.from('muscles').select('id, key, name_de, body_region').order('name_de');
+      if (error) throw error;
       setMuscles(data ?? []);
-    });
+      setMError(null);
+    } catch (e) {
+      setMError(errorMessage(e));
+    } finally {
+      setMLoading(false);
+      setRefreshing(false);
+    }
   }, []);
+
+  useEffect(() => { loadMuscles(); }, [loadMuscles]);
+
+  function onRefresh() {
+    setRefreshing(true);
+    loadMuscles(true);
+  }
 
   // Reiter erneut angetippt -> zurueck zur Startansicht (Muskel-Auswahl, Freies Training)
   useFocusTick(focusTick, () => {
@@ -63,15 +85,22 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
     setSelectedMuscle(m);
     setSelectedExercise(null);
     setLoadingExercises(true);
-    const { data } = await supabase
-      .from('exercises')
-      .select('id, name, difficulty, equipment, description, instructions')
-      .eq('primary_muscle_id', m.id)
-      .in('difficulty', allowedDiff)
-      .in('equipment', allowedEquip)
-      .order('difficulty');
-    setExercises(data ?? []);
-    setLoadingExercises(false);
+    setExError(null);
+    try {
+      const { data, error } = await supabase
+        .from('exercises')
+        .select('id, name, difficulty, equipment, description, instructions')
+        .eq('primary_muscle_id', m.id)
+        .in('difficulty', allowedDiff)
+        .in('equipment', allowedEquip)
+        .order('difficulty');
+      if (error) throw error;
+      setExercises(data ?? []);
+    } catch (e) {
+      setExError(errorMessage(e));
+    } finally {
+      setLoadingExercises(false);
+    }
   }
   function pickByKey(key: string) {
     const m = muscles.find((x) => x.key === key);
@@ -94,6 +123,8 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
         <Text style={styles.subtitle}>Passend zu deinem Level & deiner Umgebung</Text>
         {loadingExercises ? (
           <ActivityIndicator size="large" color={c.primary} style={{ marginTop: 24 }} />
+        ) : exError ? (
+          <ErrorRetry message={exError} onRetry={() => openMuscle(selectedMuscle)} />
         ) : exercises.length === 0 ? (
           <View style={styles.note}>
             <Text style={styles.noteText}>Keine passenden Übungen gefunden. Tipp: Mit mehr Equipment (Profil) schaltest du weitere frei.</Text>
@@ -131,10 +162,16 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
         <View style={{ flex: 1, marginTop: 14 }}>
           <PlanScreen embedded />
         </View>
-      ) : muscles.length === 0 ? (
+      ) : mLoading ? (
         <ActivityIndicator size="large" color={c.primary} style={{ marginTop: 40 }} />
+      ) : mError ? (
+        <ErrorRetry message={mError} onRetry={() => loadMuscles()} />
       ) : (
-        <ScrollView contentContainerStyle={{ paddingTop: 18, paddingBottom: 40, alignItems: 'center' }} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={{ paddingTop: 18, paddingBottom: 40, alignItems: 'center' }}
+          showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
+        >
           <BodyMuscleMap onSelect={pickByKey} selectedKey={pickedMuscle?.key ?? null} c={c} gender={profile?.gender === 'female' ? 'female' : 'male'} />
           {pickedMuscle && (
             <TouchableOpacity style={styles.cta} onPress={() => openMuscle(pickedMuscle)} activeOpacity={0.85}>

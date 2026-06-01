@@ -2,14 +2,16 @@
 // persoenliche Rekorde und Trainingshistorie. Liest aus set_logs / workout_sessions
 // / progress_entries. Keine DB-Aenderung noetig.
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Dimensions, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Dimensions, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { LineChart, BarChart } from '../components/Charts';
 import ExerciseProgress from '../components/ExerciseProgress';
+import ErrorRetry from '../components/ErrorRetry';
 import { useFocusTick } from '../lib/useFocusTick';
 import { localDateStr } from '../lib/date';
+import { errorMessage } from '../lib/errors';
 import { WeightPoint, loadWeights, saveTodayWeight, deleteWeight, deltaOver, parseWeight, WEIGHT_MIN, WEIGHT_MAX } from '../lib/weight';
 
 type PR = { id: string; name: string; weight: number; reps: number | null };
@@ -65,12 +67,15 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
   const [msg, setMsg] = useState<string | null>(null);
   const [msgErr, setMsgErr] = useState(false);
   const [showHist, setShowHist] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = useCallback(async (silent = false) => {
     const userId = session?.user?.id;
     if (!userId) return;
     if (!silent) setLoading(true);
 
+    try {
     // 1) Gewichtseintraege
     setWeights(await loadWeights(userId));
 
@@ -173,7 +178,13 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
       .map((h) => ({ ...h, volume: Math.round(h.volume) }));
     setHistory(hist);
 
-    setLoading(false);
+    setLoadError(null);
+    } catch (e) {
+      setLoadError(errorMessage(e));
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, [session?.user?.id]);
 
   useEffect(() => {
@@ -182,6 +193,8 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
 
   // Reiter erneut angetippt -> Detailansicht schliessen + leise aktualisieren (ohne Spinner)
   useFocusTick(focusTick, () => { setSelExercise(null); load(true); });
+
+  const onRefresh = useCallback(() => { setRefreshing(true); load(true); }, [load]);
 
   async function saveWeight() {
     const userId = session?.user?.id;
@@ -247,12 +260,18 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 48 }}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: 48 }}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
+    >
       <Text style={styles.title}>Fortschritt</Text>
       <Text style={styles.subtitle}>Deine Entwicklung auf einen Blick 📈</Text>
 
       {loading ? (
         <ActivityIndicator size="large" color={c.primary} style={{ marginTop: 60 }} />
+      ) : loadError ? (
+        <ErrorRetry message={loadError} onRetry={() => load()} />
       ) : (
         <>
           {/* GEWICHT */}
