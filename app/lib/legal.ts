@@ -1,6 +1,6 @@
 // Haftungsausschluss & Gesundheitshinweis (zentral, von Einstellungen + Registrierung genutzt).
 // Hinweis: Vorlage, keine Rechtsberatung. Vor Release anwaltlich pruefen + Impressum/Datenschutz ergaenzen.
-export const DISCLAIMER_VERSION = '1.0';
+export const DISCLAIMER_VERSION = '1.1';
 
 export const DISCLAIMER_SHORT =
   'FitFusion ersetzt keine ärztliche, ernährungs- oder trainingsbezogene Beratung. Nutzung auf eigene Gefahr. Bei Allergien immer die Zutaten selbst prüfen. Bei Beschwerden Training/Ernährung abbrechen und ärztlichen Rat einholen.';
@@ -14,35 +14,63 @@ export const ALLERGY_HINT =
 export const DISCLAIMER_SECTIONS: { h: string; p: string }[] = [
   {
     h: '1. Keine medizinische oder professionelle Beratung',
-    p: 'FitFusion ist eine reine Informations- und Motivations-App. Alle Inhalte – Trainingspläne, Übungen/Animationen, Kalorien- und Nährwertberechnungen, Ernährungs- und Rezeptvorschläge, Wasser-, Gewichts- und Fortschritts-Tracking – dienen ausschließlich allgemeinen Informationszwecken und stellen keine medizinische, ärztliche, physiotherapeutische oder ernährungsberaterische Beratung dar und ersetzen diese nicht.',
+    p: 'FitFusion ist eine reine Informations- und Motivations-App. Alle Inhalte – Trainingspläne, Übungen/Animationen, Kalorien- und Nährwertberechnungen, Wasser-, Gewichts- und Fortschritts-Tracking – dienen ausschließlich allgemeinen Informationszwecken und stellen KEINE medizinische, ärztliche, physiotherapeutische, ernährungsberaterische, psychologische oder sonstige professionelle Beratung dar und ersetzen eine solche ausdrücklich nicht.',
   },
   {
-    h: '2. Ärztliche Rücksprache & Notfall',
-    p: 'Halte vor Beginn Rücksprache mit einer Ärztin/einem Arzt – besonders bei Vorerkrankungen, Verletzungen, Herz-Kreislauf-Problemen, Ess-/Stoffwechselstörungen, in Schwangerschaft/Stillzeit oder bei Einnahme von Medikamenten. Brich bei Schmerzen, Schwindel oder Atemnot sofort ab. Im Notfall wähle den Notruf 112.',
+    h: '2. Kein Medizinprodukt – keine Diagnose oder Therapie',
+    p: 'FitFusion ist KEIN Medizinprodukt im Sinne der Medizinprodukte-Verordnung (EU) 2017/745. Die App dient nicht der Diagnose, Behandlung, Heilung, Linderung, Überwachung oder Vorbeugung von Krankheiten oder Beschwerden. Sie ersetzt keine ärztliche Untersuchung, Diagnose oder Therapie. Verlasse dich bei gesundheitlichen Fragen niemals allein auf die App.',
   },
   {
-    h: '3. Training auf eigene Gefahr',
-    p: 'Übungen bergen ein Verletzungsrisiko. Du trainierst eigenverantwortlich und auf eigenes Risiko; achte auf korrekte Ausführung, passende Gewichte und deine persönlichen Grenzen. Die Animationen und Anleitungen sind allgemeine Beispiele und nicht auf deine individuelle Verfassung abgestimmt.',
+    h: '3. Ärztliche Rücksprache vor Beginn',
+    p: 'Halte VOR Beginn eines Trainings- oder Ernährungsprogramms Rücksprache mit einer Ärztin oder einem Arzt – insbesondere bei Vorerkrankungen, Verletzungen, Herz-Kreislauf-Erkrankungen, Diabetes/Stoffwechselstörungen, Bluthochdruck, in Schwangerschaft und Stillzeit, bei Einnahme von Medikamenten, nach Operationen oder wenn du dir unsicher bist.',
   },
   {
-    h: '4. Ernährung, Kalorien & Nährwerte',
-    p: 'Kalorien- und Makroziele (z. B. nach Mifflin-St-Jeor) sind unverbindliche Richtwerte, keine individuelle Ernährungsplanung. Nährwertangaben können ungenau, veraltet oder unvollständig sein – teils, weil sie aus externen Quellen oder eigenen Eingaben stammen. Triff keine gesundheitsbezogenen Entscheidungen allein auf Basis dieser Werte.',
+    h: '4. Notfall',
+    p: 'FitFusion ist KEINE Notfall-Anwendung und nicht zur Abwendung akuter Gefahren geeignet. Brich Training oder Ernährungsumstellung bei Schmerzen, Schwindel, Übelkeit, Atemnot, Herzrasen oder anderen Beschwerden SOFORT ab. Bei einem medizinischen Notfall wähle umgehend den Notruf 112.',
   },
   {
-    h: '5. Allergien & Unverträglichkeiten — besonders wichtig',
-    p: 'Die Allergie-Funktion ist eine Hilfestellung, keine Garantie. Die Erkennung erfolgt automatisiert anhand hinterlegter Zutaten und kann unvollständig oder fehlerhaft sein; manche Unverträglichkeiten (z. B. Histamin, Fruktose, Sulfite) und Kreuzkontaminationen werden nicht erfasst. Prüfe bei Allergien oder Unverträglichkeiten immer eigenständig alle Zutaten und Produkt-/Verpackungsangaben. Für allergische Reaktionen wird – soweit gesetzlich zulässig – keine Haftung übernommen.',
+    h: '5. Nutzung ab 18 / Minderjährige',
+    p: 'Die App richtet sich an volljährige Personen (18+). Minderjährige dürfen sie nur mit Zustimmung und unter Aufsicht der Erziehungsberechtigten nutzen. Für die Nutzung durch Minderjährige ohne eine solche Zustimmung wird keine Haftung übernommen.',
   },
   {
-    h: '6. Inhalte und Daten Dritter',
-    p: 'Die App nutzt Daten und Medien von Drittanbietern (u. a. Lebensmitteldaten, Übungs-Animationen). Für deren Richtigkeit, Vollständigkeit, Aktualität und Verfügbarkeit wird keine Gewähr übernommen.',
+    h: '6. Essstörungen & Gewichts-/Kalorien-Tracking',
+    p: 'Das Zählen von Kalorien sowie das Verfolgen von Gewicht können bei einer bestehenden oder früheren Essstörung (z. B. Magersucht, Bulimie, Binge-Eating) oder einem ungesunden Verhältnis zum Essen schädlich sein. Wenn das auf dich zutrifft, nutze diese Funktionen bitte nicht ohne vorherige fachliche/ärztliche Begleitung und beende das Tracking bei belastenden Gedanken. Hilfe u. a. bei der BZgA-Beratung „Essstörungen".',
   },
   {
-    h: '7. Keine Gewähr / Haftungsbeschränkung',
-    p: 'Die Nutzung erfolgt auf eigenes Risiko. Für Schäden aus der Nutzung oder Nichtverfügbarkeit der App oder aus dem Vertrauen auf ihre Inhalte wird – soweit gesetzlich zulässig – keine Haftung übernommen. Unberührt bleibt die zwingende gesetzliche Haftung für Vorsatz, grobe Fahrlässigkeit sowie für Schäden aus der Verletzung des Lebens, des Körpers oder der Gesundheit; diese kann gesetzlich nicht ausgeschlossen werden.',
+    h: '7. Training auf eigene Gefahr',
+    p: 'Körperliche Betätigung und das Ausführen von Übungen bergen ein Verletzungsrisiko. Du führst alle Übungen eigenverantwortlich und auf eigenes Risiko aus. Achte auf eine technisch korrekte Ausführung, angemessene Gewichte, ausreichendes Aufwärmen und deine persönlichen Grenzen. Die gezeigten Animationen, Bilder und Anleitungen sind allgemeine Beispiele und nicht auf deine individuelle Verfassung abgestimmt; überschätze dich nicht und höre auf deinen Körper.',
   },
   {
-    h: '8. Eigenverantwortung',
-    p: 'Mit der Nutzung von FitFusion bestätigst du, dass du diesen Hinweis gelesen und verstanden hast und die App eigenverantwortlich nutzt.',
+    h: '8. Ernährung, Kalorien & Nährwerte',
+    p: 'Kalorien- und Makronährstoffziele (z. B. nach Mifflin-St-Jeor) sind unverbindliche, grobe Schätzwerte und keine individuelle Ernährungsplanung. Nährwertangaben zu Lebensmitteln können ungenau, veraltet oder unvollständig sein – auch, weil sie teils aus externen Quellen oder aus deinen eigenen Eingaben stammen. Die App schlägt dir keine Lebensmittel oder Gerichte vor; du trackst ausschließlich selbst. Triff keine gesundheitsbezogenen Entscheidungen allein auf Basis dieser Werte.',
+  },
+  {
+    h: '9. Allergien & Unverträglichkeiten — besonders wichtig',
+    p: 'Es liegt allein in deiner Verantwortung, bei Allergien oder Unverträglichkeiten VOR dem Zubereiten und Verzehr sämtliche Zutaten sowie die Produkt- und Verpackungsangaben eigenständig zu prüfen. Etwaige Hinweise der App sind reine Hilfestellungen ohne Anspruch auf Vollständigkeit oder Richtigkeit; Kreuzkontaminationen und bestimmte Unverträglichkeiten (z. B. Histamin, Fruktose, Sulfite) werden nicht erfasst. Für allergische Reaktionen oder gesundheitliche Folgen wird – soweit gesetzlich zulässig – keine Haftung übernommen.',
+  },
+  {
+    h: '10. Keine Erfolgs- oder Gesundheitsversprechen',
+    p: 'Es werden keinerlei Ergebnisse zugesichert. Insbesondere besteht keine Garantie für Gewichtsabnahme, Gewichtszunahme, Muskelaufbau, Leistungssteigerung, Wohlbefinden oder sonstige Gesundheits- oder Fitnessziele. Individuelle Ergebnisse hängen von vielen Faktoren ab und können nicht versprochen werden.',
+  },
+  {
+    h: '11. Inhalte und Daten Dritter',
+    p: 'Die App nutzt Daten und Medien von Drittanbietern (u. a. Lebensmitteldaten von Open Food Facts, Übungs-Animationen von ExerciseDB). Für deren Richtigkeit, Vollständigkeit, Aktualität, Rechtmäßigkeit und Verfügbarkeit wird keine Gewähr übernommen.',
+  },
+  {
+    h: '12. Keine Gewähr für Verfügbarkeit & Fehlerfreiheit',
+    p: 'Es wird nicht zugesichert, dass die App jederzeit verfügbar, ununterbrochen, sicher oder fehlerfrei ist. Funktionen können sich ändern, eingeschränkt werden oder entfallen. Für Datenverluste sichere wichtige Angaben zusätzlich selbst (Datenexport in den Einstellungen).',
+  },
+  {
+    h: '13. Haftungsbeschränkung',
+    p: 'Die Nutzung der App erfolgt auf eigenes Risiko. Für Schäden, die aus der Nutzung oder Nichtverfügbarkeit der App oder aus dem Vertrauen auf ihre Inhalte entstehen, wird – soweit gesetzlich zulässig – keine Haftung übernommen. UNBERÜHRT bleibt die zwingende gesetzliche Haftung, insbesondere für Vorsatz und grobe Fahrlässigkeit sowie für Schäden aus der Verletzung des Lebens, des Körpers oder der Gesundheit; diese kann gesetzlich nicht ausgeschlossen werden.',
+  },
+  {
+    h: '14. Eigenverantwortung & Einwilligung',
+    p: 'Mit der Nutzung von FitFusion bestätigst du, dass du diesen Hinweis gelesen und verstanden hast, gesundheitlich in der Lage bist, die Inhalte umzusetzen, und die App eigenverantwortlich sowie auf eigenes Risiko nutzt.',
+  },
+  {
+    h: '15. Änderungen & salvatorische Klausel',
+    p: 'Dieser Hinweis kann angepasst werden; es gilt die in der App jeweils aktuelle Fassung. Sollte eine Bestimmung unwirksam sein oder werden, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt.',
   },
 ];
 
