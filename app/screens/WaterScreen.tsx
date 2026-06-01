@@ -8,6 +8,7 @@ import { useFocusTick } from '../lib/useFocusTick';
 import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
 import { todayStr } from '../lib/date';
+import { CARD_SHADOW as shadow } from '../lib/ui';
 
 type WaterRow = { id: string; amount_ml: number; created_at: string };
 
@@ -159,7 +160,7 @@ function makeStyles(c: Colors) {
     embedded: { paddingTop: 8, paddingHorizontal: 0, backgroundColor: 'transparent' },
     title: { fontSize: 26, fontWeight: 'bold', color: c.heading, marginBottom: 12 },
 
-    hero: { backgroundColor: c.card, borderRadius: 18, padding: 22, alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    hero: { ...shadow, backgroundColor: c.card, borderRadius: 18, padding: 22, alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     bigMl: { fontSize: 46, fontWeight: '800', color: c.primary },
     bigUnit: { fontSize: 22, fontWeight: '700', color: c.textMuted },
     goalLine: { fontSize: 14, color: c.textMuted, marginTop: 2, marginBottom: 16 },

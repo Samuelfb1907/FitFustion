@@ -13,6 +13,7 @@ import { useFocusTick } from '../lib/useFocusTick';
 import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
 import { todayStr } from '../lib/date';
+import { CARD_SHADOW as shadow } from '../lib/ui';
 
 type Food = { id: string; name: string; category: string | null; kcal: number; protein: number; carbs: number; fat: number; user_id?: string | null };
 type LogEntry = { id: string; amount_g: number; meal_type: string | null; food: Food | null };
@@ -472,7 +473,7 @@ function makeStyles(c: Colors) {
     quickMsg: { fontSize: 13, color: c.success, marginTop: 10, fontWeight: '600' },
     sectionHead: { fontSize: 12, fontWeight: '700', letterSpacing: 0.8, color: c.textMuted, marginBottom: 8, marginLeft: 2 },
 
-    todayCard: { backgroundColor: c.card, borderRadius: 16, padding: 18, marginBottom: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    todayCard: { ...shadow, backgroundColor: c.card, borderRadius: 16, padding: 18, marginBottom: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     todayRow: { flexDirection: 'row', alignItems: 'center' },
     todayCol: { flex: 1, alignItems: 'center' },
     todayVal: { fontSize: 24, fontWeight: 'bold', color: c.heading },
@@ -485,7 +486,7 @@ function makeStyles(c: Colors) {
     macroDot: { width: 9, height: 9, borderRadius: 5, marginRight: 6 },
     macroTxt: { fontSize: 13, color: c.text, fontWeight: '600' },
 
-    mealCard: { backgroundColor: c.card, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, marginBottom: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    mealCard: { ...shadow, backgroundColor: c.card, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, marginBottom: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     entryRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10 },
     entryDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.border },
     entryName: { fontSize: 15, color: c.text, fontWeight: '600' },

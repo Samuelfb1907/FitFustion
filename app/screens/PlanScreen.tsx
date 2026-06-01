@@ -10,6 +10,7 @@ import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
 import { startOfTodayISO } from '../lib/date';
 import { DIFF_LABELS, ALLOWED_DIFF, ALLOWED_EQUIP } from '../lib/training';
+import { CARD_SHADOW as shadow } from '../lib/ui';
 
 // startOfTodayISO -> lib/date.ts; Schwierigkeits-/Equipment-Konstanten -> lib/training.ts
 const SPLITS: Record<number, { focus: string; muscles: string[] }[]> = {
@@ -456,7 +457,7 @@ function makeStyles(c: Colors) {
     link: { color: c.primary, textAlign: 'center', marginTop: 14, fontSize: 14 },
     hint: { fontSize: 13, color: c.textMuted, marginTop: 20, lineHeight: 18 },
     error: { color: c.danger, fontSize: 14, marginTop: 14, textAlign: 'center' },
-    dayCard: { backgroundColor: c.card, borderRadius: 14, padding: 16, marginBottom: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    dayCard: { ...shadow, backgroundColor: c.card, borderRadius: 14, padding: 16, marginBottom: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     dayTitle: { fontSize: 13, color: c.textMuted, fontWeight: '700', letterSpacing: 0.5 },
     dayFocus: { fontSize: 18, fontWeight: '700', color: c.heading, marginTop: 2, marginBottom: 10 },
     exItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8, borderTopColor: c.border, borderTopWidth: StyleSheet.hairlineWidth },
@@ -465,7 +466,7 @@ function makeStyles(c: Colors) {
     chev: { fontSize: 22, color: c.textMuted, marginLeft: 8 },
     tapHint: { fontSize: 12, color: c.textMuted, marginTop: -6, marginBottom: 12 },
     muted: { fontSize: 14, color: c.textMuted, fontStyle: 'italic' },
-    weekCard: { backgroundColor: c.card, borderRadius: 14, padding: 16, marginBottom: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    weekCard: { ...shadow, backgroundColor: c.card, borderRadius: 14, padding: 16, marginBottom: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     weekTitle: { fontSize: 16, fontWeight: '700', color: c.heading },
     weekHint: { fontSize: 12, color: c.textMuted, marginTop: 2, marginBottom: 8, lineHeight: 16 },
     weekRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 11, borderTopColor: c.border, borderTopWidth: StyleSheet.hairlineWidth },

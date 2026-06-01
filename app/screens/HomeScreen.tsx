@@ -16,6 +16,7 @@ import { localDateStr, todayStr, startOfTodayISO } from '../lib/date';
 import { useFocusTick } from '../lib/useFocusTick';
 import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
+import { CARD_SHADOW as shadow } from '../lib/ui';
 
 const GOAL_LABELS: Record<string, string> = {
   lose_weight: 'Abnehmen', build_muscle: 'Muskelaufbau', gain_strength: 'Kraft steigern',
@@ -425,7 +426,6 @@ function GoalRow({ g, last, c, styles }: { g: Goal; last: boolean; c: Colors; st
 }
 
 function makeStyles(c: Colors) {
-  const shadow = { shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 2 };
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: c.bg, paddingTop: 60, paddingHorizontal: 20 },
 

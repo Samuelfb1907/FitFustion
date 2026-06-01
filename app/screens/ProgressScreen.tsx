@@ -13,6 +13,7 @@ import { useFocusTick } from '../lib/useFocusTick';
 import { localDateStr, ddmm } from '../lib/date';
 import { errorMessage } from '../lib/errors';
 import { grp, unwrap } from '../lib/format';
+import { CARD_SHADOW as shadow } from '../lib/ui';
 import { WeightPoint, loadWeights, saveTodayWeight, deleteWeight, deltaOver, parseWeight, WEIGHT_MIN, WEIGHT_MAX } from '../lib/weight';
 
 type PR = { id: string; name: string; weight: number; reps: number | null };
@@ -448,7 +449,7 @@ function makeStyles(c: Colors) {
     title: { fontSize: 26, fontWeight: 'bold', color: c.heading },
     subtitle: { fontSize: 15, color: c.textMuted, marginTop: 2, marginBottom: 16 },
 
-    card: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    card: { ...shadow, backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     cardTitle: { fontSize: 16, fontWeight: '700', color: c.heading, marginBottom: 12 },
 
     weightRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
@@ -487,7 +488,7 @@ function makeStyles(c: Colors) {
     msg: { fontSize: 13, textAlign: 'center', marginTop: 10 },
 
     statGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 0 },
-    statCard: { width: '48%', backgroundColor: c.card, borderRadius: 14, paddingVertical: 16, paddingHorizontal: 12, alignItems: 'center', marginBottom: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    statCard: { ...shadow, width: '48%', backgroundColor: c.card, borderRadius: 14, paddingVertical: 16, paddingHorizontal: 12, alignItems: 'center', marginBottom: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     statIcon: { fontSize: 22 },
     statValue: { fontSize: 22, fontWeight: 'bold', color: c.heading, marginTop: 6 },
     statLabel: { fontSize: 12, color: c.textMuted, marginTop: 2, textAlign: 'center' },
