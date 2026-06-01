@@ -5,6 +5,8 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { computeNutrition, ageFromBirthDate, Gender, ActivityLevel, GoalType } from '../lib/nutrition';
+import BarcodeScanner from '../components/BarcodeScanner';
+import { resolveBarcodeFood } from '../lib/barcodeFood';
 
 type Food = { id: string; name: string; category: string | null; kcal: number; protein: number; carbs: number; fat: number };
 type LogEntry = { id: string; amount_g: number; food: Food | null };
@@ -34,8 +36,31 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
   const [saving, setSaving] = useState(false);
   const [waterMl, setWaterMl] = useState(0);
   const [waterIds, setWaterIds] = useState<string[]>([]);
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [scanning, setScanning] = useState(false);
 
   useEffect(() => { init(); }, [userId]);
+
+  async function handleScanned(code: string) {
+    setScannerOpen(false);
+    if (!userId) return;
+    setScanning(true);
+    setError(null);
+    const res = await resolveBarcodeFood(userId, code);
+    setScanning(false);
+    if (!res.food) {
+      setError(res.reason === 'not_found'
+        ? `Barcode ${code} nicht gefunden. Du kannst die Zutat manuell suchen.`
+        : 'Konnte das Produkt nicht abrufen. Bitte nochmal versuchen.');
+      return;
+    }
+    const food = res.food;
+    // neu gescanntes Lebensmittel in die lokale Liste aufnehmen
+    setFoods((prev) => (prev.some((f) => f.id === food.id) ? prev : [...prev, food].sort((a, b) => a.name.localeCompare(b.name))));
+    setSelectedFood(food);
+    setAmount('100');
+    setMode('amount');
+  }
 
   async function init() {
     if (!userId) { setLoading(false); return; }
@@ -110,6 +135,15 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
     return (<View style={[styles.container, embedded && styles.embedded]}>{!embedded && <Text style={styles.title}>Tracker</Text>}<ActivityIndicator size="large" color={c.primary} style={{ marginTop: 40 }} /></View>);
   }
 
+  if (scanning) {
+    return (
+      <View style={[styles.container, embedded && styles.embedded]}>
+        <ActivityIndicator size="large" color={c.primary} style={{ marginTop: 60 }} />
+        <Text style={[styles.subtitle, { textAlign: 'center', marginTop: 14 }]}>Produkt wird gesucht…</Text>
+      </View>
+    );
+  }
+
   if (mode === 'amount' && selectedFood) {
     const a = Number(amount.replace(',', '.')) || 0;
     const previewKcal = Math.round((selectedFood.kcal * a) / 100);
@@ -152,6 +186,7 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
   }
 
   return (
+    <>
     <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }}>
       {!embedded && <Text style={styles.title}>Tracker</Text>}
       <Text style={styles.subtitle}>Dein Essens-Tagebuch für heute</Text>
@@ -177,9 +212,14 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
         <View style={styles.sumCol}><Text style={[styles.sumValue, remaining != null && remaining < 0 && { color: c.danger }]}>{remaining != null ? remaining : '–'}</Text><Text style={styles.sumLabel}>übrig</Text></View>
       </View>
       <Text style={styles.macroLine}>{totalP} g Protein · {totalC} g KH · {totalF} g Fett</Text>
-      <TouchableOpacity style={styles.addBtn} onPress={() => setMode('pick')}>
-        <Text style={styles.addText}>+ Zutat hinzufügen</Text>
-      </TouchableOpacity>
+      <View style={styles.actionRow}>
+        <TouchableOpacity style={styles.addBtnRow} onPress={() => setMode('pick')}>
+          <Text style={styles.addText}>➕  Hinzufügen</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.scanBtn} onPress={() => { setError(null); setScannerOpen(true); }}>
+          <Text style={styles.scanText}>📷  Scannen</Text>
+        </TouchableOpacity>
+      </View>
       {logs.length === 0 ? (
         <Text style={styles.empty}>Noch nichts getrackt. Füge deine erste Zutat hinzu! 🍽️</Text>
       ) : (
@@ -193,6 +233,8 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
       )}
       {error && <Text style={styles.error}>{error}</Text>}
     </ScrollView>
+    <BarcodeScanner visible={scannerOpen} c={c} onClose={() => setScannerOpen(false)} onScanned={handleScanned} />
+    </>
   );
 }
 
@@ -221,6 +263,10 @@ function makeStyles(c: Colors) {
     waterUndoText: { color: c.textMuted, fontSize: 16, fontWeight: '700' },
     addBtn: { backgroundColor: c.primary, borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginBottom: 16 },
     addText: { color: c.onPrimary, fontSize: 16, fontWeight: '700' },
+    actionRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
+    addBtnRow: { flex: 1, backgroundColor: c.primary, borderRadius: 10, paddingVertical: 14, alignItems: 'center' },
+    scanBtn: { flex: 1, backgroundColor: c.card, borderWidth: 1, borderColor: c.primary, borderRadius: 10, paddingVertical: 14, alignItems: 'center' },
+    scanText: { color: c.primary, fontSize: 16, fontWeight: '700' },
     empty: { fontSize: 14, color: c.textMuted, textAlign: 'center', marginTop: 16 },
     logRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 12, padding: 14, marginBottom: 8, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     logName: { fontSize: 16, color: c.text, fontWeight: '600' },

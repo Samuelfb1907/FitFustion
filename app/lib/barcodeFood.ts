@@ -1,0 +1,35 @@
+// Loest einen gescannten Barcode zu einem foods-Eintrag auf:
+//  1) schon in der DB (per Barcode)?  -> nehmen
+//  2) bei Open Food Facts nachschlagen -> als neues Lebensmittel anlegen
+//  3) Name-Konflikt mit vorhandenem Lebensmittel -> dieses nehmen
+import { supabase } from './supabase';
+import { fetchOpenFoodFacts } from './openFoodFacts';
+
+export type FoodRow = { id: string; name: string; category: string | null; kcal: number; protein: number; carbs: number; fat: number };
+export type ResolveResult = { food: FoodRow; created: boolean } | { food: null; reason: 'not_found' | 'error' };
+
+const COLS = 'id, name, category, kcal, protein, carbs, fat';
+
+export async function resolveBarcodeFood(userId: string, barcode: string): Promise<ResolveResult> {
+  // 1) Schon vorhanden (von dir oder jemand anderem gescannt)?
+  const { data: existing } = await supabase.from('foods').select(COLS).eq('barcode', barcode).limit(1).maybeSingle();
+  if (existing) return { food: existing as FoodRow, created: false };
+
+  // 2) Open Food Facts
+  const off = await fetchOpenFoodFacts(barcode);
+  if (!off) return { food: null, reason: 'not_found' };
+
+  // 3) Neu anlegen (mit Barcode + Besitzer)
+  const { data: created, error } = await supabase
+    .from('foods')
+    .insert({ name: off.name, category: 'Gescannt', kcal: off.kcal, protein: off.protein, carbs: off.carbs, fat: off.fat, barcode, user_id: userId })
+    .select(COLS)
+    .single();
+  if (!error && created) return { food: created as FoodRow, created: true };
+
+  // 4) Name schon vergeben -> vorhandenes nehmen
+  const { data: byName } = await supabase.from('foods').select(COLS).eq('name', off.name).limit(1).maybeSingle();
+  if (byName) return { food: byName as FoodRow, created: false };
+
+  return { food: null, reason: 'error' };
+}
