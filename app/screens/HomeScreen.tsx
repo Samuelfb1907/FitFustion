@@ -1,7 +1,7 @@
 // Start-Screen / Dashboard (themed, aufgeraeumt): Hero mit Level/Streak,
 // "Training laeuft"-Banner zum Beenden, Tages-Kalorien (Gauge), Schnellzugriff, Erfolge.
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
@@ -272,7 +272,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
               <View style={styles.waterBtns}>
                 <TouchableOpacity style={styles.waterBtn} onPress={() => addWater(250)} activeOpacity={0.8}><Text style={styles.waterBtnText}>+250 ml 🥛</Text></TouchableOpacity>
                 <TouchableOpacity style={styles.waterBtn} onPress={() => addWater(500)} activeOpacity={0.8}><Text style={styles.waterBtnText}>+500 ml 🍶</Text></TouchableOpacity>
-                <TouchableOpacity style={styles.waterUndo} onPress={undoWater} activeOpacity={0.8}><Text style={styles.waterUndoText}>↩</Text></TouchableOpacity>
+                <TouchableOpacity style={styles.waterUndo} onPress={undoWater} activeOpacity={0.8} accessibilityRole="button" accessibilityLabel="Letzten Wasser-Eintrag rückgängig"><Text style={styles.waterUndoText}>↩</Text></TouchableOpacity>
               </View>
             </View>
 
@@ -341,10 +341,17 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
                   {ACHIEVEMENTS.map((a) => {
                     const got = a.earned(stats, lv.level);
                     return (
-                      <View key={a.key} style={[styles.badge, !got && styles.badgeLocked]}>
+                      <TouchableOpacity
+                        key={a.key}
+                        style={[styles.badge, !got && styles.badgeLocked]}
+                        activeOpacity={0.7}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${a.name}${got ? ', freigeschaltet' : ', gesperrt'}`}
+                        onPress={() => Alert.alert(`${a.icon} ${a.name}`, (got ? '✓ Freigeschaltet\n\n' : '🔒 Noch gesperrt\n\n') + (a.description ?? ''))}
+                      >
                         <Text style={[styles.badgeIcon, !got && styles.lockedIcon]}>{got ? a.icon : '🔒'}</Text>
                         <Text style={[styles.badgeName, !got && styles.lockedName]} numberOfLines={2}>{a.name}</Text>
-                      </View>
+                      </TouchableOpacity>
                     );
                   })}
                 </View>

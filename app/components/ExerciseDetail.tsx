@@ -133,6 +133,12 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
     }
   }
 
+  async function deleteSet(id: string) {
+    if (!sessionId) return;
+    await supabase.from('set_logs').delete().eq('id', id);
+    await refreshSets(sessionId);
+  }
+
   async function endTraining() {
     if (!sessionId) return;
     setEnding(true);
@@ -202,7 +208,12 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
                 {sets.map((s) => (
                   <View key={s.id} style={styles.setRow}>
                     <Text style={styles.setIdx}>Satz {s.set_index}</Text>
-                    <Text style={styles.setVal}>{s.reps} Wdh{s.weight_kg ? ` × ${s.weight_kg} kg` : ''}</Text>
+                    <View style={styles.setRight}>
+                      <Text style={styles.setVal}>{s.reps} Wdh{s.weight_kg ? ` × ${s.weight_kg} kg` : ''}</Text>
+                      <TouchableOpacity onPress={() => deleteSet(s.id)} style={styles.setDel} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`Satz ${s.set_index} löschen`}>
+                        <Text style={styles.setDelText}>✕</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 ))}
               </View>
@@ -264,7 +275,10 @@ function makeStyles(c: Colors) {
     setList: { marginBottom: 12 },
     setRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomColor: c.border, borderBottomWidth: StyleSheet.hairlineWidth },
     setIdx: { fontSize: 15, color: c.textMuted, fontWeight: '600' },
+    setRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
     setVal: { fontSize: 15, color: c.text, fontWeight: '600' },
+    setDel: { padding: 2 },
+    setDelText: { fontSize: 14, color: c.textMuted },
     inputRow: { flexDirection: 'row', gap: 12, marginTop: 4 },
     inputCol: { flex: 1 },
     inputLabel: { fontSize: 13, color: c.text, fontWeight: '600', marginBottom: 6 },

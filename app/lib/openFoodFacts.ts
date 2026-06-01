@@ -11,11 +11,13 @@ function round1(v: number): number {
 }
 
 export async function fetchOpenFoodFacts(barcode: string): Promise<OffProduct | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000); // nach 8 s abbrechen statt ewig haengen
   try {
     const url =
       `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}.json` +
       `?fields=product_name,product_name_de,brands,nutriments`;
-    const res = await fetch(url, { headers: { 'User-Agent': 'FitFusion/1.0 (Expo Fitness App)' } });
+    const res = await fetch(url, { headers: { 'User-Agent': 'FitFusion/1.0 (Expo Fitness App)' }, signal: controller.signal });
     if (!res.ok) return null;
     const json: any = await res.json();
     if (json.status !== 1 || !json.product) return null;
@@ -39,5 +41,7 @@ export async function fetchOpenFoodFacts(barcode: string): Promise<OffProduct | 
     };
   } catch {
     return null;
+  } finally {
+    clearTimeout(timeout);
   }
 }

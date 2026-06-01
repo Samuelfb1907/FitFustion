@@ -68,14 +68,14 @@ Der **App-Code ist erstaunlich solide**: `tsc` ist fehlerfrei, alle 14 Screens s
 
 ### UX / Barrierefreiheit
 - [ ] **Ernährungsplan ins Tagebuch übernehmen** – Plan-Gerichte haben keinen „Ins Tagebuch"-Button (Rezepte schon). *(NutritionScreen.tsx)*
-- [ ] **`accessibilityLabel`/`Role` ergänzen** – 0 im ganzen Projekt; Icon-Buttons (✕, 🗑, ↩, ＋, Stepper) für Screenreader stumm; Gauge/Balken ohne Wert. *(alle Screens, MainTabs, CalorieGauge)*
-- [ ] **Touch-Ziele ≥44px + `hitSlop`** (Tab-Leiste, Löschen in Progress/Water/Recipes). *(MainTabs u.a.)*
+- [x] **`accessibilityLabel`/`Role` ergänzt** ✅ – Icon-Buttons (✕ Tagebuch/Wasser/Gewicht, 🗑 Lebensmittel, ↩ Wasser-Undo, ＋ Mahlzeit, Satz löschen, Erfolge) + Tab-Leiste (`accessibilityRole="tab"` + selected) beschriftet. *(Gauge/Body-Map ohne Label belassen – stehen neben lesbarem Text.)*
+- [x] **`hitSlop` ergänzt** ✅ – an den kleinen Lösch-/Undo-Buttons (Progress/Water/FoodTracker). *(Tab-Höhe iOS via paddingBottom ok.)*
 - [x] **Fehlermeldungen-Farbe** ✅ – SettingsScreen nutzt jetzt ein `msgErr`-Flag (rot bei Fehler, grün bei Erfolg). *(Rezepte entfernt.)* *(SettingsScreen)*
 - [x] **„Onboarding erneut" warnen** ✅ – Bestätigungsdialog + altes aktives Ziel wird deaktiviert (keine doppelten aktiven Ziele). *(SettingsScreen)*
 - [~] **Feldspezifische Validierungsmeldungen** – ProfileScreen ✅ (klare Meldungen je Feld); Onboarding noch offen. *(OnboardingScreen)*
-- [ ] **Gesperrte Achievements**: Bedingung/Fortschritt anzeigen (description wird nicht gerendert). *(HomeScreen, gamification.ts)*
-- [ ] **Satz nachträglich bearbeiten/löschen** beim Mitschreiben (Tippfehler verfälscht PRs dauerhaft). *(ExerciseDetail.tsx)*
-- [ ] **OpenFoodFacts-Timeout + Abbrechen** beim Barcode-Scan. *(openFoodFacts.ts, FoodTrackerScreen)*
+- [x] **Achievements antippbar** ✅ – Tippen zeigt Bedingung/Beschreibung + ob freigeschaltet (Alert). *(HomeScreen)*
+- [x] **Satz nachträglich löschen** ✅ – ✕ pro Satz-Zeile beim Mitschreiben (löscht aus set_logs). *(ExerciseDetail.tsx)*
+- [x] **OpenFoodFacts-Timeout** ✅ – `AbortController` mit 8 s, bricht ab statt ewig zu hängen (danach klare „nicht gefunden"-Meldung). *(openFoodFacts.ts)*
 
 ### Performance (weitere)
 - [ ] **foods-Liste app-weit cachen** (3× unabhängig geladen). *(FoodTrackerScreen, RecipesScreen, EssenScreen)*

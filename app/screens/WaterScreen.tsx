@@ -117,7 +117,7 @@ export default function WaterScreen({ embedded, focusTick }: { embedded?: boolea
           <View key={r.id} style={styles.row}>
             <Text style={styles.rowTime}>{hhmm(r.created_at)}</Text>
             <Text style={styles.rowMl}>+{r.amount_ml} ml</Text>
-            <TouchableOpacity onPress={() => removeOne(r.id)} style={styles.del}><Text style={styles.delText}>✕</Text></TouchableOpacity>
+            <TouchableOpacity onPress={() => removeOne(r.id)} style={styles.del} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`Wasser-Eintrag ${r.amount_ml} ml entfernen`}><Text style={styles.delText}>✕</Text></TouchableOpacity>
           </View>
         ))
       )}

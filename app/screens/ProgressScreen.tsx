@@ -328,7 +328,7 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
                     <View key={w.id} style={styles.histRow}>
                       <Text style={styles.histDate}>{ddmm(w.date)}</Text>
                       <Text style={styles.histKg}>{w.kg} kg</Text>
-                      <TouchableOpacity onPress={() => confirmRemoveWeight(w.id)} style={styles.histDel}>
+                      <TouchableOpacity onPress={() => confirmRemoveWeight(w.id)} style={styles.histDel} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`Gewichtseintrag ${w.kg} kg löschen`}>
                         <Text style={styles.histDelText}>✕</Text>
                       </TouchableOpacity>
                     </View>

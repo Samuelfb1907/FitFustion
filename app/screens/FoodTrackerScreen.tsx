@@ -312,7 +312,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
                 </View>
                 <Text style={styles.foodKcal}>{f.kcal} kcal</Text>
                 {own && (
-                  <TouchableOpacity onPress={() => confirmDeleteFood(f)} style={styles.foodDel} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <TouchableOpacity onPress={() => confirmDeleteFood(f)} style={styles.foodDel} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`${f.name} löschen`}>
                     <Text style={styles.foodDelText}>🗑</Text>
                   </TouchableOpacity>
                 )}
@@ -392,7 +392,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
               <Text style={styles.mealTitle}>{m.icon}  {m.label}</Text>
               <View style={styles.mealHeaderRight}>
                 {mealKcal > 0 && <Text style={styles.mealKcal}>{mealKcal} kcal</Text>}
-                <TouchableOpacity style={styles.mealAdd} onPress={() => { setMealType(m.key); setError(null); setMode('pick'); }} activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <TouchableOpacity style={styles.mealAdd} onPress={() => { setMealType(m.key); setError(null); setMode('pick'); }} activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`Zu ${m.label} hinzufügen`}>
                   <Text style={styles.mealAddText}>＋</Text>
                 </TouchableOpacity>
               </View>
@@ -407,7 +407,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
                     <Text style={styles.entryMeta}>{e.amount_g} g</Text>
                   </View>
                   <Text style={styles.entryKcal}>{kcalOf(e)} kcal</Text>
-                  <TouchableOpacity onPress={() => deleteLog(e.id)} style={styles.del} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}><Text style={styles.delText}>✕</Text></TouchableOpacity>
+                  <TouchableOpacity onPress={() => deleteLog(e.id)} style={styles.del} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`${e.food?.name ?? 'Eintrag'} aus dem Tagebuch entfernen`}><Text style={styles.delText}>✕</Text></TouchableOpacity>
                 </View>
               ))
             )}
