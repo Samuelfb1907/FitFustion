@@ -310,27 +310,44 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
     <>
     <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }}>
       {!embedded && <Text style={styles.title}>Tracker</Text>}
-      <Text style={styles.subtitle}>Dein Essens-Tagebuch für heute</Text>
+      {!embedded && <Text style={styles.subtitle}>Dein Essens-Tagebuch für heute</Text>}
 
-      <View style={styles.summary}>
-        <View style={styles.sumCol}><Text style={styles.sumValue}>{totalKcal}</Text><Text style={styles.sumLabel}>gegessen</Text></View>
-        <View style={styles.sumCol}><Text style={styles.sumValue}>{targetKcal ?? '–'}</Text><Text style={styles.sumLabel}>Ziel</Text></View>
-        <View style={styles.sumCol}><Text style={[styles.sumValue, remaining != null && remaining < 0 && { color: c.danger }]}>{remaining != null ? remaining : '–'}</Text><Text style={styles.sumLabel}>übrig</Text></View>
+      {/* HEUTE-Übersicht */}
+      <View style={styles.todayCard}>
+        <View style={styles.todayRow}>
+          <View style={styles.todayCol}><Text style={styles.todayVal}>{totalKcal}</Text><Text style={styles.todayLbl}>gegessen</Text></View>
+          <View style={styles.todaySep} />
+          <View style={styles.todayCol}><Text style={styles.todayVal}>{targetKcal ?? '–'}</Text><Text style={styles.todayLbl}>Ziel</Text></View>
+          <View style={styles.todaySep} />
+          <View style={styles.todayCol}><Text style={[styles.todayVal, remaining != null && remaining < 0 && { color: c.danger }]}>{remaining != null ? remaining : '–'}</Text><Text style={styles.todayLbl}>übrig</Text></View>
+        </View>
+        {targetKcal != null && (
+          <View style={styles.kcalTrack}>
+            <View style={[styles.kcalFill, { width: `${Math.min(100, Math.round((totalKcal / targetKcal) * 100))}%`, backgroundColor: totalKcal > targetKcal ? c.danger : c.primary }]} />
+          </View>
+        )}
+        <View style={styles.macrosRow}>
+          <View style={styles.macroItem}><View style={[styles.macroDot, { backgroundColor: c.accent }]} /><Text style={styles.macroTxt}>{totalP} g Eiweiß</Text></View>
+          <View style={styles.macroItem}><View style={[styles.macroDot, { backgroundColor: '#E69500' }]} /><Text style={styles.macroTxt}>{totalC} g KH</Text></View>
+          <View style={styles.macroItem}><View style={[styles.macroDot, { backgroundColor: c.danger }]} /><Text style={styles.macroTxt}>{totalF} g Fett</Text></View>
+        </View>
       </View>
-      <Text style={styles.macroLine}>{totalP} g Protein · {totalC} g KH · {totalF} g Fett</Text>
+
+      {/* Aktionen */}
       <View style={styles.actionRow}>
-        <TouchableOpacity style={styles.addBtnRow} onPress={() => { setMealType(mealByHour()); setError(null); setMode('pick'); }}>
+        <TouchableOpacity style={styles.addBtnRow} onPress={() => { setMealType(mealByHour()); setError(null); setMode('pick'); }} activeOpacity={0.85}>
           <Text style={styles.addText}>➕  Hinzufügen</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.scanBtn} onPress={() => { setError(null); setScannerOpen(true); }}>
+        <TouchableOpacity style={styles.scanBtn} onPress={() => { setError(null); setScannerOpen(true); }} activeOpacity={0.85}>
           <Text style={styles.scanText}>📷  Scannen</Text>
         </TouchableOpacity>
       </View>
 
+      {/* Schnellzugriff */}
       {quickFoods.length > 0 && (
         <View style={styles.quickWrap}>
-          <Text style={styles.quickHead}>SCHNELLZUGRIFF · 1 TIPP</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2, paddingRight: 4 }} keyboardShouldPersistTaps="handled">
+          <Text style={styles.sectionHead}>SCHNELLZUGRIFF</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingRight: 4 }} keyboardShouldPersistTaps="handled">
             {quickFoods.map((qf) => (
               <TouchableOpacity key={qf.food.id} style={styles.quickChip} onPress={() => quickAdd(qf)} activeOpacity={0.8}>
                 <Text style={styles.quickName} numberOfLines={1}>{qf.food.name}</Text>
@@ -342,28 +359,32 @@ export default function FoodTrackerScreen({ embedded }: { embedded?: boolean }) 
         </View>
       )}
 
+      {/* Mahlzeiten */}
       {TRACKER_MEALS.map((m) => {
         const items = logs.filter((e) => normalizeMeal(e.meal_type) === m.key);
         const mealKcal = items.reduce((s, e) => s + kcalOf(e), 0);
         return (
-          <View key={m.key} style={styles.mealSection}>
+          <View key={m.key} style={styles.mealCard}>
             <View style={styles.mealHeader}>
               <Text style={styles.mealTitle}>{m.icon}  {m.label}</Text>
               <View style={styles.mealHeaderRight}>
                 {mealKcal > 0 && <Text style={styles.mealKcal}>{mealKcal} kcal</Text>}
-                <TouchableOpacity style={styles.mealAdd} onPress={() => { setMealType(m.key); setError(null); setMode('pick'); }} activeOpacity={0.8}>
+                <TouchableOpacity style={styles.mealAdd} onPress={() => { setMealType(m.key); setError(null); setMode('pick'); }} activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                   <Text style={styles.mealAddText}>＋</Text>
                 </TouchableOpacity>
               </View>
             </View>
             {items.length === 0 ? (
-              <Text style={styles.mealEmpty}>Noch nichts</Text>
+              <Text style={styles.mealEmpty}>Noch nichts – tippe ＋</Text>
             ) : (
-              items.map((e) => (
-                <View key={e.id} style={styles.logRow}>
-                  <View style={{ flex: 1 }}><Text style={styles.logName}>{e.food?.name ?? '—'}</Text><Text style={styles.logMeta}>{e.amount_g} g</Text></View>
-                  <Text style={styles.logKcal}>{kcalOf(e)} kcal</Text>
-                  <TouchableOpacity onPress={() => deleteLog(e.id)} style={styles.del}><Text style={styles.delText}>✕</Text></TouchableOpacity>
+              items.map((e, idx) => (
+                <View key={e.id} style={[styles.entryRow, idx > 0 && styles.entryDivider]}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.entryName} numberOfLines={1}>{e.food?.name ?? '—'}</Text>
+                    <Text style={styles.entryMeta}>{e.amount_g} g</Text>
+                  </View>
+                  <Text style={styles.entryKcal}>{kcalOf(e)} kcal</Text>
+                  <TouchableOpacity onPress={() => deleteLog(e.id)} style={styles.del} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}><Text style={styles.delText}>✕</Text></TouchableOpacity>
                 </View>
               ))
             )}
@@ -395,12 +416,32 @@ function makeStyles(c: Colors) {
     addBtnRow: { flex: 1, backgroundColor: c.primary, borderRadius: 10, paddingVertical: 14, alignItems: 'center' },
     scanBtn: { flex: 1, backgroundColor: c.card, borderWidth: 1, borderColor: c.primary, borderRadius: 10, paddingVertical: 14, alignItems: 'center' },
     scanText: { color: c.primary, fontSize: 16, fontWeight: '700' },
-    quickWrap: { marginBottom: 16 },
-    quickHead: { fontSize: 12, fontWeight: '700', letterSpacing: 0.8, color: c.textMuted, marginBottom: 8, marginLeft: 2 },
-    quickChip: { backgroundColor: c.card, borderWidth: 1, borderColor: c.primary, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, maxWidth: 200 },
+    quickWrap: { marginBottom: 18 },
+    quickChip: { backgroundColor: c.card, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, maxWidth: 200 },
     quickName: { fontSize: 14, fontWeight: '700', color: c.heading },
     quickMeta: { fontSize: 12, color: c.textMuted, marginTop: 2 },
     quickMsg: { fontSize: 13, color: c.success, marginTop: 10, fontWeight: '600' },
+    sectionHead: { fontSize: 12, fontWeight: '700', letterSpacing: 0.8, color: c.textMuted, marginBottom: 8, marginLeft: 2 },
+
+    todayCard: { backgroundColor: c.card, borderRadius: 16, padding: 18, marginBottom: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    todayRow: { flexDirection: 'row', alignItems: 'center' },
+    todayCol: { flex: 1, alignItems: 'center' },
+    todayVal: { fontSize: 24, fontWeight: 'bold', color: c.heading },
+    todayLbl: { fontSize: 12, color: c.textMuted, marginTop: 2 },
+    todaySep: { width: StyleSheet.hairlineWidth, height: 34, backgroundColor: c.border },
+    kcalTrack: { height: 8, backgroundColor: c.track, borderRadius: 4, overflow: 'hidden', marginTop: 14 },
+    kcalFill: { height: 8, borderRadius: 4 },
+    macrosRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 14 },
+    macroItem: { flexDirection: 'row', alignItems: 'center' },
+    macroDot: { width: 9, height: 9, borderRadius: 5, marginRight: 6 },
+    macroTxt: { fontSize: 13, color: c.text, fontWeight: '600' },
+
+    mealCard: { backgroundColor: c.card, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, marginBottom: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    entryRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10 },
+    entryDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.border },
+    entryName: { fontSize: 15, color: c.text, fontWeight: '600' },
+    entryMeta: { fontSize: 12, color: c.textMuted, marginTop: 1 },
+    entryKcal: { fontSize: 14, color: c.heading, fontWeight: '700', marginRight: 10 },
     empty: { fontSize: 14, color: c.textMuted, textAlign: 'center', marginTop: 16 },
     logRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 12, padding: 14, marginBottom: 8, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     logName: { fontSize: 16, color: c.text, fontWeight: '600' },
