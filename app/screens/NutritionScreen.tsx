@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { computeNutrition, ageFromBirthDate, NutritionResult, Gender, ActivityLevel, GoalType } from '../lib/nutrition';
-import { generateMealPlan, MEAL_TYPE_LABELS, MealType } from '../lib/meals';
+import { generateMealPlan, recipeFor, MEAL_TYPE_LABELS, MealType } from '../lib/meals';
 
 type LoadedMeal = { id: string; meal_type: string; name: string; calories: number; protein_g: number; carbs_g: number; fat_g: number };
 const TYPE_RANK: Record<string, number> = { breakfast: 0, lunch: 1, dinner: 2, snack: 3 };
@@ -22,6 +22,7 @@ export default function NutritionScreen({ embedded }: { embedded?: boolean }) {
   const [targets, setTargets] = useState<NutritionResult | null>(null);
   const [allergies, setAllergies] = useState<string[]>([]);
   const [meals, setMeals] = useState<LoadedMeal[]>([]);
+  const [selMeal, setSelMeal] = useState<LoadedMeal | null>(null);
 
   useEffect(() => { loadAll(); }, [userId]);
 
@@ -79,6 +80,30 @@ export default function NutritionScreen({ embedded }: { embedded?: boolean }) {
     return (<View style={[styles.container, embedded && styles.embedded]}>{!embedded && <Text style={styles.title}>Ernährungsplan</Text>}<ActivityIndicator size="large" color={c.primary} style={{ marginTop: 40 }} /></View>);
   }
 
+  if (selMeal) {
+    const items = recipeFor(selMeal.name, selMeal.calories);
+    return (
+      <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }}>
+        <TouchableOpacity onPress={() => setSelMeal(null)}><Text style={styles.back}>‹ Zurück</Text></TouchableOpacity>
+        <Text style={styles.recipeType}>{MEAL_TYPE_LABELS[selMeal.meal_type as MealType] ?? selMeal.meal_type}</Text>
+        <Text style={styles.recipeName}>{selMeal.name}</Text>
+        <Text style={styles.mealMeta}>{selMeal.calories} kcal · {selMeal.protein_g} g P · {selMeal.carbs_g} g KH · {selMeal.fat_g} g F</Text>
+        <Text style={styles.h2}>Zutaten</Text>
+        {items.length > 0 ? (
+          items.map((it, i) => (
+            <View key={i} style={styles.ingRow}>
+              <Text style={styles.ingName}>{it.name}</Text>
+              <Text style={styles.ingAmt}>{it.g} g</Text>
+            </View>
+          ))
+        ) : (
+          <Text style={styles.hint}>Für dieses Gericht sind keine Zutaten hinterlegt.</Text>
+        )}
+        <Text style={styles.recipeNote}>Mengen für 1 Portion, an dein Tagesziel angepasst. Zutaten sind frei austauschbar. 🍳</Text>
+      </ScrollView>
+    );
+  }
+
   return (
     <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }}>
       {!embedded && <Text style={styles.title}>Ernährungsplan</Text>}
@@ -99,11 +124,12 @@ export default function NutritionScreen({ embedded }: { embedded?: boolean }) {
       ) : (
         <>
           {meals.map((m) => (
-            <View key={m.id} style={styles.mealCard}>
+            <TouchableOpacity key={m.id} style={styles.mealCard} onPress={() => setSelMeal(m)} activeOpacity={0.7}>
               <Text style={styles.mealType}>{MEAL_TYPE_LABELS[m.meal_type as MealType] ?? m.meal_type}</Text>
               <Text style={styles.mealName}>{m.name}</Text>
               <Text style={styles.mealMeta}>{m.calories} kcal · {m.protein_g} g P · {m.carbs_g} g KH · {m.fat_g} g F</Text>
-            </View>
+              <Text style={styles.recipeLink}>Rezept ansehen ›</Text>
+            </TouchableOpacity>
           ))}
           <View style={styles.totalCard}>
             <Text style={styles.totalLabel}>Tagessumme</Text>
@@ -139,6 +165,15 @@ function makeStyles(c: Colors) {
     mealType: { fontSize: 12, color: c.textMuted, fontWeight: '700', letterSpacing: 0.5 },
     mealName: { fontSize: 17, fontWeight: '600', color: c.text, marginTop: 2 },
     mealMeta: { fontSize: 13, color: c.textMuted, marginTop: 4 },
+    recipeLink: { fontSize: 13, color: c.primary, fontWeight: '700', marginTop: 8 },
+    back: { color: c.primary, fontSize: 15, fontWeight: '600', marginBottom: 10 },
+    recipeType: { fontSize: 12, color: c.textMuted, fontWeight: '700', letterSpacing: 0.5 },
+    recipeName: { fontSize: 24, fontWeight: 'bold', color: c.heading, marginTop: 2, marginBottom: 6 },
+    h2: { fontSize: 17, fontWeight: '700', color: c.heading, marginTop: 18, marginBottom: 10 },
+    ingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: c.card, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, marginBottom: 8, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    ingName: { fontSize: 16, color: c.text, flex: 1, marginRight: 10 },
+    ingAmt: { fontSize: 16, color: c.primary, fontWeight: '700' },
+    recipeNote: { fontSize: 13, color: c.textMuted, marginTop: 16, lineHeight: 19 },
     totalCard: { backgroundColor: c.inputBg, borderRadius: 14, padding: 16, marginTop: 4, marginBottom: 12, alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     totalLabel: { fontSize: 12, color: c.primary, fontWeight: '700', letterSpacing: 0.5 },
     totalKcal: { fontSize: 22, fontWeight: 'bold', color: c.heading, marginTop: 2 },
