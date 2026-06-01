@@ -53,3 +53,29 @@ Dieser Hinweis kann angepasst werden; es gilt die in der App aktuelle Fassung. I
 
 ---
 _Kurzfassung für die App: „FitFusion ist kein Medizinprodukt und ersetzt keine ärztliche, ernährungs- oder trainingsbezogene Beratung. Keine Diagnose/Therapie, keine Erfolgsversprechen. Nutzung auf eigene Gefahr ab 18. Bei Allergien immer die Zutaten selbst prüfen. Bei Beschwerden abbrechen und ärztlichen Rat einholen; im Notfall 112."_
+
+---
+
+## ✅ Platzhalter-Checkliste (vor Veröffentlichung ausfüllen)
+
+Impressum, Datenschutzerklärung und dieser Haftungsausschluss sind **in der App** abrufbar
+(**Einstellungen → Rechtliches** bzw. **→ Datenschutz**). Alle Texte stehen zentral in
+**`app/lib/legal.ts`** – dort die Platzhalter `[...]` durch echte Angaben ersetzen, App neu laden, fertig.
+
+**Impressum** (Konstante `IMPRESSUM_SECTIONS`)
+- [ ] `[Vor- und Nachname / ggf. Firma]`
+- [ ] `[Straße und Hausnummer]` · `[PLZ und Ort]` · `[Land]` — ladungsfähige Anschrift (kein Postfach)
+- [ ] `[deine-kontakt@e-mail.de]` (+ optional `[Telefonnummer]`)
+- [ ] Verantwortlich n. § 18 Abs. 2 MStV: `[Vor- und Nachname]` + Anschrift
+- [ ] `[USt-IdNr.]` — oder Zeile streichen (Kleinunternehmer/keine USt-ID)
+
+**Datenschutzerklärung** (Konstante `PRIVACY_SECTIONS`)
+- [ ] `[Name]` · `[Anschrift]` · `[Kontakt-E-Mail]` (Verantwortlicher)
+- [ ] `[Datum eintragen]` (Stand)
+- [ ] **AVV mit Supabase** abschließen (Auftragsverarbeitungsvertrag – im Supabase-Dashboard verfügbar)
+
+**Haftungsausschluss** (oben in dieser Datei / Konstante `DISCLAIMER_SECTIONS`)
+- [ ] `[Datum eintragen]` · `[Name / Kontakt eintragen]` (Kopfzeile)
+
+> ⚠️ Diese Vorlagen sind **kein Ersatz für eine anwaltliche Prüfung**. Gerade wegen der
+> Gesundheitsdaten (Art. 9 DSGVO) und einer möglichen gewerblichen Nutzung ist rechtlicher Rat empfehlenswert.

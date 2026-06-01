@@ -8,7 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme, useColors, Colors } from '../contexts/ThemeContext';
 import ProfileScreen from './ProfileScreen';
 import LegalText from '../components/LegalText';
-import { PRIVACY_SECTIONS } from '../lib/legal';
+import { PRIVACY_SECTIONS, IMPRESSUM_SECTIONS } from '../lib/legal';
 import { exportUserData, deleteAccount } from '../lib/gdpr';
 import { loadReminderPrefs, saveReminderPrefs, applyReminders, ensurePermission, ReminderPrefs } from '../lib/reminders';
 import { useFocusTick } from '../lib/useFocusTick';
@@ -19,7 +19,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
   const c = useColors();
   const styles = makeStyles(c);
 
-  const [view, setView] = useState<'menu' | 'profile' | 'legal' | 'privacy'>('menu');
+  const [view, setView] = useState<'menu' | 'profile' | 'legal' | 'privacy' | 'impressum'>('menu');
   const [rem, setRem] = useState<ReminderPrefs | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [msgErr, setMsgErr] = useState(false);
@@ -127,7 +127,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
         <View style={[styles.card, { padding: 16 }]}>
           <LegalText c={c} />
         </View>
-        <Text style={styles.hint}>Stand: Vorlage. Vor einer Veröffentlichung anwaltlich prüfen und um Impressum & Datenschutzerklärung ergänzen.</Text>
+        <Text style={styles.hint}>Stand: Vorlage. Vor einer Veröffentlichung anwaltlich prüfen. Impressum & Datenschutzerklärung findest du separat in den Einstellungen.</Text>
       </ScrollView>
     );
   }
@@ -142,6 +142,20 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
           <LegalText c={c} sections={PRIVACY_SECTIONS} />
         </View>
         <Text style={styles.hint}>Vorlage – Platzhalter [...] ausfüllen und vor Veröffentlichung anwaltlich prüfen (zusätzlich Impressum & AVV mit Supabase).</Text>
+      </ScrollView>
+    );
+  }
+
+  // Unterseite: Impressum
+  if (view === 'impressum') {
+    return (
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+        <TouchableOpacity onPress={() => setView('menu')}><Text style={styles.link}>‹ Zurück</Text></TouchableOpacity>
+        <Text style={[styles.title, { marginTop: 10 }]}>Impressum</Text>
+        <View style={[styles.card, { padding: 16 }]}>
+          <LegalText c={c} sections={IMPRESSUM_SECTIONS} />
+        </View>
+        <Text style={styles.hint}>Vorlage nach § 5 DDG – Platzhalter [...] mit deinen Angaben (ladungsfähige Anschrift) ausfüllen und vor Veröffentlichung prüfen lassen.</Text>
       </ScrollView>
     );
   }
@@ -227,6 +241,9 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
       <View style={styles.card}>
         <TouchableOpacity style={styles.linkRow} onPress={() => setView('legal')}>
           <Text style={styles.link}>📄  Haftungsausschluss & Gesundheitshinweis</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.linkRow} onPress={() => setView('impressum')}>
+          <Text style={styles.link}>🏛  Impressum</Text>
         </TouchableOpacity>
       </View>
 

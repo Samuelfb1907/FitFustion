@@ -90,7 +90,7 @@ export const PRIVACY_SECTIONS: { h: string; p: string }[] = [
   },
   {
     h: 'Hosting & Dienstleister',
-    p: 'Deine Daten werden bei Supabase gespeichert (Datenbank, Authentifizierung, Hosting) – als Auftragsverarbeiter. Für Übungs-Animationen wird ExerciseDB (RapidAPI) und für Lebensmitteldaten Open Food Facts genutzt. Mit Auftragsverarbeitern ist ein Auftragsverarbeitungsvertrag (AVV) abzuschließen. [Bitte AVV mit Supabase abschließen.]',
+    p: 'Deine Daten werden bei Supabase gespeichert (Datenbank, Authentifizierung, Hosting) – als Auftragsverarbeiter. Die Datenbank wird in einem Rechenzentrum innerhalb der EU gehostet (Region Frankfurt, Deutschland). Für Übungs-Animationen wird ExerciseDB (RapidAPI) und für Lebensmitteldaten Open Food Facts genutzt. Mit Auftragsverarbeitern ist ein Auftragsverarbeitungsvertrag (AVV) abzuschließen. [Bitte AVV mit Supabase abschließen.]',
   },
   {
     h: 'Speicherdauer',
@@ -107,5 +107,45 @@ export const PRIVACY_SECTIONS: { h: string; p: string }[] = [
   {
     h: 'Keine Werbung / keine automatisierten Entscheidungen',
     p: 'Wir geben deine Daten nicht zu Werbezwecken weiter und nutzen keine automatisierte Entscheidungsfindung oder Profiling mit rechtlicher Wirkung. Kontakt bei Fragen: [Kontakt-E-Mail].',
+  },
+  {
+    h: 'Stand & Änderungen',
+    p: 'Stand dieser Datenschutzerklärung: [Datum eintragen]. Wir können diese Erklärung anpassen, z. B. bei neuen Funktionen oder geänderter Rechtslage; es gilt die jeweils aktuelle, in der App abrufbare Fassung.',
+  },
+];
+
+// Impressum (Vorlage nach § 5 DDG – Platzhalter [...] ausfuellen, vor Release pruefen lassen).
+export const IMPRESSUM_SECTIONS: { h: string; p: string }[] = [
+  {
+    h: 'Angaben gemäß § 5 DDG',
+    p: '[Vor- und Nachname / ggf. Firma]\n[Straße und Hausnummer]\n[PLZ und Ort]\n[Land]\n\n(Bitte vor Veröffentlichung ausfüllen. Erforderlich ist eine ladungsfähige Anschrift – ein Postfach genügt nicht.)',
+  },
+  {
+    h: 'Kontakt',
+    p: 'E-Mail: [deine-kontakt@e-mail.de]\nTelefon (optional): [Telefonnummer]',
+  },
+  {
+    h: 'Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV',
+    p: '[Vor- und Nachname]\n[Anschrift wie oben]',
+  },
+  {
+    h: 'Umsatzsteuer-ID',
+    p: 'Umsatzsteuer-Identifikationsnummer gemäß § 27 a UStG: [USt-IdNr. – oder streichen, falls nicht vorhanden / Kleinunternehmer nach § 19 UStG].',
+  },
+  {
+    h: 'EU-Streitschlichtung',
+    p: 'Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit: https://ec.europa.eu/consumers/odr/ . Wir sind nicht verpflichtet und nicht bereit, an einem Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.',
+  },
+  {
+    h: 'Haftung für Inhalte',
+    p: 'Als Diensteanbieter sind wir gemäß § 7 Abs. 1 DDG für eigene Inhalte nach den allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 DDG sind wir nicht verpflichtet, übermittelte oder gespeicherte fremde Informationen zu überwachen. Bei Bekanntwerden von Rechtsverletzungen entfernen wir entsprechende Inhalte umgehend.',
+  },
+  {
+    h: 'Haftung für Links',
+    p: 'Unser Angebot kann Links zu externen Websites Dritter enthalten, auf deren Inhalte wir keinen Einfluss haben. Für diese fremden Inhalte wird keine Gewähr übernommen; verantwortlich ist stets der jeweilige Anbieter oder Betreiber der Seiten.',
+  },
+  {
+    h: 'Urheberrecht',
+    p: 'Die vom Betreiber erstellten Inhalte und Werke in dieser App unterliegen dem deutschen Urheberrecht. Inhalte Dritter (z. B. Übungs-Animationen von ExerciseDB, Lebensmitteldaten von Open Food Facts) stammen aus den genannten Quellen. Vervielfältigung und Nutzung nur für den privaten, nicht kommerziellen Gebrauch.',
   },
 ];
