@@ -29,7 +29,7 @@ Der **App-Code ist erstaunlich solide**: `tsc` ist fehlerfrei, alle 14 Screens s
 ### Sicherheit & Datenschutz
 - [x] **DSGVO: Konto- & Datenlöschung + Export** ✅ – In **Einstellungen → Datenschutz**: „Meine Daten exportieren" (JSON-Datei teilen, Art. 15/20), „Datenschutzerklärung" (Vorlage), „Konto & alle Daten löschen" (Art. 17, mit Bestätigung). Löschen wischt alle Datenzeilen client-seitig + meldet ab; optionale Edge Function `delete-account` (service_role) entfernt zusätzlich das Auth-Konto (Cascade). Migration 014 erlaubt Profil-Löschung. *Offen: Edge Function deployen (SUPABASE_FUNCTIONS.md), Platzhalter in Datenschutzerklärung/Impressum ausfüllen, anwaltliche Prüfung.* *(SettingsScreen.tsx, lib/gdpr.ts, db/014, supabase/functions/delete-account)*
 - [ ] **ExerciseDB/RapidAPI-Key aus dem Client nehmen** – `EXPO_PUBLIC_EXERCISEDB_KEY` wird ins Bundle gebacken → der **bezahlte** Key ist aus jeder App auslesbar. → GIF-Abruf über Proxy/Edge-Function (Key serverseitig) **und Key bei RapidAPI rotieren**; RapidAPI-Spend-Limit setzen. *(components/ExerciseGif.tsx, .env)*
-- [ ] **E-Mail-Bestätigung aktivieren** – aktuell aus → Registrierung mit fremden Adressen möglich, Reset untergraben. → In Supabase-Auth „Confirm email" an; Mindest-Passwortlänge erhöhen. *(Supabase-Einstellung, AuthScreen.tsx)*
+- [ ] **E-Mail-Bestätigung aktivieren** – aktuell aus → Registrierung mit fremden Adressen möglich, Reset untergraben. → In Supabase-Auth „Confirm email" an; Mindest-Passwortlänge erhöhen (clientseitig **≥8 Zeichen ✅ ergänzt**; „Confirm email" + Server-Mindestlänge bleiben offen – nur du). *(Supabase-Einstellung, AuthScreen.tsx)*
 
 ### Robustheit & UX
 - [x] **Offline-/Fehler-Konzept** ✅ ERLEDIGT (neu: `lib/errors.ts` + `components/ErrorRetry.tsx`; `try/catch/finally`, Fehler-Ansicht „Erneut versuchen" & **Pull-to-Refresh** auf allen 6 Hauptscreens; stiller Reload ohne Spinner-Flackern bei Reiter-Wechsel) – früheres Problem: Ladefunktionen ohne `try/catch/finally` → bei Netzfehler **endloser Spinner** ohne Meldung/Retry (Home, Tracker, Progress, Water, Training, Plan). → in `try/finally` kapseln (`setLoading(false)` im finally), Fehlerzustand + „Erneut versuchen", **Pull-to-Refresh** (RefreshControl). *(HomeScreen, FoodTrackerScreen, ProgressScreen, WaterScreen, TrainingScreen, PlanScreen)*
@@ -63,11 +63,11 @@ Der **App-Code ist erstaunlich solide**: `tsc` ist fehlerfrei, alle 14 Screens s
 - [~] **Duplikation zentralisieren** (teilweise ✅) – fertig: Anzeige-/Erlaubt-Konstanten (`DIFF/EQUIP_LABELS`, `ALLOWED_DIFF/EQUIP`) → neue `lib/training.ts`; Datums-Helfer `todayStr`/`startOfTodayISO`/`ddmm` → `lib/date.ts` (lokale Kopien aus 9 Dateien entfernt); zudem grp/unwrap -> neue `lib/format.ts`. Offen: restliche Datums-Helfer (mondayOf/dStr), `KEY_TO_SLUGS`, `ALLOWED_DIFF/EQUIP`, `DIFF/EQUIP_LABELS`, `unwrap/ddmm/grp`, Wasser-Logik → `lib/date.ts`, `lib/muscles.ts`, `lib/training.ts`, `lib/water.ts`. *(diverse)*
 - [ ] **Nicht-atomare Delete→Insert** (Plan/Rezept/Ziel) → RPC-Transaktion oder „erst neu anlegen, dann altes deaktivieren". *(NutritionScreen, PlanScreen, RecipesScreen)*
 - [x] **Memoisierung** ✅ – ThemeContext-`value` per `useMemo` (verhindert App-weite Re-Renders); `makeStyles` per `useMemo` in den eingabe-intensiven Screens (FoodTracker, ExerciseDetail, Progress). *(Loader-`useCallback` in den übrigen Screens optional – greift kaum, da Bereiche jetzt gemountet bleiben.)*
-- [ ] **`recipeFor`/`swapMeal` über stabilen Key statt Anzeigename**; Rezept-0g-Items validieren; Barcode-Konflikt zusätzlich per Barcode auflösen; `parseWeight` `Number.isNaN`. *(meals.ts, RecipesScreen, barcodeFood.ts, weight.ts)*
+- [~] **Kleinkorrekturen** – `parseWeight` nutzt `Number.isNaN` ✅; `recipeFor`/`swapMeal` & Rezept-0g-Validierung **hinfällig** (Rezepte/Ernährungsplan entfernt); Barcode-Konflikt per Barcode bleibt minor offen. *(barcodeFood.ts)*
 - [x] **Tote Styles entfernen** ✅ (FoodTracker: 12 Redesign-Reste, ProgressScreen: 3 Delta-Styles, ExerciseDetail: 1× ungenutztes `instr`). *(diverse)*
 
 ### UX / Barrierefreiheit
-- [ ] **Ernährungsplan ins Tagebuch übernehmen** – Plan-Gerichte haben keinen „Ins Tagebuch"-Button (Rezepte schon). *(NutritionScreen.tsx)*
+- [~] **Ernährungsplan ins Tagebuch übernehmen** – ✅ **hinfällig**: Ernährungsplan & `NutritionScreen` wurden auf Wunsch entfernt (Essen = Tracker + Wasser). *(—)*
 - [x] **`accessibilityLabel`/`Role` ergänzt** ✅ – Icon-Buttons (✕ Tagebuch/Wasser/Gewicht, 🗑 Lebensmittel, ↩ Wasser-Undo, ＋ Mahlzeit, Satz löschen, Erfolge) + Tab-Leiste (`accessibilityRole="tab"` + selected) beschriftet. *(Gauge/Body-Map ohne Label belassen – stehen neben lesbarem Text.)*
 - [x] **`hitSlop` ergänzt** ✅ – an den kleinen Lösch-/Undo-Buttons (Progress/Water/FoodTracker). *(Tab-Höhe iOS via paddingBottom ok.)*
 - [x] **Fehlermeldungen-Farbe** ✅ – SettingsScreen nutzt jetzt ein `msgErr`-Flag (rot bei Fehler, grün bei Erfolg). *(Rezepte entfernt.)* *(SettingsScreen)*
@@ -78,7 +78,7 @@ Der **App-Code ist erstaunlich solide**: `tsc` ist fehlerfrei, alle 14 Screens s
 - [x] **OpenFoodFacts-Timeout** ✅ – `AbortController` mit 8 s, bricht ab statt ewig zu hängen (danach klare „nicht gefunden"-Meldung). *(openFoodFacts.ts)*
 
 ### Performance (weitere)
-- [ ] **foods-Liste app-weit cachen** (3× unabhängig geladen). *(FoodTrackerScreen, RecipesScreen, EssenScreen)*
+- [~] **foods-Liste app-weit cachen** – `RecipesScreen` entfernt → `foods` wird faktisch nur noch ~1× geladen (FoodTracker); app-weiter Cache jetzt geringer Nutzen. *(FoodTrackerScreen)*
 - [ ] **Progress/ExerciseProgress server-aggregieren** (laden alle `set_logs`). *(ProgressScreen, ExerciseProgress)*
 - [x] **GIF-Caching** ✅ – `ExerciseGif` nutzt jetzt `expo-image` mit `cachePolicy="memory-disk"` (GIFs werden zuverlässig gecacht statt erneut von der Rate-limitierten API geladen). *(ExerciseGif.tsx)*
 - [x] **PlanScreen `addExercise` optimistisch** ✅ – fügt die neue Übung lokal ein (lädt nur die eine Übung nach) statt den ganzen Plan neu zu laden. *(muscles-Cache: minor, offen)*

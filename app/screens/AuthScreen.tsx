@@ -34,6 +34,7 @@ export default function AuthScreen() {
   async function handleSubmit() {
     setInfo(null);
     if (!email || !password) { show('Bitte E-Mail und Passwort eingeben.', true); return; }
+    if (mode === 'register' && password.length < 8) { show('Bitte ein Passwort mit mindestens 8 Zeichen wählen.', true); return; }
     if (mode === 'register' && !accepted) { show('Bitte bestätige den Haftungsausschluss & Gesundheitshinweis, um fortzufahren.', true); return; }
     setLoading(true);
     if (mode === 'login') {
@@ -69,7 +70,7 @@ export default function AuthScreen() {
         <TextInput style={styles.input} value={email} onChangeText={setEmail} placeholder="du@beispiel.de" placeholderTextColor={c.textMuted} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" inputMode="email" />
 
         <Text style={styles.label}>Passwort</Text>
-        <TextInput style={styles.input} value={password} onChangeText={setPassword} placeholder="mindestens 6 Zeichen" placeholderTextColor={c.textMuted} secureTextEntry autoCapitalize="none" />
+        <TextInput style={styles.input} value={password} onChangeText={setPassword} placeholder={mode === 'register' ? 'mindestens 8 Zeichen' : 'Passwort'} placeholderTextColor={c.textMuted} secureTextEntry autoCapitalize="none" />
 
         {mode === 'register' && (
           <TouchableOpacity style={styles.acceptRow} onPress={() => setAccepted((a) => !a)} activeOpacity={0.7}>
