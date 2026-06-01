@@ -39,6 +39,13 @@ async function countRows(table: string, userId: string): Promise<number> {
 type Eaten = { kcal: number; p: number; c: number; f: number };
 const WATER_GOAL = 2500; // Tagesziel in ml
 
+function greeting(): string {
+  const h = new Date().getHours();
+  if (h < 11) return 'Guten Morgen';
+  if (h < 18) return 'Guten Tag';
+  return 'Guten Abend';
+}
+
 export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (tab: string) => void; focusTick?: number }) {
   const { session, profile } = useAuth();
   const c = useColors();
@@ -222,7 +229,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
           <>
             {/* HERO */}
             <View style={styles.hero}>
-              <Text style={styles.heroHi}>Hallo, {profile?.first_name || 'willkommen'} 👋</Text>
+              <Text style={styles.heroHi}>{greeting()}, {profile?.first_name || 'willkommen'} 👋</Text>
               {stats && (
                 <>
                   <View style={styles.heroChips}>
@@ -395,7 +402,7 @@ function Macro({ label, eaten, target, color, styles }: { label: string; eaten: 
 function Quick({ icon, label, onPress, styles }: { icon: string; label: string; onPress: () => void; styles: any }) {
   return (
     <TouchableOpacity style={styles.quickCard} onPress={onPress} activeOpacity={0.85}>
-      <Text style={styles.quickIcon}>{icon}</Text>
+      <View style={styles.quickIconWrap}><Text style={styles.quickIcon}>{icon}</Text></View>
       <Text style={styles.quickLabel}>{label}</Text>
     </TouchableOpacity>
   );
@@ -418,11 +425,12 @@ function GoalRow({ g, last, c, styles }: { g: Goal; last: boolean; c: Colors; st
 }
 
 function makeStyles(c: Colors) {
+  const shadow = { shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 2 };
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: c.bg, paddingTop: 60, paddingHorizontal: 20 },
 
-    hero: { backgroundColor: c.hero, borderRadius: 18, padding: 20, marginBottom: 14 },
-    heroHi: { color: '#fff', fontSize: 22, fontWeight: 'bold' },
+    hero: { backgroundColor: c.hero, borderRadius: 22, padding: 22, marginBottom: 16, shadowColor: c.hero, shadowOpacity: 0.3, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 6 },
+    heroHi: { color: '#fff', fontSize: 23, fontWeight: '800' },
     heroChips: { flexDirection: 'row', gap: 8, marginTop: 12 },
     heroChip: { backgroundColor: 'rgba(255,255,255,0.16)', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 },
     heroChipText: { color: '#fff', fontSize: 13, fontWeight: '600' },
@@ -430,7 +438,7 @@ function makeStyles(c: Colors) {
     xpFill: { height: 10, backgroundColor: '#7FA6FF', borderRadius: 5 },
     xpText: { color: 'rgba(255,255,255,0.8)', fontSize: 12, marginTop: 6 },
 
-    planToday: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 14, padding: 14, marginBottom: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    planToday: { ...shadow, flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     planTodayIcon: { fontSize: 24, marginRight: 12 },
     planTodayLabel: { fontSize: 12, color: c.textMuted, fontWeight: '700', letterSpacing: 0.5 },
     planTodayFocus: { fontSize: 16, fontWeight: '700', color: c.heading, marginTop: 2 },
@@ -442,17 +450,17 @@ function makeStyles(c: Colors) {
     bannerBtn: { backgroundColor: c.accent, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10, marginLeft: 12 },
     bannerBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
 
-    section: { fontSize: 12, fontWeight: '700', letterSpacing: 0.8, color: c.textMuted, marginTop: 8, marginBottom: 8, marginLeft: 4 },
+    section: { fontSize: 12, fontWeight: '800', letterSpacing: 1, color: c.textMuted, marginTop: 12, marginBottom: 9, marginLeft: 4 },
     nutriNote: { fontSize: 11, color: c.textMuted, lineHeight: 16, marginTop: 8, marginBottom: 2, paddingHorizontal: 2 },
 
-    card: { backgroundColor: c.card, borderRadius: 16, padding: 20, alignItems: 'center', marginBottom: 6, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    card: { ...shadow, backgroundColor: c.card, borderRadius: 18, padding: 20, alignItems: 'center', marginBottom: 6, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     macros: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 18 },
     macro: { flex: 1, alignItems: 'center' },
     macroDot: { width: 10, height: 10, borderRadius: 5, marginBottom: 6 },
     macroValue: { fontSize: 15, fontWeight: '700', color: c.text },
     macroLabel: { fontSize: 12, color: c.textMuted, marginTop: 2, textAlign: 'center' },
 
-    waterCard: { backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 6, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    waterCard: { ...shadow, backgroundColor: c.card, borderRadius: 18, padding: 16, marginBottom: 6, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     waterTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     waterTitle: { fontSize: 16, fontWeight: '700', color: c.heading },
     waterTrack: { height: 10, backgroundColor: c.track, borderRadius: 5, overflow: 'hidden', marginTop: 10 },
@@ -471,7 +479,7 @@ function makeStyles(c: Colors) {
     weightBtnText: { color: c.onPrimary, fontSize: 15, fontWeight: '700' },
     weightMsg: { fontSize: 13, color: c.success, marginTop: 8 },
 
-    listCard: { backgroundColor: c.card, borderRadius: 16, paddingHorizontal: 16, marginBottom: 6, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    listCard: { ...shadow, backgroundColor: c.card, borderRadius: 18, paddingHorizontal: 16, marginBottom: 6, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     goalRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },
     goalRowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.border },
     goalIcon: { fontSize: 20, marginRight: 12 },
@@ -482,13 +490,14 @@ function makeStyles(c: Colors) {
     goalCheck: { fontSize: 20, fontWeight: '700', marginLeft: 10 },
 
     quick: { flexDirection: 'row', gap: 10, marginBottom: 6 },
-    quickCard: { flex: 1, backgroundColor: c.card, borderRadius: 14, paddingVertical: 18, alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    quickCard: { ...shadow, flex: 1, backgroundColor: c.card, borderRadius: 16, paddingVertical: 18, alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    quickIconWrap: { width: 46, height: 46, borderRadius: 23, backgroundColor: c.inputBg, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
     quickIcon: { fontSize: 24 },
-    quickLabel: { fontSize: 12, color: c.heading, marginTop: 6, fontWeight: '600' },
+    quickLabel: { fontSize: 12, color: c.heading, fontWeight: '700' },
 
     badgeGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-    badge: { width: '31%', backgroundColor: c.card, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 6, alignItems: 'center', marginBottom: 10, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
-    badgeLocked: { backgroundColor: c.bg },
+    badge: { ...shadow, width: '31%', backgroundColor: c.card, borderRadius: 16, paddingVertical: 14, paddingHorizontal: 6, alignItems: 'center', marginBottom: 10, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    badgeLocked: { backgroundColor: c.bg, shadowOpacity: 0, elevation: 0 },
     badgeIcon: { fontSize: 26 },
     lockedIcon: { opacity: 0.6 },
     badgeName: { fontSize: 11, color: c.text, textAlign: 'center', marginTop: 6, fontWeight: '600' },
