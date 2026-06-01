@@ -1,5 +1,5 @@
 // Übungsdetail (themed) mit "Training mitschreiben": Sätze (Wdh + Gewicht) speichern.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -49,7 +49,7 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
   const { session } = useAuth();
   const userId = session?.user?.id;
   const c = useColors();
-  const styles = makeStyles(c);
+  const styles = useMemo(() => makeStyles(c), [c]);
   const steps = parseSteps(exercise.instructions);
   const tips = tipsFor(exercise.equipment, exercise.difficulty);
   const gifId = exerciseGifId(exercise.name);

@@ -167,11 +167,25 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
 
   async function addExercise(exId: string) {
     if (!userId || !addingToDay) return;
-    const day = days.find((d) => d.id === addingToDay);
+    const dayId = addingToDay;
+    const day = days.find((d) => d.id === dayId);
     const order = day ? day.exercises.length : 0;
-    await supabase.from('workout_plan_exercises').insert({ user_id: userId, plan_day_id: addingToDay, exercise_id: exId, target_sets: 3, target_reps: 10, order_index: order });
     setAddingToDay(null);
-    await loadPlan();
+    const { data: row, error } = await supabase.from('workout_plan_exercises')
+      .insert({ user_id: userId, plan_day_id: dayId, exercise_id: exId, target_sets: 3, target_reps: 10, order_index: order })
+      .select('id').single();
+    if (error || !row) { setError('Hinzufügen fehlgeschlagen.'); return; }
+    // volle Uebungsdaten fuer die Anzeige holen + optimistisch einfuegen (kein voller Reload)
+    const { data: ex } = await supabase.from('exercises').select('id, name, difficulty, equipment, description, instructions, primary_muscle_id').eq('id', exId).maybeSingle();
+    let muscleKey: string | null = null, muscleName: string | null = null;
+    if (ex?.primary_muscle_id) {
+      const { data: mu } = await supabase.from('muscles').select('key, name_de').eq('id', ex.primary_muscle_id).maybeSingle();
+      muscleKey = mu?.key ?? null; muscleName = mu?.name_de ?? null;
+    }
+    if (ex) {
+      const newEx: PlanEx = { rowId: row.id, exId: ex.id, name: ex.name, difficulty: ex.difficulty, equipment: ex.equipment, description: ex.description, instructions: ex.instructions, muscleKey, muscleName, sets: 3, reps: 10 };
+      setDays((prev) => prev.map((d) => (d.id === dayId ? { ...d, exercises: [...d.exercises, newEx] } : d)));
+    }
   }
 
   async function loadDoneToday() {

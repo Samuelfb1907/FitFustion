@@ -1,7 +1,9 @@
 // Animiertes Uebungs-GIF von ExerciseDB (ueber den API-Schluessel geladen).
+// Nutzt expo-image mit Disk-Cache (cachePolicy) -> identische GIFs werden nur einmal geladen.
 // Bei Fehler (z. B. kein Internet/Key) wird per onFail auf die Muskelgrafik zurueckgefallen.
 import { useState } from 'react';
-import { ActivityIndicator, Image, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { Image } from 'expo-image';
 import { Colors } from '../contexts/ThemeContext';
 
 const HOST = 'exercisedb.p.rapidapi.com';
@@ -26,7 +28,8 @@ export default function ExerciseGif({
       {!loaded && <ActivityIndicator color={c.primary} style={StyleSheet.absoluteFill} />}
       <Image
         source={{ uri, headers: { 'X-RapidAPI-Key': KEY ?? '', 'X-RapidAPI-Host': HOST } }}
-        resizeMode="contain"
+        cachePolicy="memory-disk"
+        contentFit="contain"
         style={StyleSheet.absoluteFill}
         onLoad={() => setLoaded(true)}
         onError={() => onFail?.()}

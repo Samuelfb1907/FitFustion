@@ -1,7 +1,7 @@
 // Fortschritts-Dashboard: Gewichtsverlauf (mit Eingabe), Trainingsvolumen,
 // persoenliche Rekorde und Trainingshistorie. Liest aus set_logs / workout_sessions
 // / progress_entries. Keine DB-Aenderung noetig.
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Dimensions, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -45,7 +45,7 @@ function unwrap<T>(rel: T | T[] | null | undefined): T | null {
 export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
   const { session } = useAuth();
   const c = useColors();
-  const styles = makeStyles(c);
+  const styles = useMemo(() => makeStyles(c), [c]);
 
   const chartW = Math.min(560, Dimensions.get('window').width) - 72;
 

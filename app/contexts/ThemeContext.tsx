@@ -1,6 +1,6 @@
 // Theme-System: Hell-/Dunkel-Modus mit zentralem Farb-Satz, gespeichert auf dem Gerät.
 // Screens holen sich Farben per useColors() und passen sich so automatisch an.
-import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useMemo, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type ThemeName = 'light' | 'dark';
@@ -75,9 +75,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const colors = theme === 'dark' ? DARK : LIGHT;
+  const value = useMemo(() => ({ theme, colors, toggleTheme, setTheme }), [theme, colors, toggleTheme, setTheme]);
 
   return (
-    <ThemeContext.Provider value={{ theme, colors, toggleTheme, setTheme }}>
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );

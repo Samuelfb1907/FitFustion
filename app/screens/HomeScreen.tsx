@@ -70,13 +70,23 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
       const userId = session?.user?.id;
       if (!userId) return;
 
-      const { data: prof } = await supabase
-        .from('profiles').select('weight_kg, height_cm, birth_date, gender, activity_level').eq('id', userId).maybeSingle();
-      setWeightKg(prof?.weight_kg != null ? Number(prof.weight_kg) : null);
-      const { data: goal } = await supabase
-        .from('goals').select('goal_type').eq('user_id', userId).eq('is_active', true)
-        .order('created_at', { ascending: false }).limit(1).maybeSingle();
+      // unabhängige Abfragen parallel (statt nacheinander) -> deutlich schnellerer Aufbau
+      const [profRes, goalRes, fdt, actRes, sessions, sets, foodLogs, sdRes, fd, schedRes] = await Promise.all([
+        supabase.from('profiles').select('weight_kg, height_cm, birth_date, gender, activity_level').eq('id', userId).maybeSingle(),
+        supabase.from('goals').select('goal_type').eq('user_id', userId).eq('is_active', true).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+        supabase.from('food_logs').select('amount_g, foods(kcal, protein, carbs, fat)').eq('user_id', userId).eq('log_date', todayStr()),
+        supabase.from('workout_sessions').select('id').eq('user_id', userId).is('ended_at', null).gte('performed_at', startOfTodayISO()).order('performed_at', { ascending: false }).limit(1).maybeSingle(),
+        countRows('workout_sessions', userId),
+        countRows('set_logs', userId),
+        countRows('food_logs', userId),
+        supabase.from('workout_sessions').select('performed_at').eq('user_id', userId),
+        supabase.from('food_logs').select('log_date').eq('user_id', userId),
+        supabase.from('plan_schedule').select('weekday, workout_plan_days(focus)').eq('user_id', userId),
+      ]);
 
+      const prof = profRes.data;
+      const goal = goalRes.data;
+      setWeightKg(prof?.weight_kg != null ? Number(prof.weight_kg) : null);
       if (prof && prof.weight_kg && prof.height_cm) {
         const goalType = (goal?.goal_type ?? 'general_fitness') as GoalType;
         setNutrition(
@@ -90,8 +100,6 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
         setError('Profildaten unvollständig.');
       }
 
-      const fdt = await supabase
-        .from('food_logs').select('amount_g, foods(kcal, protein, carbs, fat)').eq('user_id', userId).eq('log_date', todayStr());
       const e: Eaten = { kcal: 0, p: 0, c: 0, f: 0 };
       if (!fdt.error && fdt.data) {
         for (const row of fdt.data as any[]) {
@@ -106,21 +114,14 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
 
       await refreshWater();
 
-      // Aktives (noch nicht beendetes) Training von heute?
-      const { data: act } = await supabase
-        .from('workout_sessions').select('id').eq('user_id', userId).is('ended_at', null)
-        .gte('performed_at', startOfTodayISO()).order('performed_at', { ascending: false }).limit(1).maybeSingle();
+      const act = actRes.data;
       setActiveSession(act?.id ?? null);
       if (act?.id) {
         const r = await supabase.from('set_logs').select('*', { count: 'exact', head: true }).eq('session_id', act.id);
         setActiveSets(r.count ?? 0);
       } else setActiveSets(0);
 
-      const sessions = await countRows('workout_sessions', userId);
-      const sets = await countRows('set_logs', userId);
-      const foodLogs = await countRows('food_logs', userId);
-      const { data: sd } = await supabase.from('workout_sessions').select('performed_at').eq('user_id', userId);
-      const fd = await supabase.from('food_logs').select('log_date').eq('user_id', userId);
+      const sd = sdRes.data;
       const sdDates = ((sd ?? []) as any[]).map((r) => localDateStr(r.performed_at));
       const fdDates = fd.error ? [] : ((fd.data ?? []) as any[]).map((r) => String(r.log_date).slice(0, 10));
       const dates = [...sdDates, ...fdDates];
@@ -134,8 +135,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
       });
 
       // Heutiges Training laut Wochenplan
-      const { data: schedRows } = await supabase
-        .from('plan_schedule').select('weekday, workout_plan_days(focus)').eq('user_id', userId);
+      const schedRows = schedRes.data;
       if (schedRows && schedRows.length) {
         const wd = todayWeekday();
         const row = (schedRows as any[]).find((r) => r.weekday === wd);

@@ -47,7 +47,7 @@ Der **App-Code ist erstaunlich solide**: `tsc` ist fehlerfrei, alle 14 Screens s
 ### Performance
 - [x] **Lange Listen virtualisieren** ✅ – Lebensmittel-Auswahl auf `FlatList` umgestellt (nur sichtbare Zeilen, `initialNumToRender`/`windowSize`/`removeClippedSubviews`), `filteredFoods` + `makeStyles` per `useMemo`. Behebt die ~1s-Verzögerung beim „+". *(FoodTrackerScreen.tsx)*
 - [x] **Tab-Remount entschärft** ✅ – Bereiche bleiben gemountet (Sichtbarkeits-Umschaltung, faul nachgeladen) → Wechsel ist sofort. Per `focusTick` (lib/useFocusTick) springt der Reiter beim Antippen auf seine Startansicht zurück und lädt die Daten **leise** neu (kein Spinner). *(MainTabs.tsx + alle Screens)*
-- [ ] **HomeScreen-Queries reduzieren** – ~12 sequentielle Queries inkl. 2 Voll-Scans + 3 counts. → `Promise.all` parallel, Aggregation server-seitig (RPC/View) oder Zeitfenster `.gte()`. *(HomeScreen.tsx)*
+- [x] **HomeScreen-Queries parallelisiert** ✅ – die unabhängigen Abfragen laufen jetzt gebündelt per `Promise.all` (statt nacheinander) → deutlich schnellerer Aufbau. *(HomeScreen.tsx)*
 
 ## 🟡 Qualität & Wartbarkeit (mittelfristig)
 
@@ -62,7 +62,7 @@ Der **App-Code ist erstaunlich solide**: `tsc` ist fehlerfrei, alle 14 Screens s
 - [ ] **Fehlerbehandlung bei Supabase-Writes** – viele `insert/update/delete` ignorieren `error` (stille Fehlschläge, optimistischer State läuft mit DB auseinander). *(weight.ts, HomeScreen, WaterScreen, PlanScreen, TrainingScreen, FoodTrackerScreen)*
 - [ ] **Duplikation zentralisieren** – Datums-Helfer (8 Dateien!), `KEY_TO_SLUGS`, `ALLOWED_DIFF/EQUIP`, `DIFF/EQUIP_LABELS`, `unwrap/ddmm/grp`, Wasser-Logik → `lib/date.ts`, `lib/muscles.ts`, `lib/training.ts`, `lib/water.ts`. *(diverse)*
 - [ ] **Nicht-atomare Delete→Insert** (Plan/Rezept/Ziel) → RPC-Transaktion oder „erst neu anlegen, dann altes deaktivieren". *(NutritionScreen, PlanScreen, RecipesScreen)*
-- [ ] **Loader memoisieren** (`useCallback`) statt `useEffect(()=>{init()},[userId])`; `makeStyles` per `useMemo`; ThemeContext-`value` per `useMemo`. *(mehrere)*
+- [x] **Memoisierung** ✅ – ThemeContext-`value` per `useMemo` (verhindert App-weite Re-Renders); `makeStyles` per `useMemo` in den eingabe-intensiven Screens (FoodTracker, ExerciseDetail, Progress). *(Loader-`useCallback` in den übrigen Screens optional – greift kaum, da Bereiche jetzt gemountet bleiben.)*
 - [ ] **`recipeFor`/`swapMeal` über stabilen Key statt Anzeigename**; Rezept-0g-Items validieren; Barcode-Konflikt zusätzlich per Barcode auflösen; `parseWeight` `Number.isNaN`. *(meals.ts, RecipesScreen, barcodeFood.ts, weight.ts)*
 - [ ] **Tote Styles entfernen** (FoodTrackerScreen, ProgressScreen, ExerciseDetail). *(diverse)*
 
@@ -80,8 +80,8 @@ Der **App-Code ist erstaunlich solide**: `tsc` ist fehlerfrei, alle 14 Screens s
 ### Performance (weitere)
 - [ ] **foods-Liste app-weit cachen** (3× unabhängig geladen). *(FoodTrackerScreen, RecipesScreen, EssenScreen)*
 - [ ] **Progress/ExerciseProgress server-aggregieren** (laden alle `set_logs`). *(ProgressScreen, ExerciseProgress)*
-- [ ] **GIF-Caching** via `expo-image` (CachePolicy + `cacheKey=exerciseId`). *(ExerciseGif.tsx)*
-- [ ] **PlanScreen**: `muscles` einmal cachen; `addExercise` optimistisch statt voller `loadPlan`. *(PlanScreen.tsx)*
+- [x] **GIF-Caching** ✅ – `ExerciseGif` nutzt jetzt `expo-image` mit `cachePolicy="memory-disk"` (GIFs werden zuverlässig gecacht statt erneut von der Rate-limitierten API geladen). *(ExerciseGif.tsx)*
+- [x] **PlanScreen `addExercise` optimistisch** ✅ – fügt die neue Übung lokal ein (lädt nur die eine Übung nach) statt den ganzen Plan neu zu laden. *(muscles-Cache: minor, offen)*
 
 ## 🔵 Kleinigkeiten / Doku
 - [x] **Erinnerungs-Handler** ✅ – auf `shouldShowBanner`/`shouldShowList` umgestellt, `as any` entfernt. *(lib/reminders.ts)*
