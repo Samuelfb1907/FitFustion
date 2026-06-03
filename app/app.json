@@ -11,9 +11,11 @@
       ["expo-camera", { "cameraPermission": "FitFusion nutzt die Kamera, um Barcodes von Lebensmitteln zu scannen." }]
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.samuelfb1907.fitfusion"
     },
     "android": {
+      "package": "com.samuelfb1907.fitfusion",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
