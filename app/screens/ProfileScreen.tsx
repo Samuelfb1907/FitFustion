@@ -231,18 +231,18 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
 
 function makeStyles(c: Colors) {
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: c.bg, paddingTop: 60, paddingHorizontal: 20 },
+    container: { flex: 1, backgroundColor: c.bg, paddingTop: 56, paddingHorizontal: 16 },
     back: { color: c.primary, fontSize: 15, fontWeight: '600', marginBottom: 10 },
-    title: { fontSize: 26, fontWeight: 'bold', color: c.heading },
+    title: { fontSize: 26, fontWeight: '800', color: c.heading },
     subtitle: { fontSize: 15, color: c.textMuted, marginTop: 2, marginBottom: 8 },
     label: { fontSize: 14, color: c.text, fontWeight: '600', marginTop: 16, marginBottom: 6 },
-    input: { borderWidth: 1, borderColor: c.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, backgroundColor: c.inputBg, color: c.text },
+    input: { borderWidth: 1, borderColor: c.border, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 16, backgroundColor: c.inputBg, color: c.text },
     choiceWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     choice: { borderWidth: 1, borderColor: c.border, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: c.card },
     choiceActive: { backgroundColor: c.primary, borderColor: c.primary },
     choiceText: { color: c.text, fontSize: 15 },
     choiceTextActive: { color: c.onPrimary, fontWeight: '600' },
-    saveBtn: { backgroundColor: c.primary, borderRadius: 10, paddingVertical: 15, alignItems: 'center', marginTop: 28 },
+    saveBtn: { backgroundColor: c.primary, borderRadius: 16, paddingVertical: 16, alignItems: 'center', marginTop: 28 },
     saveText: { color: c.onPrimary, fontSize: 16, fontWeight: '700' },
     msg: { fontSize: 14, textAlign: 'center', marginTop: 14 },
   });
