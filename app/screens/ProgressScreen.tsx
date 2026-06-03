@@ -445,11 +445,11 @@ function DeltaChip({ label, value, color, styles }: { label: string; value: numb
 
 function makeStyles(c: Colors) {
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: c.bg, paddingTop: 60, paddingHorizontal: 20 },
-    title: { fontSize: 26, fontWeight: 'bold', color: c.heading },
+    container: { flex: 1, backgroundColor: c.bg, paddingTop: 56, paddingHorizontal: 16 },
+    title: { fontSize: 26, fontWeight: '800', color: c.heading },
     subtitle: { fontSize: 15, color: c.textMuted, marginTop: 2, marginBottom: 16 },
 
-    card: { ...shadow, backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    card: { ...shadow, backgroundColor: c.card, borderRadius: 22, padding: 18, marginBottom: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     cardTitle: { fontSize: 16, fontWeight: '700', color: c.heading, marginBottom: 12 },
 
     weightRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
@@ -459,7 +459,7 @@ function makeStyles(c: Colors) {
     weightUnit: { fontSize: 12, color: c.textMuted, marginTop: 2 },
 
     deltaGrid: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 14, gap: 8 },
-    deltaCell: { flex: 1, backgroundColor: c.inputBg, borderRadius: 12, paddingVertical: 10, alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    deltaCell: { flex: 1, backgroundColor: c.inputBg, borderRadius: 16, paddingVertical: 12, alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     deltaCellVal: { fontSize: 17, fontWeight: '800' },
     deltaCellLabel: { fontSize: 11, color: c.textMuted, marginTop: 2 },
 
@@ -482,13 +482,13 @@ function makeStyles(c: Colors) {
     axisLabel: { fontSize: 11, color: c.textMuted },
 
     inputRow: { flexDirection: 'row', gap: 10, marginTop: 14, alignItems: 'center' },
-    input: { flex: 1, borderWidth: 1, borderColor: c.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, backgroundColor: c.inputBg, color: c.text },
-    saveBtn: { backgroundColor: c.primary, borderRadius: 10, paddingHorizontal: 18, paddingVertical: 13, alignItems: 'center', justifyContent: 'center' },
+    input: { flex: 1, borderWidth: 1, borderColor: c.border, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 16, backgroundColor: c.inputBg, color: c.text },
+    saveBtn: { backgroundColor: c.primary, borderRadius: 14, paddingHorizontal: 18, paddingVertical: 13, alignItems: 'center', justifyContent: 'center' },
     saveText: { color: c.onPrimary, fontSize: 15, fontWeight: '700' },
     msg: { fontSize: 13, textAlign: 'center', marginTop: 10 },
 
     statGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 0 },
-    statCard: { ...shadow, width: '48%', backgroundColor: c.card, borderRadius: 14, paddingVertical: 16, paddingHorizontal: 12, alignItems: 'center', marginBottom: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    statCard: { ...shadow, width: '48%', backgroundColor: c.card, borderRadius: 20, paddingVertical: 18, paddingHorizontal: 12, alignItems: 'center', marginBottom: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     statIcon: { fontSize: 22 },
     statValue: { fontSize: 22, fontWeight: 'bold', color: c.heading, marginTop: 6 },
     statLabel: { fontSize: 12, color: c.textMuted, marginTop: 2, textAlign: 'center' },
