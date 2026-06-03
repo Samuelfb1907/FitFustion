@@ -167,7 +167,7 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
               <Text style={styles.ctaText}>Übungen für {pickedMuscle.name_de} anzeigen  ›</Text>
             </TouchableOpacity>
           )}
-          <Text style={styles.orHint}>oder wähle aus der Liste</Text>
+          <Text style={styles.orHint}>Muskel auswählen 👇</Text>
           <View style={styles.chips}>
             {muscles.map((m) => {
               const active = pickedMuscle?.id === m.id;
@@ -190,11 +190,11 @@ function makeStyles(c: Colors) {
     title: { fontSize: 26, fontWeight: '800', color: c.heading },
     subtitle: { fontSize: 15, color: c.textMuted, marginTop: 2, marginBottom: 16 },
     back: { color: c.primary, fontSize: 15, fontWeight: '600', marginBottom: 10 },
-    orHint: { fontSize: 13, color: c.textMuted, marginTop: 18, marginBottom: 10 },
-    chips: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8 },
-    chip: { backgroundColor: c.card, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 9, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    orHint: { fontSize: 16, fontWeight: '800', color: c.heading, marginTop: 22, marginBottom: 12 },
+    chips: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 10 },
+    chip: { ...shadow, backgroundColor: c.card, borderRadius: 22, paddingHorizontal: 18, paddingVertical: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     chipActive: { backgroundColor: c.primary, borderColor: c.primary },
-    chipText: { fontSize: 14, fontWeight: '600', color: c.heading },
+    chipText: { fontSize: 15, fontWeight: '700', color: c.heading },
     chipTextActive: { color: c.onPrimary },
     cta: { backgroundColor: c.primary, borderRadius: 16, paddingVertical: 14, paddingHorizontal: 20, marginTop: 16, width: '100%', maxWidth: 320, alignItems: 'center' },
     ctaText: { color: c.onPrimary, fontSize: 15, fontWeight: '700' },
