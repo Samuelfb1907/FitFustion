@@ -14,6 +14,25 @@
 ---
 
 ## 0. Aktueller Stand & Wiedereinstieg
+
+### 🟣 LETZTER STAND (Juni 2026) – Design-Refresh, Bestenliste, Motivation, Android-Beta
+- **Komplettes modernes Design:** neues **Indigo/Violett-Farbsystem** (`contexts/ThemeContext.tsx`, hell+dunkel) + app-weiter **Bento-Grid-Stil** (stark abgerundete Kacheln, weiche Schatten). Umgesetzt auf **allen** Screens: Home (echtes Bento-Dashboard mit Mini-KPI-Kacheln), Wasser, Tracker, Fortschritt, Training, Plan, Einstellungen, Onboarding, Profil. **Login** neu mit Punkteraster-Hintergrund (`react-native-svg`). Geteilter Karten-Schatten in **`lib/ui.ts`** (`CARD_SHADOW`). Tab-Leiste mit Indikator-Strich.
+- **Bestenliste / Leaderboard (opt-in, datenschutzfreundlich):** `lib/leaderboard.ts` + `screens/LeaderboardScreen.tsx`, eingebunden im **Fortschritt-Reiter** (Segmented „Meine Werte | 🏆 Bestenliste"). Rangliste nach **aktiven Ziel-Tagen** (= Tag mit Essens-Eintrag ODER Training), umschaltbar **Woche/Monat**. Teilnahme = eigene Zeile in `leaderboard_entries`; Aussteigen löscht sie. **➡️ Migration 017 (`db/017_leaderboard.sql`) MUSS in Supabase ausgeführt sein**, sonst Fehler in der Liste.
+- **Tägliche Motivation:** `lib/quotes.ts` (110+ Sprüche) + Erweiterung in `lib/reminders.ts` (rotierende Tages-Benachrichtigung, ~45 Tage im Voraus geplant, Schalter „💬 Tägliche Motivation" + Uhrzeit in Einstellungen). **Pushes erscheinen nur im echten Build, nicht in Expo Go.**
+- **Closed Beta / Android-Build (EAS):** `app/eas.json` (Profil **preview = APK**), `app/app.json` mit `android.package`/`ios.bundleIdentifier` = **`com.samuelfb1907.fitfusion`**, `extra.eas.projectId` = **`75146814-4f6b-45f6-8928-dbb2004f15c8`**, `owner` = **`samuelfb1907`**. Anleitung in **`ANDROID_BUILD.md`**. Erster APK-Build lief erfolgreich. EAS-**Env-Vars** (EXPO_PUBLIC_SUPABASE_URL/_ANON_KEY) sind im **Preview-Environment** auf expo.dev hinterlegt.
+- **Offener Bug + Fix-Versuch:** In der **APK** ließen sich die **Muskeln in der Körpergrafik nicht antippen** (in Expo Go schon → Release-/SVG-Touch-Thema). Fix: (1) **Muskel-Buttons** unter der Grafik sind jetzt die zuverlässige Haupt-Auswahl; (2) **`newArchEnabled: false`** in `app.json` (Versuch, den Body-Tap im Release zu reparieren). **➡️ OFFEN: neue APK bauen & testen, ob der Body-Tap jetzt geht.** Wenn ja → New Arch aus lassen. Wenn nein → `newArchEnabled` wieder entfernen (Buttons genügen).
+
+### ➡️ Sofort offene Schritte (für die nächste Sitzung)
+1. **APK neu bauen & Body-Tap testen:** im Terminal `$env:Path = 'C:\Users\Samuel\tools\node;' + $env:Path` → `cd C:\Users\Samuel\fitness-app\app` → `npx.cmd eas-cli build -p android --profile preview`. *(`npx.cmd` wegen PowerShell-ExecutionPolicy; ExecutionPolicy steht auf RemoteSigned.)*
+2. **Migration 017** in Supabase SQL Editor ausführen (Bestenliste) – falls noch nicht.
+3. Evtl. läuft noch ein **Expo-Dev-Server im Hintergrund** (kann gestoppt werden).
+4. Längerfristig (nur Nutzer): Rechtstexte-Platzhalter (`lib/legal.ts`), ExerciseDB-Key absichern, iOS/TestFlight (Apple Developer Account).
+
+### Build/Beta-Spickzettel
+- **Migrationen jetzt 002–017** (017 = Bestenliste).
+- EAS: `npx.cmd eas-cli build -p android --profile preview` → Link/QR zur APK (Free-Tier-Queue kann lange dauern → „Notify me", Randzeiten schneller). Konto `samuelfb1907`.
+- APK ist eigenständig: **PC muss NICHT laufen**; Backend = Supabase (Cloud). Benachrichtigungen funktionieren im echten Build.
+
 - **Zuletzt gebaut (neueste zuerst):**
   - **Audit-Abbau in Batches** (`AUDIT.md`): foods-Leseregel + Indizes (**Migration 015**), Zeitzonen-Fix
     (`lib/date.ts` `localDateStr`), Bestätigungs-Dialoge, Barrierefreiheit (accessibilityLabel), Performance
