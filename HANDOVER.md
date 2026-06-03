@@ -24,7 +24,7 @@
     `supabase/functions/delete-account` (echtes Auth-Konto-Löschen) – siehe `SUPABASE_FUNCTIONS.md`.
   - **Haftungsausschluss** (`lib/legal.ts`, 15 Abschnitte) + Pflicht-Zustimmung bei der Registrierung; `RECHTLICHES.md`.
   - **Ernährungsplan & Rezepte auf Wunsch ENTFERNT** (Essen = Tracker + Wasser); `NutritionScreen`/`RecipesScreen`/`lib/allergens.ts` gelöscht.
-- **⚠️ OFFENE DB-SCHRITTE (idempotent, im SQL Editor, Reihenfolge s. Abschnitt 6):** Migrationen **008–016**
+- **⚠️ OFFENE DB-SCHRITTE (idempotent, im SQL Editor, Reihenfolge s. Abschnitt 6):** Migrationen **008–017**
   müssen ausgeführt sein – sonst fehlen Übungen / Wasser / Barcode-Spalten / Mahlzeiten-Typ / Wochenplan /
   DSGVO-Lösch-Policy / Indizes. (DB-Tabellen `nutrition_plans`,`meals`,`recipes`,`recipe_items` bleiben ungenutzt bestehen.)
 - **⚠️ API-Keys in `app/.env`** (gitignored): `EXPO_PUBLIC_SUPABASE_URL/_ANON_KEY`, `EXPO_PUBLIC_EXERCISEDB_KEY`
@@ -71,7 +71,7 @@
 (Übungs-Seeds, optional) → `009_water` (`water_logs`) → `010_recipes` (recipes/recipe_items – ungenutzt)
 → `011_barcode` (`foods.barcode`+`user_id`) → `012_meal_types` (`food_logs.meal_type`)
 → `013_plan_schedule` (Wochenplan) → `014_gdpr` (`profiles_delete_own`) → `015_privacy_indexes`
-(foods-Leseregel `foods_read_global_or_own` + Indizes) → `016_integrity` (FK-Löschverhalten explizit + `goals`/`progress`/`exercises`-Integritäts-Indizes). Alle idempotent. RLS überall (`auth.uid()=user_id`).
+(foods-Leseregel `foods_read_global_or_own` + Indizes) → `016_integrity` (FK-Löschverhalten explizit + `goals`/`progress`/`exercises`-Integritäts-Indizes) → `017_leaderboard` (Bestenliste `leaderboard_entries`, opt-in, RLS read-all/write-own). Alle idempotent. RLS überall (`auth.uid()=user_id`).
 - Muskel-Keys: chest, back, shoulders, biceps, triceps, abs, legs, calves, glutes.
 - `water_logs`: id, user_id, log_date, amount_ml, created_at (RLS own).
 

@@ -9,6 +9,8 @@ import { useColors, Colors } from '../contexts/ThemeContext';
 import { LineChart, BarChart } from '../components/Charts';
 import ExerciseProgress from '../components/ExerciseProgress';
 import ErrorRetry from '../components/ErrorRetry';
+import Segmented from '../components/Segmented';
+import LeaderboardScreen from './LeaderboardScreen';
 import { useFocusTick } from '../lib/useFocusTick';
 import { localDateStr, ddmm } from '../lib/date';
 import { errorMessage } from '../lib/errors';
@@ -61,6 +63,7 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
   const [showHist, setShowHist] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [seg, setSeg] = useState<'me' | 'board'>('me');
 
   const load = useCallback(async (silent = false) => {
     const userId = session?.user?.id;
@@ -184,7 +187,7 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
   }, [load]);
 
   // Reiter erneut angetippt -> Detailansicht schliessen + leise aktualisieren (ohne Spinner)
-  useFocusTick(focusTick, () => { setSelExercise(null); load(true); });
+  useFocusTick(focusTick, () => { setSelExercise(null); setSeg('me'); load(true); });
 
   const onRefresh = useCallback(() => { setRefreshing(true); load(true); }, [load]);
 
@@ -253,12 +256,24 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
   }
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={{ paddingBottom: 48 }}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
-    >
+    <View style={styles.container}>
       <Text style={styles.title}>Fortschritt</Text>
+      <View style={{ height: 14 }} />
+      <Segmented
+        options={[{ key: 'me', label: 'Meine Werte' }, { key: 'board', label: '🏆 Bestenliste' }]}
+        value={seg}
+        onChange={(k) => setSeg(k as 'me' | 'board')}
+        c={c}
+      />
+      {seg === 'board' ? (
+        <View style={{ flex: 1, marginTop: 14 }}><LeaderboardScreen embedded /></View>
+      ) : (
+      <ScrollView
+        style={{ flex: 1, marginTop: 8 }}
+        contentContainerStyle={{ paddingBottom: 48 }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
+      >
       <Text style={styles.subtitle}>Deine Entwicklung auf einen Blick 📈</Text>
 
       {loading ? (
@@ -431,6 +446,8 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
         </>
       )}
     </ScrollView>
+      )}
+    </View>
   );
 }
 
