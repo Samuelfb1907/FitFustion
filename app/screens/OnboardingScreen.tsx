@@ -209,15 +209,15 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
 
 function makeStyles(c: Colors) {
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: c.bg, paddingTop: 60, paddingHorizontal: 20 },
+    container: { flex: 1, backgroundColor: c.bg, paddingTop: 56, paddingHorizontal: 16 },
     progress: { flexDirection: 'row', gap: 6, marginBottom: 8 },
     progressBar: { flex: 1, height: 6, borderRadius: 3, backgroundColor: c.border },
     progressBarActive: { backgroundColor: c.primary },
     stepLabel: { color: c.textMuted, fontSize: 13, marginBottom: 16 },
-    title: { fontSize: 24, fontWeight: 'bold', color: c.heading, marginBottom: 12 },
+    title: { fontSize: 24, fontWeight: '800', color: c.heading, marginBottom: 12 },
     hint: { fontSize: 14, color: c.textMuted, marginBottom: 16, lineHeight: 20 },
     label: { fontSize: 14, color: c.text, fontWeight: '600', marginTop: 14, marginBottom: 6 },
-    input: { borderWidth: 1, borderColor: c.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, backgroundColor: c.inputBg, color: c.text },
+    input: { borderWidth: 1, borderColor: c.border, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 16, backgroundColor: c.inputBg, color: c.text },
     choiceWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     choice: { borderWidth: 1, borderColor: c.border, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: c.card },
     choiceActive: { backgroundColor: c.primary, borderColor: c.primary },
@@ -226,7 +226,7 @@ function makeStyles(c: Colors) {
     selected: { marginTop: 14, color: c.primary, fontWeight: '600' },
     error: { color: c.danger, marginTop: 16, fontSize: 14 },
     nav: { flexDirection: 'row', paddingVertical: 16, gap: 12 },
-    navBtn: { flex: 1, borderRadius: 10, paddingVertical: 14, alignItems: 'center' },
+    navBtn: { flex: 1, borderRadius: 16, paddingVertical: 15, alignItems: 'center' },
     navBack: { backgroundColor: c.card, borderWidth: 1, borderColor: c.border },
     navBackText: { color: c.primary, fontWeight: '600', fontSize: 16 },
     navNext: { backgroundColor: c.primary },
