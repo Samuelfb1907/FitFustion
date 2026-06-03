@@ -212,9 +212,23 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
                 </View>
               </View>
             )}
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>💬  Tägliche Motivation</Text>
+              <Switch value={!!rem?.motivation} onValueChange={(v) => { if (rem) updateRem({ ...rem, motivation: v }); }} />
+            </View>
+            {rem.motivation && (
+              <View style={styles.row}>
+                <Text style={styles.rowLabel}>Motivations-Uhrzeit</Text>
+                <View style={styles.stepper}>
+                  <TouchableOpacity style={styles.stepBtn} onPress={() => updateRem({ ...rem, motivationHour: Math.max(5, rem.motivationHour - 1) })}><Text style={styles.stepBtnText}>−</Text></TouchableOpacity>
+                  <Text style={styles.stepVal}>{String(rem.motivationHour).padStart(2, '0')}:00</Text>
+                  <TouchableOpacity style={styles.stepBtn} onPress={() => updateRem({ ...rem, motivationHour: Math.min(22, rem.motivationHour + 1) })}><Text style={styles.stepBtnText}>+</Text></TouchableOpacity>
+                </View>
+              </View>
+            )}
           </>
         )}
-        <Text style={styles.hint}>Wasser: 10/13/16/19 Uhr · Training zur gewählten Zeit. Echte Benachrichtigungen erscheinen erst nach einem Development-Build (in Expo Go nicht).</Text>
+        <Text style={styles.hint}>💬 Über 100 Motivationssprüche, 1× täglich zur gewählten Zeit. Wasser: 10/13/16/19 Uhr · Training zur gewählten Zeit. Echte Benachrichtigungen erscheinen erst nach einem Development-Build (in Expo Go nicht).</Text>
       </View>
 
       <Text style={styles.section}>DATEN</Text>
