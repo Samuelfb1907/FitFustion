@@ -21,3 +21,6 @@ Thumbs.db
 
 # Local tool config
 .claude/settings.local.json
+
+# Office-Sperrdateien (Word/Excel)
+~$*
