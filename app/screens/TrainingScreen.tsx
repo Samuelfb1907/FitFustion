@@ -13,6 +13,7 @@ import { useFocusTick } from '../lib/useFocusTick';
 import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
 import { DIFF_LABELS, EQUIP_LABELS, ALLOWED_DIFF, ALLOWED_EQUIP } from '../lib/training';
+import { CARD_SHADOW as shadow } from '../lib/ui';
 
 type Muscle = { id: string; key: string; name_de: string; body_region: string | null };
 type Exercise = { id: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null };
@@ -185,8 +186,8 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
 
 function makeStyles(c: Colors) {
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: c.bg, paddingTop: 60, paddingHorizontal: 20 },
-    title: { fontSize: 26, fontWeight: 'bold', color: c.heading },
+    container: { flex: 1, backgroundColor: c.bg, paddingTop: 56, paddingHorizontal: 16 },
+    title: { fontSize: 26, fontWeight: '800', color: c.heading },
     subtitle: { fontSize: 15, color: c.textMuted, marginTop: 2, marginBottom: 16 },
     back: { color: c.primary, fontSize: 15, fontWeight: '600', marginBottom: 10 },
     orHint: { fontSize: 13, color: c.textMuted, marginTop: 18, marginBottom: 10 },
@@ -195,13 +196,13 @@ function makeStyles(c: Colors) {
     chipActive: { backgroundColor: c.primary, borderColor: c.primary },
     chipText: { fontSize: 14, fontWeight: '600', color: c.heading },
     chipTextActive: { color: c.onPrimary },
-    cta: { backgroundColor: c.primary, borderRadius: 12, paddingVertical: 13, paddingHorizontal: 20, marginTop: 16, width: '100%', maxWidth: 320, alignItems: 'center' },
+    cta: { backgroundColor: c.primary, borderRadius: 16, paddingVertical: 14, paddingHorizontal: 20, marginTop: 16, width: '100%', maxWidth: 320, alignItems: 'center' },
     ctaText: { color: c.onPrimary, fontSize: 15, fontWeight: '700' },
-    exRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 12, paddingVertical: 16, paddingHorizontal: 16, marginBottom: 10, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    exRow: { ...shadow, flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 18, paddingVertical: 16, paddingHorizontal: 16, marginBottom: 10, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     exName: { fontSize: 17, fontWeight: '600', color: c.text },
     exMeta: { fontSize: 13, color: c.textMuted, marginTop: 2 },
     chev: { fontSize: 24, color: c.textMuted, marginLeft: 8 },
-    note: { backgroundColor: c.card, borderColor: c.border, borderWidth: 1, borderRadius: 10, padding: 14, marginTop: 16 },
+    note: { backgroundColor: c.card, borderColor: c.border, borderWidth: 1, borderRadius: 16, padding: 16, marginTop: 16 },
     noteText: { fontSize: 14, color: c.textMuted, lineHeight: 20 },
   });
 }
