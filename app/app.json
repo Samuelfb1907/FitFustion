@@ -8,7 +8,12 @@
     "userInterfaceStyle": "automatic",
     "plugins": [
       "expo-notifications",
-      ["expo-camera", { "cameraPermission": "FitFusion nutzt die Kamera, um Barcodes von Lebensmitteln zu scannen." }]
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "FitFusion nutzt die Kamera, um Barcodes von Lebensmitteln zu scannen."
+        }
+      ]
     ],
     "ios": {
       "supportsTablet": true,
@@ -22,10 +27,20 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "75146814-4f6b-45f6-8928-dbb2004f15c8"
+      }
+    },
+    "owner": "samuelfb1907"
   }
 }
