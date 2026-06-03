@@ -1,4 +1,4 @@
-// Eigener Wasser-Tracker (Reiter unter "Essen"). Liest/schreibt water_logs.
+// Eigener Wasser-Tracker (Reiter unter "Essen"), Bento-Stil. Liest/schreibt water_logs.
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
@@ -107,48 +107,53 @@ export default function WaterScreen({ embedded, focusTick }: { embedded?: boolea
       {error ? (
         <ErrorRetry message={error} onRetry={() => load()} embedded={embedded} />
       ) : (
-      <>
-      <View style={styles.hero}>
-        <Text style={styles.bigMl}>{total} <Text style={styles.bigUnit}>ml</Text></Text>
-        <Text style={styles.goalLine}>Ziel: {WATER_GOAL} ml{reached ? '  ·  erreicht 🎉' : ''}</Text>
-        <View style={styles.track}>
-          <View style={[styles.fill, { width: `${pct}%` }]} />
-        </View>
-        <View style={styles.metaRow}>
-          <Text style={styles.meta}>{pct}%</Text>
-          <Text style={styles.meta}>{reached ? 'Geschafft!' : `noch ${remaining} ml`}</Text>
-          <Text style={styles.meta}>≈ {glasses} Gläser</Text>
-        </View>
-      </View>
-
-      <View style={styles.btnGrid}>
-        <TouchableOpacity style={styles.addBtn} onPress={() => add(250)} activeOpacity={0.85}>
-          <Text style={styles.addEmoji}>🥛</Text><Text style={styles.addText}>+250 ml</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.addBtn} onPress={() => add(500)} activeOpacity={0.85}>
-          <Text style={styles.addEmoji}>🍶</Text><Text style={styles.addText}>+500 ml</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.addBtn} onPress={() => add(750)} activeOpacity={0.85}>
-          <Text style={styles.addEmoji}>🚰</Text><Text style={styles.addText}>+750 ml</Text>
-        </TouchableOpacity>
-      </View>
-      <TouchableOpacity style={styles.undoBtn} onPress={undoLast} activeOpacity={0.85} disabled={!rows.length}>
-        <Text style={[styles.undoText, !rows.length && { opacity: 0.4 }]}>↩  Letzten Eintrag rückgängig</Text>
-      </TouchableOpacity>
-
-      <Text style={styles.section}>HEUTE GETRUNKEN</Text>
-      {rows.length === 0 ? (
-        <Text style={styles.empty}>Noch nichts getrunken. Trink ein Glas! 💧</Text>
-      ) : (
-        [...rows].reverse().map((r) => (
-          <View key={r.id} style={styles.row}>
-            <Text style={styles.rowTime}>{hhmm(r.created_at)}</Text>
-            <Text style={styles.rowMl}>+{r.amount_ml} ml</Text>
-            <TouchableOpacity onPress={() => removeOne(r.id)} style={styles.del} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`Wasser-Eintrag ${r.amount_ml} ml entfernen`}><Text style={styles.delText}>✕</Text></TouchableOpacity>
+        <View style={styles.grid}>
+          {/* HERO-KACHEL */}
+          <View style={styles.heroTile}>
+            <Text style={styles.bigMl}>{total}<Text style={styles.bigUnit}> ml</Text></Text>
+            <Text style={styles.goalLine}>Ziel: {WATER_GOAL} ml{reached ? '  ·  erreicht 🎉' : ''}</Text>
+            <View style={styles.track}>
+              <View style={[styles.fill, { width: `${pct}%` }]} />
+            </View>
+            <View style={styles.metaRow}>
+              <Text style={styles.meta}>{pct}%</Text>
+              <Text style={styles.meta}>{reached ? 'Geschafft!' : `noch ${remaining} ml`}</Text>
+              <Text style={styles.meta}>≈ {glasses} Gläser</Text>
+            </View>
           </View>
-        ))
-      )}
-      </>
+
+          {/* ADD-KACHELN */}
+          <View style={styles.row}>
+            <TouchableOpacity style={styles.addTile} onPress={() => add(250)} activeOpacity={0.85}>
+              <Text style={styles.addEmoji}>🥛</Text><Text style={styles.addText}>+250 ml</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.addTile} onPress={() => add(500)} activeOpacity={0.85}>
+              <Text style={styles.addEmoji}>🍶</Text><Text style={styles.addText}>+500 ml</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.addTile} onPress={() => add(750)} activeOpacity={0.85}>
+              <Text style={styles.addEmoji}>🚰</Text><Text style={styles.addText}>+750 ml</Text>
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity style={styles.undoBtn} onPress={undoLast} activeOpacity={0.85} disabled={!rows.length}>
+            <Text style={[styles.undoText, !rows.length && { opacity: 0.4 }]}>↩  Letzten Eintrag rückgängig</Text>
+          </TouchableOpacity>
+
+          {/* HEUTE GETRUNKEN */}
+          <View style={styles.tile}>
+            <Text style={styles.tileLabel}>HEUTE GETRUNKEN</Text>
+            {rows.length === 0 ? (
+              <Text style={styles.empty}>Noch nichts getrunken. Trink ein Glas! 💧</Text>
+            ) : (
+              [...rows].reverse().map((r, idx) => (
+                <View key={r.id} style={[styles.entry, idx > 0 && styles.entryDivider]}>
+                  <Text style={styles.rowTime}>{hhmm(r.created_at)}</Text>
+                  <Text style={styles.rowMl}>+{r.amount_ml} ml</Text>
+                  <TouchableOpacity onPress={() => removeOne(r.id)} style={styles.del} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`Wasser-Eintrag ${r.amount_ml} ml entfernen`}><Text style={styles.delText}>✕</Text></TouchableOpacity>
+                </View>
+              ))
+            )}
+          </View>
+        </View>
       )}
     </ScrollView>
   );
@@ -156,29 +161,33 @@ export default function WaterScreen({ embedded, focusTick }: { embedded?: boolea
 
 function makeStyles(c: Colors) {
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: c.bg, paddingTop: 60, paddingHorizontal: 20 },
-    embedded: { paddingTop: 8, paddingHorizontal: 0, backgroundColor: 'transparent' },
-    title: { fontSize: 26, fontWeight: 'bold', color: c.heading, marginBottom: 12 },
+    container: { flex: 1, backgroundColor: c.bg, paddingTop: 56, paddingHorizontal: 16 },
+    embedded: { paddingTop: 4, paddingHorizontal: 0, backgroundColor: 'transparent' },
+    title: { fontSize: 26, fontWeight: '800', color: c.heading, marginBottom: 14 },
 
-    hero: { ...shadow, backgroundColor: c.card, borderRadius: 18, padding: 22, alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
-    bigMl: { fontSize: 46, fontWeight: '800', color: c.primary },
+    grid: { gap: 12 },
+    row: { flexDirection: 'row', gap: 10 },
+
+    heroTile: { ...shadow, backgroundColor: c.card, borderRadius: 24, padding: 24, alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    bigMl: { fontSize: 48, fontWeight: '800', color: c.primary },
     bigUnit: { fontSize: 22, fontWeight: '700', color: c.textMuted },
     goalLine: { fontSize: 14, color: c.textMuted, marginTop: 2, marginBottom: 16 },
     track: { width: '100%', height: 14, backgroundColor: c.track, borderRadius: 7, overflow: 'hidden' },
     fill: { height: 14, backgroundColor: c.primary, borderRadius: 7 },
-    metaRow: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 10 },
+    metaRow: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 12 },
     meta: { fontSize: 13, color: c.textMuted, fontWeight: '600' },
 
-    btnGrid: { flexDirection: 'row', gap: 10, marginTop: 18 },
-    addBtn: { flex: 1, backgroundColor: c.card, borderWidth: 1, borderColor: c.primary, borderRadius: 14, paddingVertical: 14, alignItems: 'center' },
+    addTile: { ...shadow, flex: 1, backgroundColor: c.card, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border, borderRadius: 20, paddingVertical: 16, alignItems: 'center' },
     addEmoji: { fontSize: 22 },
     addText: { color: c.primary, fontWeight: '700', fontSize: 14, marginTop: 4 },
-    undoBtn: { marginTop: 12, paddingVertical: 12, alignItems: 'center', borderRadius: 12, borderWidth: 1, borderColor: c.border },
+    undoBtn: { paddingVertical: 13, alignItems: 'center', borderRadius: 14, borderWidth: 1, borderColor: c.border },
     undoText: { color: c.textMuted, fontSize: 14, fontWeight: '700' },
 
-    section: { fontSize: 12, fontWeight: '700', letterSpacing: 0.8, color: c.textMuted, marginTop: 22, marginBottom: 8, marginLeft: 4 },
+    tile: { ...shadow, backgroundColor: c.card, borderRadius: 24, padding: 18, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    tileLabel: { fontSize: 12, fontWeight: '800', letterSpacing: 0.8, color: c.textMuted, marginBottom: 6 },
     empty: { fontSize: 14, color: c.textMuted, fontStyle: 'italic', marginTop: 6, textAlign: 'center' },
-    row: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 8, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    entry: { flexDirection: 'row', alignItems: 'center', paddingVertical: 11 },
+    entryDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.border },
     rowTime: { fontSize: 14, color: c.textMuted, width: 56 },
     rowMl: { flex: 1, fontSize: 16, color: c.heading, fontWeight: '700' },
     del: { padding: 6 },
