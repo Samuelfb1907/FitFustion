@@ -63,9 +63,11 @@ export default function BodyMuscleMap({
     const sel = selSlugs.includes(slug);
     return {
       slug,
+      // Dicker, gleichfarbiger Rand (stroke = fill) vergroessert die ANTIPPBARE Flaeche
+      // und schliesst kleine Luecken zwischen den Muskeln, ohne sichtbare dicke Raender.
       styles: sel
-        ? { fill: c.primary, stroke: c.accent, strokeWidth: 4 }
-        : { fill: tint, stroke: c.border, strokeWidth: 2 },
+        ? { fill: c.primary, stroke: c.accent, strokeWidth: 5 }
+        : { fill: tint, stroke: tint, strokeWidth: 9 },
     };
   });
 
