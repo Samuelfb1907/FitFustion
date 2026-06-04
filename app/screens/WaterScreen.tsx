@@ -125,10 +125,10 @@ export default function WaterScreen({ embedded, focusTick }: { embedded?: boolea
           {/* ADD-KACHELN */}
           <View style={styles.row}>
             <TouchableOpacity style={styles.addTile} onPress={() => add(250)} activeOpacity={0.85}>
-              <Text style={styles.addEmoji}>🥛</Text><Text style={styles.addText}>+250 ml</Text>
+              <Text style={styles.addEmoji}>💧</Text><Text style={styles.addText}>+250 ml</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.addTile} onPress={() => add(500)} activeOpacity={0.85}>
-              <Text style={styles.addEmoji}>🍶</Text><Text style={styles.addText}>+500 ml</Text>
+              <Text style={styles.addEmoji}>💦</Text><Text style={styles.addText}>+500 ml</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.addTile} onPress={() => add(750)} activeOpacity={0.85}>
               <Text style={styles.addEmoji}>🚰</Text><Text style={styles.addText}>+750 ml</Text>

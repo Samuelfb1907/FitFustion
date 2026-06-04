@@ -309,8 +309,8 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
               <Text style={styles.bigStat}>{waterMl}<Text style={styles.bigStatUnit}> / {WATER_GOAL} ml{waterMl >= WATER_GOAL ? '  ✓' : ''}</Text></Text>
               <View style={styles.bar}><View style={[styles.barFill, { width: `${waterPct}%` }]} /></View>
               <View style={styles.waterBtns}>
-                <TouchableOpacity style={styles.pill} onPress={() => addWater(250)} activeOpacity={0.8}><Text style={styles.pillText}>+250 ml 🥛</Text></TouchableOpacity>
-                <TouchableOpacity style={styles.pill} onPress={() => addWater(500)} activeOpacity={0.8}><Text style={styles.pillText}>+500 ml 🍶</Text></TouchableOpacity>
+                <TouchableOpacity style={styles.pill} onPress={() => addWater(250)} activeOpacity={0.8}><Text style={styles.pillText}>+250 ml 💧</Text></TouchableOpacity>
+                <TouchableOpacity style={styles.pill} onPress={() => addWater(500)} activeOpacity={0.8}><Text style={styles.pillText}>+500 ml 💦</Text></TouchableOpacity>
                 <TouchableOpacity style={styles.pillGhost} onPress={undoWater} activeOpacity={0.8} accessibilityRole="button" accessibilityLabel="Letzten Wasser-Eintrag rückgängig"><Text style={styles.pillGhostText}>↩</Text></TouchableOpacity>
               </View>
             </View>
