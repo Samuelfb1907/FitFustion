@@ -40,7 +40,8 @@ export default function BodyMuscleMap({
   gender?: 'male' | 'female';
 }) {
   const [side, setSide] = useState<'front' | 'back'>('front');
-  const W = Math.min(230, Dimensions.get('window').width - 110);
+  // Groessere Figur -> groessere Tippziele (v.a. schmale Muskeln wie Bizeps).
+  const W = Math.min(300, Dimensions.get('window').width - 48);
   const scale = W / 200; // Body ist intrinsisch 200 x 400 (mal scale)
 
   // Muskeln werden NICHT eingefaerbt (kein sichtbares Klick-Highlight) - sie sehen
