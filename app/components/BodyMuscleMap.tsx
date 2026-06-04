@@ -18,12 +18,14 @@ const SLUG_TO_KEY: Partial<Record<Slug, string>> = {
   abs: 'abs', obliques: 'abs', trapezius: 'back', 'upper-back': 'back', 'lower-back': 'back',
   quadriceps: 'legs', hamstring: 'legs', adductors: 'legs', calves: 'calves', gluteal: 'glutes',
 };
-// unser Key -> alle zugehoerigen Slugs (zum Hervorheben des gewaehlten Muskels)
-const KEY_TO_SLUGS: Record<string, Slug[]> = {
-  chest: ['chest'], biceps: ['biceps'], triceps: ['triceps'], shoulders: ['deltoids'],
-  abs: ['abs', 'obliques'], back: ['trapezius', 'upper-back', 'lower-back'],
-  legs: ['quadriceps', 'hamstring', 'adductors'], calves: ['calves'], glutes: ['gluteal'],
-};
+// slug -> unser Key, aber SEITENABHAENGIG: auf der VORDERSEITE zaehlt der dort nur
+// schmal sichtbare Trizeps zum Bizeps, damit der ganze vordere Oberarm leicht
+// antippbar ist (auf der Rueckseite bleibt der Trizeps ein eigener Muskel).
+function keyForSlug(slug: Slug | undefined, side: 'front' | 'back'): string | undefined {
+  if (!slug) return undefined;
+  if (side === 'front' && slug === 'triceps') return 'biceps';
+  return SLUG_TO_KEY[slug];
+}
 
 // alle anklickbaren Slugs (fuer den dezenten Hinweis "hier kann man tippen")
 const CLICKABLE_SLUGS = Object.keys(SLUG_TO_KEY) as Slug[];
@@ -48,14 +50,16 @@ export default function BodyMuscleMap({
   // aus wie der restliche Koerper, sind aber durch eine sichtbare Kontur klar
   // voneinander getrennt, sodass man die einzelnen Muskeln gut erkennt.
   // Nur der aktuell GEWAEHLTE Muskel wird deutlich farbig hervorgehoben.
-  const selSlugs = selectedKey ? KEY_TO_SLUGS[selectedKey] ?? [] : [];
   const data: ExtendedBodyPart[] = CLICKABLE_SLUGS.map((slug) => {
-    const sel = selSlugs.includes(slug);
+    // hervorgehoben, wenn der (seitenabhaengige) Key dieses Muskels gewaehlt ist
+    const sel = !!selectedKey && keyForSlug(slug, side) === selectedKey;
+    // Trizeps auf der VORDERSEITE optisch ausblenden (gehoert dort zum Bizeps)
+    const mergedFront = side === 'front' && slug === 'triceps';
     return {
       slug,
       styles: sel
         ? { fill: c.primary, stroke: c.accent, strokeWidth: 3 }
-        : { fill: c.card, stroke: c.textMuted, strokeWidth: 2 },
+        : { fill: c.card, stroke: mergedFront ? c.card : c.textMuted, strokeWidth: 2 },
     };
   });
 
@@ -82,7 +86,7 @@ export default function BodyMuscleMap({
           defaultStrokeWidth={2}
           border={c.textMuted}
           onBodyPartPress={(b) => {
-            const k = b.slug ? SLUG_TO_KEY[b.slug] : undefined;
+            const k = keyForSlug(b.slug, side);
             if (k) onSelect(k);
           }}
         />
