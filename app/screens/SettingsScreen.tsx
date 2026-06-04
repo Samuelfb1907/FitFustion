@@ -13,9 +13,9 @@ import { exportUserData, deleteAccount } from '../lib/gdpr';
 import { loadReminderPrefs, saveReminderPrefs, applyReminders, ensurePermission, ReminderPrefs } from '../lib/reminders';
 import { useFocusTick } from '../lib/useFocusTick';
 
-// Unterer Abstand fuer Scroll-Inhalte: auf Android (Edge-to-Edge) groesser, damit der
-// letzte Text nicht hinter der System-/Navigationsleiste verschwindet.
-const BOTTOM_PAD = Platform.OS === 'android' ? 90 : 48;
+// Unterer Abstand fuer Scroll-Inhalte: auf Android (Edge-to-Edge) deutlich groesser,
+// damit der letzte Text auf keinem Geraet hinter der System-/Navigationsleiste landet.
+const BOTTOM_PAD = Platform.OS === 'android' ? 120 : 48;
 
 export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
   const { session, refreshProfile } = useAuth();
