@@ -28,18 +28,6 @@ const KEY_TO_SLUGS: Record<string, Slug[]> = {
 // alle anklickbaren Slugs (fuer den dezenten Hinweis "hier kann man tippen")
 const CLICKABLE_SLUGS = Object.keys(SLUG_TO_KEY) as Slug[];
 
-// zwei Farben mischen (t = 0 -> a, t = 1 -> b)
-function mix(a: string, b: string, t: number): string {
-  const parse = (h: string) => {
-    const x = h.replace('#', '');
-    const f = x.length === 3 ? x.split('').map((ch) => ch + ch).join('') : x;
-    return [parseInt(f.slice(0, 2), 16), parseInt(f.slice(2, 4), 16), parseInt(f.slice(4, 6), 16)];
-  };
-  const [ar, ag, ab] = parse(a), [br, bg, bb] = parse(b);
-  const m = (x: number, y: number) => Math.round(x + (y - x) * t).toString(16).padStart(2, '0');
-  return `#${m(ar, br)}${m(ag, bg)}${m(ab, bb)}`;
-}
-
 export default function BodyMuscleMap({
   onSelect,
   selectedKey,
@@ -55,19 +43,18 @@ export default function BodyMuscleMap({
   const W = Math.min(230, Dimensions.get('window').width - 110);
   const scale = W / 200; // Body ist intrinsisch 200 x 400 (mal scale)
 
-  // Anklickbare Muskeln nur minimal hervorheben (zarter Farbton);
-  // der aktuell gewaehlte Muskel etwas klarer (aber zurueckhaltend).
-  const tint = mix(c.card, c.primary, 0.14);
+  // Muskeln werden NICHT eingefaerbt (kein sichtbares Klick-Highlight) - sie sehen
+  // aus wie der restliche Koerper, sind aber durch eine sichtbare Kontur klar
+  // voneinander getrennt, sodass man die einzelnen Muskeln gut erkennt.
+  // Nur der aktuell GEWAEHLTE Muskel wird deutlich farbig hervorgehoben.
   const selSlugs = selectedKey ? KEY_TO_SLUGS[selectedKey] ?? [] : [];
   const data: ExtendedBodyPart[] = CLICKABLE_SLUGS.map((slug) => {
     const sel = selSlugs.includes(slug);
     return {
       slug,
-      // Dicker, gleichfarbiger Rand (stroke = fill) vergroessert die ANTIPPBARE Flaeche
-      // und schliesst kleine Luecken zwischen den Muskeln, ohne sichtbare dicke Raender.
       styles: sel
-        ? { fill: c.primary, stroke: c.accent, strokeWidth: 5 }
-        : { fill: tint, stroke: tint, strokeWidth: 9 },
+        ? { fill: c.primary, stroke: c.accent, strokeWidth: 3 }
+        : { fill: c.card, stroke: c.textMuted, strokeWidth: 2 },
     };
   });
 
