@@ -1,6 +1,6 @@
 // Einstellungen: Profil-Unterseite, Dark-Mode-Schalter, Abmelden und übliche App-Einstellungen.
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Platform, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { supabase } from '../lib/supabase';
@@ -12,6 +12,10 @@ import { PRIVACY_SECTIONS, IMPRESSUM_SECTIONS } from '../lib/legal';
 import { exportUserData, deleteAccount } from '../lib/gdpr';
 import { loadReminderPrefs, saveReminderPrefs, applyReminders, ensurePermission, ReminderPrefs } from '../lib/reminders';
 import { useFocusTick } from '../lib/useFocusTick';
+
+// Unterer Abstand fuer Scroll-Inhalte: auf Android (Edge-to-Edge) groesser, damit der
+// letzte Text nicht hinter der System-/Navigationsleiste verschwindet.
+const BOTTOM_PAD = Platform.OS === 'android' ? 90 : 48;
 
 export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
   const { session, refreshProfile } = useAuth();
@@ -121,7 +125,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
   // Unterseite: Rechtliches
   if (view === 'legal') {
     return (
-      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: BOTTOM_PAD }}>
         <TouchableOpacity onPress={() => setView('menu')}><Text style={styles.link}>‹ Zurück</Text></TouchableOpacity>
         <Text style={[styles.title, { marginTop: 10 }]}>Rechtliches</Text>
         <View style={[styles.card, { padding: 16 }]}>
@@ -135,7 +139,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
   // Unterseite: Datenschutzerklärung
   if (view === 'privacy') {
     return (
-      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: BOTTOM_PAD }}>
         <TouchableOpacity onPress={() => setView('menu')}><Text style={styles.link}>‹ Zurück</Text></TouchableOpacity>
         <Text style={[styles.title, { marginTop: 10 }]}>Datenschutzerklärung</Text>
         <View style={[styles.card, { padding: 16 }]}>
@@ -149,7 +153,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
   // Unterseite: Impressum
   if (view === 'impressum') {
     return (
-      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: BOTTOM_PAD }}>
         <TouchableOpacity onPress={() => setView('menu')}><Text style={styles.link}>‹ Zurück</Text></TouchableOpacity>
         <Text style={[styles.title, { marginTop: 10 }]}>Impressum</Text>
         <View style={[styles.card, { padding: 16 }]}>
@@ -161,7 +165,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: BOTTOM_PAD }}>
       <Text style={styles.title}>Einstellungen</Text>
 
       <Text style={styles.section}>KONTO</Text>
