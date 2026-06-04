@@ -1,5 +1,5 @@
 // Login-/Registrierungs-Screen – professionell, mit dezentem Punkteraster-Hintergrund (SVG).
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Dimensions, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -52,6 +52,7 @@ export default function AuthScreen() {
   const [accepted, setAccepted] = useState(false);
   const [showLegal, setShowLegal] = useState(false);
   const [focused, setFocused] = useState<'email' | 'pw' | null>(null);
+  const pwRef = useRef<TextInput>(null);
 
   function show(message: string, error: boolean) { setInfo(message); setIsError(error); }
   function switchMode(m: 'login' | 'register') { setMode(m); setInfo(null); }
@@ -101,6 +102,12 @@ export default function AuthScreen() {
             <Text style={styles.heading}>{mode === 'login' ? 'Anmelden' : 'Konto erstellen'}</Text>
             <Text style={styles.sub}>{mode === 'login' ? 'Melde dich an, um weiterzumachen.' : 'In unter einer Minute startklar.'}</Text>
 
+            {info && (
+              <View style={[styles.infoBox, { borderLeftColor: isError ? c.danger : c.success }]}>
+                <Text style={[styles.info, { color: isError ? c.danger : c.success }]}>{info}</Text>
+              </View>
+            )}
+
             <View style={styles.fieldWrap}>
               <Text style={styles.fieldLabel}>E-Mail</Text>
               <TextInput
@@ -113,12 +120,16 @@ export default function AuthScreen() {
                 placeholderTextColor={c.textMuted}
                 autoCapitalize="none" autoCorrect={false} keyboardType="email-address" inputMode="email"
                 underlineColorAndroid="transparent"
+                returnKeyType="next"
+                onSubmitEditing={() => pwRef.current?.focus()}
+                blurOnSubmit={false}
               />
             </View>
 
             <View style={styles.fieldWrap}>
               <Text style={styles.fieldLabel}>Passwort</Text>
               <TextInput
+                ref={pwRef}
                 style={[styles.fieldInput, focused === 'pw' && styles.fieldInputFocused]}
                 value={password}
                 onChangeText={setPassword}
@@ -128,6 +139,8 @@ export default function AuthScreen() {
                 placeholderTextColor={c.textMuted}
                 secureTextEntry autoCapitalize="none"
                 underlineColorAndroid="transparent"
+                returnKeyType={mode === 'login' ? 'go' : 'done'}
+                onSubmitEditing={handleSubmit}
               />
             </View>
 
@@ -151,12 +164,6 @@ export default function AuthScreen() {
             <TouchableOpacity style={[styles.button, submitDisabled && styles.buttonDisabled]} onPress={handleSubmit} disabled={submitDisabled} activeOpacity={0.85}>
               {loading ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.buttonText}>{mode === 'login' ? 'Einloggen' : 'Konto erstellen'}</Text>}
             </TouchableOpacity>
-
-            {info && (
-              <View style={[styles.infoBox, { borderLeftColor: isError ? c.danger : c.success }]}>
-                <Text style={[styles.info, { color: isError ? c.danger : c.success }]}>{info}</Text>
-              </View>
-            )}
 
             <TouchableOpacity style={styles.switchWrap} onPress={() => switchMode(mode === 'login' ? 'register' : 'login')} activeOpacity={0.7}>
               <Text style={styles.switchText}>
