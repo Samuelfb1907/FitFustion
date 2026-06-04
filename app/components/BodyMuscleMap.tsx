@@ -51,15 +51,19 @@ export default function BodyMuscleMap({
   // voneinander getrennt, sodass man die einzelnen Muskeln gut erkennt.
   // Nur der aktuell GEWAEHLTE Muskel wird deutlich farbig hervorgehoben.
   const data: ExtendedBodyPart[] = CLICKABLE_SLUGS.map((slug) => {
-    // hervorgehoben, wenn der (seitenabhaengige) Key dieses Muskels gewaehlt ist
-    const sel = !!selectedKey && keyForSlug(slug, side) === selectedKey;
-    // Trizeps auf der VORDERSEITE optisch ausblenden (gehoert dort zum Bizeps)
+    // Trizeps auf der VORDERSEITE: zaehlt zum Bizeps, wird aber NIE separat
+    // angezeigt (immer koerperfarben = unsichtbar) - bleibt jedoch antippbar.
     const mergedFront = side === 'front' && slug === 'triceps';
+    if (mergedFront) {
+      return { slug, styles: { fill: c.card, stroke: c.card, strokeWidth: 2 } };
+    }
+    // sonst: hervorgehoben, wenn der (seitenabhaengige) Key gewaehlt ist
+    const sel = !!selectedKey && keyForSlug(slug, side) === selectedKey;
     return {
       slug,
       styles: sel
         ? { fill: c.primary, stroke: c.accent, strokeWidth: 3 }
-        : { fill: c.card, stroke: mergedFront ? c.card : c.textMuted, strokeWidth: 2 },
+        : { fill: c.card, stroke: c.textMuted, strokeWidth: 2 },
     };
   });
 
