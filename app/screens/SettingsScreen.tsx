@@ -12,6 +12,7 @@ import { PRIVACY_SECTIONS, IMPRESSUM_SECTIONS } from '../lib/legal';
 import { exportUserData, deleteAccount } from '../lib/gdpr';
 import { loadReminderPrefs, saveReminderPrefs, applyReminders, ensurePermission, ReminderPrefs } from '../lib/reminders';
 import { useFocusTick } from '../lib/useFocusTick';
+import { healthSupported, healthAvailable, hasStepsPermission, requestStepsPermission, openHealthSettings } from '../lib/health';
 
 // Unterer Abstand fuer Scroll-Inhalte: auf Android (Edge-to-Edge) deutlich groesser,
 // damit der letzte Text auf keinem Geraet hinter der System-/Navigationsleiste landet.
@@ -28,12 +29,38 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
   const [msg, setMsg] = useState<string | null>(null);
   const [msgErr, setMsgErr] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [stepsConnected, setStepsConnected] = useState(false);
 
   function showMsg(text: string, err: boolean) { setMsg(text); setMsgErr(err); }
 
   useEffect(() => {
     loadReminderPrefs().then(setRem);
   }, []);
+
+  useEffect(() => {
+    if (healthSupported()) hasStepsPermission().then(setStepsConnected).catch(() => {});
+  }, []);
+
+  async function connectHealth() {
+    setBusy(true); setMsg(null);
+    const available = await healthAvailable();
+    if (!available) {
+      setBusy(false);
+      Alert.alert(
+        'Health Connect nötig',
+        'Bitte installiere/aktiviere die „Health Connect"-App (ab Android 14 vorinstalliert) und verbinde dann erneut.',
+        [
+          { text: 'Abbrechen', style: 'cancel' },
+          { text: 'Öffnen', onPress: () => { openHealthSettings(); } },
+        ],
+      );
+      return;
+    }
+    const ok = await requestStepsPermission();
+    setBusy(false);
+    setStepsConnected(ok);
+    showMsg(ok ? 'Schritte verbunden ✓ – sie zählen jetzt zu deinen Kalorien.' : 'Keine Berechtigung erteilt.', !ok);
+  }
 
   // Reiter erneut angetippt -> zurueck zum Einstellungs-Menue
   useFocusTick(focusTick, () => setView('menu'));
@@ -244,6 +271,18 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
         )}
         <Text style={styles.hint}>💬 Über 100 Motivationssprüche, 1× täglich zur gewählten Zeit. Wasser: 10/13/16/19 Uhr · Training zur gewählten Zeit. Echte Benachrichtigungen erscheinen erst nach einem Development-Build (in Expo Go nicht).</Text>
       </View>
+
+      {healthSupported() && (
+        <>
+          <Text style={styles.section}>GESUNDHEIT</Text>
+          <View style={styles.card}>
+            <TouchableOpacity style={styles.linkRow} onPress={connectHealth} disabled={busy}>
+              <Text style={styles.link}>🚶  {stepsConnected ? 'Schritte verbunden ✓ (Health Connect)' : 'Mit Health Connect verbinden'}</Text>
+            </TouchableOpacity>
+            <Text style={styles.hint}>Liest deine heutigen Schritte und rechnet geschätzte Kalorien aufs Tagesziel. Nur im echten Build, nicht in Expo Go.</Text>
+          </View>
+        </>
+      )}
 
       <Text style={styles.section}>DATEN</Text>
       <View style={styles.card}>

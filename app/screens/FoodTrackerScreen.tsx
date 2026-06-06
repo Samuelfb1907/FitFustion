@@ -14,6 +14,7 @@ import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
 import { todayStr } from '../lib/date';
 import { todayTrainingKcal } from '../lib/trainingBonus';
+import { hasStepsPermission, getTodaySteps, stepsKcal } from '../lib/health';
 import { CARD_SHADOW as shadow } from '../lib/ui';
 
 type Food = { id: string; name: string; category: string | null; kcal: number; protein: number; carbs: number; fat: number; user_id?: string | null };
@@ -34,6 +35,8 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [targetKcal, setTargetKcal] = useState<number | null>(null);
   const [trainingKcal, setTrainingKcal] = useState(0);
+  const [steps, setSteps] = useState(0);
+  const [stepKcal, setStepKcal] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<'diary' | 'pick' | 'amount' | 'newfood'>('diary');
   const [search, setSearch] = useState('');
@@ -114,6 +117,10 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       });
       setTargetKcal(t.targetCalories);
       setTrainingKcal(await todayTrainingKcal(userId, Number(prof.weight_kg)));
+      if (await hasStepsPermission()) {
+        const st = await getTodaySteps();
+        setSteps(st); setStepKcal(stepsKcal(st, Number(prof.weight_kg)));
+      } else { setSteps(0); setStepKcal(0); }
     }
     await loadLogs();
     await loadQuick();
@@ -263,7 +270,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     }
     return { totalKcal: kcal, totalP: Math.round(p), totalC: Math.round(cc), totalF: Math.round(f) };
   }, [logs]);
-  const effTarget = targetKcal != null ? targetKcal + trainingKcal : null;
+  const effTarget = targetKcal != null ? targetKcal + trainingKcal + stepKcal : null;
   const remaining = effTarget != null ? effTarget - totalKcal : null;
 
   if (loading) {
@@ -420,6 +427,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
           </View>
         )}
         {trainingKcal > 0 && <Text style={styles.bonusLine}>🔥 +{trainingKcal} kcal durch Training (geschätzt)</Text>}
+        {steps > 0 && <Text style={styles.bonusLine}>🚶 {steps.toLocaleString('de-DE')} Schritte · +{stepKcal} kcal (geschätzt)</Text>}
         <View style={styles.macrosRow}>
           <View style={styles.macroItem}><View style={[styles.macroDot, { backgroundColor: c.accent }]} /><Text style={styles.macroTxt}>{totalP} g Eiweiß</Text></View>
           <View style={styles.macroItem}><View style={[styles.macroDot, { backgroundColor: '#E69500' }]} /><Text style={styles.macroTxt}>{totalC} g KH</Text></View>
