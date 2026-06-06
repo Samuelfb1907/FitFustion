@@ -204,7 +204,7 @@ function makeStyles(c: Colors) {
     embedded: { paddingTop: 4, paddingHorizontal: 0, backgroundColor: 'transparent' },
     title: { fontSize: 26, fontWeight: '800', color: c.heading, marginBottom: 14 },
 
-    tile: { ...shadow, backgroundColor: c.card, borderRadius: 24, padding: 18, marginTop: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    tile: { ...shadow, backgroundColor: c.card, borderRadius: 16, padding: 18, marginTop: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     tileLabel: { fontSize: 12, fontWeight: '800', letterSpacing: 0.8, color: c.textMuted, marginBottom: 6 },
     empty: { fontSize: 14, color: c.textMuted, fontStyle: 'italic', textAlign: 'center', paddingVertical: 8 },
 
@@ -220,7 +220,7 @@ function makeStyles(c: Colors) {
     primaryText: { color: c.onPrimary, fontSize: 16, fontWeight: '800' },
 
     // Mein Platz
-    myTile: { ...shadow, flexDirection: 'row', alignItems: 'center', backgroundColor: c.hero, borderRadius: 24, padding: 18, marginTop: 12 },
+    myTile: { ...shadow, flexDirection: 'row', alignItems: 'center', backgroundColor: c.hero, borderRadius: 16, padding: 18, marginTop: 12 },
     myRankCircle: { width: 52, height: 52, borderRadius: 26, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center', marginRight: 14 },
     myRankText: { color: '#fff', fontSize: 22, fontWeight: '800' },
     myLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 11, fontWeight: '800', letterSpacing: 1 },

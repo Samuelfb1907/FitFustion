@@ -238,7 +238,7 @@ function makeStyles(c: Colors) {
     label: { fontSize: 14, color: c.text, fontWeight: '600', marginTop: 16, marginBottom: 6 },
     input: { borderWidth: 1, borderColor: c.border, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 16, backgroundColor: c.inputBg, color: c.text },
     choiceWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-    choice: { borderWidth: 1, borderColor: c.border, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: c.card },
+    choice: { borderWidth: 1, borderColor: c.border, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: c.card },
     choiceActive: { backgroundColor: c.primary, borderColor: c.primary },
     choiceText: { color: c.text, fontSize: 15 },
     choiceTextActive: { color: c.onPrimary, fontWeight: '600' },

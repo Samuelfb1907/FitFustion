@@ -485,7 +485,7 @@ function makeStyles(c: Colors) {
     scanBtn: { flex: 1, backgroundColor: c.card, borderWidth: 1, borderColor: c.primary, borderRadius: 16, paddingVertical: 15, alignItems: 'center' },
     scanText: { color: c.primary, fontSize: 16, fontWeight: '700' },
     quickWrap: { marginBottom: 18 },
-    quickChip: { ...shadow, backgroundColor: c.card, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border, borderRadius: 18, paddingHorizontal: 14, paddingVertical: 12, maxWidth: 200 },
+    quickChip: { ...shadow, backgroundColor: c.card, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, maxWidth: 200 },
     quickName: { fontSize: 14, fontWeight: '700', color: c.heading },
     quickMeta: { fontSize: 12, color: c.textMuted, marginTop: 2 },
     quickMsg: { fontSize: 13, color: c.success, marginTop: 10, fontWeight: '600' },

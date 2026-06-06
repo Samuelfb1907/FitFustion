@@ -296,7 +296,7 @@ function makeStyles(c: Colors) {
     container: { flex: 1, backgroundColor: c.bg, paddingTop: 56, paddingHorizontal: 16 },
     title: { fontSize: 26, fontWeight: '800', color: c.heading, marginBottom: 16 },
     section: { fontSize: 12, fontWeight: '700', letterSpacing: 0.8, color: c.textMuted, marginTop: 14, marginBottom: 8, marginLeft: 4 },
-    card: { backgroundColor: c.card, borderRadius: 18, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border, overflow: 'hidden' },
+    card: { backgroundColor: c.card, borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border, overflow: 'hidden' },
     row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.border },
     rowLabel: { fontSize: 16, color: c.text, flex: 1 },
     rowValue: { fontSize: 15, color: c.textMuted, marginLeft: 12, maxWidth: '60%' },
