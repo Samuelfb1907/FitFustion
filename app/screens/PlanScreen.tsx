@@ -11,6 +11,8 @@ import { errorMessage } from '../lib/errors';
 import { startOfTodayISO } from '../lib/date';
 import { DIFF_LABELS, ALLOWED_DIFF, ALLOWED_EQUIP } from '../lib/training';
 import { CARD_SHADOW as shadow } from '../lib/ui';
+import BackButton from '../components/BackButton';
+import SwipeBack from '../components/SwipeBack';
 
 // startOfTodayISO -> lib/date.ts; Schwierigkeits-/Equipment-Konstanten -> lib/training.ts
 const SPLITS: Record<number, { focus: string; muscles: string[] }[]> = {
@@ -321,8 +323,9 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
     const q = pickerSearch.trim().toLowerCase();
     const filtered = candidates.filter((e) => !existing.has(e.id) && (q ? e.name.toLowerCase().includes(q) : true));
     return (
+      <SwipeBack onBack={() => setAddingToDay(null)}>
       <View style={[styles.container, embedded && styles.embedded]}>
-        <TouchableOpacity onPress={() => setAddingToDay(null)}><Text style={styles.back}>‹ Zurück</Text></TouchableOpacity>
+        <BackButton onPress={() => setAddingToDay(null)} c={c} />
         <Text style={styles.title}>Übung hinzufügen</Text>
         <Text style={styles.subtitle}>{day?.focus ?? ''}</Text>
         <TextInput style={styles.input} value={pickerSearch} onChangeText={setPickerSearch} placeholder="Suchen…" placeholderTextColor={c.textMuted} autoCorrect={false} />
@@ -343,6 +346,7 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
           </ScrollView>
         )}
       </View>
+      </SwipeBack>
     );
   }
 

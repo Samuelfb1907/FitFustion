@@ -13,6 +13,8 @@ import { exportUserData, deleteAccount } from '../lib/gdpr';
 import { loadReminderPrefs, saveReminderPrefs, applyReminders, ensurePermission, ReminderPrefs } from '../lib/reminders';
 import { useFocusTick } from '../lib/useFocusTick';
 import { healthSupported, healthAvailable, hasStepsPermission, requestHealthPermission, openHealthSettings } from '../lib/health';
+import BackButton from '../components/BackButton';
+import SwipeBack from '../components/SwipeBack';
 
 // Unterer Abstand fuer Scroll-Inhalte: auf Android (Edge-to-Edge) deutlich groesser,
 // damit der letzte Text auf keinem Geraet hinter der System-/Navigationsleiste landet.
@@ -162,42 +164,48 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
   // Unterseite: Rechtliches
   if (view === 'legal') {
     return (
+      <SwipeBack onBack={() => setView('menu')}>
       <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: BOTTOM_PAD }}>
-        <TouchableOpacity onPress={() => setView('menu')}><Text style={styles.link}>‹ Zurück</Text></TouchableOpacity>
+        <BackButton onPress={() => setView('menu')} c={c} />
         <Text style={[styles.title, { marginTop: 10 }]}>Rechtliches</Text>
         <View style={[styles.card, { padding: 16 }]}>
           <LegalText c={c} />
         </View>
         <Text style={styles.hint}>Stand: Vorlage. Vor einer Veröffentlichung anwaltlich prüfen. Impressum & Datenschutzerklärung findest du separat in den Einstellungen.</Text>
       </ScrollView>
+      </SwipeBack>
     );
   }
 
   // Unterseite: Datenschutzerklärung
   if (view === 'privacy') {
     return (
+      <SwipeBack onBack={() => setView('menu')}>
       <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: BOTTOM_PAD }}>
-        <TouchableOpacity onPress={() => setView('menu')}><Text style={styles.link}>‹ Zurück</Text></TouchableOpacity>
+        <BackButton onPress={() => setView('menu')} c={c} />
         <Text style={[styles.title, { marginTop: 10 }]}>Datenschutzerklärung</Text>
         <View style={[styles.card, { padding: 16 }]}>
           <LegalText c={c} sections={PRIVACY_SECTIONS} />
         </View>
         <Text style={styles.hint}>Vorlage – Platzhalter [...] ausfüllen und vor Veröffentlichung anwaltlich prüfen (zusätzlich Impressum & AVV mit Supabase).</Text>
       </ScrollView>
+      </SwipeBack>
     );
   }
 
   // Unterseite: Impressum
   if (view === 'impressum') {
     return (
+      <SwipeBack onBack={() => setView('menu')}>
       <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: BOTTOM_PAD }}>
-        <TouchableOpacity onPress={() => setView('menu')}><Text style={styles.link}>‹ Zurück</Text></TouchableOpacity>
+        <BackButton onPress={() => setView('menu')} c={c} />
         <Text style={[styles.title, { marginTop: 10 }]}>Impressum</Text>
         <View style={[styles.card, { padding: 16 }]}>
           <LegalText c={c} sections={IMPRESSUM_SECTIONS} />
         </View>
         <Text style={styles.hint}>Vorlage nach § 5 DDG – Platzhalter [...] mit deinen Angaben (ladungsfähige Anschrift) ausfüllen und vor Veröffentlichung prüfen lassen.</Text>
       </ScrollView>
+      </SwipeBack>
     );
   }
 

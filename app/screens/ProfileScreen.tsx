@@ -5,6 +5,8 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { buildBirthDate, splitBirthDate } from '../lib/birthdate';
+import BackButton from '../components/BackButton';
+import SwipeBack from '../components/SwipeBack';
 
 type Opt = { label: string; value: string };
 const GENDERS: Opt[] = [
@@ -169,17 +171,20 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
 
   if (loading) {
     return (
+      <SwipeBack onBack={() => onBack?.()}>
       <View style={styles.container}>
-        {onBack && (<TouchableOpacity onPress={onBack}><Text style={styles.back}>‹ Einstellungen</Text></TouchableOpacity>)}
+        {onBack && <BackButton onPress={onBack} c={c} label="Einstellungen" />}
         <Text style={styles.title}>Profil</Text>
         <ActivityIndicator size="large" color={c.primary} style={{ marginTop: 40 }} />
       </View>
+      </SwipeBack>
     );
   }
 
   return (
+    <SwipeBack onBack={() => onBack?.()}>
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
-      {onBack && (<TouchableOpacity onPress={onBack}><Text style={styles.back}>‹ Einstellungen</Text></TouchableOpacity>)}
+      {onBack && <BackButton onPress={onBack} c={c} label="Einstellungen" />}
       <Text style={styles.title}>Profil</Text>
       <Text style={styles.subtitle}>Deine Daten – jederzeit anpassbar</Text>
 
@@ -227,6 +232,7 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
 
       {msg && <Text style={[styles.msg, { color: isError ? c.danger : c.success }]}>{msg}</Text>}
     </ScrollView>
+    </SwipeBack>
   );
 }
 

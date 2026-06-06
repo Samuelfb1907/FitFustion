@@ -10,6 +10,8 @@ import { localDateStr, ddmm } from '../lib/date';
 import { grp, unwrap } from '../lib/format';
 import ErrorRetry from './ErrorRetry';
 import { errorMessage } from '../lib/errors';
+import BackButton from './BackButton';
+import SwipeBack from './SwipeBack';
 
 type DayStat = { date: string; maxWeight: number; bestReps: number; maxReps: number; volume: number };
 
@@ -79,8 +81,9 @@ export default function ExerciseProgress({
   const recent = [...days].reverse().slice(0, 8);
 
   return (
+    <SwipeBack onBack={onBack}>
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 48 }}>
-      <TouchableOpacity onPress={onBack}><Text style={styles.back}>‹ Zurück</Text></TouchableOpacity>
+      <BackButton onPress={onBack} c={c} />
       <Text style={styles.title}>{exerciseName}</Text>
       <Text style={styles.subtitle}>Dein Fortschritt 📈</Text>
 
@@ -176,6 +179,7 @@ export default function ExerciseProgress({
         </>
       )}
     </ScrollView>
+    </SwipeBack>
   );
 }
 

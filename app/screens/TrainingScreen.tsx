@@ -8,6 +8,8 @@ import { useColors, Colors } from '../contexts/ThemeContext';
 import ExerciseDetail from '../components/ExerciseDetail';
 import Segmented from '../components/Segmented';
 import BodyMuscleMap from '../components/BodyMuscleMap';
+import BackButton from '../components/BackButton';
+import SwipeBack from '../components/SwipeBack';
 import PlanScreen from './PlanScreen';
 import { useFocusTick } from '../lib/useFocusTick';
 import ErrorRetry from '../components/ErrorRetry';
@@ -112,10 +114,9 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
   // Uebungsliste fuer die gewaehlte Koerperregion
   if (selectedMuscle) {
     return (
+      <SwipeBack onBack={() => setSelectedMuscle(null)}>
       <View style={styles.container}>
-        <TouchableOpacity onPress={() => setSelectedMuscle(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Text style={styles.back}>‹ Zurück</Text>
-        </TouchableOpacity>
+        <BackButton onPress={() => setSelectedMuscle(null)} c={c} />
         <Text style={styles.title}>{MUSCLE_ICON[selectedMuscle.key] ?? ''}  {selectedMuscle.name_de}</Text>
         <Text style={styles.subtitle}>Passend zu deinem Level & deiner Umgebung</Text>
         {loadingExercises ? (
@@ -141,6 +142,7 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
           </ScrollView>
         )}
       </View>
+      </SwipeBack>
     );
   }
 

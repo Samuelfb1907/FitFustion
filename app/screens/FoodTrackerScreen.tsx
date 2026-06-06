@@ -15,6 +15,8 @@ import { errorMessage } from '../lib/errors';
 import { todayStr } from '../lib/date';
 import { todayTrainingKcal } from '../lib/trainingBonus';
 import { hasStepsPermission, getTodayActivity } from '../lib/health';
+import BackButton from '../components/BackButton';
+import SwipeBack from '../components/SwipeBack';
 import { CARD_SHADOW as shadow } from '../lib/ui';
 
 type Food = { id: string; name: string; category: string | null; kcal: number; protein: number; carbs: number; fat: number; user_id?: string | null };
@@ -300,9 +302,10 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     const a = Number(amount.replace(',', '.')) || 0;
     const previewKcal = Math.round((selectedFood.kcal * a) / 100);
     return (
+      <SwipeBack onBack={() => setMode(backTarget)}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
-          <TouchableOpacity onPress={() => setMode(backTarget)}><Text style={styles.back}>‹ Zurück</Text></TouchableOpacity>
+          <BackButton onPress={() => setMode(backTarget)} c={c} />
           <Text style={styles.title}>{selectedFood.name}</Text>
           <Text style={styles.subtitle}>{selectedFood.kcal} kcal / 100 g</Text>
           <Text style={styles.inputLabel}>Menge in Gramm</Text>
@@ -322,13 +325,15 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
           {error && <Text style={styles.error}>{error}</Text>}
         </ScrollView>
       </KeyboardAvoidingView>
+      </SwipeBack>
     );
   }
 
   if (mode === 'newfood') {
     return (
+      <SwipeBack onBack={() => setMode('pick')}>
       <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
-        <TouchableOpacity onPress={() => setMode('pick')}><Text style={styles.back}>‹ Zurück</Text></TouchableOpacity>
+        <BackButton onPress={() => setMode('pick')} c={c} />
         <Text style={styles.title}>Neues Lebensmittel</Text>
         <Text style={styles.subtitle}>Nährwerte pro 100 g</Text>
         <Text style={styles.inputLabel}>Name</Text>
@@ -356,13 +361,15 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
         </TouchableOpacity>
         {foodErr && <Text style={styles.error}>{foodErr}</Text>}
       </ScrollView>
+      </SwipeBack>
     );
   }
 
   if (mode === 'pick') {
     return (
+      <SwipeBack onBack={() => { setMode('diary'); setSearch(''); }}>
       <View style={[styles.container, embedded && styles.embedded]}>
-        <TouchableOpacity onPress={() => { setMode('diary'); setSearch(''); }}><Text style={styles.back}>‹ Zurück</Text></TouchableOpacity>
+        <BackButton onPress={() => { setMode('diary'); setSearch(''); }} c={c} />
         <Text style={styles.title}>Zutat auswählen</Text>
         <View style={styles.allergyNote}><Text style={styles.allergyText}>{ALLERGY_HINT}</Text></View>
         <TextInput style={styles.input} value={search} onChangeText={setSearch} placeholder="Suchen (z. B. Banane)…" placeholderTextColor={c.textMuted} autoCorrect={false} />
@@ -400,6 +407,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
           ListEmptyComponent={searching ? null : <Text style={styles.noResult}>Kein Treffer{search.trim() ? ` für „${search.trim()}"` : ''}. Leg es als eigenes Lebensmittel an ☝️</Text>}
         />
       </View>
+      </SwipeBack>
     );
   }
 

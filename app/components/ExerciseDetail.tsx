@@ -5,6 +5,8 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import ExerciseFigure from './ExerciseFigure';
+import BackButton from './BackButton';
+import SwipeBack from './SwipeBack';
 import ExerciseGif, { GIF_AVAILABLE } from './ExerciseGif';
 import RestTimer from './RestTimer';
 import { exerciseGifId } from '../lib/exerciseMedia';
@@ -154,8 +156,9 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
   }
 
   return (
+    <SwipeBack onBack={onBack}>
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 60 }}>
-      <TouchableOpacity onPress={onBack}><Text style={styles.back}>‹ Zurück</Text></TouchableOpacity>
+      <BackButton onPress={onBack} c={c} />
       <Text style={styles.title}>{exercise.name}</Text>
       <View style={styles.badges}>
         <Text style={styles.badge}>{DIFF_LABELS[exercise.difficulty] ?? exercise.difficulty}</Text>
@@ -246,6 +249,7 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
         )}
       </View>
     </ScrollView>
+    </SwipeBack>
   );
 }
 
