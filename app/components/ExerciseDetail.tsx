@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import ExerciseFigure from './ExerciseFigure';
-import ExerciseGif from './ExerciseGif';
+import ExerciseGif, { GIF_AVAILABLE } from './ExerciseGif';
 import RestTimer from './RestTimer';
 import { exerciseGifId } from '../lib/exerciseMedia';
 import { startOfTodayISO } from '../lib/date';
@@ -45,7 +45,7 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
   const steps = parseSteps(exercise.instructions);
   const tips = tipsFor(exercise.equipment, exercise.difficulty);
   const gifId = exerciseGifId(exercise.name);
-  const hasGifKey = !!process.env.EXPO_PUBLIC_EXERCISEDB_KEY;
+  const hasGif = GIF_AVAILABLE;
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -155,7 +155,7 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
         <Text style={styles.badge}>{DIFF_LABELS[exercise.difficulty] ?? exercise.difficulty}</Text>
         <Text style={styles.badge}>{EQUIP_LABELS[exercise.equipment] ?? exercise.equipment}</Text>
       </View>
-      {gifId && hasGifKey && !gifFailed ? (
+      {gifId && hasGif && !gifFailed ? (
         <View style={styles.illusCard}>
           <ExerciseGif exerciseId={gifId} c={c} onFail={() => setGifFailed(true)} />
           <Text style={styles.illusCaption}>So wird's gemacht{muscleName ? ` · Zielmuskel: ${muscleName}` : ''}</Text>

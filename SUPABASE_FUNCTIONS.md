@@ -27,3 +27,38 @@ In der App: **Einstellungen → Datenschutz → Konto & alle Daten löschen**.
 - Ohne Funktion: Daten weg + abgemeldet (Login-Eintrag bleibt leer bestehen).
 
 > ⚠️ Hinweis: Der **Service-Role-Key** ist allmächtig und darf **nur serverseitig** (in der Edge Function) verwendet werden – niemals im App-Code/Client.
+
+---
+
+# Supabase Edge Function: `exercisedb-image` (Übungs-GIF-Proxy, Sicherheit)
+
+Der **bezahlte** RapidAPI/ExerciseDB-Key steckt aktuell als `EXPO_PUBLIC_EXERCISEDB_KEY` im App-Bundle und ist damit aus jeder installierten App auslesbar. Diese Funktion holt die GIFs **serverseitig** (Key bleibt geheim), die App ruft dann nur noch den Proxy auf.
+
+> Solange der Proxy **nicht** aktiv ist, funktioniert die App unverändert weiter (sie nutzt dann den bisherigen Client-Key). Es wird also nichts kaputt gemacht.
+
+### Schritt 1 – Key bei RapidAPI rotieren
+Da der alte Key öffentlich war: bei RapidAPI einen **neuen** ExerciseDB-Key erzeugen, den alten **löschen** und ein **Spend-Limit** setzen.
+
+### Schritt 2 – Funktion deployen
+**Dashboard:** Edge Functions → Create function → Name `exercisedb-image` → Code aus `supabase/functions/exercisedb-image/index.ts` einfügen → Deploy. Dann unter **Settings → Functions → Verify JWT** für diese Funktion **deaktivieren** (es werden nur öffentliche GIFs durchgereicht).
+
+**CLI:**
+```bash
+supabase functions deploy exercisedb-image --no-verify-jwt
+```
+
+### Schritt 3 – Key als Secret hinterlegen (NICHT im Client!)
+```bash
+supabase secrets set EXERCISEDB_KEY=DEIN_NEUER_KEY
+```
+(oder Dashboard → Edge Functions → exercisedb-image → Secrets)
+
+### Schritt 4 – App auf den Proxy umstellen
+In den **EAS-Umgebungsvariablen (Preview)**:
+- **`EXPO_PUBLIC_EXERCISEDB_PROXY` = `1`** hinzufügen
+- **`EXPO_PUBLIC_EXERCISEDB_KEY`** entfernen (steckt jetzt serverseitig)
+
+Beim nächsten Build lädt die App die GIFs über `…/functions/v1/exercisedb-image` – ganz ohne Key im Bundle.
+
+### Test
+Übungsdetail öffnen → das animierte GIF lädt weiterhin. (Schlägt der Abruf fehl, fällt die App automatisch auf die Muskelgrafik zurück – kein Crash.)
