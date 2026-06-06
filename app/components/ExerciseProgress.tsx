@@ -8,6 +8,8 @@ import { Colors } from '../contexts/ThemeContext';
 import { LineChart, BarChart } from './Charts';
 import { localDateStr, ddmm } from '../lib/date';
 import { grp, unwrap } from '../lib/format';
+import ErrorRetry from './ErrorRetry';
+import { errorMessage } from '../lib/errors';
 
 type DayStat = { date: string; maxWeight: number; bestReps: number; maxReps: number; volume: number };
 
@@ -23,6 +25,7 @@ export default function ExerciseProgress({
   const chartW = Math.min(560, Dimensions.get('window').width) - 72;
 
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [days, setDays] = useState<DayStat[]>([]);
   const [record, setRecord] = useState<{ weight: number; reps: number; maxReps: number; oneRm: number }>({ weight: 0, reps: 0, maxReps: 0, oneRm: 0 });
   const [totalSets, setTotalSets] = useState(0);
@@ -31,11 +34,13 @@ export default function ExerciseProgress({
     const userId = session?.user?.id;
     if (!userId) return;
     setLoading(true);
-    const { data } = await supabase
+    try {
+    const { data, error: e } = await supabase
       .from('set_logs')
       .select('reps, weight_kg, created_at, workout_sessions(performed_at)')
       .eq('user_id', userId)
       .eq('exercise_id', exerciseId);
+    if (e) throw e;
     const sets = (data ?? []) as any[];
 
     const map = new Map<string, DayStat>();
@@ -59,7 +64,12 @@ export default function ExerciseProgress({
     setDays(arr);
     setRecord({ weight: recW, reps: recWReps, maxReps: recReps, oneRm: Math.round(recOneRm) });
     setTotalSets(sets.length);
-    setLoading(false);
+    setError(null);
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setLoading(false);
+    }
   }, [session?.user?.id, exerciseId]);
 
   useEffect(() => { load(); }, [load]);
@@ -76,6 +86,8 @@ export default function ExerciseProgress({
 
       {loading ? (
         <ActivityIndicator size="large" color={c.primary} style={{ marginTop: 50 }} />
+      ) : error ? (
+        <ErrorRetry message={error} onRetry={load} />
       ) : totalSets === 0 ? (
         <Text style={styles.hint}>Für diese Übung hast du noch keine Sätze mitgeschrieben. Leg im Training los! 💪</Text>
       ) : (
