@@ -47,6 +47,16 @@ const SPLITS: Record<number, { focus: string; muscles: string[] }[]> = {
 };
 const DAY_OPTIONS = [2, 3, 4, 5, 6];
 
+// Automatische Wochentags-Verteilung je Anzahl Trainingstage (0 = Mo ... 6 = So),
+// mit moeglichst gleichmaessigen Erholungsabstaenden.
+const SCHEDULE_BY_DAYS: Record<number, number[]> = {
+  2: [0, 3],          // Mo, Do
+  3: [0, 2, 4],       // Mo, Mi, Fr
+  4: [0, 1, 3, 4],    // Mo, Di, Do, Fr
+  5: [0, 1, 2, 3, 4], // Mo-Fr
+  6: [0, 1, 2, 3, 4, 5], // Mo-Sa
+};
+
 type PlanEx = { rowId: string; exId: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null; muscleKey: string | null; muscleName: string | null; sets: number; reps: number };
 type DayView = { id: string; day_index: number; focus: string | null; exercises: PlanEx[] };
 type Selected = { exercise: { id: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null }; muscleKey: string | null; muscleName: string | null };
@@ -238,7 +248,18 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
       await supabase.from('workout_plans').update({ is_active: false }).eq('user_id', userId).eq('is_active', true);
       await supabase.from('workout_plans').update({ is_active: true }).eq('id', plan.id);
       await supabase.from('plan_schedule').delete().eq('user_id', userId);
-      setSchedule({});
+      // Trainingstage automatisch auf Wochentage verteilen (mit Erholungsabstaenden).
+      const weekdays = SCHEDULE_BY_DAYS[n] ?? [];
+      const sortedDays = [...insertedDays].sort((a: any, b: any) => a.day_index - b.day_index);
+      const newSched: Record<number, string> = {};
+      const schedInsert = weekdays
+        .map((wd, i) => (sortedDays[i] ? { user_id: userId, weekday: wd, plan_day_id: sortedDays[i].id } : null))
+        .filter(Boolean) as { user_id: string; weekday: number; plan_day_id: string }[];
+      if (schedInsert.length) {
+        await supabase.from('plan_schedule').insert(schedInsert);
+        schedInsert.forEach((r) => { newSched[r.weekday] = r.plan_day_id; });
+      }
+      setSchedule(newSched);
       await loadPlan();
     } catch (e: any) {
       setError(e?.message ?? 'Fehler bei der Plan-Erstellung.');
