@@ -6,6 +6,7 @@ import { isSupabaseConfigured } from './lib/supabase';
 import AuthScreen from './screens/AuthScreen';
 import OnboardingScreen from './screens/OnboardingScreen';
 import MainTabs from './screens/MainTabs';
+import OfflineBanner from './components/OfflineBanner';
 
 function Root() {
   const { session, profile, loading, refreshProfile } = useAuth();
@@ -37,6 +38,7 @@ function Root() {
   return (
     <>
       {content}
+      <OfflineBanner />
       <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
     </>
   );

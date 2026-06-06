@@ -5,7 +5,7 @@ import { localDateStr, daysAgoStr, daysAgoISO, mondayStr } from './date';
 import { computeStreak } from './gamification';
 
 export type LeaderRow = {
-  user_id: string;
+  is_me: boolean;
   display_name: string;
   weekly_days: number;
   monthly_days: number;
@@ -50,9 +50,11 @@ export async function computeMyScores(userId: string): Promise<Scores> {
 
 // Meinen Eintrag holen (null = nehme nicht teil / privat).
 export async function getMyEntry(userId: string): Promise<LeaderRow | null> {
-  const { data, error } = await supabase.from('leaderboard_entries').select('*').eq('user_id', userId).maybeSingle();
+  const { data, error } = await supabase.from('leaderboard_entries')
+    .select('display_name, weekly_days, monthly_days, streak, week_key, month_key')
+    .eq('user_id', userId).maybeSingle();
   if (error) throw error;
-  return (data as LeaderRow) ?? null;
+  return data ? ({ ...(data as any), is_me: true } as LeaderRow) : null;
 }
 
 // Teilnehmen / Anzeigename setzen + aktuelle Werte schreiben.
@@ -93,8 +95,8 @@ export async function leaveLeaderboard(userId: string): Promise<string | null> {
 // Ganze Liste laden (clientseitig nach effektiver Punktzahl sortiert).
 export async function fetchBoard(): Promise<LeaderRow[]> {
   const { data, error } = await supabase
-    .from('leaderboard_entries')
-    .select('user_id, display_name, weekly_days, monthly_days, streak, week_key, month_key')
+    .from('leaderboard_public')
+    .select('display_name, weekly_days, monthly_days, streak, week_key, month_key, is_me')
     .limit(200);
   if (error) throw error;
   return (data ?? []) as LeaderRow[];

@@ -140,7 +140,7 @@ export default function LeaderboardScreen({ embedded }: { embedded?: boolean }) 
   const scored = board
     .map((r) => ({ row: r, score: effectiveScore(r, period) }))
     .sort((a, b) => b.score - a.score || a.row.display_name.localeCompare(b.row.display_name));
-  const myIndex = scored.findIndex((s) => s.row.user_id === userId);
+  const myIndex = scored.findIndex((s) => s.row.is_me);
   const myRank = myIndex >= 0 ? myIndex + 1 : null;
   const myScore = myIndex >= 0 ? scored[myIndex].score : 0;
 
@@ -175,9 +175,9 @@ export default function LeaderboardScreen({ embedded }: { embedded?: boolean }) 
           <Text style={styles.empty}>Noch niemand dabei – sei die/der Erste! 🚀</Text>
         ) : (
           scored.map((s, i) => {
-            const me = s.row.user_id === userId;
+            const me = s.row.is_me;
             return (
-              <View key={s.row.user_id} style={[styles.rankRow, i > 0 && styles.rankDivider, me && styles.rankRowMe]}>
+              <View key={i} style={[styles.rankRow, i > 0 && styles.rankDivider, me && styles.rankRowMe]}>
                 <Text style={[styles.rankPos, i < 3 && styles.rankPosMedal]}>{medal(i + 1)}</Text>
                 <Text style={[styles.rankName, me && styles.rankNameMe]} numberOfLines={1}>{s.row.display_name}{me ? '  (du)' : ''}</Text>
                 <Text style={styles.rankScore}>{s.score}</Text>

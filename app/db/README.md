@@ -26,6 +26,7 @@ Alle `.sql`-Dateien werden **manuell** im Supabase **SQL Editor** ausgeführt
 | 18 | `018_audit_fixes.sql` | FK-Korrektur, set_logs-Indizes/Unique, foods-Policy |
 | 19 | `019_drop_unused.sql` | Ungenutzte Tabellen entfernt (recipes/recipe_items/nutrition_plans/meals) |
 | 20 | `020_drop_allergies.sql` | Allergie-Spalte aus profiles entfernt (Datenminimierung) |
+| 21 | `021_leaderboard_view.sql` | Leaderboard-View (is_me statt fremder UUIDs) |
 
 ## Hinweise
 - **Reihenfolge zählt:** Spätere Migrationen bauen auf früheren auf.
