@@ -1,6 +1,6 @@
 // Onboarding (themed): 5 Schritte (persönliche Daten, Allergien, Erfahrung, Umgebung, Ziel).
 import { useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
@@ -146,13 +146,13 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
   }
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.progress}>
         {[1, 2, 3, 4, 5].map((s) => (<View key={s} style={[styles.progressBar, s <= step && styles.progressBarActive]} />))}
       </View>
       <Text style={styles.stepLabel}>Schritt {step} von {totalSteps}</Text>
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 24 }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
         {step === 1 && (
           <View>
             <Text style={styles.title}>Erzähl uns von dir</Text>
@@ -205,7 +205,7 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
           {saving ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.navNextText}>{step < totalSteps ? 'Weiter' : 'Fertig'}</Text>}
         </TouchableOpacity>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

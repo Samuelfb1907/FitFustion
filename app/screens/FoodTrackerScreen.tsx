@@ -1,6 +1,6 @@
 // Kalorien-Tracker / Tagebuch (themed): eigene Zutaten auswählen, Menge angeben, Tag tracken.
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Platform, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
@@ -257,26 +257,28 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     const a = Number(amount.replace(',', '.')) || 0;
     const previewKcal = Math.round((selectedFood.kcal * a) / 100);
     return (
-      <View style={[styles.container, embedded && styles.embedded]}>
-        <TouchableOpacity onPress={() => setMode('pick')}><Text style={styles.back}>‹ Zurück</Text></TouchableOpacity>
-        <Text style={styles.title}>{selectedFood.name}</Text>
-        <Text style={styles.subtitle}>{selectedFood.kcal} kcal / 100 g</Text>
-        <Text style={styles.inputLabel}>Menge in Gramm</Text>
-        <TextInput style={styles.input} value={amount} onChangeText={setAmount} keyboardType="numeric" placeholder="z. B. 150" placeholderTextColor={c.textMuted} />
-        <Text style={styles.preview}>= {previewKcal} kcal</Text>
-        <Text style={styles.inputLabel}>Mahlzeit</Text>
-        <View style={styles.mealChips}>
-          {TRACKER_MEALS.map((m) => (
-            <TouchableOpacity key={m.key} style={[styles.mealChip, mealType === m.key && styles.mealChipActive]} onPress={() => setMealType(m.key)} activeOpacity={0.8}>
-              <Text style={[styles.mealChipText, mealType === m.key && styles.mealChipTextActive]}>{m.icon} {m.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        <TouchableOpacity style={[styles.primaryBtn, saving && { opacity: 0.6 }]} onPress={addLog} disabled={saving}>
-          {saving ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.primaryText}>Zum Tagebuch hinzufügen</Text>}
-        </TouchableOpacity>
-        {error && <Text style={styles.error}>{error}</Text>}
-      </View>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+          <TouchableOpacity onPress={() => setMode('pick')}><Text style={styles.back}>‹ Zurück</Text></TouchableOpacity>
+          <Text style={styles.title}>{selectedFood.name}</Text>
+          <Text style={styles.subtitle}>{selectedFood.kcal} kcal / 100 g</Text>
+          <Text style={styles.inputLabel}>Menge in Gramm</Text>
+          <TextInput style={styles.input} value={amount} onChangeText={setAmount} keyboardType="numeric" placeholder="z. B. 150" placeholderTextColor={c.textMuted} returnKeyType="done" onSubmitEditing={addLog} />
+          <Text style={styles.preview}>= {previewKcal} kcal</Text>
+          <Text style={styles.inputLabel}>Mahlzeit</Text>
+          <View style={styles.mealChips}>
+            {TRACKER_MEALS.map((m) => (
+              <TouchableOpacity key={m.key} style={[styles.mealChip, mealType === m.key && styles.mealChipActive]} onPress={() => setMealType(m.key)} activeOpacity={0.8}>
+                <Text style={[styles.mealChipText, mealType === m.key && styles.mealChipTextActive]}>{m.icon} {m.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <TouchableOpacity style={[styles.primaryBtn, saving && { opacity: 0.6 }]} onPress={addLog} disabled={saving}>
+            {saving ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.primaryText}>Zum Tagebuch hinzufügen</Text>}
+          </TouchableOpacity>
+          {error && <Text style={styles.error}>{error}</Text>}
+        </ScrollView>
+      </KeyboardAvoidingView>
     );
   }
 
