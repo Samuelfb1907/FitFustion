@@ -127,6 +127,18 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
     const { data: schedRows } = await supabase.from('plan_schedule').select('weekday, plan_day_id').eq('user_id', userId);
     const sched: Record<number, string> = {};
     (schedRows ?? []).forEach((r: any) => { if (dayIdSet.has(r.plan_day_id)) sched[r.weekday] = r.plan_day_id; });
+    // Kein Wochenplan vorhanden? Trainingstage automatisch verteilen (greift auch fuer aeltere Plaene).
+    if (Object.keys(sched).length === 0 && assembled.length > 0) {
+      const sortedDays = [...assembled].sort((a, b) => a.day_index - b.day_index);
+      const weekdays = SCHEDULE_BY_DAYS[sortedDays.length] ?? sortedDays.map((_, i) => i);
+      const auto = weekdays
+        .map((wd, i) => (sortedDays[i] ? { user_id: userId, weekday: wd, plan_day_id: sortedDays[i].id } : null))
+        .filter(Boolean) as { user_id: string; weekday: number; plan_day_id: string }[];
+      if (auto.length) {
+        const { error: insErr } = await supabase.from('plan_schedule').insert(auto);
+        if (!insErr) auto.forEach((r) => { sched[r.weekday] = r.plan_day_id; });
+      }
+    }
     setSchedule(sched);
     await loadDoneToday();
     setLoadError(null);
