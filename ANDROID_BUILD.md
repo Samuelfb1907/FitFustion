@@ -1,4 +1,4 @@
-# FitFusion – Android Closed Beta (EAS Build)
+# FitAvo – Android Closed Beta (EAS Build)
 
 Ziel: eine **installierbare APK**, die du per **Link/QR** an beliebig viele Tester schickst –
 kein Play Store, kein gemeinsames WLAN nötig. App-ID: `com.samuelfb1907.fitfusion`.
@@ -25,7 +25,7 @@ kein Play Store, kein gemeinsames WLAN nötig. App-ID: `com.samuelfb1907.fitfusi
 Die App braucht beim Bauen `EXPO_PUBLIC_SUPABASE_URL` und `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
 Lokal stehen sie in `app/.env` – der **Cloud-Build kennt sie aber nicht**, darum in EAS eintragen.
 
-**Einfachster Weg (Browser):** expo.dev → dein Projekt **FitFusion** → links **„Environment Variables"** → **„Create variable"**:
+**Einfachster Weg (Browser):** expo.dev → dein Projekt **FitAvo** → links **„Environment Variables"** → **„Create variable"**:
 
 | Name | Wert | Sichtbarkeit | Environments |
 |---|---|---|---|

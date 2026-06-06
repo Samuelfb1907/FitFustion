@@ -1,4 +1,4 @@
-# FitFusion 🏋️‍♂️🥗
+# FitAvo 🏋️‍♂️🥗
 
 **Personalisierte Fitness- & Ernährungs-App** – verbindet Trainings- und Ernährungspläne
 auf Basis deiner persönlichen Daten und Ziele. Läuft im **Browser** und auf dem **Handy** (Expo Go).

@@ -46,7 +46,7 @@ export default function BarcodeScanner({
           </View>
         ) : !permission.granted ? (
           <View style={styles.center}>
-            <Text style={styles.info}>FitFusion braucht Zugriff auf die Kamera, um Barcodes zu scannen.</Text>
+            <Text style={styles.info}>FitAvo braucht Zugriff auf die Kamera, um Barcodes zu scannen.</Text>
             <TouchableOpacity style={styles.btn} onPress={requestPermission}>
               <Text style={styles.btnText}>Kamera erlauben</Text>
             </TouchableOpacity>

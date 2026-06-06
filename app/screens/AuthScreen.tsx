@@ -94,7 +94,7 @@ export default function AuthScreen() {
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <View style={styles.brand}>
-            <Text style={styles.wordmark}>FitFusion</Text>
+            <Text style={styles.wordmark}>FitAvo</Text>
             <Text style={styles.tagline}>FITNESS · ERNÄHRUNG · FORTSCHRITT</Text>
           </View>
 

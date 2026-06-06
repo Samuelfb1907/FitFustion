@@ -1,5 +1,5 @@
 -- ============================================================================
---  FitFusion – Datenbank-Schema (Supabase / PostgreSQL)
+--  FitAvo – Datenbank-Schema (Supabase / PostgreSQL)
 -- ----------------------------------------------------------------------------
 --  SO FÜHRST DU ES AUS:
 --    1. Supabase-Dashboard öffnen -> linke Leiste: "SQL Editor"

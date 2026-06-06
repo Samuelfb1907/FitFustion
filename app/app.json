@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "FitFusion",
+    "name": "FitAvo",
     "slug": "app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -12,7 +12,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "FitFusion nutzt die Kamera, um Barcodes von Lebensmitteln zu scannen."
+          "cameraPermission": "FitAvo nutzt die Kamera, um Barcodes von Lebensmitteln zu scannen."
         }
       ]
     ],

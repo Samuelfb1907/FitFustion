@@ -9,7 +9,7 @@ const USER_TABLES = [
 
 // Sammelt alle personenbezogenen Daten des Nutzers als JSON-Objekt.
 export async function exportUserData(userId: string): Promise<Record<string, any>> {
-  const out: Record<string, any> = { app: 'FitFusion', user_id: userId };
+  const out: Record<string, any> = { app: 'FitAvo', user_id: userId };
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
   out.profile = profile ?? null;
   for (const t of USER_TABLES) {

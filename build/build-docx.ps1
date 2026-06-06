@@ -1,9 +1,9 @@
-# Builds FitFusion-Masterfile.docx from content.json using only built-in .NET (no Node/Python).
+# Builds FitAvo-Masterfile.docx from content.json using only built-in .NET (no Node/Python).
 $ErrorActionPreference = 'Stop'
 
 $root        = 'C:\Users\Samuel\fitness-app'
 $contentPath = Join-Path $root 'build\content.json'
-$outPath     = Join-Path $root 'FitFusion-Masterfile.docx'
+$outPath     = Join-Path $root 'FitAvo-Masterfile.docx'
 $CW          = 9638   # content width in DXA (A4 minus 2x1134 margins)
 
 # ---------- helpers ----------
@@ -97,7 +97,7 @@ function Title-Page(){
   $x = ''
   for($i=0;$i -lt 6;$i++){ $x += '<w:p/>' }
   $x += "<w:p><w:pPr><w:spacing w:after='80'/><w:jc w:val='center'/></w:pPr><w:r><w:rPr><w:b/><w:color w:val='595959'/><w:spacing w:val='80'/><w:sz w:val='26'/></w:rPr><w:t>M A S T E R F I L E</w:t></w:r></w:p>"
-  $x += "<w:p><w:pPr><w:spacing w:after='60'/><w:jc w:val='center'/></w:pPr><w:r><w:rPr><w:b/><w:color w:val='1F3864'/><w:sz w:val='80'/></w:rPr><w:t>FitFusion</w:t></w:r></w:p>"
+  $x += "<w:p><w:pPr><w:spacing w:after='60'/><w:jc w:val='center'/></w:pPr><w:r><w:rPr><w:b/><w:color w:val='1F3864'/><w:sz w:val='80'/></w:rPr><w:t>FitAvo</w:t></w:r></w:p>"
   $x += "<w:p><w:pPr><w:spacing w:after='200'/><w:jc w:val='center'/></w:pPr><w:r><w:rPr><w:i/><w:color w:val='2E5496'/><w:sz w:val='28'/></w:rPr><w:t>Training und Ern&#228;hrung &#8211; intelligent vereint.</w:t></w:r></w:p>"
   $x += "<w:p><w:pPr><w:pBdr><w:bottom w:val='single' w:sz='8' w:space='1' w:color='1F3864'/></w:pBdr><w:spacing w:after='240'/></w:pPr></w:p>"
   $x += "<w:p><w:pPr><w:spacing w:after='400'/><w:jc w:val='center'/></w:pPr><w:r><w:rPr><w:color w:val='404040'/><w:sz w:val='26'/></w:rPr><w:t>Projekt-Roadmap und Konzeptdokument f&#252;r eine KI-gest&#252;tzte Fitness- und Ern&#228;hrungs-App</w:t></w:r></w:p>"
@@ -176,7 +176,7 @@ $settingsBody = @'
 
 $footerBody = @'
 <w:ftr xmlns:w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' xmlns:r='http://schemas.openxmlformats.org/officeDocument/2006/relationships'>
-<w:p><w:pPr><w:pBdr><w:top w:val='single' w:sz='4' w:space='4' w:color='BFBFBF'/></w:pBdr><w:tabs><w:tab w:val='right' w:pos='9638'/></w:tabs><w:spacing w:after='0'/></w:pPr><w:r><w:rPr><w:color w:val='595959'/><w:sz w:val='16'/></w:rPr><w:t>FitFusion &#8211; Masterfile (vertraulich)</w:t></w:r><w:r><w:rPr><w:color w:val='595959'/><w:sz w:val='16'/></w:rPr><w:tab/><w:t xml:space='preserve'>Seite </w:t></w:r><w:r><w:rPr><w:color w:val='595959'/><w:sz w:val='16'/></w:rPr><w:fldChar w:fldCharType='begin'/></w:r><w:r><w:rPr><w:color w:val='595959'/><w:sz w:val='16'/></w:rPr><w:instrText xml:space='preserve'> PAGE </w:instrText></w:r><w:r><w:rPr><w:color w:val='595959'/><w:sz w:val='16'/></w:rPr><w:fldChar w:fldCharType='end'/></w:r><w:r><w:rPr><w:color w:val='595959'/><w:sz w:val='16'/></w:rPr><w:t xml:space='preserve'> von </w:t></w:r><w:r><w:rPr><w:color w:val='595959'/><w:sz w:val='16'/></w:rPr><w:fldChar w:fldCharType='begin'/></w:r><w:r><w:rPr><w:color w:val='595959'/><w:sz w:val='16'/></w:rPr><w:instrText xml:space='preserve'> NUMPAGES </w:instrText></w:r><w:r><w:rPr><w:color w:val='595959'/><w:sz w:val='16'/></w:rPr><w:fldChar w:fldCharType='end'/></w:r></w:p>
+<w:p><w:pPr><w:pBdr><w:top w:val='single' w:sz='4' w:space='4' w:color='BFBFBF'/></w:pBdr><w:tabs><w:tab w:val='right' w:pos='9638'/></w:tabs><w:spacing w:after='0'/></w:pPr><w:r><w:rPr><w:color w:val='595959'/><w:sz w:val='16'/></w:rPr><w:t>FitAvo &#8211; Masterfile (vertraulich)</w:t></w:r><w:r><w:rPr><w:color w:val='595959'/><w:sz w:val='16'/></w:rPr><w:tab/><w:t xml:space='preserve'>Seite </w:t></w:r><w:r><w:rPr><w:color w:val='595959'/><w:sz w:val='16'/></w:rPr><w:fldChar w:fldCharType='begin'/></w:r><w:r><w:rPr><w:color w:val='595959'/><w:sz w:val='16'/></w:rPr><w:instrText xml:space='preserve'> PAGE </w:instrText></w:r><w:r><w:rPr><w:color w:val='595959'/><w:sz w:val='16'/></w:rPr><w:fldChar w:fldCharType='end'/></w:r><w:r><w:rPr><w:color w:val='595959'/><w:sz w:val='16'/></w:rPr><w:t xml:space='preserve'> von </w:t></w:r><w:r><w:rPr><w:color w:val='595959'/><w:sz w:val='16'/></w:rPr><w:fldChar w:fldCharType='begin'/></w:r><w:r><w:rPr><w:color w:val='595959'/><w:sz w:val='16'/></w:rPr><w:instrText xml:space='preserve'> NUMPAGES </w:instrText></w:r><w:r><w:rPr><w:color w:val='595959'/><w:sz w:val='16'/></w:rPr><w:fldChar w:fldCharType='end'/></w:r></w:p>
 </w:ftr>
 '@
 
@@ -213,13 +213,13 @@ $relsDoc = @'
 
 $coreBody = @'
 <cp:coreProperties xmlns:cp='http://schemas.openxmlformats.org/package/2006/metadata/core-properties' xmlns:dc='http://purl.org/dc/elements/1.1/' xmlns:dcterms='http://purl.org/dc/terms/' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'>
-<dc:title>FitFusion &#8211; Masterfile</dc:title><dc:subject>Fitness- und Ern&#228;hrungs-App</dc:subject><dc:creator>Gr&#252;ndungsteam</dc:creator><cp:keywords>Fitness, Ern&#228;hrung, App, Masterfile, Roadmap</cp:keywords><cp:lastModifiedBy>Gr&#252;ndungsteam</cp:lastModifiedBy><cp:revision>1</cp:revision>
+<dc:title>FitAvo &#8211; Masterfile</dc:title><dc:subject>Fitness- und Ern&#228;hrungs-App</dc:subject><dc:creator>Gr&#252;ndungsteam</dc:creator><cp:keywords>Fitness, Ern&#228;hrung, App, Masterfile, Roadmap</cp:keywords><cp:lastModifiedBy>Gr&#252;ndungsteam</cp:lastModifiedBy><cp:revision>1</cp:revision>
 </cp:coreProperties>
 '@
 
 $appBody = @'
 <Properties xmlns='http://schemas.openxmlformats.org/officeDocument/2006/extended-properties'>
-<Application>FitFusion Masterfile Generator</Application><Company>FitFusion</Company>
+<Application>FitAvo Masterfile Generator</Application><Company>FitAvo</Company>
 </Properties>
 '@
 

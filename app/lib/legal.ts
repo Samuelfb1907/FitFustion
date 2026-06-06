@@ -3,22 +3,22 @@
 export const DISCLAIMER_VERSION = '1.1';
 
 export const DISCLAIMER_SHORT =
-  'FitFusion ersetzt keine ärztliche, ernährungs- oder trainingsbezogene Beratung. Nutzung auf eigene Gefahr. Bei Allergien immer die Zutaten selbst prüfen. Bei Beschwerden Training/Ernährung abbrechen und ärztlichen Rat einholen.';
+  'FitAvo ersetzt keine ärztliche, ernährungs- oder trainingsbezogene Beratung. Nutzung auf eigene Gefahr. Bei Allergien immer die Zutaten selbst prüfen. Bei Beschwerden Training/Ernährung abbrechen und ärztlichen Rat einholen.';
 
 // Kurz-Hinweise fuer den Essens-Tracker (mehrfach eingeblendet).
 export const NUTRITION_DISCLAIMER =
-  'Kalorien & Nährwerte sind geschätzte Richtwerte – keine Ernährungsberatung. FitFusion schlägt dir keine Lebensmittel vor; du trackst nur selbst.';
+  'Kalorien & Nährwerte sind geschätzte Richtwerte – keine Ernährungsberatung. FitAvo schlägt dir keine Lebensmittel vor; du trackst nur selbst.';
 export const ALLERGY_HINT =
   '⚠️ Achte bei Allergien & Unverträglichkeiten immer selbst auf die Zutaten und Verpackungsangaben.';
 
 export const DISCLAIMER_SECTIONS: { h: string; p: string }[] = [
   {
     h: '1. Keine medizinische oder professionelle Beratung',
-    p: 'FitFusion ist eine reine Informations- und Motivations-App. Alle Inhalte – Trainingspläne, Übungen/Animationen, Kalorien- und Nährwertberechnungen, Wasser-, Gewichts- und Fortschritts-Tracking – dienen ausschließlich allgemeinen Informationszwecken und stellen KEINE medizinische, ärztliche, physiotherapeutische, ernährungsberaterische, psychologische oder sonstige professionelle Beratung dar und ersetzen eine solche ausdrücklich nicht.',
+    p: 'FitAvo ist eine reine Informations- und Motivations-App. Alle Inhalte – Trainingspläne, Übungen/Animationen, Kalorien- und Nährwertberechnungen, Wasser-, Gewichts- und Fortschritts-Tracking – dienen ausschließlich allgemeinen Informationszwecken und stellen KEINE medizinische, ärztliche, physiotherapeutische, ernährungsberaterische, psychologische oder sonstige professionelle Beratung dar und ersetzen eine solche ausdrücklich nicht.',
   },
   {
     h: '2. Kein Medizinprodukt – keine Diagnose oder Therapie',
-    p: 'FitFusion ist KEIN Medizinprodukt im Sinne der Medizinprodukte-Verordnung (EU) 2017/745. Die App dient nicht der Diagnose, Behandlung, Heilung, Linderung, Überwachung oder Vorbeugung von Krankheiten oder Beschwerden. Sie ersetzt keine ärztliche Untersuchung, Diagnose oder Therapie. Verlasse dich bei gesundheitlichen Fragen niemals allein auf die App.',
+    p: 'FitAvo ist KEIN Medizinprodukt im Sinne der Medizinprodukte-Verordnung (EU) 2017/745. Die App dient nicht der Diagnose, Behandlung, Heilung, Linderung, Überwachung oder Vorbeugung von Krankheiten oder Beschwerden. Sie ersetzt keine ärztliche Untersuchung, Diagnose oder Therapie. Verlasse dich bei gesundheitlichen Fragen niemals allein auf die App.',
   },
   {
     h: '3. Ärztliche Rücksprache vor Beginn',
@@ -26,7 +26,7 @@ export const DISCLAIMER_SECTIONS: { h: string; p: string }[] = [
   },
   {
     h: '4. Notfall',
-    p: 'FitFusion ist KEINE Notfall-Anwendung und nicht zur Abwendung akuter Gefahren geeignet. Brich Training oder Ernährungsumstellung bei Schmerzen, Schwindel, Übelkeit, Atemnot, Herzrasen oder anderen Beschwerden SOFORT ab. Bei einem medizinischen Notfall wähle umgehend den Notruf 112.',
+    p: 'FitAvo ist KEINE Notfall-Anwendung und nicht zur Abwendung akuter Gefahren geeignet. Brich Training oder Ernährungsumstellung bei Schmerzen, Schwindel, Übelkeit, Atemnot, Herzrasen oder anderen Beschwerden SOFORT ab. Bei einem medizinischen Notfall wähle umgehend den Notruf 112.',
   },
   {
     h: '5. Nutzung ab 18 / Minderjährige',
@@ -66,7 +66,7 @@ export const DISCLAIMER_SECTIONS: { h: string; p: string }[] = [
   },
   {
     h: '14. Eigenverantwortung & Einwilligung',
-    p: 'Mit der Nutzung von FitFusion bestätigst du, dass du diesen Hinweis gelesen und verstanden hast, gesundheitlich in der Lage bist, die Inhalte umzusetzen, und die App eigenverantwortlich sowie auf eigenes Risiko nutzt.',
+    p: 'Mit der Nutzung von FitAvo bestätigst du, dass du diesen Hinweis gelesen und verstanden hast, gesundheitlich in der Lage bist, die Inhalte umzusetzen, und die App eigenverantwortlich sowie auf eigenes Risiko nutzt.',
   },
   {
     h: '15. Änderungen & salvatorische Klausel',
@@ -78,7 +78,7 @@ export const DISCLAIMER_SECTIONS: { h: string; p: string }[] = [
 export const PRIVACY_SECTIONS: { h: string; p: string }[] = [
   {
     h: 'Verantwortlicher',
-    p: 'Verantwortlich für die Datenverarbeitung in FitFusion ist: [Name], [Anschrift], E-Mail: [Kontakt-E-Mail]. (Bitte vor Veröffentlichung ausfüllen.)',
+    p: 'Verantwortlich für die Datenverarbeitung in FitAvo ist: [Name], [Anschrift], E-Mail: [Kontakt-E-Mail]. (Bitte vor Veröffentlichung ausfüllen.)',
   },
   {
     h: 'Welche Daten wir verarbeiten',

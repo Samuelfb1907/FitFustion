@@ -1,4 +1,4 @@
-# HANDOVER – FitFusion (Projekt-Übergabe für Claude)
+# HANDOVER – FitAvo (Projekt-Übergabe für Claude)
 
 > **Zweck:** Kompletter Projektstand, damit eine **neue Claude-Session ohne Vorwissen** sofort
 > weiterarbeiten kann. Im neuen Chat einfügen oder darauf verweisen.
@@ -56,7 +56,7 @@
 ---
 
 ## 1./2. Projekt & Arbeitsweise
-- **FitFusion** = mobile Fitness-/Ernährungs-App. Produktvision: `FitFusion-Masterfile.docx`.
+- **FitAvo** = mobile Fitness-/Ernährungs-App. Produktvision: `FitAvo-Masterfile.docx`.
 - Nutzer ist **Anfänger**; Modus **„Claude richtet ein, erklärt jeden Schritt"**, **Sprache Deutsch**.
   Ablauf: bauen → `npx tsc --noEmit` → testen lassen → committen. **Hoher Qualitätsanspruch** – lieber
   ehrlich Grenzen nennen (z. B. selbstgemalte Animationen wurden abgelehnt → ExerciseDB-GIFs).

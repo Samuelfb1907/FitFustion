@@ -17,7 +17,7 @@ export async function fetchOpenFoodFacts(barcode: string): Promise<OffProduct | 
     const url =
       `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}.json` +
       `?fields=product_name,product_name_de,brands,nutriments`;
-    const res = await fetch(url, { headers: { 'User-Agent': 'FitFusion/1.0 (Expo Fitness App)' }, signal: controller.signal });
+    const res = await fetch(url, { headers: { 'User-Agent': 'FitAvo/1.0 (Expo Fitness App)' }, signal: controller.signal });
     if (!res.ok) return null;
     const json: any = await res.json();
     if (json.status !== 1 || !json.product) return null;

@@ -1,6 +1,6 @@
 [
 {"t":"h1","x":"1. Executive Summary"},
-{"t":"p","x":"FitFusion (Arbeitstitel) ist eine mobile Fitness- und Ernährungs-App, die Trainingspläne und Ernährungspläne erstmals durchgängig und intelligent miteinander verzahnt. Während der Markt heute weitgehend zwischen reinen Trainings-Apps und reinen Ernährungs-Trackern aufgeteilt ist, betreut FitFusion den Nutzer ganzheitlich: Auf Basis persönlicher Daten, individueller Ziele und der konkreten Trainingsumgebung erstellt eine KI-gestützte Engine aufeinander abgestimmte Trainings- und Ernährungsempfehlungen und passt diese kontinuierlich an den realen Fortschritt an."},
+{"t":"p","x":"FitAvo (Arbeitstitel) ist eine mobile Fitness- und Ernährungs-App, die Trainingspläne und Ernährungspläne erstmals durchgängig und intelligent miteinander verzahnt. Während der Markt heute weitgehend zwischen reinen Trainings-Apps und reinen Ernährungs-Trackern aufgeteilt ist, betreut FitAvo den Nutzer ganzheitlich: Auf Basis persönlicher Daten, individueller Ziele und der konkreten Trainingsumgebung erstellt eine KI-gestützte Engine aufeinander abgestimmte Trainings- und Ernährungsempfehlungen und passt diese kontinuierlich an den realen Fortschritt an."},
 {"t":"h2","x":"1.1 Das Problem"},
 {"t":"ul","items":[
 "Fitness-Einsteiger sind von der Informationsflut überfordert und wissen nicht, womit sie anfangen sollen.",
@@ -9,7 +9,7 @@
 "Mangelnde Motivation und fehlende sichtbare Fortschritte führen zu hohen Abbruchquoten (typischerweise verlieren Fitness-Apps einen Großteil der Nutzer innerhalb der ersten 30 Tage)."
 ]},
 {"t":"h2","x":"1.2 Die Lösung"},
-{"t":"p","x":"FitFusion führt Nutzer durch ein geführtes Onboarding und erstellt daraus einen vollständig personalisierten, sich selbst anpassenden Plan für Training und Ernährung. Kernbausteine:"},
+{"t":"p","x":"FitAvo führt Nutzer durch ein geführtes Onboarding und erstellt daraus einen vollständig personalisierten, sich selbst anpassenden Plan für Training und Ernährung. Kernbausteine:"},
 {"t":"ul","items":[
 "Intelligentes Onboarding (persönliche Daten, Erfahrung, Trainingsumgebung, Ziel).",
 "Interaktive 3D-Muskelkarte (Mann/Frau, Vorder- und Rückansicht) mit anklickbaren Muskelgruppen.",
@@ -35,13 +35,13 @@
 ["Ziel LTV/CAC","> 3,0"]
 ]},
 {"t":"h2","x":"1.7 Mittelbedarf & Vision"},
-{"t":"p","x":"Zur Finanzierung von Produktentwicklung, Content-Produktion (3D-Animationen, Rezepte), Markteintritt und Compliance wird eine Pre-Seed-/Seed-Runde von ca. 1,2–1,8 Mio. € angestrebt (Runway 18–24 Monate). Vision: FitFusion soll zum führenden, ganzheitlichen Fitness-Begleiter im deutschsprachigen Raum werden und sich zu einer KI-gestützten Gesundheits-Plattform mit Wearable-Integration und Community ausbauen."},
+{"t":"p","x":"Zur Finanzierung von Produktentwicklung, Content-Produktion (3D-Animationen, Rezepte), Markteintritt und Compliance wird eine Pre-Seed-/Seed-Runde von ca. 1,2–1,8 Mio. € angestrebt (Runway 18–24 Monate). Vision: FitAvo soll zum führenden, ganzheitlichen Fitness-Begleiter im deutschsprachigen Raum werden und sich zu einer KI-gestützten Gesundheits-Plattform mit Wearable-Integration und Community ausbauen."},
 {"t":"callout","k":"Diagramm-Vorschlag","x":"One-Pager / Business Model Canvas auf einer Seite: Problem, Lösung, USP, Zielgruppe, Markt (TAM/SAM/SOM-Trichter), Geschäftsmodell, Wettbewerb, Team, Kapitalbedarf – ideal als visuelle Zusammenfassung für Investoren."},
 
 {"t":"pb"},
 {"t":"h1","x":"2. Produktvision"},
 {"t":"h2","x":"2.1 Vision Statement"},
-{"t":"p","x":"„Jeder Mensch verdient einen persönlichen Trainer und Ernährungsberater in der Hosentasche.“ FitFusion macht professionelle, individuelle Betreuung für Training und Ernährung für jeden zugänglich – unabhängig von Vorwissen, Budget oder Ausstattung."},
+{"t":"p","x":"„Jeder Mensch verdient einen persönlichen Trainer und Ernährungsberater in der Hosentasche.“ FitAvo macht professionelle, individuelle Betreuung für Training und Ernährung für jeden zugänglich – unabhängig von Vorwissen, Budget oder Ausstattung."},
 {"t":"h2","x":"2.2 Mission"},
 {"t":"p","x":"Wir reduzieren die Komplexität von Fitness und Ernährung auf einen klaren, täglich umsetzbaren Plan, der sich automatisch an den Nutzer anpasst – und halten Menschen durch sichtbare Fortschritte und Motivation langfristig am Ball."},
 {"t":"h2","x":"2.3 Kern-Nutzenversprechen"},
@@ -99,8 +99,8 @@
 ["Centr","Premium-Lifestyle","Promi-Marke, Content","Teuer; wenig adaptiv"]
 ]},
 {"t":"h2","x":"3.4 Wettbewerbslücke & Positionierung"},
-{"t":"p","x":"Kein etablierter Anbieter löst Training und Ernährung gleichermaßen stark und adaptiv verzahnt – genau hier positioniert sich FitFusion. Sekundäre Differenzierung: visuelle Trainingsführung (interaktive Muskelkarte + 3D-Animationen), umgebungsbasierte Übungsauswahl und konsequente DSGVO-Konformität als Vertrauensargument im DACH-Markt."},
-{"t":"callout","k":"Diagramm-Vorschlag","x":"Positionierungs-Matrix (2x2): X-Achse „Trainingstiefe“, Y-Achse „Ernährungstiefe“. Wettbewerber einordnen; FitFusion oben rechts als einziger Anbieter mit hoher Tiefe in beiden Dimensionen."},
+{"t":"p","x":"Kein etablierter Anbieter löst Training und Ernährung gleichermaßen stark und adaptiv verzahnt – genau hier positioniert sich FitAvo. Sekundäre Differenzierung: visuelle Trainingsführung (interaktive Muskelkarte + 3D-Animationen), umgebungsbasierte Übungsauswahl und konsequente DSGVO-Konformität als Vertrauensargument im DACH-Markt."},
+{"t":"callout","k":"Diagramm-Vorschlag","x":"Positionierungs-Matrix (2x2): X-Achse „Trainingstiefe“, Y-Achse „Ernährungstiefe“. Wettbewerber einordnen; FitAvo oben rechts als einziger Anbieter mit hoher Tiefe in beiden Dimensionen."},
 
 {"t":"pb"},
 {"t":"h1","x":"4. Zielgruppenanalyse"},
@@ -360,7 +360,7 @@
 
 {"t":"pb"},
 {"t":"h1","x":"7. Sicherheitskonzept"},
-{"t":"p","x":"Da FitFusion Gesundheitsdaten verarbeitet (Gewicht, Körpermaße, ggf. Allergien), gelten erhöhte Anforderungen. Diese Daten sind besondere Kategorien personenbezogener Daten nach Art. 9 DSGVO und erfordern eine ausdrückliche Einwilligung sowie besonders robuste technische und organisatorische Maßnahmen (TOMs)."},
+{"t":"p","x":"Da FitAvo Gesundheitsdaten verarbeitet (Gewicht, Körpermaße, ggf. Allergien), gelten erhöhte Anforderungen. Diese Daten sind besondere Kategorien personenbezogener Daten nach Art. 9 DSGVO und erfordern eine ausdrückliche Einwilligung sowie besonders robuste technische und organisatorische Maßnahmen (TOMs)."},
 {"t":"h2","x":"7.1 Datenschutz (DSGVO)"},
 {"t":"ul","items":[
 "Rechtsgrundlage: ausdrückliche Einwilligung (Art. 9 Abs. 2 lit. a) für Gesundheitsdaten; Vertragserfüllung für die Kernfunktion.",
@@ -627,7 +627,7 @@
 {"t":"h2","x":"13.1 Sofortmaßnahmen (0–30 Tage)"},
 {"t":"ol","items":[
 "Marktzahlen und Wettbewerbsanalyse mit aktuellen Primärquellen validieren.",
-"Markennamen prüfen (Verfügbarkeit, Marken-/Domainrecht) – „FitFusion“ ist nur Arbeitstitel.",
+"Markennamen prüfen (Verfügbarkeit, Marken-/Domainrecht) – „FitAvo“ ist nur Arbeitstitel.",
 "MVP-Scope final festziehen (MoSCoW bestätigen).",
 "Technische Grundsatzentscheidungen treffen (React Native vs. Flutter; BaaS vs. eigenes Backend).",
 "DSGVO-Fundament starten (Einwilligungskonzept, DSFA-Vorbereitung, Rechtsberatung).",

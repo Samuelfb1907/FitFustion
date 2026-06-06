@@ -84,10 +84,10 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
     try {
       const data = await exportUserData(uid);
       const json = JSON.stringify(data, null, 2);
-      const uri = FileSystem.documentDirectory + 'fitfusion-datenexport.json';
+      const uri = FileSystem.documentDirectory + 'fitavo-datenexport.json';
       await FileSystem.writeAsStringAsync(uri, json);
       if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(uri, { mimeType: 'application/json', dialogTitle: 'FitFusion Datenexport' });
+        await Sharing.shareAsync(uri, { mimeType: 'application/json', dialogTitle: 'FitAvo Datenexport' });
       } else {
         showMsg('Teilen ist auf diesem Gerät nicht verfügbar.', true);
       }
@@ -267,7 +267,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
 
       <Text style={styles.section}>ÜBER</Text>
       <View style={styles.card}>
-        <View style={styles.row}><Text style={styles.rowLabel}>App</Text><Text style={styles.rowValue}>FitFusion</Text></View>
+        <View style={styles.row}><Text style={styles.rowLabel}>App</Text><Text style={styles.rowValue}>FitAvo</Text></View>
         <View style={styles.row}><Text style={styles.rowLabel}>Version</Text><Text style={styles.rowValue}>1.0.0</Text></View>
       </View>
 

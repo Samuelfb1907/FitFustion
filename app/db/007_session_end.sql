@@ -1,5 +1,5 @@
 -- ============================================================================
---  FitFusion - Migration 007: Training manuell beenden
+--  FitAvo - Migration 007: Training manuell beenden
 -- ----------------------------------------------------------------------------
 --  Fuegt der Tabelle workout_sessions die Spalte "ended_at" hinzu.
 --

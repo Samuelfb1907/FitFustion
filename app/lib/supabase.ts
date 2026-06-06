@@ -1,4 +1,4 @@
-// Supabase-Client für die FitFusion-App (React Native / Expo)
+// Supabase-Client für die FitAvo-App (React Native / Expo)
 // -----------------------------------------------------------------
 // Diese Datei stellt EINE zentrale Verbindung zur Datenbank bereit.
 // Überall in der App importierst du einfach: import { supabase } from '../lib/supabase'

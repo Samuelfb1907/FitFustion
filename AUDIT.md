@@ -1,4 +1,4 @@
-# FitFusion – Gesamt-Audit & To-Do-Liste
+# FitAvo – Gesamt-Audit & To-Do-Liste
 
 > Erstellt durch einen Multi-Agent-Audit (26 Agenten: 1 Karte, 6 Dimensionen, kritische/hohe Funde gegen den echten Code verifiziert).
 > Schweregrade = **verifizierte** Einstufung (nach Gegenprüfung). Status: Stand des Audits, noch nichts davon umgesetzt.
@@ -34,7 +34,7 @@ Der **App-Code ist erstaunlich solide**: `tsc` ist fehlerfrei, alle 14 Screens s
 ### Robustheit & UX
 - [x] **Offline-/Fehler-Konzept** ✅ ERLEDIGT (neu: `lib/errors.ts` + `components/ErrorRetry.tsx`; `try/catch/finally`, Fehler-Ansicht „Erneut versuchen" & **Pull-to-Refresh** auf allen 6 Hauptscreens; stiller Reload ohne Spinner-Flackern bei Reiter-Wechsel) – früheres Problem: Ladefunktionen ohne `try/catch/finally` → bei Netzfehler **endloser Spinner** ohne Meldung/Retry (Home, Tracker, Progress, Water, Training, Plan). → in `try/finally` kapseln (`setLoading(false)` im finally), Fehlerzustand + „Erneut versuchen", **Pull-to-Refresh** (RefreshControl). *(HomeScreen, FoodTrackerScreen, ProgressScreen, WaterScreen, TrainingScreen, PlanScreen)*
 - [x] **Destruktive Aktionen bestätigt** ✅ – „Neuen Plan erstellen" fragt jetzt nach, wenn ein Plan existiert (ersetzt Plan+Wochenzuordnung); Gewichts-Eintrag-Löschen mit Bestätigung. *(Tagebuch-Einträge bleiben bewusst ohne Rückfrage – einzeln & leicht neu eintragbar; Rezepte entfernt.)* *(PlanScreen, ProgressScreen)*
-- [x] **App-Anzeigename „FitFusion"** ✅ – `app.json` `name` = „FitFusion". *(app.json)*
+- [x] **App-Anzeigename „FitAvo"** ✅ – `app.json` `name` = „FitAvo". *(app.json)*
 - [x] **Dark Mode durchziehen** ✅ – `userInterfaceStyle: "automatic"` (native Dialoge folgen dem System). *(app.json)*
 - [x] **„Passwort vergessen?" im Login** ✅ – Link im AuthScreen (sendet Reset-Mail an die eingegebene Adresse). *(AuthScreen.tsx)*
 - [~] **Allergien im Profil editierbar** – hinfällig: Ernährungsplan entfernt, Allergie-Angaben werden aktuell nirgends mehr verwendet. *(ggf. Allergie-Schritt im Onboarding später ganz entfernen)*

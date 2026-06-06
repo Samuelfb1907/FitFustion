@@ -1,22 +1,22 @@
-# Haftungsausschluss & Gesundheitshinweis – FitFusion
+# Haftungsausschluss & Gesundheitshinweis – FitAvo
 
 _Version 1.1 · Letzte Aktualisierung: [Datum eintragen] · Anbieter: [Name / Kontakt eintragen]_
 
 > ⚠️ **Hinweis für den Anbieter:** Dieser Text ist eine sorgfältig formulierte Vorlage, **keine Rechtsberatung**. Mehr Warnungen senken das Risiko, schließen es aber nicht vollständig aus – nach deutschem Recht ist die Haftung für Vorsatz, grobe Fahrlässigkeit sowie für Schäden an Leben, Körper und Gesundheit **nicht ausschließbar** (vgl. u. a. § 309 BGB). Vor einer Veröffentlichung zusätzlich **Impressum, Datenschutzerklärung (DSGVO) und ggf. AGB** ergänzen und den Text **anwaltlich prüfen** lassen.
 
-**Bitte vor der Nutzung von FitFusion lesen.**
+**Bitte vor der Nutzung von FitAvo lesen.**
 
 ## 1. Keine medizinische oder professionelle Beratung
-FitFusion ist eine reine Informations- und Motivations-App. Alle Inhalte dienen ausschließlich allgemeinen Informationszwecken und stellen **keine** medizinische, ärztliche, physiotherapeutische, ernährungsberaterische, psychologische oder sonstige professionelle Beratung dar und ersetzen eine solche ausdrücklich nicht.
+FitAvo ist eine reine Informations- und Motivations-App. Alle Inhalte dienen ausschließlich allgemeinen Informationszwecken und stellen **keine** medizinische, ärztliche, physiotherapeutische, ernährungsberaterische, psychologische oder sonstige professionelle Beratung dar und ersetzen eine solche ausdrücklich nicht.
 
 ## 2. Kein Medizinprodukt – keine Diagnose oder Therapie
-FitFusion ist **kein Medizinprodukt** im Sinne der Medizinprodukte-Verordnung (EU) 2017/745. Die App dient nicht der Diagnose, Behandlung, Heilung, Linderung, Überwachung oder Vorbeugung von Krankheiten und ersetzt keine ärztliche Untersuchung, Diagnose oder Therapie.
+FitAvo ist **kein Medizinprodukt** im Sinne der Medizinprodukte-Verordnung (EU) 2017/745. Die App dient nicht der Diagnose, Behandlung, Heilung, Linderung, Überwachung oder Vorbeugung von Krankheiten und ersetzt keine ärztliche Untersuchung, Diagnose oder Therapie.
 
 ## 3. Ärztliche Rücksprache vor Beginn
 Halte **vor** Beginn eines Trainings- oder Ernährungsprogramms Rücksprache mit einer Ärztin/einem Arzt – insbesondere bei Vorerkrankungen, Verletzungen, Herz-Kreislauf-Erkrankungen, Diabetes/Stoffwechselstörungen, Bluthochdruck, in Schwangerschaft und Stillzeit, bei Medikamenten, nach Operationen oder bei Unsicherheit.
 
 ## 4. Notfall
-FitFusion ist **keine Notfall-Anwendung**. Brich bei Schmerzen, Schwindel, Übelkeit, Atemnot oder Herzrasen sofort ab. Im medizinischen Notfall wähle umgehend den Notruf **112**.
+FitAvo ist **keine Notfall-Anwendung**. Brich bei Schmerzen, Schwindel, Übelkeit, Atemnot oder Herzrasen sofort ab. Im medizinischen Notfall wähle umgehend den Notruf **112**.
 
 ## 5. Nutzung ab 18 / Minderjährige
 Die App richtet sich an volljährige Personen (18+). Minderjährige dürfen sie nur mit Zustimmung und unter Aufsicht der Erziehungsberechtigten nutzen.
@@ -52,7 +52,7 @@ Mit der Nutzung bestätigst du, diesen Hinweis gelesen und verstanden zu haben, 
 Dieser Hinweis kann angepasst werden; es gilt die in der App aktuelle Fassung. Ist eine Bestimmung unwirksam, bleiben die übrigen wirksam.
 
 ---
-_Kurzfassung für die App: „FitFusion ist kein Medizinprodukt und ersetzt keine ärztliche, ernährungs- oder trainingsbezogene Beratung. Keine Diagnose/Therapie, keine Erfolgsversprechen. Nutzung auf eigene Gefahr ab 18. Bei Allergien immer die Zutaten selbst prüfen. Bei Beschwerden abbrechen und ärztlichen Rat einholen; im Notfall 112."_
+_Kurzfassung für die App: „FitAvo ist kein Medizinprodukt und ersetzt keine ärztliche, ernährungs- oder trainingsbezogene Beratung. Keine Diagnose/Therapie, keine Erfolgsversprechen. Nutzung auf eigene Gefahr ab 18. Bei Allergien immer die Zutaten selbst prüfen. Bei Beschwerden abbrechen und ärztlichen Rat einholen; im Notfall 112."_
 
 ---
 
