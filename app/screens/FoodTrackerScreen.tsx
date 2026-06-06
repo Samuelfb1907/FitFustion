@@ -13,6 +13,7 @@ import { useFocusTick } from '../lib/useFocusTick';
 import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
 import { todayStr } from '../lib/date';
+import { todayTrainingKcal } from '../lib/trainingBonus';
 import { CARD_SHADOW as shadow } from '../lib/ui';
 
 type Food = { id: string; name: string; category: string | null; kcal: number; protein: number; carbs: number; fat: number; user_id?: string | null };
@@ -32,6 +33,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   const [searching, setSearching] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [targetKcal, setTargetKcal] = useState<number | null>(null);
+  const [trainingKcal, setTrainingKcal] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<'diary' | 'pick' | 'amount' | 'newfood'>('diary');
   const [search, setSearch] = useState('');
@@ -111,6 +113,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
         gender: (prof.gender ?? 'prefer_not') as Gender, activity: (prof.activity_level ?? 'moderate') as ActivityLevel, goal: (goal?.goal_type ?? 'general_fitness') as GoalType,
       });
       setTargetKcal(t.targetCalories);
+      setTrainingKcal(await todayTrainingKcal(userId, Number(prof.weight_kg)));
     }
     await loadLogs();
     await loadQuick();
@@ -260,7 +263,8 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     }
     return { totalKcal: kcal, totalP: Math.round(p), totalC: Math.round(cc), totalF: Math.round(f) };
   }, [logs]);
-  const remaining = targetKcal != null ? targetKcal - totalKcal : null;
+  const effTarget = targetKcal != null ? targetKcal + trainingKcal : null;
+  const remaining = effTarget != null ? effTarget - totalKcal : null;
 
   if (loading) {
     return (<View style={[styles.container, embedded && styles.embedded]}>{!embedded && <Text style={styles.title}>Tracker</Text>}<ActivityIndicator size="large" color={c.primary} style={{ marginTop: 40 }} /></View>);
@@ -406,15 +410,16 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
         <View style={styles.todayRow}>
           <View style={styles.todayCol}><Text style={styles.todayVal}>{totalKcal}</Text><Text style={styles.todayLbl}>gegessen</Text></View>
           <View style={styles.todaySep} />
-          <View style={styles.todayCol}><Text style={styles.todayVal}>{targetKcal ?? '–'}</Text><Text style={styles.todayLbl}>Ziel</Text></View>
+          <View style={styles.todayCol}><Text style={styles.todayVal}>{effTarget ?? '–'}</Text><Text style={styles.todayLbl}>Ziel</Text></View>
           <View style={styles.todaySep} />
           <View style={styles.todayCol}><Text style={[styles.todayVal, remaining != null && remaining < 0 && { color: c.danger }]}>{remaining != null ? remaining : '–'}</Text><Text style={styles.todayLbl}>übrig</Text></View>
         </View>
-        {targetKcal != null && (
+        {effTarget != null && (
           <View style={styles.kcalTrack}>
-            <View style={[styles.kcalFill, { width: `${Math.min(100, Math.round((totalKcal / targetKcal) * 100))}%`, backgroundColor: totalKcal > targetKcal ? c.danger : c.primary }]} />
+            <View style={[styles.kcalFill, { width: `${Math.min(100, Math.round((totalKcal / effTarget) * 100))}%`, backgroundColor: totalKcal > effTarget ? c.danger : c.primary }]} />
           </View>
         )}
+        {trainingKcal > 0 && <Text style={styles.bonusLine}>🔥 +{trainingKcal} kcal durch Training (geschätzt)</Text>}
         <View style={styles.macrosRow}>
           <View style={styles.macroItem}><View style={[styles.macroDot, { backgroundColor: c.accent }]} /><Text style={styles.macroTxt}>{totalP} g Eiweiß</Text></View>
           <View style={styles.macroItem}><View style={[styles.macroDot, { backgroundColor: '#E69500' }]} /><Text style={styles.macroTxt}>{totalC} g KH</Text></View>
@@ -525,6 +530,7 @@ function makeStyles(c: Colors) {
     macroItem: { flexDirection: 'row', alignItems: 'center' },
     macroDot: { width: 9, height: 9, borderRadius: 5, marginRight: 6 },
     macroTxt: { fontSize: 13, color: c.text, fontWeight: '600' },
+    bonusLine: { fontSize: 12, fontWeight: '700', color: c.primary, textAlign: 'center', marginTop: 12 },
 
     mealCard: { ...shadow, backgroundColor: c.card, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 16, marginBottom: 12, borderWidth: 1, borderColor: c.cardBorder },
     entryRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10 },

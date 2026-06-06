@@ -9,6 +9,7 @@ import { useColors, Colors } from '../contexts/ThemeContext';
 import { computeNutrition, ageFromBirthDate, NutritionResult, Gender, ActivityLevel, GoalType } from '../lib/nutrition';
 import { computeXp, levelInfo, computeStreak, ACHIEVEMENTS, GameStats } from '../lib/gamification';
 import CalorieGauge from '../components/CalorieGauge';
+import { todayTrainingKcal } from '../lib/trainingBonus';
 import { dailyGoals, Goal } from '../lib/goals';
 import { todayWeekday } from '../lib/weekdays';
 import { localDateStr, todayStr, startOfTodayISO, daysAgoStr, daysAgoISO, mondayStr } from '../lib/date';
@@ -56,6 +57,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
   const [waterMl, setWaterMl] = useState(0);
   const [planToday, setPlanToday] = useState<{ has: boolean; focus: string | null } | null>(null);
   const [weightKg, setWeightKg] = useState<number | null>(null);
+  const [trainingKcal, setTrainingKcal] = useState(0);
 
   const load = useCallback(async (silent = false) => {
       const userId = session?.user?.id;
@@ -88,6 +90,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
           })
         );
         setGoalLabel(GOAL_LABELS[goalType] ?? goalType);
+        setTrainingKcal(await todayTrainingKcal(userId, Number(prof.weight_kg)));
       } else {
         setError('Profildaten unvollständig.');
       }
@@ -210,8 +213,9 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
               <View style={styles.card}>
                 <Text style={styles.cardLabel}>HEUTE{goalLabel ? ` · ${goalLabel.toUpperCase()}` : ''}</Text>
                 <View style={{ alignItems: 'center', marginTop: 12 }}>
-                  <CalorieGauge target={nutrition.targetCalories} eaten={eaten.kcal} />
+                  <CalorieGauge target={nutrition.targetCalories + trainingKcal} eaten={eaten.kcal} />
                 </View>
+                {trainingKcal > 0 && <Text style={styles.bonusLine}>🔥 +{trainingKcal} kcal durch Training heute (geschätzt)</Text>}
                 <View style={styles.macros}>
                   <Macro label="Protein" eaten={eaten.p} target={nutrition.proteinG} color={c.accent} styles={styles} />
                   <Macro label="Kohlenhydrate" eaten={eaten.c} target={nutrition.carbsG} color="#E69500" styles={styles} />
@@ -247,7 +251,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
                   <Text style={styles.cardLabel}>TAGESZIELE</Text>
                   {stats && <Text style={styles.headRight}>🏆 {earnedCount}/{ACHIEVEMENTS.length}</Text>}
                 </View>
-                {dailyGoals({ trainedToday: goalsData.trainedToday, trackedToday: goalsData.trackedToday, eatenKcal: eaten.kcal, targetKcal: nutrition.targetCalories, eatenProtein: eaten.p, targetProtein: nutrition.proteinG }).map((g, i, arr) => (
+                {dailyGoals({ trainedToday: goalsData.trainedToday, trackedToday: goalsData.trackedToday, eatenKcal: eaten.kcal, targetKcal: nutrition.targetCalories + trainingKcal, eatenProtein: eaten.p, targetProtein: nutrition.proteinG }).map((g, i, arr) => (
                   <GoalRow key={g.key} g={g} last={i === arr.length - 1} c={c} styles={styles} />
                 ))}
               </View>
@@ -315,6 +319,7 @@ function makeStyles(c: Colors) {
     card: { ...shadow, backgroundColor: c.card, borderRadius: 16, padding: 18, borderWidth: 1, borderColor: c.cardBorder },
     cardHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     cardLabel: { fontSize: 12, fontWeight: '700', letterSpacing: 0.6, color: c.textMuted },
+    bonusLine: { fontSize: 12, fontWeight: '700', color: c.primary, textAlign: 'center', marginTop: 10 },
     headRight: { fontSize: 13, fontWeight: '700', color: c.textMuted },
 
     // Makros

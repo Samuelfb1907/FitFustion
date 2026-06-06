@@ -104,3 +104,12 @@ export function computeNutrition(i: NutritionInput): NutritionResult {
     fatG,
   };
 }
+
+// Grobe Schaetzung der bei Krafttraining verbrannten Kalorien (MET ~5):
+// kcal = MET * kg * Stunden. Bewusst konservativ - nur eine Orientierung,
+// damit das Tagesziel an Trainingstagen mitwaechst ("mehr trainiert -> mehr essen").
+export function estimateWorkoutKcal(weightKg: number, minutes: number): number {
+  if (!weightKg || !minutes) return 0;
+  const hours = Math.min(360, Math.max(0, minutes)) / 60;
+  return Math.round(5 * weightKg * hours);
+}
