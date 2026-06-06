@@ -7,6 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import ExerciseDetail from '../components/ExerciseDetail';
 import Segmented from '../components/Segmented';
+import BodyMuscleMap from '../components/BodyMuscleMap';
 import PlanScreen from './PlanScreen';
 import { useFocusTick } from '../lib/useFocusTick';
 import ErrorRetry from '../components/ErrorRetry';
@@ -169,8 +170,14 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
         >
-          <Text style={styles.sectionLabel}>KÖRPERREGION WÄHLEN</Text>
-          <Text style={styles.lead}>Tippe eine Region – du bekommst passende Übungen für dein Level.</Text>
+          <View style={styles.bodyCard}>
+            <BodyMuscleMap
+              onSelect={(key) => { const m = muscles.find((x) => x.key === key); if (m) openMuscle(m); }}
+              c={c}
+              gender={profile?.gender === 'female' ? 'female' : 'male'}
+            />
+          </View>
+          <Text style={styles.sectionLabel}>ODER AUS DER LISTE</Text>
           <View style={styles.grid}>
             {orderedMuscles.map((m) => (
               <TouchableOpacity
@@ -200,8 +207,8 @@ function makeStyles(c: Colors) {
     subtitle: { fontSize: 15, color: c.textMuted, marginTop: 2, marginBottom: 16 },
     back: { color: c.primary, fontSize: 15, fontWeight: '600', marginBottom: 10 },
 
-    sectionLabel: { fontSize: 12, fontWeight: '800', letterSpacing: 0.8, color: c.textMuted, marginBottom: 4 },
-    lead: { fontSize: 14, color: c.textMuted, lineHeight: 20, marginBottom: 16 },
+    sectionLabel: { fontSize: 12, fontWeight: '800', letterSpacing: 0.8, color: c.textMuted, marginTop: 4, marginBottom: 12 },
+    bodyCard: { ...shadow, backgroundColor: c.card, borderRadius: 16, paddingVertical: 18, paddingHorizontal: 14, marginBottom: 8, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center' },
 
     grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
     muscleCard: { ...shadow, width: '48%', backgroundColor: c.card, borderRadius: 16, paddingVertical: 22, paddingHorizontal: 14, marginBottom: 12, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center' },
