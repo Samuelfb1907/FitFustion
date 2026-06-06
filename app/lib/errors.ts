@@ -17,16 +17,3 @@ export function errorMessage(e: unknown): string {
   }
   return 'Es hat nicht geklappt. Bitte versuche es erneut.';
 }
-
-// true, wenn der Fehler nach einem Verbindungsproblem aussieht.
-export function isNetworkError(e: unknown): boolean {
-  const lower = String(typeof e === 'string' ? e : (e as any)?.message ?? '').toLowerCase();
-  return (
-    lower.includes('network request failed') ||
-    lower.includes('failed to fetch') ||
-    lower.includes('networkerror') ||
-    lower.includes('timeout') ||
-    lower.includes('econn') ||
-    lower.includes('offline')
-  );
-}

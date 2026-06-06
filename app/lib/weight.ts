@@ -3,23 +3,12 @@
 // damit das Kalorienziel mitwandert.
 import { supabase } from './supabase';
 import { errorMessage } from './errors';
+import { todayStr, daysAgoStr } from './date';
 
 export const WEIGHT_MIN = 30;
 export const WEIGHT_MAX = 300;
 
 export type WeightPoint = { id: string; date: string; kg: number };
-
-export function todayStr(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
-function daysAgoStr(days: number): string {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() - days);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
 
 // Parst eine Eingabe ("82,5" -> 82.5) und prueft die Grenzen. null = ungueltig.
 export function parseWeight(input: string): number | null {

@@ -1,0 +1,34 @@
+# Datenbank-Migrationen (Supabase)
+
+Alle `.sql`-Dateien werden **manuell** im Supabase **SQL Editor** ausgeführt
+(Dashboard → SQL Editor → New query → einfügen → Run). Sie sind **idempotent**
+(mehrfaches Ausführen schadet nicht) und müssen **in dieser Reihenfolge** laufen:
+
+| Reihenfolge | Datei | Inhalt |
+|---|---|---|
+| 1 | `schema.sql` | Basis: profiles, goals, muscles, exercises, workout_* , progress_entries, RLS |
+| 2 | `002_allergies.sql` | Allergie-Felder |
+| 3 | `003_more_exercises.sql` | Mehr Übungen |
+| 4 | `004_more_exercises.sql` | Mehr Übungen |
+| 5 | `005_food_tracking.sql` | foods + food_logs (Tracker) |
+| 6 | `006_foods_500plus.sql` | ~500 Lebensmittel-Seed |
+| 7 | `007_session_end.sql` | workout_sessions.ended_at |
+| 8 | `008_more_exercises_gifs.sql` | Übungen + GIF-Bezug |
+| 9 | `009_water.sql` | water_logs |
+| 10 | `010_recipes.sql` | (aktuell ungenutzt) Rezepte/Pläne |
+| 11 | `011_barcode.sql` | Barcode-Felder für foods |
+| 12 | `012_meal_types.sql` | meal_type in food_logs |
+| 13 | `013_plan_schedule.sql` | Wochenplan: Wochentag → Plan-Tag |
+| 14 | `014_gdpr.sql` | DSGVO-Hilfen |
+| 15 | `015_privacy_indexes.sql` | Indizes + restriktive foods-Policy |
+| 16 | `016_integrity.sql` | Unique-/Integritäts-Constraints |
+| 17 | `017_leaderboard.sql` | leaderboard_entries (opt-in Bestenliste) |
+| 18 | `018_audit_fixes.sql` | FK-Korrektur, set_logs-Indizes/Unique, foods-Policy |
+
+## Hinweise
+- **Reihenfolge zählt:** Spätere Migrationen bauen auf früheren auf.
+- Es gibt **bewusst kein `001`** (historisch); Start ist immer `schema.sql`.
+- `foods` wird in 005/006 angelegt **und** in 015 mit einer restriktiven
+  Lese-Policy versehen – nach erneutem Seeden von 006 ggf. 015/018 erneut laufen lassen.
+- Neue Migration? Datei `0XX_kurzbeschreibung.sql` anlegen, hier eintragen,
+  idempotent schreiben (`create table if not exists`, `drop policy if exists`, …).

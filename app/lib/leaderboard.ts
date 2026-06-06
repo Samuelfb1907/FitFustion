@@ -1,7 +1,7 @@
 // Bestenliste-Logik: aktive Ziel-Tage (getrackt ODER trainiert) pro Woche/Monat.
 // Datenschutz: Teilnahme ist opt-in (eigene Zeile in leaderboard_entries). Kein Eintrag = privat.
 import { supabase } from './supabase';
-import { localDateStr, daysAgoStr, daysAgoISO } from './date';
+import { localDateStr, daysAgoStr, daysAgoISO, mondayStr } from './date';
 import { computeStreak } from './gamification';
 
 export type LeaderRow = {
@@ -16,10 +16,7 @@ export type LeaderRow = {
 
 // Montag-Datum der aktuellen Woche als Schluessel/Grenze ("YYYY-MM-DD").
 export function weekKey(d: Date = new Date()): string {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); // Montag
-  return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+  return mondayStr(d); // Montag der Woche -> Wochen-Schluessel
 }
 // Aktueller Monat als Schluessel ("YYYY-MM").
 export function monthKey(d: Date = new Date()): string {

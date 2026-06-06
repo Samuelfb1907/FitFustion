@@ -11,7 +11,7 @@ import { computeXp, levelInfo, computeStreak, ACHIEVEMENTS, GameStats } from '..
 import CalorieGauge from '../components/CalorieGauge';
 import { dailyGoals, Goal } from '../lib/goals';
 import { todayWeekday } from '../lib/weekdays';
-import { localDateStr, todayStr, startOfTodayISO, daysAgoStr, daysAgoISO } from '../lib/date';
+import { localDateStr, todayStr, startOfTodayISO, daysAgoStr, daysAgoISO, mondayStr } from '../lib/date';
 import { useFocusTick } from '../lib/useFocusTick';
 import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
@@ -22,13 +22,6 @@ const GOAL_LABELS: Record<string, string> = {
   lose_weight: 'Abnehmen', build_muscle: 'Muskelaufbau', gain_strength: 'Kraft steigern',
   endurance: 'Ausdauer', general_fitness: 'Allgemeine Fitness', get_defined: 'Definieren',
 };
-
-function mondayStr(): string {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
 
 type GoalsData = { trainedToday: boolean; trackedToday: boolean; sessionsThisWeek: number; trackedDaysThisWeek: number };
 async function countRows(table: string, userId: string): Promise<number> {

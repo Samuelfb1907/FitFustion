@@ -41,3 +41,11 @@ export function ddmm(iso: string): string {
   if (isNaN(d.getTime())) return String(iso);
   return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
+
+// Montag der Woche von d als "YYYY-MM-DD" (Wochen-Schluessel, 0 = Montag-Konvention).
+export function mondayStr(d: Date = new Date()): string {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+  return todayStr(x);
+}
