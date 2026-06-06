@@ -158,13 +158,17 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
 
   // Unterseite: Profil bearbeiten
   if (view === 'profile') {
-    return <ProfileScreen onBack={() => setView('menu')} />;
+    return (
+      <SwipeBack onBack={() => setView('menu')} c={c} behind={renderMenu()}>
+        <ProfileScreen onBack={() => setView('menu')} />
+      </SwipeBack>
+    );
   }
 
   // Unterseite: Rechtliches
   if (view === 'legal') {
     return (
-      <SwipeBack onBack={() => setView('menu')}>
+      <SwipeBack onBack={() => setView('menu')} c={c} behind={renderMenu()}>
       <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: BOTTOM_PAD }}>
         <BackButton onPress={() => setView('menu')} c={c} />
         <Text style={[styles.title, { marginTop: 10 }]}>Rechtliches</Text>
@@ -180,7 +184,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
   // Unterseite: Datenschutzerklärung
   if (view === 'privacy') {
     return (
-      <SwipeBack onBack={() => setView('menu')}>
+      <SwipeBack onBack={() => setView('menu')} c={c} behind={renderMenu()}>
       <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: BOTTOM_PAD }}>
         <BackButton onPress={() => setView('menu')} c={c} />
         <Text style={[styles.title, { marginTop: 10 }]}>Datenschutzerklärung</Text>
@@ -196,7 +200,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
   // Unterseite: Impressum
   if (view === 'impressum') {
     return (
-      <SwipeBack onBack={() => setView('menu')}>
+      <SwipeBack onBack={() => setView('menu')} c={c} behind={renderMenu()}>
       <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: BOTTOM_PAD }}>
         <BackButton onPress={() => setView('menu')} c={c} />
         <Text style={[styles.title, { marginTop: 10 }]}>Impressum</Text>
@@ -209,6 +213,9 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
     );
   }
 
+  return renderMenu();
+
+  function renderMenu() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: BOTTOM_PAD }}>
       <Text style={styles.title}>Einstellungen</Text>
@@ -336,6 +343,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
       </TouchableOpacity>
     </ScrollView>
   );
+  }
 }
 
 function makeStyles(c: Colors) {

@@ -308,12 +308,14 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
 
   if (selected) {
     return (
-      <ExerciseDetail
-        exercise={selected.exercise}
-        muscleKey={selected.muscleKey}
-        muscleName={selected.muscleName}
-        onBack={() => { setSelected(null); loadDoneToday(); }}
-      />
+      <SwipeBack onBack={() => { setSelected(null); loadDoneToday(); }} c={c} behind={renderPlan()}>
+        <ExerciseDetail
+          exercise={selected.exercise}
+          muscleKey={selected.muscleKey}
+          muscleName={selected.muscleName}
+          onBack={() => { setSelected(null); loadDoneToday(); }}
+        />
+      </SwipeBack>
     );
   }
 
@@ -323,7 +325,7 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
     const q = pickerSearch.trim().toLowerCase();
     const filtered = candidates.filter((e) => !existing.has(e.id) && (q ? e.name.toLowerCase().includes(q) : true));
     return (
-      <SwipeBack onBack={() => setAddingToDay(null)}>
+      <SwipeBack onBack={() => setAddingToDay(null)} c={c} behind={renderPlan()}>
       <View style={[styles.container, embedded && styles.embedded]}>
         <BackButton onPress={() => setAddingToDay(null)} c={c} />
         <Text style={styles.title}>Übung hinzufügen</Text>
@@ -388,6 +390,9 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
     );
   }
 
+  return renderPlan();
+
+  function renderPlan() {
   return (
     <ScrollView
       style={[styles.container, embedded && styles.embedded]}
@@ -479,6 +484,7 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
       ))}
     </ScrollView>
   );
+  }
 }
 
 function Stepper({ label, value, onDec, onInc, styles }: { label: string; value: number; onDec: () => void; onInc: () => void; styles: any }) {

@@ -302,7 +302,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     const a = Number(amount.replace(',', '.')) || 0;
     const previewKcal = Math.round((selectedFood.kcal * a) / 100);
     return (
-      <SwipeBack onBack={() => setMode(backTarget)}>
+      <SwipeBack onBack={() => setMode(backTarget)} c={c} behind={backTarget === 'pick' ? renderPick() : renderDiary()}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
           <BackButton onPress={() => setMode(backTarget)} c={c} />
@@ -331,7 +331,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
 
   if (mode === 'newfood') {
     return (
-      <SwipeBack onBack={() => setMode('pick')}>
+      <SwipeBack onBack={() => setMode('pick')} c={c} behind={renderPick()}>
       <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
         <BackButton onPress={() => setMode('pick')} c={c} />
         <Text style={styles.title}>Neues Lebensmittel</Text>
@@ -367,7 +367,14 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
 
   if (mode === 'pick') {
     return (
-      <SwipeBack onBack={() => { setMode('diary'); setSearch(''); }}>
+      <SwipeBack onBack={() => { setMode('diary'); setSearch(''); }} c={c} behind={renderDiary()}>
+        {renderPick()}
+      </SwipeBack>
+    );
+  }
+
+  function renderPick() {
+    return (
       <View style={[styles.container, embedded && styles.embedded]}>
         <BackButton onPress={() => { setMode('diary'); setSearch(''); }} c={c} />
         <Text style={styles.title}>Zutat auswählen</Text>
@@ -407,10 +414,12 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
           ListEmptyComponent={searching ? null : <Text style={styles.noResult}>Kein Treffer{search.trim() ? ` für „${search.trim()}"` : ''}. Leg es als eigenes Lebensmittel an ☝️</Text>}
         />
       </View>
-      </SwipeBack>
     );
   }
 
+  return renderDiary();
+
+  function renderDiary() {
   return (
     <>
     <ScrollView
@@ -511,6 +520,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     <BarcodeScanner visible={scannerOpen} c={c} onClose={() => setScannerOpen(false)} onScanned={handleScanned} />
     </>
   );
+  }
 }
 
 function makeStyles(c: Colors) {
