@@ -1,12 +1,11 @@
 // Training-Hub (themed): oben umschalten zwischen Freiem Training und Trainingsplan.
-// Freies Training: Muskel am Koerper antippen (oder Liste) -> gefilterte Uebungen -> Detail.
+// Freies Training: Koerperregion als Karte antippen -> gefilterte Uebungen -> Detail.
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import ExerciseDetail from '../components/ExerciseDetail';
-import BodyMuscleMap from '../components/BodyMuscleMap';
 import Segmented from '../components/Segmented';
 import PlanScreen from './PlanScreen';
 import { useFocusTick } from '../lib/useFocusTick';
@@ -18,7 +17,12 @@ import { CARD_SHADOW as shadow } from '../lib/ui';
 type Muscle = { id: string; key: string; name_de: string; body_region: string | null };
 type Exercise = { id: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null };
 
-// Schwierigkeits-/Equipment-Konstanten -> lib/training.ts
+// Reihenfolge + Symbol je Muskel-Key (clientseitig, damit Anordnung/Icons stabil bleiben).
+const MUSCLE_ORDER = ['chest', 'back', 'shoulders', 'biceps', 'triceps', 'abs', 'legs', 'glutes', 'calves'];
+const MUSCLE_ICON: Record<string, string> = {
+  chest: '🫁', back: '🔙', shoulders: '🤷', biceps: '💪', triceps: '🦾',
+  abs: '🧱', legs: '🦵', glutes: '🍑', calves: '🦶',
+};
 
 export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
   const { profile } = useAuth();
@@ -31,7 +35,6 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loadingExercises, setLoadingExercises] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
-  const [pickedMuscle, setPickedMuscle] = useState<Muscle | null>(null);
   const [mLoading, setMLoading] = useState(true);
   const [mError, setMError] = useState<string | null>(null);
   const [exError, setExError] = useState<string | null>(null);
@@ -39,6 +42,15 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
 
   const allowedDiff = ALLOWED_DIFF[profile?.experience_level ?? 'beginner'] ?? ['beginner'];
   const allowedEquip = ALLOWED_EQUIP[profile?.training_environment ?? 'gym'] ?? ALLOWED_EQUIP.gym;
+
+  // Muskeln in fester, sinnvoller Reihenfolge (nur die, die es in der DB gibt).
+  const orderedMuscles = useMemo(() => {
+    const byKey: Record<string, Muscle> = {};
+    muscles.forEach((m) => { byKey[m.key] = m; });
+    const ordered = MUSCLE_ORDER.map((k) => byKey[k]).filter(Boolean) as Muscle[];
+    const extra = muscles.filter((m) => !MUSCLE_ORDER.includes(m.key));
+    return [...ordered, ...extra];
+  }, [muscles]);
 
   const loadMuscles = useCallback(async (silent = false) => {
     if (!silent) setMLoading(true);
@@ -62,12 +74,11 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
     loadMuscles(true);
   }
 
-  // Reiter erneut angetippt -> zurueck zur Startansicht (Muskel-Auswahl, Freies Training)
+  // Reiter erneut angetippt -> zurueck zur Startansicht (Freies Training)
   useFocusTick(focusTick, () => {
     setSeg('free');
     setSelectedExercise(null);
     setSelectedMuscle(null);
-    setPickedMuscle(null);
   });
 
   async function openMuscle(m: Muscle) {
@@ -91,24 +102,20 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
       setLoadingExercises(false);
     }
   }
-  function pickByKey(key: string) {
-    const m = muscles.find((x) => x.key === key);
-    if (m) setPickedMuscle(m);
-  }
 
-  // Übungsdetail = volle Ansicht
+  // Uebungsdetail = volle Ansicht
   if (selectedExercise) {
     return <ExerciseDetail exercise={selectedExercise} onBack={() => setSelectedExercise(null)} muscleKey={selectedMuscle?.key ?? null} muscleName={selectedMuscle?.name_de ?? null} />;
   }
 
-  // Übungsliste für den gewählten Muskel
+  // Uebungsliste fuer die gewaehlte Koerperregion
   if (selectedMuscle) {
     return (
       <View style={styles.container}>
-        <TouchableOpacity onPress={() => setSelectedMuscle(null)}>
-          <Text style={styles.back}>‹ Körper</Text>
+        <TouchableOpacity onPress={() => setSelectedMuscle(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <Text style={styles.back}>‹ Zurück</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>{selectedMuscle.name_de}</Text>
+        <Text style={styles.title}>{MUSCLE_ICON[selectedMuscle.key] ?? ''}  {selectedMuscle.name_de}</Text>
         <Text style={styles.subtitle}>Passend zu deinem Level & deiner Umgebung</Text>
         {loadingExercises ? (
           <ActivityIndicator size="large" color={c.primary} style={{ marginTop: 24 }} />
@@ -119,7 +126,8 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
             <Text style={styles.noteText}>Keine passenden Übungen gefunden. Tipp: Mit mehr Equipment (Profil) schaltest du weitere frei.</Text>
           </View>
         ) : (
-          <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+          <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+            <Text style={styles.countHint}>{exercises.length} {exercises.length === 1 ? 'Übung' : 'Übungen'}</Text>
             {exercises.map((ex) => (
               <TouchableOpacity key={ex.id} style={styles.exRow} onPress={() => setSelectedExercise(ex)} activeOpacity={0.7}>
                 <View style={{ flex: 1 }}>
@@ -157,26 +165,27 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
         <ErrorRetry message={mError} onRetry={() => loadMuscles()} />
       ) : (
         <ScrollView
-          contentContainerStyle={{ paddingTop: 18, paddingBottom: 40, alignItems: 'center' }}
+          contentContainerStyle={{ paddingTop: 18, paddingBottom: 40 }}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
         >
-          <BodyMuscleMap onSelect={pickByKey} selectedKey={pickedMuscle?.key ?? null} c={c} gender={profile?.gender === 'female' ? 'female' : 'male'} />
-          {pickedMuscle && (
-            <TouchableOpacity style={styles.cta} onPress={() => openMuscle(pickedMuscle)} activeOpacity={0.85}>
-              <Text style={styles.ctaText}>Übungen für {pickedMuscle.name_de} anzeigen  ›</Text>
-            </TouchableOpacity>
-          )}
-          <Text style={styles.orHint}>Muskel auswählen 👇</Text>
-          <View style={styles.chips}>
-            {muscles.map((m) => {
-              const active = pickedMuscle?.id === m.id;
-              return (
-                <TouchableOpacity key={m.id} style={[styles.chip, active && styles.chipActive]} onPress={() => openMuscle(m)} activeOpacity={0.8} accessibilityRole="button" accessibilityLabel={`Übungen für ${m.name_de} anzeigen`}>
-                  <Text style={[styles.chipText, active && styles.chipTextActive]}>{m.name_de}</Text>
-                </TouchableOpacity>
-              );
-            })}
+          <Text style={styles.sectionLabel}>KÖRPERREGION WÄHLEN</Text>
+          <Text style={styles.lead}>Tippe eine Region – du bekommst passende Übungen für dein Level.</Text>
+          <View style={styles.grid}>
+            {orderedMuscles.map((m) => (
+              <TouchableOpacity
+                key={m.id}
+                style={styles.muscleCard}
+                onPress={() => openMuscle(m)}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel={`Übungen für ${m.name_de} anzeigen`}
+              >
+                <Text style={styles.muscleChev}>›</Text>
+                <Text style={styles.muscleIcon}>{MUSCLE_ICON[m.key] ?? '🏋️'}</Text>
+                <Text style={styles.muscleName}>{m.name_de}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </ScrollView>
       )}
@@ -190,14 +199,17 @@ function makeStyles(c: Colors) {
     title: { fontSize: 26, fontWeight: '800', color: c.heading },
     subtitle: { fontSize: 15, color: c.textMuted, marginTop: 2, marginBottom: 16 },
     back: { color: c.primary, fontSize: 15, fontWeight: '600', marginBottom: 10 },
-    orHint: { fontSize: 16, fontWeight: '800', color: c.heading, marginTop: 22, marginBottom: 12 },
-    chips: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 10 },
-    chip: { ...shadow, backgroundColor: c.card, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 11, borderWidth: 1, borderColor: c.cardBorder },
-    chipActive: { backgroundColor: c.primary, borderColor: c.primary },
-    chipText: { fontSize: 15, fontWeight: '700', color: c.heading },
-    chipTextActive: { color: c.onPrimary },
-    cta: { backgroundColor: c.primary, borderRadius: 12, paddingVertical: 14, paddingHorizontal: 20, marginTop: 16, width: '100%', maxWidth: 320, alignItems: 'center' },
-    ctaText: { color: c.onPrimary, fontSize: 15, fontWeight: '700' },
+
+    sectionLabel: { fontSize: 12, fontWeight: '800', letterSpacing: 0.8, color: c.textMuted, marginBottom: 4 },
+    lead: { fontSize: 14, color: c.textMuted, lineHeight: 20, marginBottom: 16 },
+
+    grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+    muscleCard: { ...shadow, width: '48%', backgroundColor: c.card, borderRadius: 16, paddingVertical: 22, paddingHorizontal: 14, marginBottom: 12, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center' },
+    muscleChev: { position: 'absolute', top: 8, right: 12, fontSize: 18, color: c.textMuted },
+    muscleIcon: { fontSize: 30 },
+    muscleName: { fontSize: 16, fontWeight: '700', color: c.heading, marginTop: 8, textAlign: 'center' },
+
+    countHint: { fontSize: 13, color: c.textMuted, marginBottom: 10 },
     exRow: { ...shadow, flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 14, paddingVertical: 16, paddingHorizontal: 16, marginBottom: 10, borderWidth: 1, borderColor: c.cardBorder },
     exName: { fontSize: 17, fontWeight: '600', color: c.text },
     exMeta: { fontSize: 13, color: c.textMuted, marginTop: 2 },
