@@ -15,8 +15,21 @@ create table if not exists public.foods (
   fat      numeric not null default 0
 );
 alter table public.foods enable row level security;
+-- Lese-Policy datenschutzfreundlich + re-run-sicher (siehe 005/015): globale Foods
+-- fuer alle, eigene/gescannte nur fuer den Besitzer (sobald user_id existiert).
 drop policy if exists "foods_read_all" on public.foods;
-create policy "foods_read_all" on public.foods for select using (true);
+do $$
+begin
+  drop policy if exists "foods_read_global_or_own" on public.foods;
+  if exists (select 1 from information_schema.columns
+             where table_schema='public' and table_name='foods' and column_name='user_id') then
+    create policy "foods_read_global_or_own" on public.foods
+      for select to authenticated using (user_id is null or auth.uid() = user_id);
+  else
+    create policy "foods_read_global_or_own" on public.foods
+      for select to authenticated using (true);
+  end if;
+end $$;
 
 -- ---------------------------------------------------------------- Obst
 insert into public.foods (name, category, kcal, protein, carbs, fat) values

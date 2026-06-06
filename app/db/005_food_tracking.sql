@@ -28,8 +28,22 @@ create index if not exists food_logs_user_date_idx on public.food_logs(user_id, 
 
 -- RLS
 alter table public.foods enable row level security;
+-- Lese-Policy datenschutzfreundlich: globale Foods (user_id is null) fuer alle,
+-- eigene/gescannte nur fuer den Besitzer. Faellt auf "alle lesbar" zurueck, solange
+-- die user_id-Spalte (Migration 011) noch nicht existiert -> re-run-sicher.
 drop policy if exists "foods_read_all" on public.foods;
-create policy "foods_read_all" on public.foods for select using (true);
+do $$
+begin
+  drop policy if exists "foods_read_global_or_own" on public.foods;
+  if exists (select 1 from information_schema.columns
+             where table_schema='public' and table_name='foods' and column_name='user_id') then
+    create policy "foods_read_global_or_own" on public.foods
+      for select to authenticated using (user_id is null or auth.uid() = user_id);
+  else
+    create policy "foods_read_global_or_own" on public.foods
+      for select to authenticated using (true);
+  end if;
+end $$;
 
 alter table public.food_logs enable row level security;
 drop policy if exists "food_logs_all_own" on public.food_logs;
