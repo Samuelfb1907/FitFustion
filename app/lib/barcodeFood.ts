@@ -27,9 +27,13 @@ export async function resolveBarcodeFood(userId: string, barcode: string): Promi
     .single();
   if (!error && created) return { food: created as FoodRow, created: true };
 
-  // 4) Name schon vergeben -> vorhandenes nehmen
-  const { data: byName } = await supabase.from('foods').select(COLS).eq('name', off.name).limit(1).maybeSingle();
-  if (byName) return { food: byName as FoodRow, created: false };
-
+  // 4) Insert fehlgeschlagen: NUR bei Eindeutigkeits-Konflikt (23505) den vorhandenen
+  //    Eintrag holen (bevorzugt per Barcode, sonst per Name). Andere Fehler -> 'error'.
+  if (error && (error as any).code === '23505') {
+    const { data: byBarcode } = await supabase.from('foods').select(COLS).eq('barcode', barcode).limit(1).maybeSingle();
+    if (byBarcode) return { food: byBarcode as FoodRow, created: false };
+    const { data: byName } = await supabase.from('foods').select(COLS).eq('name', off.name).limit(1).maybeSingle();
+    if (byName) return { food: byName as FoodRow, created: false };
+  }
   return { food: null, reason: 'error' };
 }

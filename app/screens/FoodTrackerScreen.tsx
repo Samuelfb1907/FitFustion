@@ -222,9 +222,18 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   }
 
   const kcalOf = (e: LogEntry) => (e.food ? Math.round((e.food.kcal * e.amount_g) / 100) : 0);
-  const sumMacro = (sel: (f: Food) => number) => Math.round(logs.reduce((s, e) => s + (e.food ? (sel(e.food) * e.amount_g) / 100 : 0), 0));
-  const totalKcal = logs.reduce((s, e) => s + kcalOf(e), 0);
-  const totalP = sumMacro((f) => f.protein), totalC = sumMacro((f) => f.carbs), totalF = sumMacro((f) => f.fat);
+  // Summen in EINEM Durchlauf (memoisiert) statt 4x ueber die Liste zu iterieren
+  const { totalKcal, totalP, totalC, totalF } = useMemo(() => {
+    let kcal = 0, p = 0, cc = 0, f = 0;
+    for (const e of logs) {
+      if (!e.food) continue;
+      kcal += Math.round((e.food.kcal * e.amount_g) / 100);
+      p += (e.food.protein * e.amount_g) / 100;
+      cc += (e.food.carbs * e.amount_g) / 100;
+      f += (e.food.fat * e.amount_g) / 100;
+    }
+    return { totalKcal: kcal, totalP: Math.round(p), totalC: Math.round(cc), totalF: Math.round(f) };
+  }, [logs]);
   const remaining = targetKcal != null ? targetKcal - totalKcal : null;
   const filteredFoods = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -263,7 +272,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
           <Text style={styles.title}>{selectedFood.name}</Text>
           <Text style={styles.subtitle}>{selectedFood.kcal} kcal / 100 g</Text>
           <Text style={styles.inputLabel}>Menge in Gramm</Text>
-          <TextInput style={styles.input} value={amount} onChangeText={setAmount} keyboardType="numeric" placeholder="z. B. 150" placeholderTextColor={c.textMuted} returnKeyType="done" onSubmitEditing={addLog} />
+          <TextInput style={styles.input} value={amount} onChangeText={setAmount} keyboardType="numeric" inputMode="decimal" placeholder="z. B. 150" placeholderTextColor={c.textMuted} returnKeyType="done" onSubmitEditing={addLog} />
           <Text style={styles.preview}>= {previewKcal} kcal</Text>
           <Text style={styles.inputLabel}>Mahlzeit</Text>
           <View style={styles.mealChips}>

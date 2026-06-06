@@ -163,7 +163,7 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
             <Text style={styles.label}>Geschlecht</Text>
             <Choice options={GENDERS} value={gender} onChange={setGender} styles={styles} />
             <Text style={styles.label}>Körpergewicht (kg)</Text>
-            <TextInput style={styles.input} value={weight} onChangeText={setWeight} placeholder="z. B. 78" placeholderTextColor={c.textMuted} keyboardType="numeric" />
+            <TextInput style={styles.input} value={weight} onChangeText={setWeight} placeholder="z. B. 78" placeholderTextColor={c.textMuted} keyboardType="numeric" inputMode="decimal" />
             <Text style={styles.label}>Körpergröße (cm)</Text>
             <TextInput style={styles.input} value={height} onChangeText={setHeight} placeholder="z. B. 180" placeholderTextColor={c.textMuted} keyboardType="numeric" />
             <Text style={styles.label}>Aktivitätslevel</Text>
