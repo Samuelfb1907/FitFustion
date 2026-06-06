@@ -17,6 +17,7 @@ import { useFocusTick } from '../lib/useFocusTick';
 import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
 import { CARD_SHADOW as shadow } from '../lib/ui';
+import { WATER_GOAL } from '../lib/water';
 
 const GOAL_LABELS: Record<string, string> = {
   lose_weight: 'Abnehmen', build_muscle: 'Muskelaufbau', gain_strength: 'Kraft steigern',
@@ -38,7 +39,7 @@ async function countRows(table: string, userId: string): Promise<number> {
 }
 
 type Eaten = { kcal: number; p: number; c: number; f: number };
-const WATER_GOAL = 2500; // Tagesziel in ml
+// WATER_GOAL -> lib/water.ts
 
 function greeting(): string {
   const h = new Date().getHours();

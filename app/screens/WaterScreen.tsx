@@ -9,13 +9,11 @@ import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
 import { todayStr } from '../lib/date';
 import { CARD_SHADOW as shadow } from '../lib/ui';
+import { WATER_GOAL, GLASS } from '../lib/water';
 
 type WaterRow = { id: string; amount_ml: number; created_at: string };
 
-const WATER_GOAL = 2500; // Tagesziel in ml
-const GLASS = 250;
-
-// todayStr -> lib/date.ts
+// todayStr -> lib/date.ts, WATER_GOAL/GLASS -> lib/water.ts
 function hhmm(iso: string): string {
   const d = new Date(iso);
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
