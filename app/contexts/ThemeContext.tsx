@@ -23,18 +23,20 @@ export type Colors = {
   muscle: string;    // Grundfarbe der Muskeln im Koerper-Diagramm
 };
 
-// Modernes Indigo/Violett-Farbsystem (frisch & einladend).
+// "Clean Light" Design-System: viel Weissraum, neutrale Graustufen + EIN edler
+// Smaragd-Akzent, hoher Lese-Kontrast, flache Flaechen mit feinen Raendern.
+// Funktioniert in Hell UND Dunkel (Dark Mode bleibt erhalten).
 const LIGHT: Colors = {
-  bg: '#F4F5FB', card: '#FFFFFF', text: '#1E2433', textMuted: '#79839B', heading: '#1E1B4B',
-  primary: '#6366F1', onPrimary: '#FFFFFF', border: '#E6E8F2', inputBg: '#F1F2FA',
-  danger: '#EF4444', success: '#10B981', track: '#E6E8F2',
-  accent: '#8B5CF6', hero: '#312E81', muscle: '#CBD2EC',
+  bg: '#F5F6F8', card: '#FFFFFF', text: '#1B1F24', textMuted: '#6B727C', heading: '#0E1217',
+  primary: '#0E9F6E', onPrimary: '#FFFFFF', border: '#E8EAED', inputBg: '#F2F4F6',
+  danger: '#E5484D', success: '#0E9F6E', track: '#ECEEF1',
+  accent: '#0E9F6E', hero: '#0E1217', muscle: '#E2E6EA',
 };
 const DARK: Colors = {
-  bg: '#0E1116', card: '#181B26', text: '#E7E9F0', textMuted: '#8B93A7', heading: '#EEF0FF',
-  primary: '#7C83F7', onPrimary: '#FFFFFF', border: '#272C3A', inputBg: '#1E2230',
-  danger: '#FF6B6B', success: '#34D399', track: '#272C3A',
-  accent: '#A78BFA', hero: '#26235C', muscle: '#33445E',
+  bg: '#0F1216', card: '#181C21', text: '#E8EBEF', textMuted: '#969EA8', heading: '#F3F5F7',
+  primary: '#16B486', onPrimary: '#04231A', border: '#252A30', inputBg: '#1D2228',
+  danger: '#FF6B6B', success: '#1FB587', track: '#252A30',
+  accent: '#1FB587', hero: '#11221C', muscle: '#2A2F36',
 };
 
 type ThemeCtx = {

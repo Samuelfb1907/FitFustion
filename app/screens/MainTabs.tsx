@@ -64,7 +64,7 @@ export default function MainTabs() {
 const styles = StyleSheet.create({
   page: { flex: 1 },
   pageHidden: { flex: 1, display: 'none' },
-  tabBar: { flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 6, paddingBottom: Platform.OS === 'ios' ? 30 : 12, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 14, shadowOffset: { width: 0, height: -3 }, elevation: 16 },
+  tabBar: { flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 8, paddingBottom: Platform.OS === 'ios' ? 30 : 12 },
   tabBtn: { flex: 1, alignItems: 'center', paddingHorizontal: 2 },
   indicator: { width: 26, height: 3, borderRadius: 2, backgroundColor: 'transparent', marginBottom: 6 },
   tabIcon: { fontSize: 20 },
