@@ -1,6 +1,6 @@
 // Training-Hub (themed): oben umschalten zwischen Freiem Training und Trainingsplan.
 // Freies Training: Muskel am Koerper antippen (oder Liste) -> gefilterte Uebungen -> Detail.
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -23,7 +23,7 @@ type Exercise = { id: string; name: string; difficulty: string; equipment: strin
 export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
   const { profile } = useAuth();
   const c = useColors();
-  const styles = makeStyles(c);
+  const styles = useMemo(() => makeStyles(c), [c]);
 
   const [seg, setSeg] = useState<'free' | 'plan'>('free');
   const [muscles, setMuscles] = useState<Muscle[]>([]);

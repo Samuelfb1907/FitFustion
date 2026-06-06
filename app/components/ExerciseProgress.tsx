@@ -1,6 +1,6 @@
 // Fortschritt einer einzelnen Uebung: Gewichts-/Wdh-Verlauf, Rekord (+ geschaetztes 1RM)
 // und die letzten Einheiten. Liest aus set_logs (+ workout_sessions fuer das Datum).
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -19,7 +19,7 @@ export default function ExerciseProgress({
   exerciseId: string; exerciseName: string; c: Colors; onBack: () => void;
 }) {
   const { session } = useAuth();
-  const styles = makeStyles(c);
+  const styles = useMemo(() => makeStyles(c), [c]);
   const chartW = Math.min(560, Dimensions.get('window').width) - 72;
 
   const [loading, setLoading] = useState(true);

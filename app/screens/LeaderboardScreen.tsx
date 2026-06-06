@@ -1,6 +1,6 @@
 // Bestenliste (opt-in, datenschutzfreundlich): Rangliste nach aktiven Ziel-Tagen
 // (getrackt ODER trainiert) - umschaltbar Woche/Monat. Eigene Zeile hervorgehoben.
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
@@ -18,7 +18,7 @@ export default function LeaderboardScreen({ embedded }: { embedded?: boolean }) 
   const { session, profile } = useAuth();
   const userId = session?.user?.id;
   const c = useColors();
-  const styles = makeStyles(c);
+  const styles = useMemo(() => makeStyles(c), [c]);
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);

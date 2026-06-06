@@ -1,6 +1,6 @@
 // Start-Screen / Dashboard im Bento-Grid-Stil: Begruessungs-Kachel, Mini-KPI-Kacheln,
 // grosse Feature-Kacheln (Kalorien/Wasser/Gewicht), Schnellzugriff & Erfolge.
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -51,7 +51,7 @@ function greeting(): string {
 export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (tab: string) => void; focusTick?: number }) {
   const { session, profile } = useAuth();
   const c = useColors();
-  const styles = makeStyles(c);
+  const styles = useMemo(() => makeStyles(c), [c]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
