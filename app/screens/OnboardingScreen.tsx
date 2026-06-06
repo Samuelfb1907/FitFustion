@@ -1,4 +1,4 @@
-// Onboarding (themed): 5 Schritte (persönliche Daten, Allergien, Erfahrung, Umgebung, Ziel).
+// Onboarding (themed): 4 Schritte (persönliche Daten, Erfahrung, Umgebung, Ziel).
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
@@ -16,21 +16,6 @@ const GENDERS: Opt[] = [
 const ACTIVITY: Opt[] = [
   { label: 'Kaum aktiv', value: 'sedentary' }, { label: 'Leicht aktiv', value: 'light' },
   { label: 'Mäßig aktiv', value: 'moderate' }, { label: 'Sehr aktiv', value: 'active' }, { label: 'Extrem aktiv', value: 'very_active' },
-];
-const ALLERGIES: Opt[] = [
-  { label: 'Gluten', value: 'gluten' }, { label: 'Weizen', value: 'wheat' }, { label: 'Mais', value: 'corn' },
-  { label: 'Milch (Kuhmilch)', value: 'milk' }, { label: 'Laktose', value: 'lactose' }, { label: 'Eier', value: 'eggs' },
-  { label: 'Erdnüsse', value: 'peanuts' }, { label: 'Nüsse (allgemein)', value: 'tree_nuts' }, { label: 'Haselnuss', value: 'hazelnut' },
-  { label: 'Mandel', value: 'almond' }, { label: 'Walnuss', value: 'walnut' }, { label: 'Cashew', value: 'cashew' },
-  { label: 'Pistazie', value: 'pistachio' }, { label: 'Kokosnuss', value: 'coconut' }, { label: 'Sesam', value: 'sesame' },
-  { label: 'Soja', value: 'soy' }, { label: 'Lupine', value: 'lupin' }, { label: 'Hülsenfrüchte (Linsen, Bohnen)', value: 'legumes' },
-  { label: 'Fisch', value: 'fish' }, { label: 'Krebstiere', value: 'crustaceans' }, { label: 'Weichtiere', value: 'molluscs' },
-  { label: 'Sellerie', value: 'celery' }, { label: 'Nachtschatten (z. B. Tomate)', value: 'nightshades' }, { label: 'Zitrusfrüchte', value: 'citrus' },
-  { label: 'Apfel', value: 'apple' }, { label: 'Kiwi', value: 'kiwi' }, { label: 'Banane', value: 'banana' },
-  { label: 'Erdbeere', value: 'strawberry' }, { label: 'Pfirsich', value: 'peach' }, { label: 'Knoblauch', value: 'garlic' }, { label: 'Zwiebel', value: 'onion' },
-  { label: 'Fruktose', value: 'fructose' }, { label: 'Histamin', value: 'histamine' }, { label: 'Sulfite', value: 'sulphites' },
-  { label: 'Senf', value: 'mustard' }, { label: 'Hefe', value: 'yeast' }, { label: 'Gelatine', value: 'gelatin' },
-  { label: 'Kakao / Schokolade', value: 'cocoa' }, { label: 'Alkohol', value: 'alcohol' },
 ];
 const EXPERIENCE: Opt[] = [
   { label: 'Anfänger', value: 'beginner' }, { label: 'Etwas erfahren', value: 'some' },
@@ -61,21 +46,6 @@ function Choice({ options, value, onChange, styles }: { options: Opt[]; value: s
     </View>
   );
 }
-function MultiChoice({ options, values, onToggle, styles }: { options: Opt[]; values: string[]; onToggle: (v: string) => void; styles: any }) {
-  return (
-    <View style={styles.choiceWrap}>
-      {options.map((o) => {
-        const active = values.includes(o.value);
-        return (
-          <TouchableOpacity key={o.value} style={[styles.choice, active && styles.choiceActive]} onPress={() => onToggle(o.value)}>
-            <Text style={[styles.choiceText, active && styles.choiceTextActive]}>{active ? '✓ ' : ''}{o.label}</Text>
-          </TouchableOpacity>
-        );
-      })}
-    </View>
-  );
-}
-
 export default function OnboardingScreen({ onDone }: { onDone: () => Promise<void> | void }) {
   const { session } = useAuth();
   const c = useColors();
@@ -92,23 +62,20 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
   const [weight, setWeight] = useState('');
   const [height, setHeight] = useState('');
   const [activity, setActivity] = useState('moderate');
-  const [allergies, setAllergies] = useState<string[]>([]);
   const [experience, setExperience] = useState('');
   const [environment, setEnvironment] = useState('');
   const [goal, setGoal] = useState('');
   const [targetWeight, setTargetWeight] = useState('');
   const [timeframe, setTimeframe] = useState('12');
 
-  const totalSteps = 5;
+  const totalSteps = 4;
   const num = (v: string) => Number(v.replace(',', '.'));
-  function toggleAllergy(v: string) { setAllergies((prev) => (prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v])); }
 
   function stepValid(): boolean {
     if (step === 1) return firstName.trim().length > 0 && !!buildBirthDate(birthDay, birthMonth, birthYear) && !!gender && num(weight) >= 30 && num(weight) <= 300 && num(height) >= 100 && num(height) <= 250;
-    if (step === 2) return true;
-    if (step === 3) return !!experience;
-    if (step === 4) return !!environment;
-    if (step === 5) { if (!goal) return false; if (goal === 'lose_weight') return num(targetWeight) >= 30 && num(targetWeight) <= 300; return true; }
+    if (step === 2) return !!experience;
+    if (step === 3) return !!environment;
+    if (step === 4) { if (!goal) return false; if (goal === 'lose_weight') return num(targetWeight) >= 30 && num(targetWeight) <= 300; return true; }
     return false;
   }
   function stepError(): string | null {
@@ -119,9 +86,9 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
       if (!(num(weight) >= 30 && num(weight) <= 300)) return 'Gewicht muss zwischen 30 und 300 kg liegen.';
       if (!(num(height) >= 100 && num(height) <= 250)) return 'Größe muss zwischen 100 und 250 cm liegen.';
     }
-    if (step === 3 && !experience) return 'Bitte wähle dein Erfahrungslevel.';
-    if (step === 4 && !environment) return 'Bitte wähle deine Trainingsumgebung.';
-    if (step === 5) {
+    if (step === 2 && !experience) return 'Bitte wähle dein Erfahrungslevel.';
+    if (step === 3 && !environment) return 'Bitte wähle deine Trainingsumgebung.';
+    if (step === 4) {
       if (!goal) return 'Bitte wähle ein Ziel.';
       if (goal === 'lose_weight' && !(num(targetWeight) >= 30 && num(targetWeight) <= 300)) return 'Bitte ein gültiges Traumgewicht (30–300 kg) eingeben.';
     }
@@ -138,7 +105,7 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
     if (!birth_date) { setSaving(false); setError('Bitte ein gültiges Geburtsdatum eingeben (TT/MM/JJJJ).'); return; }
     const { error: pErr } = await supabase.from('profiles').upsert({
       id: userId, first_name: firstName.trim(), birth_date, gender,
-      weight_kg: num(weight), height_cm: num(height), activity_level: activity, allergies, experience_level: experience, training_environment: environment,
+      weight_kg: num(weight), height_cm: num(height), activity_level: activity, experience_level: experience, training_environment: environment,
     });
     let targetDate: string | null = null;
     if (goal === 'lose_weight') { const d = new Date(); d.setDate(d.getDate() + Number(timeframe) * 7); targetDate = d.toISOString().slice(0, 10); }
@@ -154,7 +121,7 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Ambient c={c} />
       <View style={styles.progress}>
-        {[1, 2, 3, 4, 5].map((s) => (<View key={s} style={[styles.progressBar, s <= step && styles.progressBarActive]} />))}
+        {[1, 2, 3, 4].map((s) => (<View key={s} style={[styles.progressBar, s <= step && styles.progressBarActive]} />))}
       </View>
       <Text style={styles.stepLabel}>Schritt {step} von {totalSteps}</Text>
 
@@ -180,17 +147,9 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
             <Choice options={ACTIVITY} value={activity} onChange={setActivity} styles={styles} />
           </View>
         )}
-        {step === 2 && (
-          <View>
-            <Text style={styles.title}>Allergien & Unverträglichkeiten</Text>
-            <Text style={styles.hint}>Wähle alles aus, was auf dich zutrifft. Wenn nichts zutrifft, einfach auf „Weiter".</Text>
-            <MultiChoice options={ALLERGIES} values={allergies} onToggle={toggleAllergy} styles={styles} />
-            <Text style={styles.selected}>{allergies.length === 0 ? 'Keine ausgewählt' : `${allergies.length} ausgewählt`}</Text>
-          </View>
-        )}
-        {step === 3 && (<View><Text style={styles.title}>Wie viel Trainingserfahrung hast du?</Text><Choice options={EXPERIENCE} value={experience} onChange={setExperience} styles={styles} /></View>)}
-        {step === 4 && (<View><Text style={styles.title}>Wo trainierst du?</Text><Choice options={ENVIRONMENT} value={environment} onChange={setEnvironment} styles={styles} /></View>)}
-        {step === 5 && (
+        {step === 2 && (<View><Text style={styles.title}>Wie viel Trainingserfahrung hast du?</Text><Choice options={EXPERIENCE} value={experience} onChange={setExperience} styles={styles} /></View>)}
+        {step === 3 && (<View><Text style={styles.title}>Wo trainierst du?</Text><Choice options={ENVIRONMENT} value={environment} onChange={setEnvironment} styles={styles} /></View>)}
+        {step === 4 && (
           <View>
             <Text style={styles.title}>Was ist dein Ziel?</Text>
             <Choice options={GOALS} value={goal} onChange={setGoal} styles={styles} />
