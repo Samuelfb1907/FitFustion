@@ -1,5 +1,6 @@
 // Training-Hub (themed): oben umschalten zwischen Freiem Training und Trainingsplan.
-// Freies Training: Koerperregion als Karte antippen -> gefilterte Uebungen -> Detail.
+// Freies Training: Koerperregion (Karte/Koerper) antippen -> gefilterte Uebungen -> Detail.
+// Zurueck per Wischen zeigt die vorherige Seite dahinter (SwipeBack mit `behind`).
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
@@ -7,15 +8,15 @@ import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import ExerciseDetail from '../components/ExerciseDetail';
 import Segmented from '../components/Segmented';
-import BodyMuscleMap from '../components/BodyMuscleMap';
-import BackButton from '../components/BackButton';
-import SwipeBack from '../components/SwipeBack';
 import PlanScreen from './PlanScreen';
 import { useFocusTick } from '../lib/useFocusTick';
 import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
 import { DIFF_LABELS, EQUIP_LABELS, ALLOWED_DIFF, ALLOWED_EQUIP } from '../lib/training';
 import { CARD_SHADOW as shadow } from '../lib/ui';
+import BodyMuscleMap from '../components/BodyMuscleMap';
+import BackButton from '../components/BackButton';
+import SwipeBack from '../components/SwipeBack';
 
 type Muscle = { id: string; key: string; name_de: string; body_region: string | null };
 type Exercise = { id: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null };
@@ -46,7 +47,6 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
   const allowedDiff = ALLOWED_DIFF[profile?.experience_level ?? 'beginner'] ?? ['beginner'];
   const allowedEquip = ALLOWED_EQUIP[profile?.training_environment ?? 'gym'] ?? ALLOWED_EQUIP.gym;
 
-  // Muskeln in fester, sinnvoller Reihenfolge (nur die, die es in der DB gibt).
   const orderedMuscles = useMemo(() => {
     const byKey: Record<string, Muscle> = {};
     muscles.forEach((m) => { byKey[m.key] = m; });
@@ -77,7 +77,6 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
     loadMuscles(true);
   }
 
-  // Reiter erneut angetippt -> zurueck zur Startansicht (Freies Training)
   useFocusTick(focusTick, () => {
     setSeg('free');
     setSelectedExercise(null);
@@ -106,48 +105,8 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
     }
   }
 
-  // Uebungsdetail = volle Ansicht
-  if (selectedExercise) {
-    return <ExerciseDetail exercise={selectedExercise} onBack={() => setSelectedExercise(null)} muscleKey={selectedMuscle?.key ?? null} muscleName={selectedMuscle?.name_de ?? null} />;
-  }
-
-  // Uebungsliste fuer die gewaehlte Koerperregion
-  if (selectedMuscle) {
-    return (
-      <SwipeBack onBack={() => setSelectedMuscle(null)}>
-      <View style={styles.container}>
-        <BackButton onPress={() => setSelectedMuscle(null)} c={c} />
-        <Text style={styles.title}>{MUSCLE_ICON[selectedMuscle.key] ?? ''}  {selectedMuscle.name_de}</Text>
-        <Text style={styles.subtitle}>Passend zu deinem Level & deiner Umgebung</Text>
-        {loadingExercises ? (
-          <ActivityIndicator size="large" color={c.primary} style={{ marginTop: 24 }} />
-        ) : exError ? (
-          <ErrorRetry message={exError} onRetry={() => openMuscle(selectedMuscle)} />
-        ) : exercises.length === 0 ? (
-          <View style={styles.note}>
-            <Text style={styles.noteText}>Keine passenden Übungen gefunden. Tipp: Mit mehr Equipment (Profil) schaltest du weitere frei.</Text>
-          </View>
-        ) : (
-          <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-            <Text style={styles.countHint}>{exercises.length} {exercises.length === 1 ? 'Übung' : 'Übungen'}</Text>
-            {exercises.map((ex) => (
-              <TouchableOpacity key={ex.id} style={styles.exRow} onPress={() => setSelectedExercise(ex)} activeOpacity={0.7}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.exName}>{ex.name}</Text>
-                  <Text style={styles.exMeta}>{DIFF_LABELS[ex.difficulty] ?? ex.difficulty} · {EQUIP_LABELS[ex.equipment] ?? ex.equipment}</Text>
-                </View>
-                <Text style={styles.chev}>›</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        )}
-      </View>
-      </SwipeBack>
-    );
-  }
-
-  // Hub: Umschalter + Inhalt
-  return (
+  // --- Ansichten als Variablen (damit beim Zurueckwischen die Vorseite dahinter sichtbar ist) ---
+  const hubView = (
     <View style={styles.container}>
       <Text style={styles.title}>Training</Text>
       <View style={{ height: 14 }} />
@@ -157,7 +116,6 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
         onChange={(k) => setSeg(k as 'free' | 'plan')}
         c={c}
       />
-
       {seg === 'plan' ? (
         <View style={{ flex: 1, marginTop: 14 }}>
           <PlanScreen embedded />
@@ -200,6 +158,59 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
       )}
     </View>
   );
+
+  const listView = selectedMuscle ? (
+    <View style={styles.container}>
+      <BackButton onPress={() => setSelectedMuscle(null)} c={c} />
+      <Text style={styles.title}>{MUSCLE_ICON[selectedMuscle.key] ?? ''}  {selectedMuscle.name_de}</Text>
+      <Text style={styles.subtitle}>Passend zu deinem Level & deiner Umgebung</Text>
+      {loadingExercises ? (
+        <ActivityIndicator size="large" color={c.primary} style={{ marginTop: 24 }} />
+      ) : exError ? (
+        <ErrorRetry message={exError} onRetry={() => openMuscle(selectedMuscle)} />
+      ) : exercises.length === 0 ? (
+        <View style={styles.note}>
+          <Text style={styles.noteText}>Keine passenden Übungen gefunden. Tipp: Mit mehr Equipment (Profil) schaltest du weitere frei.</Text>
+        </View>
+      ) : (
+        <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+          <Text style={styles.countHint}>{exercises.length} {exercises.length === 1 ? 'Übung' : 'Übungen'}</Text>
+          {exercises.map((ex) => (
+            <TouchableOpacity key={ex.id} style={styles.exRow} onPress={() => setSelectedExercise(ex)} activeOpacity={0.7}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.exName}>{ex.name}</Text>
+                <Text style={styles.exMeta}>{DIFF_LABELS[ex.difficulty] ?? ex.difficulty} · {EQUIP_LABELS[ex.equipment] ?? ex.equipment}</Text>
+              </View>
+              <Text style={styles.chev}>›</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
+    </View>
+  ) : null;
+
+  if (selectedExercise) {
+    return (
+      <SwipeBack onBack={() => setSelectedExercise(null)} c={c} behind={listView}>
+        <ExerciseDetail
+          exercise={selectedExercise}
+          onBack={() => setSelectedExercise(null)}
+          muscleKey={selectedMuscle?.key ?? null}
+          muscleName={selectedMuscle?.name_de ?? null}
+        />
+      </SwipeBack>
+    );
+  }
+
+  if (selectedMuscle) {
+    return (
+      <SwipeBack onBack={() => setSelectedMuscle(null)} c={c} behind={hubView}>
+        {listView}
+      </SwipeBack>
+    );
+  }
+
+  return hubView;
 }
 
 function makeStyles(c: Colors) {
