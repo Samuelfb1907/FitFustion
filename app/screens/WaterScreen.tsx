@@ -166,8 +166,8 @@ function makeStyles(c: Colors) {
     grid: { gap: 12 },
     row: { flexDirection: 'row', gap: 10 },
 
-    heroTile: { ...shadow, backgroundColor: c.card, borderRadius: 24, padding: 24, alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
-    bigMl: { fontSize: 48, fontWeight: '800', color: c.primary },
+    heroTile: { ...shadow, backgroundColor: c.card, borderRadius: 16, padding: 22, alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    bigMl: { fontSize: 40, fontWeight: '800', color: c.primary },
     bigUnit: { fontSize: 22, fontWeight: '700', color: c.textMuted },
     goalLine: { fontSize: 14, color: c.textMuted, marginTop: 2, marginBottom: 16 },
     track: { width: '100%', height: 14, backgroundColor: c.track, borderRadius: 7, overflow: 'hidden' },
@@ -175,13 +175,13 @@ function makeStyles(c: Colors) {
     metaRow: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 12 },
     meta: { fontSize: 13, color: c.textMuted, fontWeight: '600' },
 
-    addTile: { ...shadow, flex: 1, backgroundColor: c.card, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border, borderRadius: 20, paddingVertical: 16, alignItems: 'center' },
+    addTile: { ...shadow, flex: 1, backgroundColor: c.card, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
     addEmoji: { fontSize: 22 },
     addText: { color: c.primary, fontWeight: '700', fontSize: 14, marginTop: 4 },
-    undoBtn: { paddingVertical: 13, alignItems: 'center', borderRadius: 14, borderWidth: 1, borderColor: c.border },
+    undoBtn: { paddingVertical: 13, alignItems: 'center', borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     undoText: { color: c.textMuted, fontSize: 14, fontWeight: '700' },
 
-    tile: { ...shadow, backgroundColor: c.card, borderRadius: 24, padding: 18, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    tile: { ...shadow, backgroundColor: c.card, borderRadius: 16, padding: 18, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     tileLabel: { fontSize: 12, fontWeight: '800', letterSpacing: 0.8, color: c.textMuted, marginBottom: 6 },
     empty: { fontSize: 14, color: c.textMuted, fontStyle: 'italic', marginTop: 6, textAlign: 'center' },
     entry: { flexDirection: 'row', alignItems: 'center', paddingVertical: 11 },
