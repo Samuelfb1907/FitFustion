@@ -6,7 +6,7 @@ import { MOTIVATION_QUOTES } from './quotes';
 
 export type ReminderPrefs = { enabled: boolean; water: boolean; training: boolean; trainingHour: number; motivation: boolean; motivationHour: number };
 
-const KEY = 'fitfusion.reminders';
+const KEY = 'fitavo.reminders';
 const DEFAULT: ReminderPrefs = { enabled: false, water: true, training: true, trainingHour: 18, motivation: true, motivationHour: 8 };
 const WATER_TIMES: [number, number][] = [[10, 0], [13, 0], [16, 0], [19, 0]];
 

@@ -71,7 +71,7 @@ export default function AuthScreen() {
       if (error) show(translateError(error.message), true);
       else {
         // Zustimmung zum Haftungsausschluss dokumentieren (Zeitpunkt + Version)
-        try { await AsyncStorage.setItem('fitfusion.disclaimerAccepted', JSON.stringify({ version: DISCLAIMER_VERSION, at: new Date().toISOString() })); } catch {}
+        try { await AsyncStorage.setItem('fitavo.disclaimerAccepted', JSON.stringify({ version: DISCLAIMER_VERSION, at: new Date().toISOString() })); } catch {}
         if (!data.session) { show('Fast geschafft! Bitte bestätige deine E-Mail und logge dich dann ein.', false); setMode('login'); }
       }
     }

@@ -18,10 +18,10 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.samuelfb1907.fitfusion"
+      "bundleIdentifier": "com.samuelfb1907.fitavo"
     },
     "android": {
-      "package": "com.samuelfb1907.fitfusion",
+      "package": "com.samuelfb1907.fitavo",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",

@@ -51,7 +51,7 @@ const ThemeContext = createContext<ThemeCtx>({
   setTheme: () => {},
 });
 
-const STORAGE_KEY = 'fitfusion.theme';
+const STORAGE_KEY = 'fitavo.theme';
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<ThemeName>('light');

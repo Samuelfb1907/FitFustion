@@ -1,7 +1,7 @@
 # FitAvo – Android Closed Beta (EAS Build)
 
 Ziel: eine **installierbare APK**, die du per **Link/QR** an beliebig viele Tester schickst –
-kein Play Store, kein gemeinsames WLAN nötig. App-ID: `com.samuelfb1907.fitfusion`.
+kein Play Store, kein gemeinsames WLAN nötig. App-ID: `com.samuelfb1907.fitavo`.
 
 ---
 

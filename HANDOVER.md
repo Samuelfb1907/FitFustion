@@ -19,7 +19,7 @@
 - **Komplettes modernes Design:** neues **Indigo/Violett-Farbsystem** (`contexts/ThemeContext.tsx`, hell+dunkel) + app-weiter **Bento-Grid-Stil** (stark abgerundete Kacheln, weiche Schatten). Umgesetzt auf **allen** Screens: Home (echtes Bento-Dashboard mit Mini-KPI-Kacheln), Wasser, Tracker, Fortschritt, Training, Plan, Einstellungen, Onboarding, Profil. **Login** neu mit Punkteraster-Hintergrund (`react-native-svg`). Geteilter Karten-Schatten in **`lib/ui.ts`** (`CARD_SHADOW`). Tab-Leiste mit Indikator-Strich.
 - **Bestenliste / Leaderboard (opt-in, datenschutzfreundlich):** `lib/leaderboard.ts` + `screens/LeaderboardScreen.tsx`, eingebunden im **Fortschritt-Reiter** (Segmented „Meine Werte | 🏆 Bestenliste"). Rangliste nach **aktiven Ziel-Tagen** (= Tag mit Essens-Eintrag ODER Training), umschaltbar **Woche/Monat**. Teilnahme = eigene Zeile in `leaderboard_entries`; Aussteigen löscht sie. **➡️ Migration 017 (`db/017_leaderboard.sql`) MUSS in Supabase ausgeführt sein**, sonst Fehler in der Liste.
 - **Tägliche Motivation:** `lib/quotes.ts` (110+ Sprüche) + Erweiterung in `lib/reminders.ts` (rotierende Tages-Benachrichtigung, ~45 Tage im Voraus geplant, Schalter „💬 Tägliche Motivation" + Uhrzeit in Einstellungen). **Pushes erscheinen nur im echten Build, nicht in Expo Go.**
-- **Closed Beta / Android-Build (EAS):** `app/eas.json` (Profil **preview = APK**), `app/app.json` mit `android.package`/`ios.bundleIdentifier` = **`com.samuelfb1907.fitfusion`**, `extra.eas.projectId` = **`75146814-4f6b-45f6-8928-dbb2004f15c8`**, `owner` = **`samuelfb1907`**. Anleitung in **`ANDROID_BUILD.md`**. Erster APK-Build lief erfolgreich. EAS-**Env-Vars** (EXPO_PUBLIC_SUPABASE_URL/_ANON_KEY) sind im **Preview-Environment** auf expo.dev hinterlegt.
+- **Closed Beta / Android-Build (EAS):** `app/eas.json` (Profil **preview = APK**), `app/app.json` mit `android.package`/`ios.bundleIdentifier` = **`com.samuelfb1907.fitavo`**, `extra.eas.projectId` = **`75146814-4f6b-45f6-8928-dbb2004f15c8`**, `owner` = **`samuelfb1907`**. Anleitung in **`ANDROID_BUILD.md`**. Erster APK-Build lief erfolgreich. EAS-**Env-Vars** (EXPO_PUBLIC_SUPABASE_URL/_ANON_KEY) sind im **Preview-Environment** auf expo.dev hinterlegt.
 - **Offener Bug + Fix-Versuch:** In der **APK** ließen sich die **Muskeln in der Körpergrafik nicht antippen** (in Expo Go schon → Release-/SVG-Touch-Thema). Fix: (1) **Muskel-Buttons** unter der Grafik sind jetzt die zuverlässige Haupt-Auswahl; (2) **`newArchEnabled: false`** in `app.json` (Versuch, den Body-Tap im Release zu reparieren). **➡️ OFFEN: neue APK bauen & testen, ob der Body-Tap jetzt geht.** Wenn ja → New Arch aus lassen. Wenn nein → `newArchEnabled` wieder entfernen (Buttons genügen).
 
 ### ➡️ Sofort offene Schritte (für die nächste Sitzung)
@@ -109,7 +109,7 @@
   (name, difficulty, equipment, muscle_key, …).
 
 ### 6c. Erinnerungen (expo-notifications)
-- `lib/reminders.ts`: `ReminderPrefs` (enabled/water/training/trainingHour) in AsyncStorage `fitfusion.reminders`;
+- `lib/reminders.ts`: `ReminderPrefs` (enabled/water/training/trainingHour) in AsyncStorage `fitavo.reminders`;
   `applyReminders()` plant tägliche lokale Notifications (Trigger `{type:'daily',hour,minute}`).
 - `app.json` hat `"plugins": ["expo-notifications"]`.
 - **Expo Go feuert nicht** (v. a. iOS) → erst im **Dev-Build**. iOS-Dev-Build: Apple-Entwickler-Konto (99 $/Jahr) + EAS.
