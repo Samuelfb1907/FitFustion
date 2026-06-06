@@ -31,5 +31,14 @@ export const supabase = createClient(
       persistSession: true,
       detectSessionInUrl: false, // wichtig für mobile Apps (kein Browser-Redirect)
     },
+    // Timeout: haengende Verbindungen (schlechtes Netz/Captive Portal) brechen nach 15s ab,
+    // damit Screens nicht ewig im Lade-Spinner haengen (der jeweilige catch/ErrorRetry greift).
+    global: {
+      fetch: (input: any, init?: any) => {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        return fetch(input, { ...init, signal: controller.signal }).finally(() => clearTimeout(timeout));
+      },
+    },
   }
 );

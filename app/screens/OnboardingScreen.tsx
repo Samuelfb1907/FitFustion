@@ -137,6 +137,8 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
     });
     let targetDate: string | null = null;
     if (goal === 'lose_weight') { const d = new Date(); d.setDate(d.getDate() + Number(timeframe) * 7); targetDate = d.toISOString().slice(0, 10); }
+    // Nur EIN aktives Ziel zulassen (Unique-Index goals_one_active_per_user): altes vorher deaktivieren
+    await supabase.from('goals').update({ is_active: false }).eq('user_id', userId).eq('is_active', true);
     const { error: gErr } = await supabase.from('goals').insert({ user_id: userId, goal_type: goal, target_weight_kg: goal === 'lose_weight' ? num(targetWeight) : null, target_date: targetDate, is_active: true });
     setSaving(false);
     if (pErr || gErr) setError('Speichern fehlgeschlagen: ' + (pErr?.message || gErr?.message));

@@ -18,21 +18,34 @@ export async function exportUserData(userId: string): Promise<Record<string, any
   }
   const { data: ownFoods } = await supabase.from('foods').select('*').eq('user_id', userId);
   out.foods_eigene = ownFoods ?? [];
+  const { data: lb } = await supabase.from('leaderboard_entries').select('*').eq('user_id', userId);
+  out.leaderboard_entries = lb ?? [];
   return out;
 }
 
 // Loescht alle Datenzeilen des Nutzers (das Auth-Konto selbst braucht die Edge Function unten).
-export async function deleteAllUserData(userId: string): Promise<void> {
+// Loescht alle Datenzeilen des Nutzers und meldet, welche Tabellen (falls ueberhaupt)
+// fehlschlugen - kein stilles Verschlucken mehr.
+export async function deleteAllUserData(userId: string): Promise<{ ok: boolean; failed: string[] }> {
+  const failed: string[] = [];
   for (const t of USER_TABLES) {
-    await supabase.from(t).delete().eq('user_id', userId);
+    const { error } = await supabase.from(t).delete().eq('user_id', userId);
+    if (error) failed.push(t);
   }
-  await supabase.from('foods').delete().eq('user_id', userId);
-  await supabase.from('profiles').delete().eq('id', userId);
+  // Bestenlisten-Eintrag (opt-in) VOR profiles entfernen
+  const lb = await supabase.from('leaderboard_entries').delete().eq('user_id', userId);
+  if (lb.error) failed.push('leaderboard_entries');
+  const fo = await supabase.from('foods').delete().eq('user_id', userId);
+  if (fo.error) failed.push('foods');
+  const pr = await supabase.from('profiles').delete().eq('id', userId);
+  if (pr.error) failed.push('profiles');
+  return { ok: failed.length === 0, failed };
 }
 
-// Versucht serverseitige Konto-Loeschung (Edge Function "delete-account").
-// Faellt immer auf die client-seitige Daten-Loeschung zurueck. serverDeleted=true => Auth-Konto entfernt.
-export async function deleteAccount(userId: string): Promise<{ serverDeleted: boolean }> {
+// Versucht serverseitige Konto-Loeschung (Edge Function "delete-account"): entfernt das
+// Auth-Konto + alle Daten per Cascade. Ist sie nicht verfuegbar, wird client-seitig geloescht.
+// Gibt ehrlich zurueck, was passiert ist (kein Falsch-Erfolg).
+export async function deleteAccount(userId: string): Promise<{ serverDeleted: boolean; dataDeleted: boolean; failed: string[] }> {
   let serverDeleted = false;
   try {
     const { error } = await supabase.functions.invoke('delete-account');
@@ -40,6 +53,7 @@ export async function deleteAccount(userId: string): Promise<{ serverDeleted: bo
   } catch {
     serverDeleted = false;
   }
-  try { await deleteAllUserData(userId); } catch {}
-  return { serverDeleted };
+  if (serverDeleted) return { serverDeleted: true, dataDeleted: true, failed: [] };
+  const r = await deleteAllUserData(userId);
+  return { serverDeleted: false, dataDeleted: r.ok, failed: r.failed };
 }

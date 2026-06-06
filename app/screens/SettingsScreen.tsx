@@ -113,8 +113,18 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
     const uid = session?.user?.id;
     if (!uid) return;
     setBusy(true); setMsg(null);
-    try { await deleteAccount(uid); } catch {}
-    await supabase.auth.signOut(); // beendet die Sitzung -> zurück zum Login
+    try {
+      const res = await deleteAccount(uid);
+      if (res.serverDeleted || res.dataDeleted) {
+        await supabase.auth.signOut(); // beendet die Sitzung -> zurück zum Login
+      } else {
+        setBusy(false);
+        showMsg('Löschung fehlgeschlagen (' + res.failed.join(', ') + '). Bitte erneut versuchen.', true);
+      }
+    } catch (e: any) {
+      setBusy(false);
+      showMsg('Löschung fehlgeschlagen: ' + (e?.message ?? ''), true);
+    }
   }
 
   // Unterseite: Profil bearbeiten

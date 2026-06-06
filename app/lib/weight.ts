@@ -32,11 +32,10 @@ export function parseWeight(input: string): number | null {
 export async function saveTodayWeight(userId: string, kg: number): Promise<string | null> {
   try {
     const today = todayStr();
-    const { data: ex } = await supabase
-      .from('progress_entries').select('id').eq('user_id', userId).eq('entry_date', today).maybeSingle();
-    const res = ex?.id
-      ? await supabase.from('progress_entries').update({ weight_kg: kg }).eq('id', ex.id)
-      : await supabase.from('progress_entries').insert({ user_id: userId, entry_date: today, weight_kg: kg });
+    // Atomar: legt an oder aktualisiert anhand des Unique-Schluessels (user_id, entry_date)
+    const res = await supabase
+      .from('progress_entries')
+      .upsert({ user_id: userId, entry_date: today, weight_kg: kg }, { onConflict: 'user_id,entry_date' });
     if (res.error) return errorMessage(res.error);
     await supabase.from('profiles').update({ weight_kg: kg }).eq('id', userId);
     return null;
