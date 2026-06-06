@@ -204,7 +204,7 @@ function makeStyles(c: Colors) {
     embedded: { paddingTop: 4, paddingHorizontal: 0, backgroundColor: 'transparent' },
     title: { fontSize: 26, fontWeight: '800', color: c.heading, marginBottom: 14 },
 
-    tile: { ...shadow, backgroundColor: c.card, borderRadius: 16, padding: 18, marginTop: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    tile: { ...shadow, backgroundColor: c.card, borderRadius: 16, padding: 18, marginTop: 12, borderWidth: 1, borderColor: c.cardBorder },
     tileLabel: { fontSize: 12, fontWeight: '800', letterSpacing: 0.8, color: c.textMuted, marginBottom: 6 },
     empty: { fontSize: 14, color: c.textMuted, fontStyle: 'italic', textAlign: 'center', paddingVertical: 8 },
 
@@ -212,7 +212,7 @@ function makeStyles(c: Colors) {
     joinIcon: { fontSize: 40, textAlign: 'center' },
     joinTitle: { fontSize: 20, fontWeight: '800', color: c.heading, textAlign: 'center', marginTop: 8 },
     joinText: { fontSize: 14, color: c.textMuted, lineHeight: 21, textAlign: 'center', marginTop: 10 },
-    privacy: { backgroundColor: c.inputBg, borderRadius: 14, padding: 12, marginTop: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    privacy: { backgroundColor: c.inputBg, borderRadius: 14, padding: 12, marginTop: 16, borderWidth: 1, borderColor: c.cardBorder },
     privacyText: { fontSize: 13, color: c.text, lineHeight: 19 },
     label: { fontSize: 13, color: c.text, fontWeight: '700', marginTop: 16, marginBottom: 6 },
     input: { backgroundColor: c.inputBg, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 16, color: c.text, borderWidth: 1, borderColor: c.border },

@@ -314,12 +314,12 @@ function makeStyles(c: Colors) {
     header: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
     greet: { fontSize: 15, color: c.textMuted, fontWeight: '500' },
     name: { fontSize: 26, fontWeight: '800', color: c.heading, marginTop: 1 },
-    levelPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 },
+    levelPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 },
     levelText: { fontSize: 13, fontWeight: '700', color: c.heading },
     levelSep: { width: StyleSheet.hairlineWidth, height: 14, backgroundColor: c.border, marginHorizontal: 9 },
 
     // Karte
-    card: { ...shadow, backgroundColor: c.card, borderRadius: 16, padding: 18, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    card: { ...shadow, backgroundColor: c.card, borderRadius: 16, padding: 18, borderWidth: 1, borderColor: c.cardBorder },
     cardHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     cardLabel: { fontSize: 12, fontWeight: '700', letterSpacing: 0.6, color: c.textMuted },
     headRight: { fontSize: 13, fontWeight: '700', color: c.textMuted },
@@ -333,7 +333,7 @@ function makeStyles(c: Colors) {
     macroLabel: { fontSize: 11, color: c.textMuted, marginTop: 3, textAlign: 'center' },
 
     // Uebersichts-Kacheln
-    stat: { ...shadow, flex: 1, backgroundColor: c.card, borderRadius: 16, paddingVertical: 16, paddingHorizontal: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    stat: { ...shadow, flex: 1, backgroundColor: c.card, borderRadius: 16, paddingVertical: 16, paddingHorizontal: 12, borderWidth: 1, borderColor: c.cardBorder },
     statLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 0.6, color: c.textMuted },
     statValue: { fontSize: 20, fontWeight: '800', color: c.heading, marginTop: 8 },
     statSub: { fontSize: 11, color: c.textMuted, marginTop: 2 },

@@ -14,6 +14,7 @@ export type Colors = {
   primary: string;   // Markenfarbe / Buttons
   onPrimary: string; // Text auf primary
   border: string;
+  cardBorder: string; // dezenter Smaragd-Rahmen um Widget-Karten
   inputBg: string;
   danger: string;
   success: string;
@@ -28,13 +29,13 @@ export type Colors = {
 // Funktioniert in Hell UND Dunkel (Dark Mode bleibt erhalten).
 const LIGHT: Colors = {
   bg: '#F5F6F8', card: '#FFFFFF', text: '#1B1F24', textMuted: '#6B727C', heading: '#0E1217',
-  primary: '#0E9F6E', onPrimary: '#FFFFFF', border: '#E8EAED', inputBg: '#F2F4F6',
+  primary: '#0E9F6E', onPrimary: '#FFFFFF', border: '#E8EAED', cardBorder: '#84CDB1', inputBg: '#F2F4F6',
   danger: '#E5484D', success: '#0E9F6E', track: '#ECEEF1',
   accent: '#0E9F6E', hero: '#0E1217', muscle: '#E2E6EA',
 };
 const DARK: Colors = {
   bg: '#0F1216', card: '#181C21', text: '#E8EBEF', textMuted: '#969EA8', heading: '#F3F5F7',
-  primary: '#16B486', onPrimary: '#04231A', border: '#252A30', inputBg: '#1D2228',
+  primary: '#16B486', onPrimary: '#04231A', border: '#252A30', cardBorder: '#33785A', inputBg: '#1D2228',
   danger: '#FF6B6B', success: '#1FB587', track: '#252A30',
   accent: '#1FB587', hero: '#11221C', muscle: '#2A2F36',
 };
