@@ -1,5 +1,5 @@
 // Einstellungen: Profil-Unterseite, Dark-Mode-Schalter, Abmelden und übliche App-Einstellungen.
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Platform, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
@@ -21,7 +21,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
   const { session, refreshProfile } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const c = useColors();
-  const styles = makeStyles(c);
+  const styles = useMemo(() => makeStyles(c), [c]);
 
   const [view, setView] = useState<'menu' | 'profile' | 'legal' | 'privacy' | 'impressum'>('menu');
   const [rem, setRem] = useState<ReminderPrefs | null>(null);

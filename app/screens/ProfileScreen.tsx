@@ -1,5 +1,5 @@
 // Profil: persönliche Daten & Ziel bearbeiten (vorausgefüllt, speichert in profiles + goals).
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -43,7 +43,7 @@ const ENVIRONMENTS: Opt[] = [
 export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
   const { session, refreshProfile } = useAuth();
   const c = useColors();
-  const styles = makeStyles(c);
+  const styles = useMemo(() => makeStyles(c), [c]);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -196,10 +196,10 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
       {renderChoice(GENDERS, gender, setGender)}
 
       <Text style={styles.label}>Körpergewicht (kg)</Text>
-      <TextInput style={styles.input} value={weight} onChangeText={setWeight} keyboardType="numeric" placeholder="z. B. 78" placeholderTextColor={c.textMuted} />
+      <TextInput style={styles.input} value={weight} onChangeText={setWeight} keyboardType="numeric" inputMode="decimal" placeholder="z. B. 78" placeholderTextColor={c.textMuted} />
 
       <Text style={styles.label}>Körpergröße (cm)</Text>
-      <TextInput style={styles.input} value={height} onChangeText={setHeight} keyboardType="numeric" placeholder="z. B. 180" placeholderTextColor={c.textMuted} />
+      <TextInput style={styles.input} value={height} onChangeText={setHeight} keyboardType="numeric" inputMode="decimal" placeholder="z. B. 180" placeholderTextColor={c.textMuted} />
 
       <Text style={styles.label}>Aktivitätslevel</Text>
       {renderChoice(ACTIVITY, activity, setActivity)}
@@ -216,7 +216,7 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
       {goal === 'lose_weight' && (
         <>
           <Text style={styles.label}>Traumgewicht (kg)</Text>
-          <TextInput style={styles.input} value={targetWeight} onChangeText={setTargetWeight} keyboardType="numeric" placeholder="z. B. 72" placeholderTextColor={c.textMuted} />
+          <TextInput style={styles.input} value={targetWeight} onChangeText={setTargetWeight} keyboardType="numeric" inputMode="decimal" placeholder="z. B. 72" placeholderTextColor={c.textMuted} />
         </>
       )}
 

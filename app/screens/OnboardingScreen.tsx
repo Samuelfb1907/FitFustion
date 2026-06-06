@@ -1,5 +1,5 @@
 // Onboarding (themed): 5 Schritte (persönliche Daten, Allergien, Erfahrung, Umgebung, Ziel).
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -78,7 +78,7 @@ function MultiChoice({ options, values, onToggle, styles }: { options: Opt[]; va
 export default function OnboardingScreen({ onDone }: { onDone: () => Promise<void> | void }) {
   const { session } = useAuth();
   const c = useColors();
-  const styles = makeStyles(c);
+  const styles = useMemo(() => makeStyles(c), [c]);
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -167,7 +167,7 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
             <Text style={styles.label}>Körpergewicht (kg)</Text>
             <TextInput style={styles.input} value={weight} onChangeText={setWeight} placeholder="z. B. 78" placeholderTextColor={c.textMuted} keyboardType="numeric" inputMode="decimal" />
             <Text style={styles.label}>Körpergröße (cm)</Text>
-            <TextInput style={styles.input} value={height} onChangeText={setHeight} placeholder="z. B. 180" placeholderTextColor={c.textMuted} keyboardType="numeric" />
+            <TextInput style={styles.input} value={height} onChangeText={setHeight} placeholder="z. B. 180" placeholderTextColor={c.textMuted} keyboardType="numeric" inputMode="decimal" />
             <Text style={styles.label}>Aktivitätslevel</Text>
             <Choice options={ACTIVITY} value={activity} onChange={setActivity} styles={styles} />
           </View>
@@ -189,7 +189,7 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
             {goal === 'lose_weight' && (
               <View style={{ marginTop: 8 }}>
                 <Text style={styles.label}>Traumgewicht (kg)</Text>
-                <TextInput style={styles.input} value={targetWeight} onChangeText={setTargetWeight} placeholder="z. B. 72" placeholderTextColor={c.textMuted} keyboardType="numeric" />
+                <TextInput style={styles.input} value={targetWeight} onChangeText={setTargetWeight} placeholder="z. B. 72" placeholderTextColor={c.textMuted} keyboardType="numeric" inputMode="decimal" />
                 <Text style={styles.label}>Zielzeitraum</Text>
                 <Choice options={TIMEFRAMES} value={timeframe} onChange={setTimeframe} styles={styles} />
               </View>

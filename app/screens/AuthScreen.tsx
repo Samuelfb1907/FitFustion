@@ -1,5 +1,5 @@
-// Login-/Registrierungs-Screen – professionell, mit dezentem Punkteraster-Hintergrund (SVG).
-import { useRef, useState } from 'react';
+// Login-/Registrierungs-Screen – Clean-Light, mit dezentem Smaragd-Hintergrund (Ambient).
+import { useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
@@ -20,7 +20,7 @@ function translateError(msg: string): string {
 
 export default function AuthScreen() {
   const c = useColors();
-  const styles = makeStyles(c);
+  const styles = useMemo(() => makeStyles(c), [c]);
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

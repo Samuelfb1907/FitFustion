@@ -230,6 +230,8 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
   const current = weights.length ? weights[weights.length - 1].kg : profileWeight;
   const start = weights.length ? weights[0].kg : null;
   const delta = current != null && start != null && weights.length >= 2 ? Math.round((current - start) * 10) / 10 : null;
+  // Chart auf die letzten ~120 Eintraege begrenzen (Performance bei langer Historie).
+  const chartWeights = weights.length > 120 ? weights.slice(-120) : weights;
   const d7 = deltaOver(weights, 7);
   const d30 = deltaOver(weights, 30);
   // Vorzeichen Richtung Ziel (ueber=abnehmen gut, unter=zunehmen gut). Ohne Ziel neutral.
@@ -308,10 +310,10 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
 
             {weights.length >= 2 ? (
               <View style={styles.chartWrap}>
-                <LineChart values={weights.map((w) => w.kg)} width={chartW} height={120} color={c.primary} c={c} goal={targetWeight} showMinMax />
+                <LineChart values={chartWeights.map((w) => w.kg)} width={chartW} height={120} color={c.primary} c={c} goal={targetWeight} showMinMax />
                 <View style={styles.chartAxis}>
-                  <Text style={styles.axisLabel}>{ddmm(weights[0].date)}</Text>
-                  <Text style={styles.axisLabel}>{ddmm(weights[weights.length - 1].date)}</Text>
+                  <Text style={styles.axisLabel}>{ddmm(chartWeights[0].date)}</Text>
+                  <Text style={styles.axisLabel}>{ddmm(chartWeights[chartWeights.length - 1].date)}</Text>
                 </View>
               </View>
             ) : (
@@ -338,6 +340,7 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
                 placeholder="Heutiges Gewicht (kg)"
                 placeholderTextColor={c.textMuted}
                 keyboardType="numeric"
+                inputMode="decimal"
               />
               <TouchableOpacity style={[styles.saveBtn, savingW && { opacity: 0.6 }]} onPress={saveWeight} disabled={savingW}>
                 {savingW ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.saveText}>Eintragen</Text>}

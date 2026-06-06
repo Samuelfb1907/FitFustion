@@ -1,6 +1,6 @@
 // Essen-Hub: oben umschalten zwischen Tracker (Tagebuch) und Wasser.
 // Beide Unter-Screens bleiben gemountet (sofortiges Umschalten, Zustand bleibt erhalten).
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import Segmented from '../components/Segmented';
@@ -12,7 +12,7 @@ type Seg = 'tracker' | 'water';
 
 export default function EssenScreen({ focusTick }: { focusTick?: number }) {
   const c = useColors();
-  const styles = makeStyles(c);
+  const styles = useMemo(() => makeStyles(c), [c]);
   const [seg, setSeg] = useState<Seg>('tracker');
 
   // Reiter erneut angetippt -> zurueck zum Tracker

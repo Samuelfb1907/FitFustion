@@ -65,7 +65,7 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
   const { session, profile } = useAuth();
   const userId = session?.user?.id;
   const c = useColors();
-  const styles = makeStyles(c);
+  const styles = useMemo(() => makeStyles(c), [c]);
 
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);

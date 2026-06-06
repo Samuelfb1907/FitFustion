@@ -1,5 +1,5 @@
 // Eigener Wasser-Tracker (Reiter unter "Essen"), Bento-Stil. Liest/schreibt water_logs.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -23,7 +23,7 @@ export default function WaterScreen({ embedded, focusTick }: { embedded?: boolea
   const { session } = useAuth();
   const userId = session?.user?.id;
   const c = useColors();
-  const styles = makeStyles(c);
+  const styles = useMemo(() => makeStyles(c), [c]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
