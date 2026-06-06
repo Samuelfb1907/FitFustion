@@ -40,11 +40,11 @@ Der **bezahlte** RapidAPI/ExerciseDB-Key steckt aktuell als `EXPO_PUBLIC_EXERCIS
 Da der alte Key öffentlich war: bei RapidAPI einen **neuen** ExerciseDB-Key erzeugen, den alten **löschen** und ein **Spend-Limit** setzen.
 
 ### Schritt 2 – Funktion deployen
-**Dashboard:** Edge Functions → Create function → Name `exercisedb-image` → Code aus `supabase/functions/exercisedb-image/index.ts` einfügen → Deploy. Dann unter **Settings → Functions → Verify JWT** für diese Funktion **deaktivieren** (es werden nur öffentliche GIFs durchgereicht).
+**Dashboard:** Edge Functions → Create a function → Name `exercisedb-image` → Code aus `supabase/functions/exercisedb-image/index.ts` einfügen → Deploy. **„Verify JWT" kann ON bleiben** (Standard) – die App sendet automatisch den Supabase-Anon-Key mit.
 
 **CLI:**
 ```bash
-supabase functions deploy exercisedb-image --no-verify-jwt
+supabase functions deploy exercisedb-image
 ```
 
 ### Schritt 3 – Key als Secret hinterlegen (NICHT im Client!)
