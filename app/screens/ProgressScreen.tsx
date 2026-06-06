@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { LineChart, BarChart } from '../components/Charts';
+import SwipeBack from '../components/SwipeBack';
 import ExerciseProgress from '../components/ExerciseProgress';
 import ErrorRetry from '../components/ErrorRetry';
 import Segmented from '../components/Segmented';
@@ -253,11 +254,7 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
     { icon: '🔥', label: 'Diese Woche', value: `${grp(stats.weekVolume)} kg` },
   ];
 
-  if (selExercise) {
-    return <ExerciseProgress exerciseId={selExercise.id} exerciseName={selExercise.name} c={c} onBack={() => setSelExercise(null)} />;
-  }
-
-  return (
+  const baseView = (
     <View style={styles.container}>
       <Text style={styles.title}>Fortschritt</Text>
       <View style={{ height: 14 }} />
@@ -452,6 +449,16 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
       )}
     </View>
   );
+
+  if (selExercise) {
+    return (
+      <SwipeBack onBack={() => setSelExercise(null)} c={c} behind={baseView}>
+        <ExerciseProgress exerciseId={selExercise.id} exerciseName={selExercise.name} c={c} onBack={() => setSelExercise(null)} />
+      </SwipeBack>
+    );
+  }
+
+  return baseView;
 }
 
 function DeltaChip({ label, value, color, styles }: { label: string; value: number | null; color: string; styles: any }) {
