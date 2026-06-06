@@ -1,10 +1,10 @@
 // DSGVO-Funktionen: Datenexport (Art. 15/20) und Loeschung aller Nutzerdaten (Art. 17).
 import { supabase } from './supabase';
 
-// Reihenfolge: Kinder vor Eltern (FK-sicher); foods erst NACH food_logs/recipe_items; profiles zuletzt.
+// Reihenfolge: Kinder vor Eltern (FK-sicher); foods erst NACH food_logs; profiles zuletzt.
 const USER_TABLES = [
   'set_logs', 'workout_sessions', 'plan_schedule', 'workout_plan_exercises', 'workout_plan_days', 'workout_plans',
-  'meals', 'nutrition_plans', 'recipe_items', 'recipes', 'food_logs', 'water_logs', 'progress_entries', 'goals', 'user_achievements',
+  'food_logs', 'water_logs', 'progress_entries', 'goals', 'user_achievements',
 ];
 
 // Sammelt alle personenbezogenen Daten des Nutzers als JSON-Objekt.

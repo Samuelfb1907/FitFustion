@@ -4,7 +4,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOp
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
-import { ageFromBirthDate } from '../lib/nutrition';
+import { buildBirthDate, splitBirthDate } from '../lib/birthdate';
 
 type Opt = { label: string; value: string };
 const GENDERS: Opt[] = [
@@ -51,7 +51,9 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
   const [isError, setIsError] = useState(false);
 
   const [firstName, setFirstName] = useState('');
-  const [age, setAge] = useState('');
+  const [birthDay, setBirthDay] = useState('');
+  const [birthMonth, setBirthMonth] = useState('');
+  const [birthYear, setBirthYear] = useState('');
   const [gender, setGender] = useState('');
   const [weight, setWeight] = useState('');
   const [height, setHeight] = useState('');
@@ -60,7 +62,6 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
   const [environment, setEnvironment] = useState('');
   const [goal, setGoal] = useState('');
   const [targetWeight, setTargetWeight] = useState('');
-  const [origBirthDate, setOrigBirthDate] = useState<string | null>(null);
 
   const num = (v: string) => Number(v.replace(',', '.'));
 
@@ -83,8 +84,8 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
         .maybeSingle();
       if (prof) {
         setFirstName(prof.first_name ?? '');
-        setOrigBirthDate(prof.birth_date ?? null);
-        setAge(prof.birth_date ? String(ageFromBirthDate(prof.birth_date)) : '');
+        const b = splitBirthDate(prof.birth_date);
+        setBirthDay(b.day); setBirthMonth(b.month); setBirthYear(b.year);
         setGender(prof.gender ?? '');
         setWeight(prof.weight_kg != null ? String(prof.weight_kg) : '');
         setHeight(prof.height_cm != null ? String(prof.height_cm) : '');
@@ -107,7 +108,7 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
     // feldspezifische Validierung mit klaren Meldungen
     let err = '';
     if (!firstName.trim()) err = 'Bitte einen Vornamen eingeben.';
-    else if (!(num(age) >= 10 && num(age) <= 100)) err = 'Alter muss zwischen 10 und 100 liegen.';
+    else if (!buildBirthDate(birthDay, birthMonth, birthYear)) err = 'Bitte ein gültiges Geburtsdatum eingeben (TT/MM/JJJJ).';
     else if (!gender) err = 'Bitte wähle dein Geschlecht.';
     else if (!(num(weight) >= 30 && num(weight) <= 300)) err = 'Gewicht muss zwischen 30 und 300 kg liegen.';
     else if (!(num(height) >= 100 && num(height) <= 250)) err = 'Größe muss zwischen 100 und 250 cm liegen.';
@@ -117,11 +118,7 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
     if (err) { setMsg(err); setIsError(true); return; }
     setSaving(true);
     setMsg(null);
-    // Geburtsdatum erhalten: nur wenn sich das Alter geändert hat, neu setzen (sonst Monat/Tag bewahren)
-    const enteredAge = Math.round(num(age));
-    const birth_date = origBirthDate && ageFromBirthDate(origBirthDate) === enteredAge
-      ? origBirthDate
-      : `${new Date().getFullYear() - enteredAge}-01-01`;
+    const birth_date = buildBirthDate(birthDay, birthMonth, birthYear)!; // oben validiert
 
     const { error: pErr } = await supabase.from('profiles').upsert({
       id: userId,
@@ -189,8 +186,12 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
       <Text style={styles.label}>Vorname</Text>
       <TextInput style={styles.input} value={firstName} onChangeText={setFirstName} placeholder="Vorname" placeholderTextColor={c.textMuted} />
 
-      <Text style={styles.label}>Alter</Text>
-      <TextInput style={styles.input} value={age} onChangeText={setAge} keyboardType="numeric" placeholder="z. B. 28" placeholderTextColor={c.textMuted} />
+      <Text style={styles.label}>Geburtsdatum</Text>
+      <View style={styles.dateRow}>
+        <TextInput style={[styles.input, styles.dateField]} value={birthDay} onChangeText={setBirthDay} keyboardType="numeric" inputMode="numeric" maxLength={2} placeholder="TT" placeholderTextColor={c.textMuted} />
+        <TextInput style={[styles.input, styles.dateField]} value={birthMonth} onChangeText={setBirthMonth} keyboardType="numeric" inputMode="numeric" maxLength={2} placeholder="MM" placeholderTextColor={c.textMuted} />
+        <TextInput style={[styles.input, styles.dateFieldYear]} value={birthYear} onChangeText={setBirthYear} keyboardType="numeric" inputMode="numeric" maxLength={4} placeholder="JJJJ" placeholderTextColor={c.textMuted} />
+      </View>
 
       <Text style={styles.label}>Geschlecht</Text>
       {renderChoice(GENDERS, gender, setGender)}
@@ -237,6 +238,9 @@ function makeStyles(c: Colors) {
     subtitle: { fontSize: 15, color: c.textMuted, marginTop: 2, marginBottom: 8 },
     label: { fontSize: 14, color: c.text, fontWeight: '600', marginTop: 16, marginBottom: 6 },
     input: { borderWidth: 1, borderColor: c.border, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 16, backgroundColor: c.inputBg, color: c.text },
+    dateRow: { flexDirection: 'row', gap: 10 },
+    dateField: { flex: 1, textAlign: 'center' },
+    dateFieldYear: { flex: 1.5, textAlign: 'center' },
     choiceWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     choice: { borderWidth: 1, borderColor: c.border, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: c.card },
     choiceActive: { backgroundColor: c.primary, borderColor: c.primary },

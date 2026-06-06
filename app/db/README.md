@@ -24,6 +24,7 @@ Alle `.sql`-Dateien werden **manuell** im Supabase **SQL Editor** ausgeführt
 | 16 | `016_integrity.sql` | Unique-/Integritäts-Constraints |
 | 17 | `017_leaderboard.sql` | leaderboard_entries (opt-in Bestenliste) |
 | 18 | `018_audit_fixes.sql` | FK-Korrektur, set_logs-Indizes/Unique, foods-Policy |
+| 19 | `019_drop_unused.sql` | Ungenutzte Tabellen entfernt (recipes/recipe_items/nutrition_plans/meals) |
 
 ## Hinweise
 - **Reihenfolge zählt:** Spätere Migrationen bauen auf früheren auf.

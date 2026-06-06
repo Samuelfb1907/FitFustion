@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import Ambient from '../components/Ambient';
+import { buildBirthDate } from '../lib/birthdate';
 
 type Opt = { label: string; value: string };
 
@@ -84,7 +85,9 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
   const [error, setError] = useState<string | null>(null);
 
   const [firstName, setFirstName] = useState('');
-  const [age, setAge] = useState('');
+  const [birthDay, setBirthDay] = useState('');
+  const [birthMonth, setBirthMonth] = useState('');
+  const [birthYear, setBirthYear] = useState('');
   const [gender, setGender] = useState('');
   const [weight, setWeight] = useState('');
   const [height, setHeight] = useState('');
@@ -101,7 +104,7 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
   function toggleAllergy(v: string) { setAllergies((prev) => (prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v])); }
 
   function stepValid(): boolean {
-    if (step === 1) return firstName.trim().length > 0 && num(age) >= 10 && num(age) <= 100 && !!gender && num(weight) >= 30 && num(weight) <= 300 && num(height) >= 100 && num(height) <= 250;
+    if (step === 1) return firstName.trim().length > 0 && !!buildBirthDate(birthDay, birthMonth, birthYear) && !!gender && num(weight) >= 30 && num(weight) <= 300 && num(height) >= 100 && num(height) <= 250;
     if (step === 2) return true;
     if (step === 3) return !!experience;
     if (step === 4) return !!environment;
@@ -111,7 +114,7 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
   function stepError(): string | null {
     if (step === 1) {
       if (!firstName.trim()) return 'Bitte einen Vornamen eingeben.';
-      if (!(num(age) >= 10 && num(age) <= 100)) return 'Alter muss zwischen 10 und 100 liegen.';
+      if (!buildBirthDate(birthDay, birthMonth, birthYear)) return 'Bitte ein gültiges Geburtsdatum eingeben (TT/MM/JJJJ).';
       if (!gender) return 'Bitte wähle dein Geschlecht.';
       if (!(num(weight) >= 30 && num(weight) <= 300)) return 'Gewicht muss zwischen 30 und 300 kg liegen.';
       if (!(num(height) >= 100 && num(height) <= 250)) return 'Größe muss zwischen 100 und 250 cm liegen.';
@@ -131,9 +134,10 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
     if (!session?.user) return;
     setSaving(true); setError(null);
     const userId = session.user.id;
-    const birthYear = new Date().getFullYear() - Math.round(num(age));
+    const birth_date = buildBirthDate(birthDay, birthMonth, birthYear);
+    if (!birth_date) { setSaving(false); setError('Bitte ein gültiges Geburtsdatum eingeben (TT/MM/JJJJ).'); return; }
     const { error: pErr } = await supabase.from('profiles').upsert({
-      id: userId, first_name: firstName.trim(), birth_date: `${birthYear}-01-01`, gender,
+      id: userId, first_name: firstName.trim(), birth_date, gender,
       weight_kg: num(weight), height_cm: num(height), activity_level: activity, allergies, experience_level: experience, training_environment: environment,
     });
     let targetDate: string | null = null;
@@ -160,8 +164,12 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
             <Text style={styles.title}>Erzähl uns von dir</Text>
             <Text style={styles.label}>Vorname</Text>
             <TextInput style={styles.input} value={firstName} onChangeText={setFirstName} placeholder="z. B. Samuel" placeholderTextColor={c.textMuted} />
-            <Text style={styles.label}>Alter</Text>
-            <TextInput style={styles.input} value={age} onChangeText={setAge} placeholder="z. B. 28" placeholderTextColor={c.textMuted} keyboardType="numeric" />
+            <Text style={styles.label}>Geburtsdatum</Text>
+            <View style={styles.dateRow}>
+              <TextInput style={[styles.input, styles.dateField]} value={birthDay} onChangeText={setBirthDay} placeholder="TT" placeholderTextColor={c.textMuted} keyboardType="numeric" inputMode="numeric" maxLength={2} />
+              <TextInput style={[styles.input, styles.dateField]} value={birthMonth} onChangeText={setBirthMonth} placeholder="MM" placeholderTextColor={c.textMuted} keyboardType="numeric" inputMode="numeric" maxLength={2} />
+              <TextInput style={[styles.input, styles.dateFieldYear]} value={birthYear} onChangeText={setBirthYear} placeholder="JJJJ" placeholderTextColor={c.textMuted} keyboardType="numeric" inputMode="numeric" maxLength={4} />
+            </View>
             <Text style={styles.label}>Geschlecht</Text>
             <Choice options={GENDERS} value={gender} onChange={setGender} styles={styles} />
             <Text style={styles.label}>Körpergewicht (kg)</Text>
@@ -222,6 +230,9 @@ function makeStyles(c: Colors) {
     hint: { fontSize: 14, color: c.textMuted, marginBottom: 16, lineHeight: 20 },
     label: { fontSize: 14, color: c.text, fontWeight: '600', marginTop: 14, marginBottom: 6 },
     input: { borderWidth: 1, borderColor: c.border, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 16, backgroundColor: c.inputBg, color: c.text },
+    dateRow: { flexDirection: 'row', gap: 10 },
+    dateField: { flex: 1, textAlign: 'center' },
+    dateFieldYear: { flex: 1.5, textAlign: 'center' },
     choiceWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     choice: { borderWidth: 1, borderColor: c.border, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: c.card },
     choiceActive: { backgroundColor: c.primary, borderColor: c.primary },
