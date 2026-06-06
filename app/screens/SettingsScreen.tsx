@@ -293,7 +293,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
 
 function makeStyles(c: Colors) {
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: c.bg, paddingTop: 56, paddingHorizontal: 16 },
+    container: { flex: 1, backgroundColor: 'transparent', paddingTop: 56, paddingHorizontal: 16 },
     title: { fontSize: 26, fontWeight: '800', color: c.heading, marginBottom: 16 },
     section: { fontSize: 12, fontWeight: '700', letterSpacing: 0.8, color: c.textMuted, marginTop: 14, marginBottom: 8, marginLeft: 4 },
     card: { backgroundColor: c.card, borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border, overflow: 'hidden' },

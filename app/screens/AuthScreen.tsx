@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import LegalText from '../components/LegalText';
 import { DISCLAIMER_VERSION } from '../lib/legal';
+import Ambient from '../components/Ambient';
 
 function translateError(msg: string): string {
   const m = msg.toLowerCase();
@@ -68,6 +69,7 @@ export default function AuthScreen() {
 
   return (
     <View style={styles.root}>
+      <Ambient c={c} />
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <View style={styles.brand}>

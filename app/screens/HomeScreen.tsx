@@ -305,7 +305,7 @@ function GoalRow({ g, last, c, styles }: { g: Goal; last: boolean; c: Colors; st
 
 function makeStyles(c: Colors) {
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: c.bg },
+    container: { flex: 1, backgroundColor: 'transparent' },
     scroll: { paddingTop: 60, paddingHorizontal: 18, paddingBottom: 36 },
     stack: { gap: 16 },
     row: { flexDirection: 'row', gap: 12 },

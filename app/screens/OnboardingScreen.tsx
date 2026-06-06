@@ -4,6 +4,7 @@ import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleShe
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
+import Ambient from '../components/Ambient';
 
 type Opt = { label: string; value: string };
 
@@ -147,6 +148,7 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <Ambient c={c} />
       <View style={styles.progress}>
         {[1, 2, 3, 4, 5].map((s) => (<View key={s} style={[styles.progressBar, s <= step && styles.progressBarActive]} />))}
       </View>

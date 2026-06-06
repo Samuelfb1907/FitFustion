@@ -462,7 +462,7 @@ function DeltaChip({ label, value, color, styles }: { label: string; value: numb
 
 function makeStyles(c: Colors) {
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: c.bg, paddingTop: 56, paddingHorizontal: 16 },
+    container: { flex: 1, backgroundColor: 'transparent', paddingTop: 56, paddingHorizontal: 16 },
     title: { fontSize: 26, fontWeight: '800', color: c.heading },
     subtitle: { fontSize: 15, color: c.textMuted, marginTop: 2, marginBottom: 16 },
 

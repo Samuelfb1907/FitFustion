@@ -8,6 +8,7 @@ import TrainingScreen from './TrainingScreen';
 import EssenScreen from './EssenScreen';
 import ProgressScreen from './ProgressScreen';
 import SettingsScreen from './SettingsScreen';
+import Ambient from '../components/Ambient';
 
 type Tab = 'home' | 'training' | 'essen' | 'progress' | 'settings';
 
@@ -43,6 +44,7 @@ export default function MainTabs() {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
+      <Ambient c={c} />
       <View style={{ flex: 1 }}>
         {mounted.home && <Page active={tab === 'home'}><HomeScreen onNavigate={(t) => go(t as Tab)} focusTick={ticks.home} /></Page>}
         {mounted.training && <Page active={tab === 'training'}><TrainingScreen focusTick={ticks.training} /></Page>}
