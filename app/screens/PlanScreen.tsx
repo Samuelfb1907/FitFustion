@@ -204,10 +204,9 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
     if (!userId) return;
     setGenerating(true); setError(null);
     try {
-      await supabase.from('workout_plans').update({ is_active: false }).eq('user_id', userId).eq('is_active', true);
-      await supabase.from('plan_schedule').delete().eq('user_id', userId); // Wochenplan zuruecksetzen
-      setSchedule({});
-      const { data: plan, error: pErr } = await supabase.from('workout_plans').insert({ user_id: userId, name: `Mein ${n}-Tage-Plan`, is_active: true }).select('id').single();
+      // Neuen Plan ERST vollstaendig (INAKTIV) aufbauen - der alte bleibt aktiv/intakt,
+      // bis der neue fertig ist. So gibt es bei Abbruch mittendrin keinen Datenverlust.
+      const { data: plan, error: pErr } = await supabase.from('workout_plans').insert({ user_id: userId, name: `Mein ${n}-Tage-Plan`, is_active: false }).select('id').single();
       if (pErr || !plan) throw pErr ?? new Error('Plan konnte nicht erstellt werden.');
       const template = SPLITS[n];
       const allKeys = Array.from(new Set(template.flatMap((d) => d.muscles)));
@@ -235,6 +234,11 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
         });
       });
       if (peInsert.length) { const { error: peErr } = await supabase.from('workout_plan_exercises').insert(peInsert); if (peErr) throw peErr; }
+      // Erst JETZT umschalten: alten Plan deaktivieren, neuen aktivieren, alten Wochenplan loeschen.
+      await supabase.from('workout_plans').update({ is_active: false }).eq('user_id', userId).eq('is_active', true);
+      await supabase.from('workout_plans').update({ is_active: true }).eq('id', plan.id);
+      await supabase.from('plan_schedule').delete().eq('user_id', userId);
+      setSchedule({});
       await loadPlan();
     } catch (e: any) {
       setError(e?.message ?? 'Fehler bei der Plan-Erstellung.');
