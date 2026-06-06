@@ -1,7 +1,6 @@
 // Login-/Registrierungs-Screen – professionell, mit dezentem Punkteraster-Hintergrund (SVG).
-import { useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Dimensions, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
+import { useRef, useState } from 'react';
+import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { useColors, Colors } from '../contexts/ThemeContext';
@@ -16,28 +15,6 @@ function translateError(msg: string): string {
   if (m.includes('invalid email') || m.includes('unable to validate email')) return 'Bitte eine gültige E-Mail-Adresse eingeben.';
   if (m.includes('email not confirmed')) return 'Bitte bestätige zuerst deine E-Mail (Postfach prüfen).';
   return msg;
-}
-
-// Dezentes Punkteraster + zwei softe Akzent-Kreise als professioneller Hintergrund.
-function PatternBackground({ c }: { c: Colors }) {
-  const { width: W, height: H } = Dimensions.get('window');
-  const dots = useMemo(() => {
-    const arr: any[] = [];
-    const SP = 30;
-    for (let y = SP; y < H; y += SP) {
-      for (let x = SP; x < W; x += SP) {
-        arr.push(<Circle key={`${x}_${y}`} cx={x} cy={y} r={1.3} fill={c.textMuted} opacity={0.16} />);
-      }
-    }
-    return arr;
-  }, [W, H, c.textMuted]);
-  return (
-    <Svg style={StyleSheet.absoluteFill} width={W} height={H} pointerEvents="none">
-      <Circle cx={W * 0.92} cy={H * 0.07} r={140} fill={c.primary} opacity={0.06} />
-      <Circle cx={W * 0.04} cy={H * 0.93} r={160} fill={c.primary} opacity={0.05} />
-      {dots}
-    </Svg>
-  );
 }
 
 export default function AuthScreen() {
@@ -91,10 +68,10 @@ export default function AuthScreen() {
 
   return (
     <View style={styles.root}>
-      <PatternBackground c={c} />
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <View style={styles.brand}>
+            <View style={styles.logo}><Text style={styles.logoMark}>F</Text></View>
             <Text style={styles.wordmark}>FitAvo</Text>
             <Text style={styles.tagline}>FITNESS · ERNÄHRUNG · FORTSCHRITT</Text>
           </View>
@@ -203,52 +180,51 @@ function makeStyles(c: Colors) {
   return StyleSheet.create({
     root: { flex: 1, backgroundColor: c.bg },
     flex: { flex: 1 },
-    scroll: { flexGrow: 1, justifyContent: 'flex-start', paddingHorizontal: 26, paddingTop: 70, paddingBottom: 48 },
+    scroll: { flexGrow: 1, justifyContent: 'flex-start', paddingHorizontal: 28, paddingTop: 64, paddingBottom: 48 },
 
-    brand: { alignItems: 'center', marginBottom: 32 },
-    wordmark: { fontSize: 30, fontWeight: '800', color: c.heading, letterSpacing: 0.5 },
-    tagline: { fontSize: 11, fontWeight: '700', letterSpacing: 2.5, color: c.textMuted, marginTop: 9 },
+    brand: { alignItems: 'center', marginBottom: 36 },
+    logo: { width: 60, height: 60, borderRadius: 18, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+    logoMark: { color: c.onPrimary, fontSize: 30, fontWeight: '800' },
+    wordmark: { fontSize: 28, fontWeight: '800', color: c.heading, letterSpacing: 0.2 },
+    tagline: { fontSize: 11, fontWeight: '700', letterSpacing: 2, color: c.textMuted, marginTop: 8 },
 
-    form: { width: '100%', maxWidth: 400, alignSelf: 'center' },
-    heading: { fontSize: 24, fontWeight: '800', color: c.heading },
+    form: { width: '100%', maxWidth: 420, alignSelf: 'center' },
+    heading: { fontSize: 22, fontWeight: '800', color: c.heading },
     sub: { fontSize: 14, color: c.textMuted, marginTop: 6 },
 
-    fieldWrap: { marginTop: 16 },
-    fieldLabel: { fontSize: 12, fontWeight: '600', color: c.text, marginBottom: 7 },
+    fieldWrap: { marginTop: 18 },
+    fieldLabel: { fontSize: 13, fontWeight: '600', color: c.text, marginBottom: 8 },
     fieldInput: {
-      backgroundColor: c.card, borderWidth: 1, borderColor: c.border, borderRadius: 12,
+      backgroundColor: c.inputBg, borderWidth: 1.5, borderColor: 'transparent', borderRadius: 12,
       paddingHorizontal: 14, paddingVertical: 14, fontSize: 16, color: c.text,
     },
-    fieldInputFocused: { borderColor: c.primary },
-    pwToggle: { position: 'absolute', right: 6, top: 0, bottom: 0, justifyContent: 'center', paddingHorizontal: 8 },
+    fieldInputFocused: { borderColor: c.primary, backgroundColor: c.card },
+    pwToggle: { position: 'absolute', right: 6, top: 0, bottom: 0, justifyContent: 'center', paddingHorizontal: 10 },
     pwToggleText: { fontSize: 18 },
 
     forgotWrap: { alignSelf: 'flex-end', marginTop: 12 },
     forgot: { color: c.primary, fontSize: 13, fontWeight: '600' },
 
-    button: {
-      backgroundColor: c.primary, borderRadius: 12, paddingVertical: 16, alignItems: 'center', marginTop: 22,
-      shadowColor: c.primary, shadowOpacity: 0.28, shadowRadius: 12, shadowOffset: { width: 0, height: 5 }, elevation: 4,
-    },
-    buttonDisabled: { opacity: 0.5 },
-    buttonText: { color: c.onPrimary, fontSize: 16, fontWeight: '800', letterSpacing: 0.3 },
+    button: { backgroundColor: c.primary, borderRadius: 12, paddingVertical: 16, alignItems: 'center', marginTop: 24 },
+    buttonDisabled: { opacity: 0.45 },
+    buttonText: { color: c.onPrimary, fontSize: 16, fontWeight: '700', letterSpacing: 0.2 },
 
-    infoBox: { backgroundColor: c.inputBg, borderLeftWidth: 3, borderRadius: 8, paddingVertical: 11, paddingHorizontal: 14, marginTop: 16 },
+    infoBox: { backgroundColor: c.inputBg, borderLeftWidth: 3, borderRadius: 10, paddingVertical: 12, paddingHorizontal: 14, marginTop: 18 },
     info: { fontSize: 14, lineHeight: 19 },
 
-    switchWrap: { marginTop: 22, alignItems: 'center' },
+    switchWrap: { marginTop: 24, alignItems: 'center' },
     switchText: { fontSize: 14, color: c.textMuted },
     switchLink: { color: c.primary, fontWeight: '700' },
 
-    acceptRow: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 16 },
-    checkbox: { width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: c.border, alignItems: 'center', justifyContent: 'center', marginRight: 10, marginTop: 1 },
+    acceptRow: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 18 },
+    checkbox: { width: 24, height: 24, borderRadius: 7, borderWidth: 2, borderColor: c.border, alignItems: 'center', justifyContent: 'center', marginRight: 11, marginTop: 1 },
     checkboxOn: { backgroundColor: c.primary, borderColor: c.primary },
     checkmark: { color: c.onPrimary, fontSize: 15, fontWeight: '800' },
     acceptText: { flex: 1, fontSize: 13, color: c.textMuted, lineHeight: 19 },
     acceptLink: { color: c.primary, fontWeight: '700' },
 
-    modalRoot: { flex: 1, backgroundColor: c.bg, paddingHorizontal: 20, paddingTop: 60, paddingBottom: 24 },
-    modalTitle: { fontSize: 20, fontWeight: 'bold', color: c.heading, marginBottom: 14 },
+    modalRoot: { flex: 1, backgroundColor: c.bg, paddingHorizontal: 22, paddingTop: 60, paddingBottom: 24 },
+    modalTitle: { fontSize: 20, fontWeight: '800', color: c.heading, marginBottom: 14 },
     modalClose: { textAlign: 'center', color: c.textMuted, fontSize: 14 },
   });
 }
