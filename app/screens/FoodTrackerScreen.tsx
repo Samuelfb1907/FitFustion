@@ -145,6 +145,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     const { error: e } = await supabase.from('food_logs').insert({ user_id: userId, food_id: qf.food.id, amount_g: qf.amount, log_date: todayStr(), meal_type: mealByHour() });
     if (e) { setError(errorMessage(e)); return; }
     setQuickMsg(`✓ ${qf.food.name} (${qf.amount} g) hinzugefügt`);
+    setTimeout(() => setQuickMsg(null), 2500);
     await loadLogs();
     await loadQuick();
   }
@@ -162,7 +163,13 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     await loadQuick();
   }
 
-  async function deleteLog(id: string) {
+  function deleteLog(id: string) {
+    Alert.alert('Eintrag löschen?', 'Diesen Tagebuch-Eintrag entfernen?', [
+      { text: 'Abbrechen', style: 'cancel' },
+      { text: 'Löschen', style: 'destructive', onPress: () => doDeleteLog(id) },
+    ]);
+  }
+  async function doDeleteLog(id: string) {
     const { error } = await supabase.from('food_logs').delete().eq('id', id);
     if (error) { Alert.alert('Nicht möglich', errorMessage(error)); return; }
     await loadLogs();

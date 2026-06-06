@@ -210,6 +210,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
     setWeightKg(w);
     setWeightInput('');
     setWeightMsg('Gespeichert ✓');
+    setTimeout(() => setWeightMsg(null), 2500);
   }
 
   const xp = stats ? computeXp(stats) : 0;

@@ -1,6 +1,6 @@
 // Übungsdetail (themed) mit "Training mitschreiben": Sätze (Wdh + Gewicht) speichern.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
@@ -125,7 +125,13 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
     }
   }
 
-  async function deleteSet(id: string) {
+  function deleteSet(id: string) {
+    Alert.alert('Satz löschen?', 'Diesen Satz wirklich entfernen?', [
+      { text: 'Abbrechen', style: 'cancel' },
+      { text: 'Löschen', style: 'destructive', onPress: () => doDeleteSet(id) },
+    ]);
+  }
+  async function doDeleteSet(id: string) {
     if (!sessionId) return;
     await supabase.from('set_logs').delete().eq('id', id);
     await refreshSets(sessionId);
