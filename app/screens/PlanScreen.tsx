@@ -1,5 +1,5 @@
 // Automatischer Trainingsplan (themed).
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -89,6 +89,18 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
   const allowedDiff = ALLOWED_DIFF[profile?.experience_level ?? 'beginner'] ?? ['beginner'];
   const allowedEquip = ALLOWED_EQUIP[profile?.training_environment ?? 'gym'] ?? ALLOWED_EQUIP.gym;
 
+  // Effektiver Wochenplan: gespeicherte Zuordnung ODER (falls leer) automatische Standard-Verteilung.
+  // So steht beim Erstellen sofort "Training" an den passenden Tagen - auch ohne DB-Schreibzugriff.
+  const effectiveSchedule = useMemo<Record<number, string>>(() => {
+    if (Object.keys(schedule).length > 0) return schedule;
+    if (days.length === 0) return {};
+    const sortedDays = [...days].sort((a, b) => a.day_index - b.day_index);
+    const weekdays = SCHEDULE_BY_DAYS[sortedDays.length] ?? sortedDays.map((_, i) => i);
+    const def: Record<number, string> = {};
+    weekdays.forEach((wd, i) => { if (sortedDays[i]) def[wd] = sortedDays[i].id; });
+    return def;
+  }, [schedule, days]);
+
   useEffect(() => { loadPlan(); }, [userId]);
 
   async function loadPlan(silent = false) {
@@ -135,6 +147,7 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
         .map((wd, i) => (sortedDays[i] ? { user_id: userId, weekday: wd, plan_day_id: sortedDays[i].id } : null))
         .filter(Boolean) as { user_id: string; weekday: number; plan_day_id: string }[];
       if (auto.length) {
+        await supabase.from('plan_schedule').delete().eq('user_id', userId);
         const { error: insErr } = await supabase.from('plan_schedule').insert(auto);
         if (!insErr) auto.forEach((r) => { sched[r.weekday] = r.plan_day_id; });
       }
@@ -158,15 +171,17 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
   async function assignDay(weekday: number, dayId: string | null) {
     if (!userId) return;
     setEditWeekday(null);
-    setSchedule((prev) => {
-      const next = { ...prev };
-      if (dayId) next[weekday] = dayId; else delete next[weekday];
-      return next;
-    });
-    const { error } = dayId
-      ? await supabase.from('plan_schedule').upsert({ user_id: userId, weekday, plan_day_id: dayId }, { onConflict: 'user_id,weekday' })
-      : await supabase.from('plan_schedule').delete().eq('user_id', userId).eq('weekday', weekday);
-    if (error) { Alert.alert('Nicht gespeichert', errorMessage(error)); loadPlan(true); }
+    // Vollstaendigen Wochenplan (inkl. aktueller Standard-Anzeige) materialisieren + Aenderung anwenden,
+    // damit das Aendern eines Tages die uebrigen Trainingstage nicht entfernt.
+    const next: Record<number, string> = { ...effectiveSchedule };
+    if (dayId) next[weekday] = dayId; else delete next[weekday];
+    setSchedule(next);
+    const rows = Object.entries(next).map(([wd, pid]) => ({ user_id: userId, weekday: Number(wd), plan_day_id: pid }));
+    await supabase.from('plan_schedule').delete().eq('user_id', userId);
+    if (rows.length) {
+      const { error } = await supabase.from('plan_schedule').insert(rows);
+      if (error) { Alert.alert('Nicht gespeichert', errorMessage(error)); loadPlan(true); }
+    }
   }
 
   async function removeExercise(dayId: string, rowId: string) {
@@ -390,7 +405,7 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
         <Text style={styles.weekTitle}>📅 Wochenplan</Text>
         <Text style={styles.weekHint}>Tippe einen Wochentag, um ihm einen Trainingstag (oder Ruhetag) zuzuordnen.</Text>
         {WEEKDAYS.map((wd, i) => {
-          const dayId = schedule[i];
+          const dayId = effectiveSchedule[i];
           const focus = dayId ? (days.find((d) => d.id === dayId)?.focus ?? 'Training') : null;
           const isToday = i === todayWeekday();
           return (
