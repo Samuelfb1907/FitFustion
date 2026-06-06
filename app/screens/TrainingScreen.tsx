@@ -172,7 +172,7 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
             {muscles.map((m) => {
               const active = pickedMuscle?.id === m.id;
               return (
-                <TouchableOpacity key={m.id} style={[styles.chip, active && styles.chipActive]} onPress={() => openMuscle(m)} activeOpacity={0.8}>
+                <TouchableOpacity key={m.id} style={[styles.chip, active && styles.chipActive]} onPress={() => openMuscle(m)} activeOpacity={0.8} accessibilityRole="button" accessibilityLabel={`Übungen für ${m.name_de} anzeigen`}>
                   <Text style={[styles.chipText, active && styles.chipTextActive]}>{m.name_de}</Text>
                 </TouchableOpacity>
               );

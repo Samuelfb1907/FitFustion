@@ -53,6 +53,7 @@ export default function AuthScreen() {
   const [showLegal, setShowLegal] = useState(false);
   const [focused, setFocused] = useState<'email' | 'pw' | null>(null);
   const pwRef = useRef<TextInput>(null);
+  const [showPw, setShowPw] = useState(false);
 
   function show(message: string, error: boolean) { setInfo(message); setIsError(error); }
   function switchMode(m: 'login' | 'register') { setMode(m); setInfo(null); }
@@ -128,20 +129,25 @@ export default function AuthScreen() {
 
             <View style={styles.fieldWrap}>
               <Text style={styles.fieldLabel}>Passwort</Text>
-              <TextInput
-                ref={pwRef}
-                style={[styles.fieldInput, focused === 'pw' && styles.fieldInputFocused]}
-                value={password}
-                onChangeText={setPassword}
-                onFocus={() => setFocused('pw')}
-                onBlur={() => setFocused(null)}
-                placeholder={mode === 'register' ? 'mindestens 8 Zeichen' : 'Passwort'}
-                placeholderTextColor={c.textMuted}
-                secureTextEntry autoCapitalize="none"
-                underlineColorAndroid="transparent"
-                returnKeyType={mode === 'login' ? 'go' : 'done'}
-                onSubmitEditing={handleSubmit}
-              />
+              <View>
+                <TextInput
+                  ref={pwRef}
+                  style={[styles.fieldInput, focused === 'pw' && styles.fieldInputFocused, { paddingRight: 48 }]}
+                  value={password}
+                  onChangeText={setPassword}
+                  onFocus={() => setFocused('pw')}
+                  onBlur={() => setFocused(null)}
+                  placeholder={mode === 'register' ? 'mindestens 8 Zeichen' : 'Passwort'}
+                  placeholderTextColor={c.textMuted}
+                  secureTextEntry={!showPw} autoCapitalize="none"
+                  underlineColorAndroid="transparent"
+                  returnKeyType={mode === 'login' ? 'go' : 'done'}
+                  onSubmitEditing={handleSubmit}
+                />
+                <TouchableOpacity style={styles.pwToggle} onPress={() => setShowPw((s) => !s)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button" accessibilityLabel={showPw ? 'Passwort verbergen' : 'Passwort anzeigen'}>
+                  <Text style={styles.pwToggleText}>{showPw ? '🙈' : '👁️'}</Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
             {mode === 'login' && (
@@ -214,6 +220,8 @@ function makeStyles(c: Colors) {
       paddingHorizontal: 14, paddingVertical: 14, fontSize: 16, color: c.text,
     },
     fieldInputFocused: { borderColor: c.primary },
+    pwToggle: { position: 'absolute', right: 6, top: 0, bottom: 0, justifyContent: 'center', paddingHorizontal: 8 },
+    pwToggleText: { fontSize: 18 },
 
     forgotWrap: { alignSelf: 'flex-end', marginTop: 12 },
     forgot: { color: c.primary, fontSize: 13, fontWeight: '600' },

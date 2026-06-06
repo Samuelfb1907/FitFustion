@@ -16,7 +16,7 @@ function TabButton({ label, icon, active, onPress, c }: { label: string; icon: s
     <TouchableOpacity style={styles.tabBtn} onPress={onPress} activeOpacity={0.7} accessibilityRole="tab" accessibilityState={{ selected: active }} accessibilityLabel={label}>
       <View style={[styles.indicator, active && { backgroundColor: c.primary }]} />
       <Text style={[styles.tabIcon, { opacity: active ? 1 : 0.45 }]}>{icon}</Text>
-      <Text style={[styles.tabLabel, { color: active ? c.primary : c.textMuted, fontWeight: active ? '700' : '500' }]} numberOfLines={1}>
+      <Text style={[styles.tabLabel, { color: active ? c.primary : c.textMuted, fontWeight: active ? '700' : '500' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
         {label}
       </Text>
     </TouchableOpacity>

@@ -1,7 +1,7 @@
 // Vollbild-Kamera zum Scannen von Lebensmittel-Barcodes (EAN/UPC).
 // Nutzt expo-camera (laeuft in Expo Go auf einem echten Geraet).
 import { useEffect, useState } from 'react';
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Linking, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Colors } from '../contexts/ThemeContext';
 
@@ -47,9 +47,15 @@ export default function BarcodeScanner({
         ) : !permission.granted ? (
           <View style={styles.center}>
             <Text style={styles.info}>FitAvo braucht Zugriff auf die Kamera, um Barcodes zu scannen.</Text>
-            <TouchableOpacity style={styles.btn} onPress={requestPermission}>
-              <Text style={styles.btnText}>Kamera erlauben</Text>
-            </TouchableOpacity>
+            {permission.canAskAgain ? (
+              <TouchableOpacity style={styles.btn} onPress={requestPermission}>
+                <Text style={styles.btnText}>Kamera erlauben</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity style={styles.btn} onPress={() => Linking.openSettings()}>
+                <Text style={styles.btnText}>Einstellungen öffnen</Text>
+              </TouchableOpacity>
+            )}
             <TouchableOpacity style={styles.linkBtn} onPress={onClose}>
               <Text style={styles.link}>Abbrechen</Text>
             </TouchableOpacity>
