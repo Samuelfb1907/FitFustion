@@ -1,7 +1,7 @@
 // Bestenliste-Logik: aktive Ziel-Tage (getrackt ODER trainiert) pro Woche/Monat.
 // Datenschutz: Teilnahme ist opt-in (eigene Zeile in leaderboard_entries). Kein Eintrag = privat.
 import { supabase } from './supabase';
-import { localDateStr } from './date';
+import { localDateStr, daysAgoStr, daysAgoISO } from './date';
 import { computeStreak } from './gamification';
 
 export type LeaderRow = {
@@ -30,9 +30,12 @@ type Scores = { weekly: number; monthly: number; streak: number; week_key: strin
 
 // Zaehlt aktive Ziel-Tage (Tage mit Essens-Eintrag ODER Training) diese Woche/diesen Monat.
 export async function computeMyScores(userId: string): Promise<Scores> {
+  // Auf ~13 Monate begrenzen: Wochen-/Monatswertung & Streak bleiben korrekt, Query bleibt klein.
+  const sinceDate = daysAgoStr(400);
+  const sinceIso = daysAgoISO(400);
   const [fd, sd] = await Promise.all([
-    supabase.from('food_logs').select('log_date').eq('user_id', userId),
-    supabase.from('workout_sessions').select('performed_at').eq('user_id', userId),
+    supabase.from('food_logs').select('log_date').eq('user_id', userId).gte('log_date', sinceDate),
+    supabase.from('workout_sessions').select('performed_at').eq('user_id', userId).gte('performed_at', sinceIso),
   ]);
   const dates = new Set<string>();
   ((fd.data ?? []) as any[]).forEach((r) => dates.add(String(r.log_date).slice(0, 10)));

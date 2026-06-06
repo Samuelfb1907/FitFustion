@@ -20,6 +20,21 @@ export function startOfTodayISO(): string {
   return d.toISOString();
 }
 
+// "vor N Tagen" als lokales Kalenderdatum "YYYY-MM-DD" (Mitternacht-basiert) – fuer date-Spalten.
+export function daysAgoStr(days: number, from: Date = new Date()): string {
+  const d = new Date(from);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - days);
+  return todayStr(d);
+}
+// "vor N Tagen" ab lokaler Mitternacht als ISO/UTC-Timestamp – fuer timestamptz-Spalten.
+export function daysAgoISO(days: number, from: Date = new Date()): string {
+  const d = new Date(from);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - days);
+  return d.toISOString();
+}
+
 // "YYYY-MM-DD" oder ISO -> "TT.MM"
 export function ddmm(iso: string): string {
   const d = new Date(iso);

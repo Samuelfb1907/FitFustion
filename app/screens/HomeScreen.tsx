@@ -11,7 +11,7 @@ import { computeXp, levelInfo, computeStreak, ACHIEVEMENTS, GameStats } from '..
 import CalorieGauge from '../components/CalorieGauge';
 import { dailyGoals, Goal } from '../lib/goals';
 import { todayWeekday } from '../lib/weekdays';
-import { localDateStr, todayStr, startOfTodayISO } from '../lib/date';
+import { localDateStr, todayStr, startOfTodayISO, daysAgoStr, daysAgoISO } from '../lib/date';
 import { useFocusTick } from '../lib/useFocusTick';
 import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
@@ -78,8 +78,8 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
         countRows('workout_sessions', userId),
         countRows('set_logs', userId),
         countRows('food_logs', userId),
-        supabase.from('workout_sessions').select('performed_at').eq('user_id', userId),
-        supabase.from('food_logs').select('log_date').eq('user_id', userId),
+        supabase.from('workout_sessions').select('performed_at').eq('user_id', userId).gte('performed_at', daysAgoISO(400)),
+        supabase.from('food_logs').select('log_date').eq('user_id', userId).gte('log_date', daysAgoStr(400)),
         supabase.from('plan_schedule').select('weekday, workout_plan_days(focus)').eq('user_id', userId),
       ]);
 

@@ -46,9 +46,10 @@ export async function saveTodayWeight(userId: string, kg: number): Promise<strin
 
 // Laedt alle Gewichtseintraege (aufsteigend nach Datum).
 export async function loadWeights(userId: string): Promise<WeightPoint[]> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('progress_entries').select('id, entry_date, weight_kg')
     .eq('user_id', userId).order('entry_date', { ascending: true });
+  if (error) throw error;
   return ((data ?? []) as any[])
     .filter((r) => r.weight_kg != null)
     .map((r) => ({ id: String(r.id), date: String(r.entry_date), kg: Number(r.weight_kg) }));

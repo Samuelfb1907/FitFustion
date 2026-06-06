@@ -1,5 +1,5 @@
 // Eigener Wasser-Tracker (Reiter unter "Essen"), Bento-Stil. Liest/schreibt water_logs.
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -29,6 +29,7 @@ export default function WaterScreen({ embedded, focusTick }: { embedded?: boolea
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [rows, setRows] = useState<WaterRow[]>([]);
+  const busyRef = useRef(false); // verhindert doppelte Eintraege bei schnellem Doppel-Tippen
 
   useEffect(() => { load(); }, [userId]);
 
@@ -64,10 +65,15 @@ export default function WaterScreen({ embedded, focusTick }: { embedded?: boolea
   }
 
   async function add(ml: number) {
-    if (!userId) return;
-    const { error: e } = await supabase.from('water_logs').insert({ user_id: userId, amount_ml: ml, log_date: todayStr() });
-    if (e) { setError(errorMessage(e)); return; }
-    await load(true);
+    if (!userId || busyRef.current) return;
+    busyRef.current = true;
+    try {
+      const { error: e } = await supabase.from('water_logs').insert({ user_id: userId, amount_ml: ml, log_date: todayStr() });
+      if (e) { setError(errorMessage(e)); return; }
+      await load(true);
+    } finally {
+      busyRef.current = false;
+    }
   }
   async function removeOne(id: string) {
     const { error: e } = await supabase.from('water_logs').delete().eq('id', id);

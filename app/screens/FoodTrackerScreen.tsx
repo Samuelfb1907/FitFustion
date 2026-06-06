@@ -1,5 +1,5 @@
 // Kalorien-Tracker / Tagebuch (themed): eigene Zutaten auswählen, Menge angeben, Tag tracken.
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Platform, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -28,7 +28,8 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   const styles = useMemo(() => makeStyles(c), [c]);
 
   const [loading, setLoading] = useState(true);
-  const [foods, setFoods] = useState<Food[]>([]);
+  const [searchResults, setSearchResults] = useState<Food[]>([]);
+  const [searching, setSearching] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [targetKcal, setTargetKcal] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +49,8 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   const [foodErr, setFoodErr] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [backTarget, setBackTarget] = useState<'diary' | 'pick'>('diary'); // wohin "Zurueck" aus dem Mengen-Screen fuehrt
+  const busyRef = useRef(false); // verhindert doppelte Tagebuch-Eintraege bei schnellem Doppel-Tippen
 
   useEffect(() => { init(); }, [userId]);
 
@@ -56,6 +59,24 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     setMode('diary'); setSelectedFood(null); setSearch(''); setError(null); setScannerOpen(false);
     loadLogs(); loadQuick();
   });
+
+  // Serverseitige Lebensmittel-Suche (debounced) – laedt NICHT mehr die ganze foods-Tabelle.
+  useEffect(() => {
+    if (mode !== 'pick' || !userId) return;
+    let cancelled = false;
+    const q = search.trim().replace(/[%_]/g, ' ');
+    setSearching(true);
+    const run = async () => {
+      let query = supabase.from('foods').select('id, name, category, kcal, protein, carbs, fat, user_id');
+      if (q) query = query.ilike('name', `%${q}%`);
+      const { data } = await query.order('name').limit(50);
+      if (cancelled) return;
+      setSearchResults((data ?? []) as Food[]);
+      setSearching(false);
+    };
+    const t = setTimeout(run, q ? 280 : 0);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [search, mode, userId]);
 
   async function handleScanned(code: string) {
     setScannerOpen(false);
@@ -71,11 +92,10 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       return;
     }
     const food = res.food;
-    // neu gescanntes Lebensmittel in die lokale Liste aufnehmen
-    setFoods((prev) => (prev.some((f) => f.id === food.id) ? prev : [...prev, food].sort((a, b) => a.name.localeCompare(b.name))));
     setSelectedFood(food);
     setAmount('100');
     setMealType(mealByHour());
+    setBackTarget('diary'); // vom Scan kam man aus dem Tagebuch -> dorthin zurueck
     setMode('amount');
   }
 
@@ -83,9 +103,6 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     if (!userId) { setLoading(false); return; }
     if (!silent) setLoading(true);
     try {
-    const { data: foodData, error: fErr } = await supabase.from('foods').select('id, name, category, kcal, protein, carbs, fat, user_id').order('name');
-    if (fErr) throw fErr;
-    setFoods((foodData ?? []) as Food[]);
     const { data: prof } = await supabase.from('profiles').select('weight_kg, height_cm, birth_date, gender, activity_level').eq('id', userId).maybeSingle();
     const { data: goal } = await supabase.from('goals').select('goal_type').eq('user_id', userId).eq('is_active', true).order('created_at', { ascending: false }).limit(1).maybeSingle();
     if (prof && prof.weight_kg && prof.height_cm) {
@@ -140,27 +157,37 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   }
 
   async function quickAdd(qf: QuickFood) {
-    if (!userId) return;
+    if (!userId || busyRef.current) return;
+    busyRef.current = true;
     setQuickMsg(null);
-    const { error: e } = await supabase.from('food_logs').insert({ user_id: userId, food_id: qf.food.id, amount_g: qf.amount, log_date: todayStr(), meal_type: mealByHour() });
-    if (e) { setError(errorMessage(e)); return; }
-    setQuickMsg(`✓ ${qf.food.name} (${qf.amount} g) hinzugefügt`);
-    setTimeout(() => setQuickMsg(null), 2500);
-    await loadLogs();
-    await loadQuick();
+    try {
+      const { error: e } = await supabase.from('food_logs').insert({ user_id: userId, food_id: qf.food.id, amount_g: qf.amount, log_date: todayStr(), meal_type: mealByHour() });
+      if (e) { setError(errorMessage(e)); return; }
+      setQuickMsg(`✓ ${qf.food.name} (${qf.amount} g) hinzugefügt`);
+      setTimeout(() => setQuickMsg(null), 2500);
+      await loadLogs();
+      await loadQuick();
+    } finally {
+      busyRef.current = false;
+    }
   }
 
   async function addLog() {
-    if (!userId || !selectedFood) return;
+    if (!userId || !selectedFood || busyRef.current) return;
     const a = Number(amount.replace(',', '.'));
     if (!a || a <= 0) { setError('Bitte gültige Menge in Gramm eingeben.'); return; }
+    busyRef.current = true;
     setSaving(true); setError(null);
-    const { error: e } = await supabase.from('food_logs').insert({ user_id: userId, food_id: selectedFood.id, amount_g: a, log_date: todayStr(), meal_type: mealType });
-    setSaving(false);
-    if (e) { setError(errorMessage(e)); return; }
-    setSelectedFood(null); setAmount('100'); setSearch(''); setMode('diary');
-    await loadLogs();
-    await loadQuick();
+    try {
+      const { error: e } = await supabase.from('food_logs').insert({ user_id: userId, food_id: selectedFood.id, amount_g: a, log_date: todayStr(), meal_type: mealType });
+      if (e) { setError(errorMessage(e)); return; }
+      setSelectedFood(null); setAmount('100'); setSearch(''); setMode('diary');
+      await loadLogs();
+      await loadQuick();
+    } finally {
+      setSaving(false);
+      busyRef.current = false;
+    }
   }
 
   function deleteLog(id: string) {
@@ -202,8 +229,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       return;
     }
     const food = data as Food;
-    setFoods((prev) => [...prev, food].sort((a, b) => a.name.localeCompare(b.name)));
-    setSelectedFood(food); setAmount('100'); setError(null); setMode('amount');
+    setSelectedFood(food); setAmount('100'); setError(null); setBackTarget('pick'); setMode('amount');
   }
 
   function confirmDeleteFood(food: Food) {
@@ -218,7 +244,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       Alert.alert('Nicht möglich', 'Dieses Lebensmittel wird noch in Tagebuch-Einträgen oder Rezepten verwendet und kann darum nicht gelöscht werden.');
       return;
     }
-    setFoods((prev) => prev.filter((f) => f.id !== id));
+    setSearchResults((prev) => prev.filter((f) => f.id !== id));
   }
 
   const kcalOf = (e: LogEntry) => (e.food ? Math.round((e.food.kcal * e.amount_g) / 100) : 0);
@@ -235,10 +261,6 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     return { totalKcal: kcal, totalP: Math.round(p), totalC: Math.round(cc), totalF: Math.round(f) };
   }, [logs]);
   const remaining = targetKcal != null ? targetKcal - totalKcal : null;
-  const filteredFoods = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return q ? foods.filter((f) => f.name.toLowerCase().includes(q)) : foods;
-  }, [foods, search]);
 
   if (loading) {
     return (<View style={[styles.container, embedded && styles.embedded]}>{!embedded && <Text style={styles.title}>Tracker</Text>}<ActivityIndicator size="large" color={c.primary} style={{ marginTop: 40 }} /></View>);
@@ -268,7 +290,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     return (
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
-          <TouchableOpacity onPress={() => setMode('pick')}><Text style={styles.back}>‹ Zurück</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => setMode(backTarget)}><Text style={styles.back}>‹ Zurück</Text></TouchableOpacity>
           <Text style={styles.title}>{selectedFood.name}</Text>
           <Text style={styles.subtitle}>{selectedFood.kcal} kcal / 100 g</Text>
           <Text style={styles.inputLabel}>Menge in Gramm</Text>
@@ -335,10 +357,10 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
         <TouchableOpacity style={styles.newFoodBtn} onPress={openNewFood} activeOpacity={0.85}>
           <Text style={styles.newFoodText}>➕  Eigenes Lebensmittel anlegen</Text>
         </TouchableOpacity>
-        <Text style={styles.countHint}>{filteredFoods.length} Zutaten</Text>
+        <Text style={styles.countHint}>{searching ? 'Suche…' : `${searchResults.length} Treffer${searchResults.length >= 50 ? '+' : ''}`}</Text>
         <FlatList
           style={{ flex: 1 }}
-          data={filteredFoods}
+          data={searchResults}
           keyExtractor={(f) => f.id}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ paddingBottom: 40 }}
@@ -349,7 +371,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
           renderItem={({ item: f }) => {
             const own = !!userId && f.user_id === userId;
             return (
-              <TouchableOpacity style={styles.foodRow} onPress={() => { setSelectedFood(f); setAmount('100'); setError(null); setMode('amount'); }} activeOpacity={0.7}>
+              <TouchableOpacity style={styles.foodRow} onPress={() => { setSelectedFood(f); setAmount('100'); setError(null); setBackTarget('pick'); setMode('amount'); }} activeOpacity={0.7}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.foodName}>{f.name}</Text>
                   <Text style={styles.foodMeta}>{f.category}{own ? '  ·  eigenes' : ''}</Text>
@@ -363,7 +385,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
               </TouchableOpacity>
             );
           }}
-          ListEmptyComponent={<Text style={styles.noResult}>Kein Treffer{search.trim() ? ` für „${search.trim()}"` : ''}. Leg es als eigenes Lebensmittel an ☝️</Text>}
+          ListEmptyComponent={searching ? null : <Text style={styles.noResult}>Kein Treffer{search.trim() ? ` für „${search.trim()}"` : ''}. Leg es als eigenes Lebensmittel an ☝️</Text>}
         />
       </View>
     );
