@@ -3,7 +3,7 @@
 // Muskel ruft onSelect(key) -> der Training-Screen oeffnet direkt die Uebungen.
 // Bewusst clean: einheitlich getoente Figur, dezente Konturen, kein Klick-Geblinke.
 import { useState } from 'react';
-import { Dimensions, Text, View } from 'react-native';
+import { Dimensions, Text, TouchableOpacity, View } from 'react-native';
 import Body, { ExtendedBodyPart, Slug } from 'react-native-body-highlighter';
 import { Colors } from '../contexts/ThemeContext';
 import Segmented from './Segmented';
@@ -58,7 +58,7 @@ export default function BodyMuscleMap({
         />
       </View>
 
-      <View style={{ marginTop: 18 }}>
+      <View style={{ marginTop: 18, width: W, height: W * 2 }}>
         <Body
           side={side}
           gender={gender}
@@ -73,6 +73,22 @@ export default function BodyMuscleMap({
             const k = keyForSlug(b.slug, side);
             if (k) onSelect(k);
           }}
+        />
+        {/* Grosse, unsichtbare Tippzonen ueber den Armen: schmale Muskeln (Bizeps/Trizeps)
+            sind als SVG-Form schwer exakt zu treffen -> diese Flaechen machen es zuverlaessig. */}
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel={side === 'front' ? 'Bizeps' : 'Trizeps'}
+          activeOpacity={1}
+          onPress={() => onSelect(side === 'front' ? 'biceps' : 'triceps')}
+          style={{ position: 'absolute', left: 0, top: W * 2 * 0.20, width: W * 0.26, height: W * 2 * 0.22 }}
+        />
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel={side === 'front' ? 'Bizeps' : 'Trizeps'}
+          activeOpacity={1}
+          onPress={() => onSelect(side === 'front' ? 'biceps' : 'triceps')}
+          style={{ position: 'absolute', right: 0, top: W * 2 * 0.20, width: W * 0.26, height: W * 2 * 0.22 }}
         />
       </View>
 
