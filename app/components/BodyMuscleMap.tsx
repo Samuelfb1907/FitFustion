@@ -34,7 +34,8 @@ export default function BodyMuscleMap({
   gender?: 'male' | 'female';
 }) {
   const [side, setSide] = useState<'front' | 'back'>('front');
-  const W = Math.min(240, Dimensions.get('window').width - 110);
+  // Groessere Figur = groessere Tippziele (v.a. schmale Muskeln wie Bizeps).
+  const W = Math.min(300, Dimensions.get('window').width - 64);
   const scale = W / 200; // Body ist intrinsisch 200 x 400 (mal scale)
 
   // Einheitlich getoente Figur; tippbare Muskeln mit etwas klarerer Kontur (dezenter Hinweis).
@@ -48,7 +49,7 @@ export default function BodyMuscleMap({
 
   return (
     <View style={{ alignItems: 'center', width: '100%' }}>
-      <View style={{ width: '100%', maxWidth: 280 }}>
+      <View style={{ width: '100%', maxWidth: 300 }}>
         <Segmented
           options={[{ key: 'front', label: 'Vorderseite' }, { key: 'back', label: 'Rückseite' }]}
           value={side}
