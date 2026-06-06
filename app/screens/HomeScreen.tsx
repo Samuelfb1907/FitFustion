@@ -1,17 +1,16 @@
-// Start-Screen / Dashboard im Bento-Grid-Stil: Begruessungs-Kachel, Mini-KPI-Kacheln,
-// grosse Feature-Kacheln (Kalorien/Wasser/Gewicht), Schnellzugriff & Erfolge.
+// Start-Screen / Dashboard (Clean Light): aufgeraeumter Ueberblick statt Kachel-Wand.
+// Header (Begruessung + Level/Streak) -> Kalorien-Karte -> 3 Uebersichts-Kacheln
+// (Wasser/Training/Gewicht, fuehren in ihren Bereich) -> Training-laeuft -> Tagesziele.
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { computeNutrition, ageFromBirthDate, NutritionResult, Gender, ActivityLevel, GoalType } from '../lib/nutrition';
 import { computeXp, levelInfo, computeStreak, ACHIEVEMENTS, GameStats } from '../lib/gamification';
 import CalorieGauge from '../components/CalorieGauge';
-import { dailyGoals, weeklyChallenges, Goal } from '../lib/goals';
-import { saveTodayWeight, parseWeight, WEIGHT_MIN, WEIGHT_MAX } from '../lib/weight';
+import { dailyGoals, Goal } from '../lib/goals';
 import { todayWeekday } from '../lib/weekdays';
-import { NUTRITION_DISCLAIMER } from '../lib/legal';
 import { localDateStr, todayStr, startOfTodayISO } from '../lib/date';
 import { useFocusTick } from '../lib/useFocusTick';
 import ErrorRetry from '../components/ErrorRetry';
@@ -24,11 +23,10 @@ const GOAL_LABELS: Record<string, string> = {
   endurance: 'Ausdauer', general_fitness: 'Allgemeine Fitness', get_defined: 'Definieren',
 };
 
-// todayStr & startOfTodayISO -> lib/date.ts
 function mondayStr(): string {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); // Montag dieser Woche
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
@@ -39,7 +37,6 @@ async function countRows(table: string, userId: string): Promise<number> {
 }
 
 type Eaten = { kcal: number; p: number; c: number; f: number };
-// WATER_GOAL -> lib/water.ts
 
 function greeting(): string {
   const h = new Date().getHours();
@@ -64,12 +61,8 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
   const [activeSets, setActiveSets] = useState(0);
   const [goalsData, setGoalsData] = useState<GoalsData | null>(null);
   const [waterMl, setWaterMl] = useState(0);
-  const [waterIds, setWaterIds] = useState<string[]>([]);
   const [planToday, setPlanToday] = useState<{ has: boolean; focus: string | null } | null>(null);
   const [weightKg, setWeightKg] = useState<number | null>(null);
-  const [weightInput, setWeightInput] = useState('');
-  const [savingW, setSavingW] = useState(false);
-  const [weightMsg, setWeightMsg] = useState<string | null>(null);
 
   const load = useCallback(async (silent = false) => {
       const userId = session?.user?.id;
@@ -77,7 +70,6 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
       if (!silent) setLoading(true);
 
       try {
-      // unabhängige Abfragen parallel (statt nacheinander) -> deutlich schnellerer Aufbau
       const [profRes, goalRes, fdt, actRes, sessions, sets, foodLogs, sdRes, fd, schedRes] = await Promise.all([
         supabase.from('profiles').select('weight_kg, height_cm, birth_date, gender, activity_level').eq('id', userId).maybeSingle(),
         supabase.from('goals').select('goal_type').eq('user_id', userId).eq('is_active', true).order('created_at', { ascending: false }).limit(1).maybeSingle(),
@@ -141,7 +133,6 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
         trackedDaysThisWeek: new Set(fdDates.filter((x) => x >= mon)).size,
       });
 
-      // Heutiges Training laut Wochenplan
       const schedRows = schedRes.data;
       if (schedRows && schedRows.length) {
         const wd = todayWeekday();
@@ -162,10 +153,17 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
   }, [session?.user?.id]);
 
   useEffect(() => { load(); }, [load]);
-  // Start-Reiter erneut angetippt -> leise neu laden (ohne Spinner)
   useFocusTick(focusTick, () => { load(true); });
 
   const onRefresh = useCallback(() => { setRefreshing(true); load(true); }, [load]);
+
+  async function refreshWater() {
+    const uid = session?.user?.id;
+    if (!uid) return;
+    const { data } = await supabase.from('water_logs').select('id, amount_ml').eq('user_id', uid).eq('log_date', todayStr()).order('created_at');
+    const rows = (data ?? []) as any[];
+    setWaterMl(rows.reduce((s, r) => s + (r.amount_ml ?? 0), 0));
+  }
 
   async function endTraining() {
     if (!activeSession) return;
@@ -175,48 +173,16 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
     setActiveSets(0);
   }
 
-  async function refreshWater() {
-    const uid = session?.user?.id;
-    if (!uid) return;
-    const { data } = await supabase.from('water_logs').select('id, amount_ml').eq('user_id', uid).eq('log_date', todayStr()).order('created_at');
-    const rows = (data ?? []) as any[];
-    setWaterMl(rows.reduce((s, r) => s + (r.amount_ml ?? 0), 0));
-    setWaterIds(rows.map((r) => r.id));
-  }
-  async function addWater(ml: number) {
-    const uid = session?.user?.id;
-    if (!uid) return;
-    const { error } = await supabase.from('water_logs').insert({ user_id: uid, amount_ml: ml, log_date: todayStr() });
-    if (error) { Alert.alert('Nicht gespeichert', errorMessage(error)); return; }
-    await refreshWater();
-  }
-  async function undoWater() {
-    if (!waterIds.length) return;
-    const { error } = await supabase.from('water_logs').delete().eq('id', waterIds[waterIds.length - 1]);
-    if (error) { Alert.alert('Nicht möglich', errorMessage(error)); return; }
-    await refreshWater();
-  }
-
-  async function saveHomeWeight() {
-    const uid = session?.user?.id;
-    if (!uid) return;
-    const w = parseWeight(weightInput);
-    if (w == null) { setWeightMsg(`Bitte ${WEIGHT_MIN}–${WEIGHT_MAX} kg eingeben.`); return; }
-    setSavingW(true);
-    setWeightMsg(null);
-    const err = await saveTodayWeight(uid, w);
-    setSavingW(false);
-    if (err) { setWeightMsg('Speichern fehlgeschlagen.'); return; }
-    setWeightKg(w);
-    setWeightInput('');
-    setWeightMsg('Gespeichert ✓');
-    setTimeout(() => setWeightMsg(null), 2500);
-  }
-
   const xp = stats ? computeXp(stats) : 0;
   const lv = levelInfo(xp);
   const earnedCount = stats ? ACHIEVEMENTS.filter((a) => a.earned(stats, lv.level)).length : 0;
   const waterPct = Math.min(100, Math.round((waterMl / WATER_GOAL) * 100));
+
+  // Training-Status fuer die Uebersichts-Kachel
+  let trainVal = 'Start', trainSub = 'Freies Training';
+  if (activeSession) { trainVal = 'Läuft'; trainSub = `${activeSets} ${activeSets === 1 ? 'Satz' : 'Sätze'}`; }
+  else if (goalsData?.trainedToday) { trainVal = 'Erledigt'; trainSub = '✓ heute'; }
+  else if (planToday?.has) { trainVal = planToday.focus ?? 'Ruhetag'; trainSub = planToday.focus ? 'laut Plan' : 'Erholung'; }
 
   return (
     <View style={styles.container}>
@@ -230,166 +196,67 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
         ) : loadError ? (
           <ErrorRetry message={loadError} onRetry={() => load()} />
         ) : (
-          <View style={styles.grid}>
-            {/* BEGRUESSUNG */}
-            <View style={styles.heroTile}>
-              <Text style={styles.heroHi}>{greeting()},</Text>
-              <Text style={styles.heroName}>{profile?.first_name || 'willkommen'} 👋</Text>
+          <View style={styles.stack}>
+            {/* HEADER */}
+            <View style={styles.header}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.greet}>{greeting()},</Text>
+                <Text style={styles.name}>{profile?.first_name || 'Willkommen'}</Text>
+              </View>
               {stats && (
-                <>
-                  <View style={styles.xpTrack}><View style={[styles.xpFill, { width: `${Math.round(lv.progress * 100)}%` }]} /></View>
-                  <Text style={styles.xpText}>Level {lv.level} · {lv.intoLevel}/{lv.perLevel} XP bis Level {lv.level + 1}</Text>
-                </>
+                <View style={styles.levelPill}>
+                  <Text style={styles.levelText}>🔥 {stats.streak}</Text>
+                  <View style={styles.levelSep} />
+                  <Text style={styles.levelText}>Lv {lv.level}</Text>
+                </View>
               )}
             </View>
 
-            {/* MINI-KPI-KACHELN */}
-            {stats && (
-              <View style={styles.row}>
-                <View style={styles.mini}>
-                  <Text style={styles.miniIcon}>🔥</Text>
-                  <Text style={styles.miniValue}>{stats.streak}</Text>
-                  <Text style={styles.miniLabel}>{stats.streak === 1 ? 'Tag' : 'Tage'} Streak</Text>
-                </View>
-                <View style={styles.mini}>
-                  <Text style={styles.miniIcon}>⭐</Text>
-                  <Text style={styles.miniValue}>{lv.level}</Text>
-                  <Text style={styles.miniLabel}>Level</Text>
-                </View>
-                <View style={styles.mini}>
-                  <Text style={styles.miniIcon}>🏋️</Text>
-                  <Text style={styles.miniValue}>{stats.sessions}</Text>
-                  <Text style={styles.miniLabel}>Trainings</Text>
-                </View>
-              </View>
-            )}
-
-            {/* HEUTE LAUT PLAN */}
-            {planToday?.has && (
-              <TouchableOpacity style={styles.tileRow} onPress={() => onNavigate?.('training')} activeOpacity={0.85}>
-                <Text style={styles.tileRowIcon}>{planToday.focus ? '📅' : '😌'}</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.tileLabel}>HEUTE LAUT PLAN</Text>
-                  <Text style={styles.tileRowValue} numberOfLines={1}>{planToday.focus ?? 'Ruhetag – Erholung'}</Text>
-                </View>
-                {planToday.focus && <Text style={styles.tileGo}>Start ›</Text>}
-              </TouchableOpacity>
-            )}
-
-            {/* TRAINING LÄUFT */}
-            {activeSession && (
-              <View style={styles.activeTile}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.activeTitle}>🏋️ Training läuft</Text>
-                  <Text style={styles.activeSub}>{activeSets} {activeSets === 1 ? 'Satz' : 'Sätze'} heute mitgeschrieben</Text>
-                </View>
-                <TouchableOpacity style={styles.activeBtn} onPress={endTraining} activeOpacity={0.85}>
-                  <Text style={styles.activeBtnText}>✓ Beenden</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
             {/* KALORIEN */}
             {nutrition && (
-              <View style={styles.tile}>
-                <Text style={styles.tileLabel}>HEUTE · {goalLabel.toUpperCase()}</Text>
-                <View style={{ alignItems: 'center', marginTop: 8 }}>
+              <View style={styles.card}>
+                <Text style={styles.cardLabel}>HEUTE{goalLabel ? ` · ${goalLabel.toUpperCase()}` : ''}</Text>
+                <View style={{ alignItems: 'center', marginTop: 12 }}>
                   <CalorieGauge target={nutrition.targetCalories} eaten={eaten.kcal} />
                 </View>
                 <View style={styles.macros}>
                   <Macro label="Protein" eaten={eaten.p} target={nutrition.proteinG} color={c.accent} styles={styles} />
-                  <Macro label="Kohlenhydrate" eaten={eaten.c} target={nutrition.carbsG} color="#F59E0B" styles={styles} />
+                  <Macro label="Kohlenhydrate" eaten={eaten.c} target={nutrition.carbsG} color="#E69500" styles={styles} />
                   <Macro label="Fett" eaten={eaten.f} target={nutrition.fatG} color={c.danger} styles={styles} />
                 </View>
-                <Text style={styles.nutriNote}>{NUTRITION_DISCLAIMER}</Text>
               </View>
             )}
 
-            {/* WASSER */}
-            <View style={styles.tile}>
-              <Text style={styles.tileLabel}>💧 WASSER</Text>
-              <Text style={styles.bigStat}>{waterMl}<Text style={styles.bigStatUnit}> / {WATER_GOAL} ml{waterMl >= WATER_GOAL ? '  ✓' : ''}</Text></Text>
-              <View style={styles.bar}><View style={[styles.barFill, { width: `${waterPct}%` }]} /></View>
-              <View style={styles.waterBtns}>
-                <TouchableOpacity style={styles.pill} onPress={() => addWater(250)} activeOpacity={0.8}><Text style={styles.pillText}>+250 ml 💧</Text></TouchableOpacity>
-                <TouchableOpacity style={styles.pill} onPress={() => addWater(500)} activeOpacity={0.8}><Text style={styles.pillText}>+500 ml 💦</Text></TouchableOpacity>
-                <TouchableOpacity style={styles.pillGhost} onPress={undoWater} activeOpacity={0.8} accessibilityRole="button" accessibilityLabel="Letzten Wasser-Eintrag rückgängig"><Text style={styles.pillGhostText}>↩</Text></TouchableOpacity>
-              </View>
+            {/* 3 UEBERSICHTS-KACHELN */}
+            <View style={styles.row}>
+              <Stat label="WASSER" value={`${(waterMl / 1000).toFixed(1)} L`} sub={`Ziel ${(WATER_GOAL / 1000).toFixed(1)} L`} pct={waterPct} onPress={() => onNavigate?.('essen')} styles={styles} />
+              <Stat label="TRAINING" value={trainVal} sub={trainSub} onPress={() => onNavigate?.('training')} styles={styles} />
+              <Stat label="GEWICHT" value={weightKg != null ? `${weightKg}` : '–'} sub={weightKg != null ? 'kg · Verlauf' : 'eintragen'} onPress={() => onNavigate?.('progress')} styles={styles} />
             </View>
 
-            {/* GEWICHT */}
-            <View style={styles.tile}>
-              <View style={styles.tileHead}>
-                <Text style={styles.tileLabel}>⚖️ GEWICHT</Text>
-                <TouchableOpacity onPress={() => onNavigate?.('progress')} activeOpacity={0.7}><Text style={styles.tileGo}>Verlauf ›</Text></TouchableOpacity>
-              </View>
-              <Text style={styles.bigStat}>{weightKg != null ? `${weightKg} kg` : 'Noch kein Wert'}</Text>
-              <View style={styles.weightRow}>
-                <TextInput
-                  style={styles.input}
-                  value={weightInput}
-                  onChangeText={setWeightInput}
-                  placeholder="Heutiges Gewicht (kg)"
-                  placeholderTextColor={c.textMuted}
-                  keyboardType="numeric"
-                  underlineColorAndroid="transparent"
-                />
-                <TouchableOpacity style={[styles.solidBtn, savingW && { opacity: 0.6 }]} onPress={saveHomeWeight} disabled={savingW} activeOpacity={0.85}>
-                  {savingW ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.solidBtnText}>Eintragen</Text>}
+            {/* TRAINING LÄUFT */}
+            {activeSession && (
+              <View style={styles.activeCard}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.activeTitle}>Training läuft</Text>
+                  <Text style={styles.activeSub}>{activeSets} {activeSets === 1 ? 'Satz' : 'Sätze'} heute mitgeschrieben</Text>
+                </View>
+                <TouchableOpacity style={styles.activeBtn} onPress={endTraining} activeOpacity={0.85}>
+                  <Text style={styles.activeBtnText}>Beenden</Text>
                 </TouchableOpacity>
               </View>
-              {weightMsg && <Text style={styles.weightMsg}>{weightMsg}</Text>}
-            </View>
+            )}
 
             {/* TAGESZIELE */}
             {nutrition && goalsData && (
-              <View style={styles.tile}>
-                <Text style={[styles.tileLabel, { marginBottom: 4 }]}>TAGESZIELE</Text>
+              <View style={styles.card}>
+                <View style={styles.cardHead}>
+                  <Text style={styles.cardLabel}>TAGESZIELE</Text>
+                  {stats && <Text style={styles.headRight}>🏆 {earnedCount}/{ACHIEVEMENTS.length}</Text>}
+                </View>
                 {dailyGoals({ trainedToday: goalsData.trainedToday, trackedToday: goalsData.trackedToday, eatenKcal: eaten.kcal, targetKcal: nutrition.targetCalories, eatenProtein: eaten.p, targetProtein: nutrition.proteinG }).map((g, i, arr) => (
                   <GoalRow key={g.key} g={g} last={i === arr.length - 1} c={c} styles={styles} />
                 ))}
-              </View>
-            )}
-
-            {/* CHALLENGES */}
-            {goalsData && stats && (
-              <View style={styles.tile}>
-                <Text style={[styles.tileLabel, { marginBottom: 4 }]}>CHALLENGES · DIESE WOCHE</Text>
-                {weeklyChallenges({ sessionsThisWeek: goalsData.sessionsThisWeek, trackedDaysThisWeek: goalsData.trackedDaysThisWeek, streak: stats.streak }).map((g, i, arr) => (
-                  <GoalRow key={g.key} g={g} last={i === arr.length - 1} c={c} styles={styles} />
-                ))}
-              </View>
-            )}
-
-            {/* SCHNELLZUGRIFF */}
-            <View style={styles.row}>
-              <Quick icon="🏋️" label="Training" onPress={() => onNavigate?.('training')} styles={styles} />
-              <Quick icon="🍽️" label="Essen" onPress={() => onNavigate?.('essen')} styles={styles} />
-              <Quick icon="📈" label="Fortschritt" onPress={() => onNavigate?.('progress')} styles={styles} />
-            </View>
-
-            {/* ERFOLGE */}
-            {stats && (
-              <View style={styles.tile}>
-                <Text style={[styles.tileLabel, { marginBottom: 4 }]}>ERFOLGE ({earnedCount}/{ACHIEVEMENTS.length})</Text>
-                <View style={styles.badgeGrid}>
-                  {ACHIEVEMENTS.map((a) => {
-                    const got = a.earned(stats, lv.level);
-                    return (
-                      <TouchableOpacity
-                        key={a.key}
-                        style={[styles.badge, !got && styles.badgeLocked]}
-                        activeOpacity={0.7}
-                        accessibilityRole="button"
-                        accessibilityLabel={`${a.name}${got ? ', freigeschaltet' : ', gesperrt'}`}
-                        onPress={() => Alert.alert(`${a.icon} ${a.name}`, (got ? '✓ Freigeschaltet\n\n' : '🔒 Noch gesperrt\n\n') + (a.description ?? ''))}
-                      >
-                        <Text style={[styles.badgeIcon, !got && styles.lockedIcon]}>{got ? a.icon : '🔒'}</Text>
-                        <Text style={[styles.badgeName, !got && styles.lockedName]} numberOfLines={2}>{a.name}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
               </View>
             )}
 
@@ -405,17 +272,19 @@ function Macro({ label, eaten, target, color, styles }: { label: string; eaten: 
   return (
     <View style={styles.macro}>
       <View style={[styles.macroDot, { backgroundColor: color }]} />
-      <Text style={styles.macroValue}>{eaten} / {target} g</Text>
+      <Text style={styles.macroValue}>{eaten}<Text style={styles.macroMax}> / {target} g</Text></Text>
       <Text style={styles.macroLabel}>{label}</Text>
     </View>
   );
 }
 
-function Quick({ icon, label, onPress, styles }: { icon: string; label: string; onPress: () => void; styles: any }) {
+function Stat({ label, value, sub, pct, onPress, styles }: { label: string; value: string; sub: string; pct?: number; onPress: () => void; styles: any }) {
   return (
-    <TouchableOpacity style={styles.quickCard} onPress={onPress} activeOpacity={0.85}>
-      <View style={styles.quickIconWrap}><Text style={styles.quickIcon}>{icon}</Text></View>
-      <Text style={styles.quickLabel}>{label}</Text>
+    <TouchableOpacity style={styles.stat} onPress={onPress} activeOpacity={0.85}>
+      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={styles.statValue} numberOfLines={1}>{value}</Text>
+      <Text style={styles.statSub} numberOfLines={1}>{sub}</Text>
+      {pct != null && <View style={styles.statBar}><View style={[styles.statFill, { width: `${pct}%` }]} /></View>}
     </TouchableOpacity>
   );
 }
@@ -423,13 +292,11 @@ function Quick({ icon, label, onPress, styles }: { icon: string; label: string; 
 function GoalRow({ g, last, c, styles }: { g: Goal; last: boolean; c: Colors; styles: any }) {
   return (
     <View style={[styles.goalRow, !last && styles.goalRowBorder]}>
-      <Text style={styles.goalIcon}>{g.icon}</Text>
       <View style={{ flex: 1 }}>
         <Text style={styles.goalLabel}>{g.label}</Text>
         <View style={styles.goalTrack}>
           <View style={[styles.goalFill, { width: `${Math.round(g.progress * 100)}%`, backgroundColor: g.done ? c.success : c.primary }]} />
         </View>
-        <Text style={styles.goalDetail}>{g.detail}</Text>
       </View>
       <Text style={[styles.goalCheck, { color: g.done ? c.success : c.textMuted }]}>{g.done ? '✓' : '○'}</Text>
     </View>
@@ -439,93 +306,54 @@ function GoalRow({ g, last, c, styles }: { g: Goal; last: boolean; c: Colors; st
 function makeStyles(c: Colors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: c.bg },
-    scroll: { paddingTop: 56, paddingHorizontal: 16, paddingBottom: 40 },
-    grid: { gap: 12 },
+    scroll: { paddingTop: 60, paddingHorizontal: 18, paddingBottom: 36 },
+    stack: { gap: 16 },
     row: { flexDirection: 'row', gap: 12 },
 
-    // Begruessungs-Kachel (Hero)
-    heroTile: { backgroundColor: c.hero, borderRadius: 24, padding: 22, shadowColor: c.hero, shadowOpacity: 0.3, shadowRadius: 18, shadowOffset: { width: 0, height: 10 }, elevation: 7 },
-    heroHi: { color: 'rgba(255,255,255,0.82)', fontSize: 16, fontWeight: '600' },
-    heroName: { color: '#fff', fontSize: 27, fontWeight: '800', marginTop: 2 },
-    xpTrack: { height: 8, backgroundColor: 'rgba(255,255,255,0.22)', borderRadius: 4, marginTop: 18, overflow: 'hidden' },
-    xpFill: { height: 8, backgroundColor: '#A5B4FC', borderRadius: 4 },
-    xpText: { color: 'rgba(255,255,255,0.82)', fontSize: 12, marginTop: 8 },
+    // Header
+    header: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
+    greet: { fontSize: 15, color: c.textMuted, fontWeight: '500' },
+    name: { fontSize: 26, fontWeight: '800', color: c.heading, marginTop: 1 },
+    levelPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 },
+    levelText: { fontSize: 13, fontWeight: '700', color: c.heading },
+    levelSep: { width: StyleSheet.hairlineWidth, height: 14, backgroundColor: c.border, marginHorizontal: 9 },
 
-    // Mini-KPI-Kacheln
-    mini: { ...shadow, flex: 1, backgroundColor: c.card, borderRadius: 22, paddingVertical: 16, paddingHorizontal: 10, alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
-    miniIcon: { fontSize: 20 },
-    miniValue: { fontSize: 25, fontWeight: '800', color: c.heading, marginTop: 4 },
-    miniLabel: { fontSize: 11, color: c.textMuted, marginTop: 2, textAlign: 'center' },
+    // Karte
+    card: { ...shadow, backgroundColor: c.card, borderRadius: 16, padding: 18, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    cardHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    cardLabel: { fontSize: 12, fontWeight: '700', letterSpacing: 0.6, color: c.textMuted },
+    headRight: { fontSize: 13, fontWeight: '700', color: c.textMuted },
 
-    // Allgemeine grosse Kachel
-    tile: { ...shadow, backgroundColor: c.card, borderRadius: 24, padding: 18, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
-    tileHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    tileLabel: { fontSize: 12, fontWeight: '800', letterSpacing: 0.8, color: c.textMuted },
-    tileGo: { fontSize: 13, color: c.primary, fontWeight: '700' },
+    // Makros
+    macros: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 18 },
+    macro: { flex: 1, alignItems: 'center' },
+    macroDot: { width: 8, height: 8, borderRadius: 4, marginBottom: 7 },
+    macroValue: { fontSize: 15, fontWeight: '700', color: c.heading },
+    macroMax: { fontSize: 12, fontWeight: '600', color: c.textMuted },
+    macroLabel: { fontSize: 11, color: c.textMuted, marginTop: 3, textAlign: 'center' },
 
-    bigStat: { fontSize: 30, fontWeight: '800', color: c.heading, marginTop: 8 },
-    bigStatUnit: { fontSize: 16, fontWeight: '700', color: c.textMuted },
-    bar: { height: 10, backgroundColor: c.track, borderRadius: 5, overflow: 'hidden', marginTop: 14 },
-    barFill: { height: 10, backgroundColor: c.primary, borderRadius: 5 },
+    // Uebersichts-Kacheln
+    stat: { ...shadow, flex: 1, backgroundColor: c.card, borderRadius: 16, paddingVertical: 16, paddingHorizontal: 12, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    statLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 0.6, color: c.textMuted },
+    statValue: { fontSize: 20, fontWeight: '800', color: c.heading, marginTop: 8 },
+    statSub: { fontSize: 11, color: c.textMuted, marginTop: 2 },
+    statBar: { height: 5, backgroundColor: c.track, borderRadius: 3, overflow: 'hidden', marginTop: 10 },
+    statFill: { height: 5, backgroundColor: c.primary, borderRadius: 3 },
 
-    // Plan-heute Kachel (Zeile)
-    tileRow: { ...shadow, flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 24, padding: 18, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
-    tileRowIcon: { fontSize: 26, marginRight: 14 },
-    tileRowValue: { fontSize: 16, fontWeight: '700', color: c.heading, marginTop: 3 },
-
-    // Training-laeuft Kachel
-    activeTile: { ...shadow, flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 24, padding: 18, borderWidth: 1.5, borderColor: c.accent },
+    // Training laeuft
+    activeCard: { ...shadow, flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 16, padding: 16, borderWidth: 1.5, borderColor: c.primary },
     activeTitle: { fontSize: 16, fontWeight: '700', color: c.heading },
     activeSub: { fontSize: 13, color: c.textMuted, marginTop: 2 },
-    activeBtn: { backgroundColor: c.accent, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 11, marginLeft: 12 },
-    activeBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+    activeBtn: { backgroundColor: c.primary, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10, marginLeft: 12 },
+    activeBtnText: { color: c.onPrimary, fontSize: 14, fontWeight: '700' },
 
-    // Wasser-Buttons
-    waterBtns: { flexDirection: 'row', gap: 10, marginTop: 14, alignItems: 'center' },
-    pill: { flex: 1, backgroundColor: c.inputBg, borderRadius: 14, paddingVertical: 12, alignItems: 'center' },
-    pillText: { color: c.primary, fontWeight: '700', fontSize: 14 },
-    pillGhost: { width: 50, borderRadius: 14, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: c.border },
-    pillGhostText: { color: c.textMuted, fontSize: 16, fontWeight: '700' },
-
-    // Gewicht-Eingabe
-    weightRow: { flexDirection: 'row', gap: 10, marginTop: 14, alignItems: 'center' },
-    input: { flex: 1, backgroundColor: c.inputBg, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: c.text, borderWidth: 1, borderColor: c.border },
-    solidBtn: { backgroundColor: c.primary, borderRadius: 14, paddingHorizontal: 18, paddingVertical: 13, alignItems: 'center', justifyContent: 'center' },
-    solidBtnText: { color: c.onPrimary, fontSize: 15, fontWeight: '700' },
-    weightMsg: { fontSize: 13, color: c.success, marginTop: 10 },
-
-    // Kalorien-Makros
-    macros: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 18 },
-    macro: { flex: 1, alignItems: 'center' },
-    macroDot: { width: 10, height: 10, borderRadius: 5, marginBottom: 6 },
-    macroValue: { fontSize: 15, fontWeight: '700', color: c.text },
-    macroLabel: { fontSize: 12, color: c.textMuted, marginTop: 2, textAlign: 'center' },
-    nutriNote: { fontSize: 11, color: c.textMuted, lineHeight: 16, marginTop: 14 },
-
-    // Ziele/Challenges-Zeilen
-    goalRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },
+    // Tagesziele
+    goalRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 13 },
     goalRowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.border },
-    goalIcon: { fontSize: 20, marginRight: 12 },
-    goalLabel: { fontSize: 15, fontWeight: '600', color: c.text },
-    goalTrack: { height: 6, backgroundColor: c.track, borderRadius: 3, marginTop: 6, overflow: 'hidden' },
-    goalFill: { height: 6, borderRadius: 3 },
-    goalDetail: { fontSize: 12, color: c.textMuted, marginTop: 4 },
-    goalCheck: { fontSize: 20, fontWeight: '700', marginLeft: 10 },
-
-    // Schnellzugriff-Kacheln
-    quickCard: { ...shadow, flex: 1, backgroundColor: c.card, borderRadius: 22, paddingVertical: 18, alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
-    quickIconWrap: { width: 48, height: 48, borderRadius: 24, backgroundColor: c.inputBg, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
-    quickIcon: { fontSize: 24 },
-    quickLabel: { fontSize: 12, color: c.heading, fontWeight: '700' },
-
-    // Erfolge
-    badgeGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginTop: 10 },
-    badge: { width: '31%', backgroundColor: c.inputBg, borderRadius: 18, paddingVertical: 14, paddingHorizontal: 6, alignItems: 'center', marginBottom: 10 },
-    badgeLocked: { opacity: 0.55 },
-    badgeIcon: { fontSize: 26 },
-    lockedIcon: { opacity: 0.6 },
-    badgeName: { fontSize: 11, color: c.text, textAlign: 'center', marginTop: 6, fontWeight: '600' },
-    lockedName: { color: c.textMuted, fontWeight: '400' },
+    goalLabel: { fontSize: 14, fontWeight: '600', color: c.text },
+    goalTrack: { height: 5, backgroundColor: c.track, borderRadius: 3, marginTop: 8, overflow: 'hidden' },
+    goalFill: { height: 5, borderRadius: 3 },
+    goalCheck: { fontSize: 18, fontWeight: '700', marginLeft: 14 },
 
     error: { color: c.danger, fontSize: 14, marginTop: 8, textAlign: 'center' },
   });

@@ -73,7 +73,7 @@ export default function AuthScreen() {
           <View style={styles.brand}>
             <View style={styles.logo}><Text style={styles.logoMark}>F</Text></View>
             <Text style={styles.wordmark}>FitAvo</Text>
-            <Text style={styles.tagline}>FITNESS · ERNÄHRUNG · FORTSCHRITT</Text>
+            <Text style={styles.tagline}>Dein Begleiter für Training & Ernährung</Text>
           </View>
 
           <View style={styles.form}>
@@ -186,7 +186,7 @@ function makeStyles(c: Colors) {
     logo: { width: 60, height: 60, borderRadius: 18, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
     logoMark: { color: c.onPrimary, fontSize: 30, fontWeight: '800' },
     wordmark: { fontSize: 28, fontWeight: '800', color: c.heading, letterSpacing: 0.2 },
-    tagline: { fontSize: 11, fontWeight: '700', letterSpacing: 2, color: c.textMuted, marginTop: 8 },
+    tagline: { fontSize: 13, fontWeight: '500', color: c.textMuted, marginTop: 8, textAlign: 'center' },
 
     form: { width: '100%', maxWidth: 420, alignSelf: 'center' },
     heading: { fontSize: 22, fontWeight: '800', color: c.heading },
