@@ -12,7 +12,7 @@ import { PRIVACY_SECTIONS, IMPRESSUM_SECTIONS } from '../lib/legal';
 import { exportUserData, deleteAccount } from '../lib/gdpr';
 import { loadReminderPrefs, saveReminderPrefs, applyReminders, ensurePermission, ReminderPrefs } from '../lib/reminders';
 import { useFocusTick } from '../lib/useFocusTick';
-import { healthSupported, healthAvailable, hasStepsPermission, requestStepsPermission, openHealthSettings } from '../lib/health';
+import { healthSupported, healthAvailable, hasStepsPermission, requestHealthPermission, openHealthSettings } from '../lib/health';
 
 // Unterer Abstand fuer Scroll-Inhalte: auf Android (Edge-to-Edge) deutlich groesser,
 // damit der letzte Text auf keinem Geraet hinter der System-/Navigationsleiste landet.
@@ -56,10 +56,10 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
       );
       return;
     }
-    const ok = await requestStepsPermission();
+    const ok = await requestHealthPermission();
     setBusy(false);
     setStepsConnected(ok);
-    showMsg(ok ? 'Schritte verbunden ✓ – sie zählen jetzt zu deinen Kalorien.' : 'Keine Berechtigung erteilt.', !ok);
+    showMsg(ok ? 'Verbunden ✓ – Schritte & Kalorien zählen jetzt mit.' : 'Keine Berechtigung erteilt.', !ok);
   }
 
   // Reiter erneut angetippt -> zurueck zum Einstellungs-Menue
@@ -279,7 +279,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
             <TouchableOpacity style={styles.linkRow} onPress={connectHealth} disabled={busy}>
               <Text style={styles.link}>🚶  {stepsConnected ? 'Schritte verbunden ✓ (Health Connect)' : 'Mit Health Connect verbinden'}</Text>
             </TouchableOpacity>
-            <Text style={styles.hint}>Liest deine heutigen Schritte und rechnet geschätzte Kalorien aufs Tagesziel. Nur im echten Build, nicht in Expo Go.</Text>
+            <Text style={styles.hint}>Liest Schritte und – falls vorhanden – die von deiner Uhr gemessenen aktiven Kalorien und rechnet sie aufs Tagesziel. Nur im echten Build, nicht in Expo Go.</Text>
           </View>
         </>
       )}

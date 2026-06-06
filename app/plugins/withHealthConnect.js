@@ -7,7 +7,10 @@
 const { withAndroidManifest, withMainActivity } = require('@expo/config-plugins');
 
 const HEALTH_PACKAGE = 'com.google.android.apps.healthdata';
-const PERMISSIONS = ['android.permission.health.READ_STEPS'];
+const PERMISSIONS = [
+  'android.permission.health.READ_STEPS',
+  'android.permission.health.READ_ACTIVE_CALORIES_BURNED',
+];
 
 function withHealthPermissions(config) {
   return withAndroidManifest(config, (cfg) => {

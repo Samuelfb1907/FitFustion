@@ -37,13 +37,16 @@ export async function healthAvailable(): Promise<boolean> {
   }
 }
 
-// Berechtigung "Schritte lesen" anfragen. Gibt true zurueck, wenn erteilt.
-export async function requestStepsPermission(): Promise<boolean> {
+// Berechtigung anfragen: Schritte + aktive Kalorien lesen. Gibt true zurueck, wenn erteilt.
+export async function requestHealthPermission(): Promise<boolean> {
   const HC = hc();
   if (!HC) return false;
   try {
     await HC.initialize();
-    const granted = await HC.requestPermission([{ accessType: 'read', recordType: 'Steps' }]);
+    const granted = await HC.requestPermission([
+      { accessType: 'read', recordType: 'Steps' },
+      { accessType: 'read', recordType: 'ActiveCaloriesBurned' },
+    ]);
     return Array.isArray(granted) && granted.length > 0;
   } catch {
     return false;
@@ -78,6 +81,34 @@ export async function getTodaySteps(): Promise<number> {
   } catch {
     return 0;
   }
+}
+
+// Heute aktiv verbrannte Kalorien (z. B. von der Smartwatch gemessen) in kcal.
+export async function getTodayActiveCalories(): Promise<number> {
+  const HC = hc();
+  if (!HC) return 0;
+  try {
+    await HC.initialize();
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    const res = await HC.readRecords('ActiveCaloriesBurned', {
+      timeRangeFilter: { operator: 'between', startTime: start.toISOString(), endTime: new Date().toISOString() },
+    });
+    const recs = res?.records ?? res?.result ?? (Array.isArray(res) ? res : []);
+    const kcal = (recs as any[]).reduce((sum: number, r: any) => sum + (Number(r?.energy?.inKilocalories) || 0), 0);
+    return Math.round(kcal);
+  } catch {
+    return 0;
+  }
+}
+
+// Heutige Aktivitaet: GEMESSENE aktive Kalorien bevorzugen (Uhr), sonst aus Schritten schaetzen.
+// So zaehlen wir nie doppelt (entweder Messwert ODER Schaetzung).
+export async function getTodayActivity(weightKg: number): Promise<{ steps: number; kcal: number; measured: boolean }> {
+  const steps = await getTodaySteps();
+  const active = await getTodayActiveCalories();
+  if (active > 0) return { steps, kcal: active, measured: true };
+  return { steps, kcal: stepsKcal(steps, weightKg), measured: false };
 }
 
 // Health-Connect-Einstellungen oeffnen (z. B. zum Installieren/Verwalten).

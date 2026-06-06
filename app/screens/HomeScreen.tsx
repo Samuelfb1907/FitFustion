@@ -10,7 +10,7 @@ import { computeNutrition, ageFromBirthDate, NutritionResult, Gender, ActivityLe
 import { computeXp, levelInfo, computeStreak, ACHIEVEMENTS, GameStats } from '../lib/gamification';
 import CalorieGauge from '../components/CalorieGauge';
 import { todayTrainingKcal } from '../lib/trainingBonus';
-import { hasStepsPermission, getTodaySteps, stepsKcal } from '../lib/health';
+import { hasStepsPermission, getTodayActivity } from '../lib/health';
 import { dailyGoals, Goal } from '../lib/goals';
 import { todayWeekday } from '../lib/weekdays';
 import { localDateStr, todayStr, startOfTodayISO, daysAgoStr, daysAgoISO, mondayStr } from '../lib/date';
@@ -60,7 +60,8 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
   const [weightKg, setWeightKg] = useState<number | null>(null);
   const [trainingKcal, setTrainingKcal] = useState(0);
   const [steps, setSteps] = useState(0);
-  const [stepKcal, setStepKcal] = useState(0);
+  const [activityKcal, setActivityKcal] = useState(0);
+  const [activityMeasured, setActivityMeasured] = useState(false);
 
   const load = useCallback(async (silent = false) => {
       const userId = session?.user?.id;
@@ -95,9 +96,9 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
         setGoalLabel(GOAL_LABELS[goalType] ?? goalType);
         setTrainingKcal(await todayTrainingKcal(userId, Number(prof.weight_kg)));
         if (await hasStepsPermission()) {
-          const st = await getTodaySteps();
-          setSteps(st); setStepKcal(stepsKcal(st, Number(prof.weight_kg)));
-        } else { setSteps(0); setStepKcal(0); }
+          const a = await getTodayActivity(Number(prof.weight_kg));
+          setSteps(a.steps); setActivityKcal(a.kcal); setActivityMeasured(a.measured);
+        } else { setSteps(0); setActivityKcal(0); setActivityMeasured(false); }
       } else {
         setError('Profildaten unvollständig.');
       }
@@ -220,10 +221,10 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
               <View style={styles.card}>
                 <Text style={styles.cardLabel}>HEUTE{goalLabel ? ` · ${goalLabel.toUpperCase()}` : ''}</Text>
                 <View style={{ alignItems: 'center', marginTop: 12 }}>
-                  <CalorieGauge target={nutrition.targetCalories + trainingKcal + stepKcal} eaten={eaten.kcal} />
+                  <CalorieGauge target={nutrition.targetCalories + trainingKcal + activityKcal} eaten={eaten.kcal} />
                 </View>
                 {trainingKcal > 0 && <Text style={styles.bonusLine}>🔥 +{trainingKcal} kcal durch Training heute (geschätzt)</Text>}
-                {steps > 0 && <Text style={styles.bonusLine}>🚶 {steps.toLocaleString('de-DE')} Schritte · +{stepKcal} kcal (geschätzt)</Text>}
+                {activityKcal > 0 && <Text style={styles.bonusLine}>🚶 {steps > 0 ? `${steps.toLocaleString('de-DE')} Schritte · ` : ''}+{activityKcal} kcal {activityMeasured ? 'aktiv (gemessen)' : '(geschätzt)'}</Text>}
                 <View style={styles.macros}>
                   <Macro label="Protein" eaten={eaten.p} target={nutrition.proteinG} color={c.accent} styles={styles} />
                   <Macro label="Kohlenhydrate" eaten={eaten.c} target={nutrition.carbsG} color="#E69500" styles={styles} />
@@ -259,7 +260,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
                   <Text style={styles.cardLabel}>TAGESZIELE</Text>
                   {stats && <Text style={styles.headRight}>🏆 {earnedCount}/{ACHIEVEMENTS.length}</Text>}
                 </View>
-                {dailyGoals({ trainedToday: goalsData.trainedToday, trackedToday: goalsData.trackedToday, eatenKcal: eaten.kcal, targetKcal: nutrition.targetCalories + trainingKcal + stepKcal, eatenProtein: eaten.p, targetProtein: nutrition.proteinG }).map((g, i, arr) => (
+                {dailyGoals({ trainedToday: goalsData.trainedToday, trackedToday: goalsData.trackedToday, eatenKcal: eaten.kcal, targetKcal: nutrition.targetCalories + trainingKcal + activityKcal, eatenProtein: eaten.p, targetProtein: nutrition.proteinG }).map((g, i, arr) => (
                   <GoalRow key={g.key} g={g} last={i === arr.length - 1} c={c} styles={styles} />
                 ))}
               </View>
