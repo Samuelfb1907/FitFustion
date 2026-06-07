@@ -53,12 +53,15 @@ export default function SwipeBack({
 
   // Vorherige Seite leicht nach links versetzt mitlaufen lassen (Parallax wie iOS).
   const behindTx = tx.interpolate({ inputRange: [0, SCREEN_W], outputRange: [-SCREEN_W * 0.25, 0], extrapolate: 'clamp' });
+  // Im Ruhezustand (tx=0) komplett unsichtbar -> kein Durchblitzen am Rand; ab dem ersten
+  // Wisch-Pixel sofort sichtbar.
+  const behindOpacity = tx.interpolate({ inputRange: [0, 1], outputRange: [0, 1], extrapolate: 'clamp' });
 
   return (
     <View style={[{ flex: 1 }, style]}>
       {behind != null && (
         <Animated.View
-          style={[StyleSheet.absoluteFill, c ? { backgroundColor: c.bg } : null, { transform: [{ translateX: behindTx }] }]}
+          style={[StyleSheet.absoluteFill, c ? { backgroundColor: c.bg } : null, { opacity: behindOpacity, transform: [{ translateX: behindTx }] }]}
           pointerEvents="none"
         >
           {c && <Ambient c={c} />}
