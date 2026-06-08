@@ -275,6 +275,12 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       setNlBusy(false);
     }
   }
+  // Menge (Gramm) eines erkannten Eintrags im Bestaetigungs-Dialog anpassen.
+  function setNlAmount(idx: number, text: string) {
+    const digits = text.replace(/[^0-9]/g, '');
+    const n = Math.min(100000, parseInt(digits || '0', 10) || 0);
+    setNlItems((cur) => (cur ?? []).map((it, i) => (i === idx ? { ...it, amount_g: n } : it)));
+  }
   // Erkannte Eintraege ins Tagebuch: vorhandenes Lebensmittel abgleichen, sonst neu anlegen.
   async function applyNlItems() {
     if (!userId || !nlItems || !nlItems.length || busyRef.current) return;
@@ -894,7 +900,21 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
               <View key={idx} style={[styles.entryRow, idx > 0 && styles.entryDivider]}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.entryName} numberOfLines={1}>{it.name}</Text>
-                  <Text style={styles.entryMeta}>{it.amount_g} g  ·  {Math.round((it.kcal * it.amount_g) / 100)} kcal  ·  {TRACKER_MEALS.find((m) => m.key === it.meal_type)?.label ?? ''}</Text>
+                  <View style={styles.nlAmtRow}>
+                    <TextInput
+                      style={[styles.nlAmtInput, it.amount_g < 1 && { borderColor: c.danger }]}
+                      value={it.amount_g ? String(it.amount_g) : ''}
+                      onChangeText={(t) => setNlAmount(idx, t)}
+                      keyboardType="number-pad"
+                      selectTextOnFocus
+                      maxLength={6}
+                      placeholder="0"
+                      placeholderTextColor={c.textMuted}
+                      accessibilityLabel={`Menge für ${it.name} in Gramm`}
+                    />
+                    <Text style={styles.nlAmtUnit}>g</Text>
+                    <Text style={styles.entryMeta} numberOfLines={1}>  ·  {Math.round((it.kcal * it.amount_g) / 100)} kcal  ·  {TRACKER_MEALS.find((m) => m.key === it.meal_type)?.label ?? ''}</Text>
+                  </View>
                 </View>
                 <TouchableOpacity onPress={() => setNlItems((cur) => (cur ?? []).filter((_, i) => i !== idx))} style={styles.del} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`${it.name} entfernen`}>
                   <Text style={styles.delText}>✕</Text>
@@ -902,8 +922,9 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
               </View>
             ))}
             {nlItems?.length === 0 && <Text style={styles.mealEmpty}>Nichts mehr übrig – tippe Abbrechen.</Text>}
+            {!!nlItems?.some((it) => it.amount_g < 1) && <Text style={styles.nlHint}>Bitte bei allen eine Menge (g) eintragen.</Text>}
           </ScrollView>
-          <TouchableOpacity style={[styles.primaryBtn, (nlBusy || !nlItems?.length) && { opacity: 0.5 }]} onPress={applyNlItems} disabled={nlBusy || !nlItems?.length} activeOpacity={0.85}>
+          <TouchableOpacity style={[styles.primaryBtn, (nlBusy || !nlItems?.length || !!nlItems?.some((it) => it.amount_g < 1)) && { opacity: 0.5 }]} onPress={applyNlItems} disabled={nlBusy || !nlItems?.length || !!nlItems?.some((it) => it.amount_g < 1)} activeOpacity={0.85}>
             {nlBusy ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.primaryText}>Ins Tagebuch eintragen</Text>}
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setNlItems(null)} style={{ marginTop: 12 }}>
@@ -992,6 +1013,10 @@ function makeStyles(c: Colors) {
     nlSheet: { backgroundColor: c.bg, borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 22, paddingBottom: 32 },
     nlSheetTitle: { fontSize: 18, fontWeight: '800', color: c.heading, marginBottom: 10 },
     nlClose: { textAlign: 'center', color: c.textMuted, fontSize: 14 },
+    nlAmtRow: { flexDirection: 'row', alignItems: 'center', marginTop: 3 },
+    nlAmtInput: { minWidth: 52, paddingVertical: 3, paddingHorizontal: 8, borderWidth: 1, borderColor: c.border, borderRadius: 8, backgroundColor: c.inputBg, color: c.text, fontSize: 13, fontWeight: '700', textAlign: 'right' },
+    nlAmtUnit: { color: c.textMuted, fontSize: 13, marginLeft: 4 },
+    nlHint: { color: c.danger, fontSize: 12, marginTop: 8 },
     inputLabel: { fontSize: 14, color: c.text, fontWeight: '600', marginTop: 8, marginBottom: 6 },
     input: { borderWidth: 1, borderColor: c.border, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 16, backgroundColor: c.inputBg, color: c.text },
     preview: { fontSize: 18, fontWeight: '700', color: c.heading, marginTop: 14 },
