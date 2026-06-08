@@ -32,6 +32,9 @@ export default function SwipeBack({
 
   const responder = useRef(
     PanResponder.create({
+      // Auch VOR scrollbaren Kindern (FlatList/ScrollView) greifen: nur bei klarer
+      // Wisch-Geste vom linken Rand -> sonst scrollt/tippt das Kind normal weiter.
+      onMoveShouldSetPanResponderCapture: (_, g) => g.x0 < 40 && g.dx > 12 && Math.abs(g.dx) > Math.abs(g.dy) * 1.4,
       onMoveShouldSetPanResponder: (_, g) => g.x0 < 40 && g.dx > 12 && Math.abs(g.dx) > Math.abs(g.dy) * 1.4,
       onPanResponderMove: (_, g) => tx.setValue(Math.max(0, g.dx)),
       onPanResponderRelease: (_, g) => {

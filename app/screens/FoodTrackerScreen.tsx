@@ -77,7 +77,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     const run = async () => {
       let query = supabase.from('foods').select('id, name, category, kcal, protein, carbs, fat, user_id');
       if (q) query = query.ilike('name', `%${q}%`);
-      const { data } = await query.order('name').limit(50);
+      const { data } = await query.order('name').limit(2000);
       if (cancelled) return;
       setSearchResults((data ?? []) as Food[]);
       setSearching(false);
@@ -383,7 +383,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
         <TouchableOpacity style={styles.newFoodBtn} onPress={openNewFood} activeOpacity={0.85}>
           <Text style={styles.newFoodText}>➕  Eigenes Lebensmittel anlegen</Text>
         </TouchableOpacity>
-        <Text style={styles.countHint}>{searching ? 'Suche…' : `${searchResults.length} Treffer${searchResults.length >= 50 ? '+' : ''}`}</Text>
+        <Text style={styles.countHint}>{searching ? 'Suche…' : `${searchResults.length} ${searchResults.length === 1 ? 'Eintrag' : 'Einträge'}${searchResults.length >= 2000 ? '+' : ''}`}</Text>
         <FlatList
           style={{ flex: 1 }}
           data={searchResults}
