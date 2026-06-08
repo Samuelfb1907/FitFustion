@@ -1,6 +1,6 @@
 // Automatischer Trainingsplan (themed).
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Modal, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
@@ -307,15 +307,21 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
   }
 
   if (selected) {
+    const closeSel = () => { setSelected(null); loadDoneToday(); };
     return (
-      <SwipeBack onBack={() => { setSelected(null); loadDoneToday(); }} c={c} behind={renderPlan()}>
-        <ExerciseDetail
-          exercise={selected.exercise}
-          muscleKey={selected.muscleKey}
-          muscleName={selected.muscleName}
-          onBack={() => { setSelected(null); loadDoneToday(); }}
-        />
-      </SwipeBack>
+      <>
+        {renderPlan()}
+        <Modal transparent visible animationType="none" onRequestClose={closeSel}>
+          <SwipeBack onBack={closeSel} c={c}>
+            <ExerciseDetail
+              exercise={selected.exercise}
+              muscleKey={selected.muscleKey}
+              muscleName={selected.muscleName}
+              onBack={closeSel}
+            />
+          </SwipeBack>
+        </Modal>
+      </>
     );
   }
 
@@ -325,30 +331,35 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
     const q = pickerSearch.trim().toLowerCase();
     const filtered = candidates.filter((e) => !existing.has(e.id) && (q ? e.name.toLowerCase().includes(q) : true));
     return (
-      <SwipeBack onBack={() => setAddingToDay(null)} c={c} behind={renderPlan()}>
-      <View style={[styles.container, embedded && styles.embedded]}>
-        <BackButton onPress={() => setAddingToDay(null)} c={c} />
-        <Text style={styles.title}>Übung hinzufügen</Text>
-        <Text style={styles.subtitle}>{day?.focus ?? ''}</Text>
-        <TextInput style={styles.input} value={pickerSearch} onChangeText={setPickerSearch} placeholder="Suchen…" placeholderTextColor={c.textMuted} autoCorrect={false} />
-        {pickerLoading ? (
-          <ActivityIndicator color={c.primary} style={{ marginTop: 24 }} />
-        ) : (
-          <ScrollView contentContainerStyle={{ paddingBottom: 40, paddingTop: 10 }} keyboardShouldPersistTaps="handled">
-            {filtered.map((e) => (
-              <TouchableOpacity key={e.id} style={styles.pickRow} onPress={() => addExercise(e.id)} activeOpacity={0.7}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.exName}>{e.name}</Text>
-                  <Text style={styles.exMeta}>{DIFF_LABELS[e.difficulty] ?? e.difficulty}{e.muscleName ? ` · ${e.muscleName}` : ''}</Text>
-                </View>
-                <Text style={styles.pickAdd}>+ Hinzufügen</Text>
-              </TouchableOpacity>
-            ))}
-            {filtered.length === 0 && <Text style={styles.muted}>Keine weiteren passenden Übungen.</Text>}
-          </ScrollView>
-        )}
-      </View>
-      </SwipeBack>
+      <>
+        {renderPlan()}
+        <Modal transparent visible animationType="none" onRequestClose={() => setAddingToDay(null)}>
+          <SwipeBack onBack={() => setAddingToDay(null)} c={c}>
+          <View style={styles.container}>
+            <BackButton onPress={() => setAddingToDay(null)} c={c} />
+            <Text style={styles.title}>Übung hinzufügen</Text>
+            <Text style={styles.subtitle}>{day?.focus ?? ''}</Text>
+            <TextInput style={styles.input} value={pickerSearch} onChangeText={setPickerSearch} placeholder="Suchen…" placeholderTextColor={c.textMuted} autoCorrect={false} />
+            {pickerLoading ? (
+              <ActivityIndicator color={c.primary} style={{ marginTop: 24 }} />
+            ) : (
+              <ScrollView contentContainerStyle={{ paddingBottom: 40, paddingTop: 10 }} keyboardShouldPersistTaps="handled">
+                {filtered.map((e) => (
+                  <TouchableOpacity key={e.id} style={styles.pickRow} onPress={() => addExercise(e.id)} activeOpacity={0.7}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.exName}>{e.name}</Text>
+                      <Text style={styles.exMeta}>{DIFF_LABELS[e.difficulty] ?? e.difficulty}{e.muscleName ? ` · ${e.muscleName}` : ''}</Text>
+                    </View>
+                    <Text style={styles.pickAdd}>+ Hinzufügen</Text>
+                  </TouchableOpacity>
+                ))}
+                {filtered.length === 0 && <Text style={styles.muted}>Keine weiteren passenden Übungen.</Text>}
+              </ScrollView>
+            )}
+          </View>
+          </SwipeBack>
+        </Modal>
+      </>
     );
   }
 
