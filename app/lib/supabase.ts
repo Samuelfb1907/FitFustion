@@ -7,8 +7,8 @@
 // WICHTIG: Nach Änderungen an .env den Expo-Server NEU starten.
 
 import 'react-native-url-polyfill/auto'; // Polyfill, das Supabase unter React Native benötigt
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
+import { SecureStorageAdapter } from './secureStorage';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
@@ -26,7 +26,9 @@ export const supabase = createClient(
   supabaseAnonKey || 'placeholder-anon-key',
   {
     auth: {
-      storage: AsyncStorage,     // Login bleibt auf dem Gerät gespeichert
+      // Auth-Token verschluesselt im Geraete-Keystore (statt unverschluesselt in
+      // AsyncStorage). Nach dem Update muss man sich EINMAL neu einloggen.
+      storage: SecureStorageAdapter,
       autoRefreshToken: true,    // Token wird automatisch erneuert
       persistSession: true,
       detectSessionInUrl: false, // wichtig für mobile Apps (kein Browser-Redirect)

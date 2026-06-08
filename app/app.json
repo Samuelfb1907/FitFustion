@@ -19,10 +19,13 @@
       [
         "expo-build-properties",
         {
-          "android": { "minSdkVersion": 26 }
+          "android": {
+            "minSdkVersion": 26
+          }
         }
       ],
-      "./plugins/withHealthConnect"
+      "./plugins/withHealthConnect",
+      "expo-secure-store"
     ],
     "ios": {
       "supportsTablet": true,
