@@ -12,7 +12,7 @@ import { NUTRITION_DISCLAIMER, ALLERGY_HINT } from '../lib/legal';
 import { useFocusTick } from '../lib/useFocusTick';
 import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
-import { todayStr } from '../lib/date';
+import { todayStr, daysAgoStr } from '../lib/date';
 import { todayTrainingKcal } from '../lib/trainingBonus';
 import { hasStepsPermission, getTodayActivity } from '../lib/health';
 import BackButton from '../components/BackButton';
@@ -26,6 +26,23 @@ type QuickFood = { food: Food; amount: number; count: number };
 // Favorit = gespeicherte Mahlzeit (z. B. dein taegliches Fruehstueck) mit mehreren Zutaten.
 type FavItem = { food_id: string; name: string; amount_g: number; kcal: number; protein: number; carbs: number; fat: number };
 type Favorite = { id: string; name: string; items: FavItem[] };
+// "Mein ueblicher Tag": pro Mahlzeit die haeufig zusammen geloggten Lebensmittel.
+type UsualItem = { food: Food; amount: number; days: number };
+type UsualMeal = { items: UsualItem[]; kcal: number };
+
+// Typische Menge = haeufigste Menge; sonst die zuletzt verwendete.
+function typicalAmount(amounts: number[]): number {
+  if (!amounts.length) return 100;
+  const freq = new Map<number, number>();
+  let best = amounts[0];
+  let bestCount = 0;
+  for (const a of amounts) {
+    const n = (freq.get(a) ?? 0) + 1;
+    freq.set(a, n);
+    if (n > bestCount) { bestCount = n; best = a; }
+  }
+  return best;
+}
 
 // todayStr -> lib/date.ts
 
@@ -70,6 +87,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   const [savingFav, setSavingFav] = useState(false);
   const [favErr, setFavErr] = useState<string | null>(null);
   const [favMsg, setFavMsg] = useState<string | null>(null);
+  const [usualByMeal, setUsualByMeal] = useState<Partial<Record<MealType, UsualMeal>>>({});
   const busyRef = useRef(false); // verhindert doppelte Tagebuch-Eintraege bei schnellem Doppel-Tippen
 
   useEffect(() => { init(); }, [userId]);
@@ -78,7 +96,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   useFocusTick(focusTick, () => {
     setMode('diary'); setSelectedFood(null); setSearch(''); setError(null); setScannerOpen(false);
     setPickTab('zutaten'); setAddingTo('diary'); setFavDraft(null);
-    loadLogs(); loadQuick(); loadFavorites();
+    loadLogs(); loadQuick(); loadFavorites(); loadUsual();
   });
 
   // Serverseitige Lebensmittel-Suche (debounced) – laedt NICHT mehr die ganze foods-Tabelle.
@@ -141,6 +159,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     await loadLogs();
     await loadQuick();
     await loadFavorites();
+    await loadUsual();
     setLoadError(null);
     } catch (e) {
       setLoadError(errorMessage(e));
@@ -181,6 +200,58 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       .slice(0, 8)
       .map((x) => ({ food: x.food, amount: x.amount, count: x.count }));
     setQuickFoods(list);
+  }
+
+  // "Mein ueblicher Tag": aus ~35 Tagen Historie pro Mahlzeit die Lebensmittel,
+  // die an mind. 2 Tagen geloggt wurden (= ueblich). Rein clientseitig, ohne KI.
+  async function loadUsual() {
+    if (!userId) { setUsualByMeal({}); return; }
+    const { data } = await supabase
+      .from('food_logs')
+      .select('meal_type, amount_g, log_date, foods(id, name, category, kcal, protein, carbs, fat, user_id)')
+      .eq('user_id', userId).gte('log_date', daysAgoStr(35)).order('created_at', { ascending: false }).limit(400);
+    const byMeal: Record<string, Map<string, { food: Food; days: Set<string>; amounts: number[] }>> = {};
+    ((data ?? []) as any[]).forEach((row) => {
+      const food = Array.isArray(row.foods) ? row.foods[0] : row.foods;
+      if (!food) return;
+      const meal = normalizeMeal(row.meal_type);
+      if (!byMeal[meal]) byMeal[meal] = new Map();
+      const m = byMeal[meal];
+      const amt = Number(row.amount_g) || 100;
+      const ex = m.get(food.id);
+      if (ex) { ex.days.add(String(row.log_date)); ex.amounts.push(amt); }
+      else m.set(food.id, { food: food as Food, days: new Set([String(row.log_date)]), amounts: [amt] });
+    });
+    const result: Partial<Record<MealType, UsualMeal>> = {};
+    (Object.keys(byMeal) as MealType[]).forEach((meal) => {
+      const items = [...byMeal[meal].values()]
+        .filter((x) => x.days.size >= 2)
+        .sort((a, b) => b.days.size - a.days.size)
+        .slice(0, 6)
+        .map((x) => ({ food: x.food, amount: typicalAmount(x.amounts), days: x.days.size }));
+      if (items.length) {
+        const kcal = items.reduce((s, it) => s + Math.round((it.food.kcal * it.amount) / 100), 0);
+        result[meal] = { items, kcal };
+      }
+    });
+    setUsualByMeal(result);
+  }
+
+  // Alle ueblichen Items einer Mahlzeit mit EINEM Tipp ins heutige Tagebuch.
+  async function addUsual(meal: MealType) {
+    if (!userId || busyRef.current) return;
+    const u = usualByMeal[meal];
+    if (!u || !u.items.length) return;
+    busyRef.current = true; setQuickMsg(null);
+    try {
+      const rows = u.items.map((it) => ({ user_id: userId, food_id: it.food.id, amount_g: it.amount, log_date: todayStr(), meal_type: meal }));
+      const { error: e } = await supabase.from('food_logs').insert(rows);
+      if (e) { setError(errorMessage(e)); return; }
+      setQuickMsg(`✓ Übliches ${TRACKER_MEALS.find((m) => m.key === meal)?.label ?? ''} hinzugefügt`);
+      setTimeout(() => setQuickMsg(null), 2500);
+      await loadLogs();
+      await loadQuick();
+    } finally { busyRef.current = false; }
   }
 
   async function quickAdd(qf: QuickFood) {
@@ -606,6 +677,10 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   return renderDiary();
 
   function renderDiary() {
+  const curMeal = mealByHour();
+  const usual = usualByMeal[curMeal];
+  const curLoggedToday = logs.some((e) => normalizeMeal(e.meal_type) === curMeal);
+  const showUsual = !!usual && usual.items.length > 0 && !curLoggedToday;
   return (
     <>
     <ScrollView
@@ -653,6 +728,19 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
           <Text style={styles.scanText}>📷  Scannen</Text>
         </TouchableOpacity>
       </View>
+
+      {/* "Mein üblicher Tag": die übliche Mahlzeit mit 1 Tipp hinzufügen */}
+      {showUsual && usual && (
+        <View style={styles.usualCard}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.usualTitle}>⭐  Dein übliches {TRACKER_MEALS.find((m) => m.key === curMeal)?.label ?? 'Essen'}</Text>
+            <Text style={styles.usualItems} numberOfLines={2}>{usual.items.map((i) => i.food.name).join(' · ')}  ·  {usual.kcal} kcal</Text>
+          </View>
+          <TouchableOpacity style={styles.usualBtn} onPress={() => addUsual(curMeal)} disabled={busyRef.current} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={`Übliches ${TRACKER_MEALS.find((m) => m.key === curMeal)?.label ?? 'Essen'} hinzufügen`}>
+            <Text style={styles.usualBtnText}>+ 1 Tipp</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <View style={styles.allergyNote}><Text style={styles.allergyText}>{ALLERGY_HINT}</Text></View>
 
@@ -773,6 +861,11 @@ function makeStyles(c: Colors) {
     mealAdd: { width: 30, height: 30, borderRadius: 15, backgroundColor: c.inputBg, borderWidth: 1, borderColor: c.primary, alignItems: 'center', justifyContent: 'center' },
     mealAddText: { fontSize: 16, color: c.primary, fontWeight: '700', lineHeight: 18 },
     mealEmpty: { fontSize: 12, color: c.textMuted, fontStyle: 'italic', paddingVertical: 3, paddingLeft: 2 },
+    usualCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 12, borderWidth: 1, borderColor: c.primary },
+    usualTitle: { fontSize: 14, fontWeight: '800', color: c.heading },
+    usualItems: { fontSize: 12, color: c.textMuted, marginTop: 2 },
+    usualBtn: { backgroundColor: c.primary, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, marginLeft: 10 },
+    usualBtnText: { color: c.onPrimary, fontWeight: '800', fontSize: 14 },
     inputLabel: { fontSize: 14, color: c.text, fontWeight: '600', marginTop: 8, marginBottom: 6 },
     input: { borderWidth: 1, borderColor: c.border, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 16, backgroundColor: c.inputBg, color: c.text },
     preview: { fontSize: 18, fontWeight: '700', color: c.heading, marginTop: 14 },
