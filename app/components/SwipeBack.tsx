@@ -38,8 +38,10 @@ export default function SwipeBack({
         const back = g.dx > SCREEN_W * 0.33 || (g.dx > 60 && g.vx > 0.3);
         if (back) {
           Animated.timing(tx, { toValue: SCREEN_W, duration: 180, useNativeDriver: true }).start(() => {
+            // Kein tx.setValue(0): der Parent entfernt diese Seite direkt nach onBack().
+            // Ein Reset wuerde die schon weggeschobene Seite fuer 1 Frame zurueck ins
+            // Bild schnappen lassen -> kurzes Aufblitzen der vorigen Seite.
             onBackRef.current();
-            tx.setValue(0);
           });
         } else {
           Animated.spring(tx, { toValue: 0, useNativeDriver: true, bounciness: 0, speed: 16 }).start();
