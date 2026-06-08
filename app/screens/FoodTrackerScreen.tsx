@@ -630,8 +630,11 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
             <View style={[styles.kcalFill, { width: `${Math.min(100, Math.round((totalKcal / effTarget) * 100))}%`, backgroundColor: totalKcal > effTarget ? c.danger : c.primary }]} />
           </View>
         )}
-        {trainingKcal > 0 && <Text style={styles.bonusLine}>🔥 +{trainingKcal} kcal durch Training (geschätzt)</Text>}
-        {activityKcal > 0 && <Text style={styles.bonusLine}>🚶 {steps > 0 ? `${steps.toLocaleString('de-DE')} Schritte · ` : ''}+{activityKcal} kcal {activityMeasured ? 'aktiv (gemessen)' : '(geschätzt)'}</Text>}
+        {(trainingKcal > 0 || activityKcal > 0) && (
+          <Text style={styles.bonusLine} numberOfLines={1}>
+            {trainingKcal > 0 ? '🔥' : ''}{activityKcal > 0 ? '🚶' : ''}  +{trainingKcal + activityKcal} kcal extra{activityKcal > 0 && steps > 0 ? `  ·  ${steps.toLocaleString('de-DE')} Schritte` : ''}
+          </Text>
+        )}
         <View style={styles.macrosRow}>
           <View style={styles.macroItem}><View style={[styles.macroDot, { backgroundColor: c.accent }]} /><Text style={styles.macroTxt}>{totalP} g Eiweiß</Text></View>
           <View style={styles.macroItem}><View style={[styles.macroDot, { backgroundColor: '#E69500' }]} /><Text style={styles.macroTxt}>{totalC} g KH</Text></View>
@@ -720,38 +723,38 @@ function makeStyles(c: Colors) {
     bleedPad: { paddingHorizontal: 20 },
     title: { fontSize: 26, fontWeight: '800', color: c.heading },
     subtitle: { fontSize: 15, color: c.textMuted, marginTop: 2, marginBottom: 16 },
-    disclaimer: { fontSize: 12, color: c.textMuted, lineHeight: 17, marginTop: 2, marginBottom: 14 },
-    allergyNote: { backgroundColor: c.inputBg, borderRadius: 16, padding: 12, borderWidth: 1, borderColor: c.cardBorder, marginBottom: 14 },
-    allergyText: { fontSize: 13, color: c.text, lineHeight: 18, fontWeight: '600' },
+    disclaimer: { fontSize: 11, color: c.textMuted, lineHeight: 15, marginTop: 2, marginBottom: 10 },
+    allergyNote: { backgroundColor: c.inputBg, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9, borderWidth: 1, borderColor: c.cardBorder, marginBottom: 10 },
+    allergyText: { fontSize: 12, color: c.text, lineHeight: 16, fontWeight: '600' },
     back: { color: c.primary, fontSize: 15, fontWeight: '600', marginBottom: 10 },
     addText: { color: c.onPrimary, fontSize: 16, fontWeight: '700' },
-    actionRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
-    addBtnRow: { flex: 1, backgroundColor: c.primary, borderRadius: 16, paddingVertical: 15, alignItems: 'center' },
-    scanBtn: { flex: 1, backgroundColor: c.card, borderWidth: 1, borderColor: c.primary, borderRadius: 16, paddingVertical: 15, alignItems: 'center' },
+    actionRow: { flexDirection: 'row', gap: 10, marginBottom: 12 },
+    addBtnRow: { flex: 1, backgroundColor: c.primary, borderRadius: 14, paddingVertical: 13, alignItems: 'center' },
+    scanBtn: { flex: 1, backgroundColor: c.card, borderWidth: 1, borderColor: c.primary, borderRadius: 14, paddingVertical: 13, alignItems: 'center' },
     scanText: { color: c.primary, fontSize: 16, fontWeight: '700' },
-    quickWrap: { marginBottom: 18 },
-    quickChip: { ...shadow, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, maxWidth: 200 },
+    quickWrap: { marginBottom: 12 },
+    quickChip: { ...shadow, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9, maxWidth: 200 },
     quickName: { fontSize: 14, fontWeight: '700', color: c.heading },
     quickMeta: { fontSize: 12, color: c.textMuted, marginTop: 2 },
     quickMsg: { fontSize: 13, color: c.success, marginTop: 10, fontWeight: '600' },
-    sectionHead: { fontSize: 12, fontWeight: '700', letterSpacing: 0.8, color: c.textMuted, marginBottom: 8, marginLeft: 2 },
+    sectionHead: { fontSize: 11, fontWeight: '700', letterSpacing: 0.8, color: c.textMuted, marginBottom: 6, marginLeft: 2 },
 
-    todayCard: { ...shadow, backgroundColor: c.card, borderRadius: 16, padding: 20, marginBottom: 14, borderWidth: 1, borderColor: c.cardBorder },
+    todayCard: { ...shadow, backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: c.cardBorder },
     todayRow: { flexDirection: 'row', alignItems: 'center' },
     todayCol: { flex: 1, alignItems: 'center' },
-    todayVal: { fontSize: 24, fontWeight: 'bold', color: c.heading },
+    todayVal: { fontSize: 22, fontWeight: 'bold', color: c.heading },
     todayLbl: { fontSize: 12, color: c.textMuted, marginTop: 2 },
-    todaySep: { width: StyleSheet.hairlineWidth, height: 34, backgroundColor: c.border },
-    kcalTrack: { height: 8, backgroundColor: c.track, borderRadius: 4, overflow: 'hidden', marginTop: 14 },
-    kcalFill: { height: 8, borderRadius: 4 },
-    macrosRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 14 },
+    todaySep: { width: StyleSheet.hairlineWidth, height: 30, backgroundColor: c.border },
+    kcalTrack: { height: 7, backgroundColor: c.track, borderRadius: 4, overflow: 'hidden', marginTop: 12 },
+    kcalFill: { height: 7, borderRadius: 4 },
+    macrosRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
     macroItem: { flexDirection: 'row', alignItems: 'center' },
     macroDot: { width: 9, height: 9, borderRadius: 5, marginRight: 6 },
-    macroTxt: { fontSize: 13, color: c.text, fontWeight: '600' },
-    bonusLine: { fontSize: 12, fontWeight: '700', color: c.primary, textAlign: 'center', marginTop: 12 },
+    macroTxt: { fontSize: 12, color: c.text, fontWeight: '600' },
+    bonusLine: { fontSize: 11, fontWeight: '700', color: c.primary, textAlign: 'center', marginTop: 8 },
 
-    mealCard: { ...shadow, backgroundColor: c.card, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 16, marginBottom: 12, borderWidth: 1, borderColor: c.cardBorder },
-    entryRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10 },
+    mealCard: { ...shadow, backgroundColor: c.card, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 10, borderWidth: 1, borderColor: c.cardBorder },
+    entryRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },
     entryDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.border },
     entryName: { fontSize: 15, color: c.text, fontWeight: '600' },
     entryMeta: { fontSize: 12, color: c.textMuted, marginTop: 1 },
@@ -763,13 +766,13 @@ function makeStyles(c: Colors) {
     mealChipActive: { backgroundColor: c.primary, borderColor: c.primary },
     mealChipText: { fontSize: 14, fontWeight: '600', color: c.text },
     mealChipTextActive: { color: c.onPrimary },
-    mealHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+    mealHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
     mealTitle: { fontSize: 16, fontWeight: '700', color: c.heading },
     mealHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
     mealKcal: { fontSize: 13, fontWeight: '700', color: c.textMuted },
     mealAdd: { width: 30, height: 30, borderRadius: 15, backgroundColor: c.inputBg, borderWidth: 1, borderColor: c.primary, alignItems: 'center', justifyContent: 'center' },
     mealAddText: { fontSize: 16, color: c.primary, fontWeight: '700', lineHeight: 18 },
-    mealEmpty: { fontSize: 13, color: c.textMuted, fontStyle: 'italic', paddingVertical: 6, paddingLeft: 2 },
+    mealEmpty: { fontSize: 12, color: c.textMuted, fontStyle: 'italic', paddingVertical: 3, paddingLeft: 2 },
     inputLabel: { fontSize: 14, color: c.text, fontWeight: '600', marginTop: 8, marginBottom: 6 },
     input: { borderWidth: 1, borderColor: c.border, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 16, backgroundColor: c.inputBg, color: c.text },
     preview: { fontSize: 18, fontWeight: '700', color: c.heading, marginTop: 14 },
