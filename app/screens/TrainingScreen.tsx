@@ -21,12 +21,8 @@ import SwipeBack from '../components/SwipeBack';
 type Muscle = { id: string; key: string; name_de: string; body_region: string | null };
 type Exercise = { id: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null };
 
-// Reihenfolge + Symbol je Muskel-Key (clientseitig, damit Anordnung/Icons stabil bleiben).
+// Reihenfolge je Muskel-Key (clientseitig, damit die Anordnung stabil bleibt).
 const MUSCLE_ORDER = ['chest', 'back', 'shoulders', 'biceps', 'triceps', 'abs', 'legs', 'glutes', 'calves'];
-const MUSCLE_ICON: Record<string, string> = {
-  chest: '🫁', back: '🔙', shoulders: '🤷', biceps: '💪', triceps: '🦾',
-  abs: '🧱', legs: '🦵', glutes: '🍑', calves: '🦶',
-};
 
 export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
   const { profile } = useAuth();
@@ -141,19 +137,18 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
             />
           </View>
           <Text style={styles.sectionLabel}>ODER AUS DER LISTE</Text>
-          <View style={styles.grid}>
-            {orderedMuscles.map((m) => (
+          <View style={styles.muscleList}>
+            {orderedMuscles.map((m, idx) => (
               <TouchableOpacity
                 key={m.id}
-                style={styles.muscleCard}
+                style={[styles.muscleRow, idx > 0 && styles.muscleRowDivider]}
                 onPress={() => openMuscle(m)}
-                activeOpacity={0.85}
+                activeOpacity={0.6}
                 accessibilityRole="button"
                 accessibilityLabel={`Übungen für ${m.name_de} anzeigen`}
               >
-                <Text style={styles.muscleChev}>›</Text>
-                <Text style={styles.muscleIcon}>{MUSCLE_ICON[m.key] ?? '🏋️'}</Text>
-                <Text style={styles.muscleName}>{m.name_de}</Text>
+                <Text style={styles.muscleRowName}>{m.name_de}</Text>
+                <Text style={styles.muscleRowChev}>›</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -165,7 +160,7 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
   const listView = selectedMuscle ? (
     <View style={styles.container}>
       <BackButton onPress={() => setSelectedMuscle(null)} c={c} />
-      <Text style={styles.title}>{MUSCLE_ICON[selectedMuscle.key] ?? ''}  {selectedMuscle.name_de}</Text>
+      <Text style={styles.title}>{selectedMuscle.name_de}</Text>
       <Text style={styles.subtitle}>Passend zu deinem Level & deiner Umgebung</Text>
       {loadingExercises ? (
         <ActivityIndicator size="large" color={c.primary} style={{ marginTop: 24 }} />
@@ -242,11 +237,11 @@ function makeStyles(c: Colors) {
     sectionLabel: { fontSize: 12, fontWeight: '800', letterSpacing: 0.8, color: c.textMuted, marginTop: 4, marginBottom: 12 },
     bodyCard: { ...shadow, backgroundColor: c.card, borderRadius: 16, paddingVertical: 18, paddingHorizontal: 14, marginBottom: 8, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center' },
 
-    grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-    muscleCard: { ...shadow, width: '48%', backgroundColor: c.card, borderRadius: 16, paddingVertical: 22, paddingHorizontal: 14, marginBottom: 12, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center' },
-    muscleChev: { position: 'absolute', top: 8, right: 12, fontSize: 18, color: c.textMuted },
-    muscleIcon: { fontSize: 30 },
-    muscleName: { fontSize: 16, fontWeight: '700', color: c.heading, marginTop: 8, textAlign: 'center' },
+    muscleList: { ...shadow, backgroundColor: c.card, borderRadius: 14, borderWidth: 1, borderColor: c.cardBorder },
+    muscleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 13, paddingHorizontal: 16 },
+    muscleRowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.border },
+    muscleRowName: { fontSize: 15, fontWeight: '600', color: c.text },
+    muscleRowChev: { fontSize: 20, color: c.textMuted, marginLeft: 8 },
 
     countHint: { fontSize: 13, color: c.textMuted, marginBottom: 10 },
     exRow: { ...shadow, flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 14, paddingVertical: 16, paddingHorizontal: 16, marginBottom: 10, borderWidth: 1, borderColor: c.cardBorder },
