@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import Ambient from '../components/Ambient';
-import { buildBirthDate } from '../lib/birthdate';
+import { buildBirthDate, isUnderMinAge, MIN_AGE_YEARS } from '../lib/birthdate';
 
 type Opt = { label: string; value: string };
 
@@ -81,7 +81,10 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
   function stepError(): string | null {
     if (step === 1) {
       if (!firstName.trim()) return 'Bitte einen Vornamen eingeben.';
-      if (!buildBirthDate(birthDay, birthMonth, birthYear)) return 'Bitte ein gültiges Geburtsdatum eingeben (TT/MM/JJJJ).';
+      if (!buildBirthDate(birthDay, birthMonth, birthYear)) {
+        if (isUnderMinAge(birthDay, birthMonth, birthYear)) return `Du musst mindestens ${MIN_AGE_YEARS} Jahre alt sein, um FitAvo zu nutzen.`;
+        return 'Bitte ein gültiges Geburtsdatum eingeben (TT/MM/JJJJ).';
+      }
       if (!gender) return 'Bitte wähle dein Geschlecht.';
       if (!(num(weight) >= 30 && num(weight) <= 300)) return 'Gewicht muss zwischen 30 und 300 kg liegen.';
       if (!(num(height) >= 100 && num(height) <= 250)) return 'Größe muss zwischen 100 und 250 cm liegen.';

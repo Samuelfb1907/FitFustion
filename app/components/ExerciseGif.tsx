@@ -6,29 +6,21 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Colors } from '../contexts/ThemeContext';
 
-const HOST = 'exercisedb.p.rapidapi.com';
-const KEY = process.env.EXPO_PUBLIC_EXERCISEDB_KEY;
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const ANON = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
-// Proxy aktiv -> der RapidAPI-Key liegt serverseitig (Edge Function), nicht im App-Bundle.
+// GIFs laufen AUSSCHLIESSLICH ueber den serverseitigen Proxy (Edge Function).
+// So bleibt der bezahlte ExerciseDB/RapidAPI-Key immer serverseitig und landet
+// nie im App-Bundle. Ohne Proxy: keine GIFs -> es wird auf die Muskelgrafik
+// zurueckgefallen (siehe GIF_AVAILABLE / onFail).
 const USE_PROXY = process.env.EXPO_PUBLIC_EXERCISEDB_PROXY === '1' && !!SUPABASE_URL;
 
-// GIFs verfuegbar, wenn der Proxy aktiv ist ODER ein Client-Key gesetzt ist.
-export const GIF_AVAILABLE = USE_PROXY || !!KEY;
+export const GIF_AVAILABLE = USE_PROXY;
 
-// Bildquelle: ueber den Proxy (ohne Key) oder direkt bei RapidAPI (mit Key-Header).
+// Bildquelle immer ueber den Proxy (ohne Key); der Anon-Key dient nur als JWT.
 function gifSource(exerciseId: string): { uri: string; headers?: Record<string, string> } {
-  if (USE_PROXY) {
-    // Anon-Key als JWT mitsenden -> Edge Function laeuft mit Standard-"Verify JWT".
-    // Der bezahlte ExerciseDB-Key bleibt serverseitig (Function-Secret).
-    return {
-      uri: `${SUPABASE_URL}/functions/v1/exercisedb-image?exerciseId=${exerciseId}&resolution=360`,
-      headers: ANON ? { Authorization: `Bearer ${ANON}`, apikey: ANON } : undefined,
-    };
-  }
   return {
-    uri: `https://${HOST}/image?exerciseId=${exerciseId}&resolution=360`,
-    headers: { 'X-RapidAPI-Key': KEY ?? '', 'X-RapidAPI-Host': HOST },
+    uri: `${SUPABASE_URL}/functions/v1/exercisedb-image?exerciseId=${exerciseId}&resolution=360`,
+    headers: ANON ? { Authorization: `Bearer ${ANON}`, apikey: ANON } : undefined,
   };
 }
 

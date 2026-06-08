@@ -7,6 +7,7 @@ import AuthScreen from './screens/AuthScreen';
 import OnboardingScreen from './screens/OnboardingScreen';
 import MainTabs from './screens/MainTabs';
 import OfflineBanner from './components/OfflineBanner';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function Root() {
   const { session, profile, loading, refreshProfile } = useAuth();
@@ -48,7 +49,9 @@ export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <Root />
+        <ErrorBoundary>
+          <Root />
+        </ErrorBoundary>
       </AuthProvider>
     </ThemeProvider>
   );
