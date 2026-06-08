@@ -423,8 +423,8 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   return (
     <>
     <ScrollView
-      style={[styles.container, embedded && styles.embedded]}
-      contentContainerStyle={{ paddingBottom: 40 }}
+      style={[styles.container, embedded && styles.embedded, embedded && styles.bleed]}
+      contentContainerStyle={[{ paddingBottom: 40 }, embedded && styles.bleedPad]}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
     >
       {!embedded && <Text style={styles.title}>Tracker</Text>}
@@ -527,6 +527,11 @@ function makeStyles(c: Colors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: c.bg, paddingTop: 56, paddingHorizontal: 16 },
     embedded: { paddingTop: 4, paddingHorizontal: 0, backgroundColor: 'transparent' },
+    // Eingebettet im Essen-Hub (der 20px Seitenrand hat): die Liste bis zum echten
+    // Bildschirmrand ziehen, damit der Scroll-Balken rechts ganz am Rand sitzt statt
+    // eingerueckt. Der Inhalt bleibt per bleedPad genau an Ort und Stelle.
+    bleed: { marginHorizontal: -20 },
+    bleedPad: { paddingHorizontal: 20 },
     title: { fontSize: 26, fontWeight: '800', color: c.heading },
     subtitle: { fontSize: 15, color: c.textMuted, marginTop: 2, marginBottom: 16 },
     disclaimer: { fontSize: 12, color: c.textMuted, lineHeight: 17, marginTop: 2, marginBottom: 14 },
