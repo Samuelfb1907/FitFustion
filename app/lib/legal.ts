@@ -82,7 +82,7 @@ export const PRIVACY_SECTIONS: { h: string; p: string }[] = [
   },
   {
     h: 'Welche Daten wir verarbeiten',
-    p: 'Konto: E-Mail-Adresse. Profil: Vorname, Alter/Geburtsjahr, Geschlecht, Größe, Gewicht, Aktivitätslevel, Erfahrungslevel, Trainingsumgebung, Allergie-Angaben. Nutzungsdaten: Trainingseinheiten & Sätze, Trainingspläne, Essens-Tagebuch, Wasser- und Gewichtsverlauf, Erfolge. Einige davon sind Gesundheitsdaten (besondere Kategorie nach Art. 9 DSGVO).',
+    p: 'Konto: E-Mail-Adresse. Profil: Vorname, Alter/Geburtsjahr, Geschlecht, Größe, Gewicht, Aktivitätslevel, Erfahrungslevel, Trainingsumgebung, Allergie-Angaben. Nutzungsdaten: Trainingseinheiten & Sätze, Trainingspläne, Essens-Tagebuch, Wasser- und Gewichtsverlauf, Erfolge. Bei Nutzung der KI-gestützten Mahlzeiten-Erkennung („Sprich’s einfach“) zusätzlich der von dir eingegebene Freitext zur Beschreibung deiner Mahlzeit. Einige davon sind Gesundheitsdaten (besondere Kategorie nach Art. 9 DSGVO).',
   },
   {
     h: 'Zwecke & Rechtsgrundlage',
@@ -90,7 +90,11 @@ export const PRIVACY_SECTIONS: { h: string; p: string }[] = [
   },
   {
     h: 'Hosting & Dienstleister',
-    p: 'Deine Daten werden bei Supabase gespeichert (Datenbank, Authentifizierung, Hosting) – als Auftragsverarbeiter. Die Datenbank wird in einem Rechenzentrum innerhalb der EU gehostet (Region Frankfurt, Deutschland). Für Übungs-Animationen wird ExerciseDB (RapidAPI) und für Lebensmitteldaten Open Food Facts genutzt. Mit Auftragsverarbeitern ist ein Auftragsverarbeitungsvertrag (AVV) abzuschließen. [Bitte AVV mit Supabase abschließen.]',
+    p: 'Deine Daten werden bei Supabase gespeichert (Datenbank, Authentifizierung, Hosting) – als Auftragsverarbeiter. Die Datenbank wird in einem Rechenzentrum innerhalb der EU gehostet (Region Frankfurt, Deutschland). Für Übungs-Animationen wird ExerciseDB (RapidAPI) und für Lebensmitteldaten Open Food Facts genutzt. Für die optionale KI-gestützte Mahlzeiten-Erkennung wird Anthropic PBC (San Francisco, USA) als Auftragsverarbeiter genutzt; dabei findet eine Übermittlung in die USA (Drittland) statt, abgesichert über die EU-Standardvertragsklauseln (Art. 46 DSGVO) bzw., soweit zertifiziert, das EU-US Data Privacy Framework. Mit Auftragsverarbeitern ist ein Auftragsverarbeitungsvertrag (AVV) abzuschließen. [Bitte AVV mit Supabase und Anthropic abschließen.]',
+  },
+  {
+    h: 'KI-gestützte Mahlzeiten-Erkennung („Sprich’s einfach“)',
+    p: 'Diese Funktion ist freiwillig. Wenn du sie nutzt, wird der von dir eingegebene Text (z. B. „2 Eier und ein Toast“) an unseren Auftragsverarbeiter Anthropic PBC (USA) übermittelt und dort automatisiert in einzelne Lebensmittel mit geschätzten Nährwerten zerlegt; das Ergebnis zeigen wir dir zur Bestätigung an, bevor etwas gespeichert wird. Rechtsgrundlage ist deine Einwilligung durch die Nutzung der Funktion (Art. 6 Abs. 1 lit. a, ggf. Art. 9 Abs. 2 lit. a DSGVO). Die Eingaben werden nicht zum Training von KI-Modellen verwendet. Bitte gib in dieses Feld keine sensiblen Daten ein, die über die Beschreibung deiner Mahlzeit hinausgehen. Nutzt du die Funktion nicht, findet keine solche Übermittlung statt.',
   },
   {
     h: 'Speicherdauer',
