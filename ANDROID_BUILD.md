@@ -31,10 +31,12 @@ Lokal stehen sie in `app/.env` – der **Cloud-Build kennt sie aber nicht**, dar
 |---|---|---|---|
 | `EXPO_PUBLIC_SUPABASE_URL` | `https://ugofjmdwjcrjvakilmsu.supabase.co` | Plain text | Preview (+ Production) |
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | *(Wert aus `app/.env` kopieren)* | Sensitive | Preview (+ Production) |
-| `EXPO_PUBLIC_EXERCISEDB_KEY` *(optional)* | *(aus `app/.env`)* | Sensitive | Preview |
+| `EXPO_PUBLIC_EXERCISEDB_PROXY` *(optional)* | `1` | Plain text | Preview |
 
-> Ohne den ExerciseDB-Key funktioniert alles – es werden dann statt animierter GIFs nur
+> Ohne den GIF-Proxy funktioniert alles – es werden dann statt animierter GIFs nur
 > statische Muskelgrafiken gezeigt (kein Fehler). Für die Beta okay.
+> Der bezahlte RapidAPI-Key gehört **nicht** in die App – er bleibt serverseitig
+> (Edge Function `exercisedb-image`, siehe `SUPABASE_FUNCTIONS.md`).
 
 ## 3. APK bauen
 ```

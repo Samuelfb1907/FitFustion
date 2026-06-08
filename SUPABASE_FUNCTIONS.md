@@ -32,9 +32,9 @@ In der App: **Einstellungen → Datenschutz → Konto & alle Daten löschen**.
 
 # Supabase Edge Function: `exercisedb-image` (Übungs-GIF-Proxy, Sicherheit)
 
-Der **bezahlte** RapidAPI/ExerciseDB-Key steckt aktuell als `EXPO_PUBLIC_EXERCISEDB_KEY` im App-Bundle und ist damit aus jeder installierten App auslesbar. Diese Funktion holt die GIFs **serverseitig** (Key bleibt geheim), die App ruft dann nur noch den Proxy auf.
+Der **bezahlte** RapidAPI/ExerciseDB-Key darf **nicht** ins App-Bundle. Diese Funktion holt die GIFs **serverseitig** (Key bleibt als Secret geheim); die App ruft nur noch den Proxy auf. Der frühere Client-Key-Pfad (`EXPO_PUBLIC_EXERCISEDB_KEY`) wurde aus der App **entfernt**.
 
-> Solange der Proxy **nicht** aktiv ist, funktioniert die App unverändert weiter (sie nutzt dann den bisherigen Client-Key). Es wird also nichts kaputt gemacht.
+> Solange der Proxy **nicht** aktiv ist (`EXPO_PUBLIC_EXERCISEDB_PROXY` ungesetzt), zeigt die App statt der GIFs einfach die statische Muskelgrafik – es wird nichts kaputt gemacht.
 
 ### Schritt 1 – Key bei RapidAPI rotieren
 Da der alte Key öffentlich war: bei RapidAPI einen **neuen** ExerciseDB-Key erzeugen, den alten **löschen** und ein **Spend-Limit** setzen.

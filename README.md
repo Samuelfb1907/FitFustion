@@ -64,7 +64,7 @@ fitness-app/
 2. **Umgebungsvariablen:** `.env` in `app/` anlegen (Supabase → *Project Settings → API Keys*):
    - `EXPO_PUBLIC_SUPABASE_URL`
    - `EXPO_PUBLIC_SUPABASE_ANON_KEY`
-   - `EXPO_PUBLIC_EXERCISEDB_KEY` *(optional – ohne ihn werden statt animierter GIFs nur statische Muskelgrafiken gezeigt; RapidAPI „ExerciseDB")*
+   - `EXPO_PUBLIC_EXERCISEDB_PROXY` *(optional, `=1`)* – animierte Übungs-GIFs über die serverseitige Edge Function `exercisedb-image` (der bezahlte RapidAPI-Key bleibt **serverseitig**, siehe `SUPABASE_FUNCTIONS.md`). Ohne den Proxy zeigt die App statt GIFs statische Muskelgrafiken. Den RapidAPI-Key **nicht** in den Client legen.
 3. **Datenbank einrichten:** Im Supabase **SQL Editor** **in dieser Reihenfolge** ausführen:
    `schema.sql` → `002_allergies.sql` → `003_more_exercises.sql` → `004_more_exercises.sql` →
    `005_food_tracking.sql` → `006_foods_500plus.sql` → `007_session_end.sql` → `008_more_exercises_gifs.sql` →
