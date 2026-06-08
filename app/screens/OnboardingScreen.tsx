@@ -1,6 +1,6 @@
 // Onboarding (themed): 4 Schritte (persönliche Daten, Erfahrung, Umgebung, Ziel).
-import { useMemo, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, KeyboardAvoidingView, PanResponder, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
@@ -97,6 +97,16 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
   function next() { const e = stepError(); if (e) { setError(e); return; } setError(null); if (step < totalSteps) setStep(step + 1); else finish(); }
   function back() { setError(null); if (step > 1) setStep(step - 1); }
 
+  // Vom linken Rand nach rechts wischen = einen Schritt zurueck.
+  const swipe = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, g) => g.x0 < 40 && g.dx > 14 && Math.abs(g.dx) > Math.abs(g.dy) * 1.4,
+      onPanResponderRelease: (_, g) => {
+        if (g.dx > 70 && Math.abs(g.dx) > Math.abs(g.dy)) { setError(null); setStep((s) => Math.max(1, s - 1)); }
+      },
+    }),
+  ).current;
+
   async function finish() {
     if (!session?.user) return;
     setSaving(true); setError(null);
@@ -118,7 +128,7 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
   }
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={styles.container} {...swipe.panHandlers} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Ambient c={c} />
       <View style={styles.progress}>
         {[1, 2, 3, 4].map((s) => (<View key={s} style={[styles.progressBar, s <= step && styles.progressBarActive]} />))}

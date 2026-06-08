@@ -366,6 +366,14 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
   }
 
   if (mode === 'create') {
+    return planName ? (
+      <SwipeBack onBack={() => setMode('view')} c={c} behind={renderPlan()}>
+        {renderCreate()}
+      </SwipeBack>
+    ) : renderCreate();
+  }
+
+  function renderCreate() {
     return (
       <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }}>
         {!embedded && <Text style={styles.title}>Trainingsplan erstellen</Text>}
