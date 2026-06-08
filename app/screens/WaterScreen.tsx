@@ -102,8 +102,8 @@ export default function WaterScreen({ embedded, focusTick }: { embedded?: boolea
 
   return (
     <ScrollView
-      style={[styles.container, embedded && styles.embedded]}
-      contentContainerStyle={{ paddingBottom: 40 }}
+      style={[styles.container, embedded && styles.embedded, embedded && styles.bleed]}
+      contentContainerStyle={[{ paddingBottom: 40 }, embedded && styles.bleedPad]}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
     >
       {!embedded && <Text style={styles.title}>Wasser</Text>}
@@ -167,6 +167,10 @@ function makeStyles(c: Colors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: c.bg, paddingTop: 56, paddingHorizontal: 16 },
     embedded: { paddingTop: 4, paddingHorizontal: 0, backgroundColor: 'transparent' },
+    // Eingebettet im Essen-Hub (20px Seitenrand): Liste bis zum echten Bildschirmrand
+    // ziehen -> Scroll-Balken sitzt rechts am Rand; Inhalt bleibt per bleedPad eingerueckt.
+    bleed: { marginHorizontal: -20 },
+    bleedPad: { paddingHorizontal: 20 },
     title: { fontSize: 26, fontWeight: '800', color: c.heading, marginBottom: 14 },
 
     grid: { gap: 12 },
