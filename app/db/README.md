@@ -27,6 +27,7 @@ Alle `.sql`-Dateien werden **manuell** im Supabase **SQL Editor** ausgeführt
 | 19 | `019_drop_unused.sql` | Ungenutzte Tabellen entfernt (recipes/recipe_items/nutrition_plans/meals) |
 | 20 | `020_drop_allergies.sql` | Allergie-Spalte aus profiles entfernt (Datenminimierung) |
 | 21 | `021_leaderboard_view.sql` | Leaderboard-View (is_me statt fremder UUIDs) |
+| 22 | `022_meal_favorites.sql` | Favoriten (gespeicherte Mahlzeiten) für den Essens-Tracker |
 
 ## Hinweise
 - **Reihenfolge zählt:** Spätere Migrationen bauen auf früheren auf.

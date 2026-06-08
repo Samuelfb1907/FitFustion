@@ -17,11 +17,15 @@ import { todayTrainingKcal } from '../lib/trainingBonus';
 import { hasStepsPermission, getTodayActivity } from '../lib/health';
 import BackButton from '../components/BackButton';
 import SwipeBack from '../components/SwipeBack';
+import Segmented from '../components/Segmented';
 import { CARD_SHADOW as shadow } from '../lib/ui';
 
 type Food = { id: string; name: string; category: string | null; kcal: number; protein: number; carbs: number; fat: number; user_id?: string | null };
 type LogEntry = { id: string; amount_g: number; meal_type: string | null; food: Food | null };
 type QuickFood = { food: Food; amount: number; count: number };
+// Favorit = gespeicherte Mahlzeit (z. B. dein taegliches Fruehstueck) mit mehreren Zutaten.
+type FavItem = { food_id: string; name: string; amount_g: number; kcal: number; protein: number; carbs: number; fat: number };
+type Favorite = { id: string; name: string; items: FavItem[] };
 
 // todayStr -> lib/date.ts
 
@@ -41,7 +45,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   const [activityKcal, setActivityKcal] = useState(0);
   const [activityMeasured, setActivityMeasured] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [mode, setMode] = useState<'diary' | 'pick' | 'amount' | 'newfood'>('diary');
+  const [mode, setMode] = useState<'diary' | 'pick' | 'amount' | 'newfood' | 'favnew'>('diary');
   const [search, setSearch] = useState('');
   const [selectedFood, setSelectedFood] = useState<Food | null>(null);
   const [amount, setAmount] = useState('100');
@@ -58,6 +62,14 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   const [loadError, setLoadError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [backTarget, setBackTarget] = useState<'diary' | 'pick'>('diary'); // wohin "Zurueck" aus dem Mengen-Screen fuehrt
+  // Favoriten (Zutaten/Favoriten-Umschalter beim Hinzufuegen)
+  const [pickTab, setPickTab] = useState<'zutaten' | 'favoriten'>('zutaten');
+  const [addingTo, setAddingTo] = useState<'diary' | 'favorite'>('diary'); // Menge -> Tagebuch oder in Favoriten-Entwurf
+  const [favorites, setFavorites] = useState<Favorite[]>([]);
+  const [favDraft, setFavDraft] = useState<{ name: string; items: FavItem[] } | null>(null);
+  const [savingFav, setSavingFav] = useState(false);
+  const [favErr, setFavErr] = useState<string | null>(null);
+  const [favMsg, setFavMsg] = useState<string | null>(null);
   const busyRef = useRef(false); // verhindert doppelte Tagebuch-Eintraege bei schnellem Doppel-Tippen
 
   useEffect(() => { init(); }, [userId]);
@@ -65,7 +77,8 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   // Reiter erneut angetippt -> zurueck zum Tagebuch + leise aktualisieren (ohne Spinner)
   useFocusTick(focusTick, () => {
     setMode('diary'); setSelectedFood(null); setSearch(''); setError(null); setScannerOpen(false);
-    loadLogs(); loadQuick();
+    setPickTab('zutaten'); setAddingTo('diary'); setFavDraft(null);
+    loadLogs(); loadQuick(); loadFavorites();
   });
 
   // Serverseitige Lebensmittel-Suche (debounced) – laedt NICHT mehr die ganze foods-Tabelle.
@@ -127,6 +140,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     }
     await loadLogs();
     await loadQuick();
+    await loadFavorites();
     setLoadError(null);
     } catch (e) {
       setLoadError(errorMessage(e));
@@ -189,6 +203,16 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     if (!userId || !selectedFood || busyRef.current) return;
     const a = Number(amount.replace(',', '.'));
     if (!a || a <= 0) { setError('Bitte gültige Menge in Gramm eingeben.'); return; }
+    // Beim Erstellen eines Favoriten: Zutat in den Entwurf legen statt ins Tagebuch.
+    if (addingTo === 'favorite') {
+      const food = selectedFood;
+      setFavDraft((d) => {
+        const base = d ?? { name: '', items: [] };
+        return { name: base.name, items: [...base.items, { food_id: food.id, name: food.name, amount_g: a, kcal: food.kcal, protein: food.protein, carbs: food.carbs, fat: food.fat }] };
+      });
+      setSelectedFood(null); setAmount('100'); setError(null); setSearch(''); setMode('favnew');
+      return;
+    }
     busyRef.current = true;
     setSaving(true); setError(null);
     try {
@@ -201,6 +225,74 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       setSaving(false);
       busyRef.current = false;
     }
+  }
+
+  // ---- Favoriten (gespeicherte Mahlzeiten) ----------------------------------
+  async function loadFavorites() {
+    if (!userId) return;
+    const { data } = await supabase.from('meal_favorites').select('id, name, items').eq('user_id', userId).order('created_at', { ascending: false });
+    setFavorites((data ?? []).map((r: any) => ({ id: r.id, name: r.name, items: Array.isArray(r.items) ? (r.items as FavItem[]) : [] })));
+  }
+
+  const favKcal = (fav: Favorite) => fav.items.reduce((s, it) => s + Math.round((it.kcal * it.amount_g) / 100), 0);
+
+  // Zutatenauswahl aus dem Tagebuch oeffnen (normaler Weg, Tab "Zutaten").
+  function openPick(meal: MealType) {
+    setMealType(meal); setError(null); setSearch(''); setAddingTo('diary'); setPickTab('zutaten'); setMode('pick');
+  }
+  // "Zurueck" aus der Zutatenauswahl: beim Favoriten-Bau zurueck zum Entwurf, sonst ins Tagebuch.
+  function pickBack() {
+    setSearch('');
+    if (addingTo === 'favorite') setMode('favnew');
+    else setMode('diary');
+  }
+
+  function startNewFavorite() {
+    setFavDraft({ name: '', items: [] }); setFavErr(null); setAddingTo('favorite'); setMode('favnew');
+  }
+  function cancelFavNew() {
+    setFavDraft(null); setAddingTo('diary'); setPickTab('favoriten'); setMode('pick');
+  }
+  function addItemToFavorite() {
+    setAddingTo('favorite'); setSearch(''); setPickTab('zutaten'); setMode('pick');
+  }
+  function removeDraftItem(idx: number) {
+    setFavDraft((d) => (d ? { name: d.name, items: d.items.filter((_, i) => i !== idx) } : d));
+  }
+  async function saveFavorite() {
+    if (!userId || !favDraft) return;
+    const name = favDraft.name.trim();
+    if (!name) { setFavErr('Bitte einen Namen eingeben.'); return; }
+    if (favDraft.items.length === 0) { setFavErr('Bitte mindestens eine Zutat hinzufügen.'); return; }
+    setSavingFav(true); setFavErr(null);
+    const { error } = await supabase.from('meal_favorites').insert({ user_id: userId, name, items: favDraft.items });
+    setSavingFav(false);
+    if (error) { setFavErr('Speichern fehlgeschlagen: ' + (error.message ?? '')); return; }
+    setFavDraft(null); setAddingTo('diary'); setPickTab('favoriten'); setMode('pick');
+    await loadFavorites();
+  }
+  // Favorit anwenden: alle Zutaten auf einmal in die gewaehlte Mahlzeit eintragen.
+  async function applyFavorite(fav: Favorite) {
+    if (!userId || busyRef.current || !fav.items.length) return;
+    busyRef.current = true; setFavMsg(null);
+    try {
+      const rows = fav.items.map((it) => ({ user_id: userId, food_id: it.food_id, amount_g: it.amount_g, log_date: todayStr(), meal_type: mealType }));
+      const { error: e } = await supabase.from('food_logs').insert(rows);
+      if (e) { setError('Konnte Favorit nicht hinzufügen. Vielleicht wurde eine Zutat gelöscht.'); setMode('diary'); return; }
+      setMode('diary'); setSearch('');
+      await loadLogs(); await loadQuick();
+    } finally { busyRef.current = false; }
+  }
+  function confirmDeleteFavorite(fav: Favorite) {
+    Alert.alert('Favorit löschen?', `„${fav.name}" wirklich löschen?`, [
+      { text: 'Abbrechen', style: 'cancel' },
+      { text: 'Löschen', style: 'destructive', onPress: () => doDeleteFavorite(fav.id) },
+    ]);
+  }
+  async function doDeleteFavorite(id: string) {
+    const { error } = await supabase.from('meal_favorites').delete().eq('id', id);
+    if (error) { Alert.alert('Nicht möglich', errorMessage(error)); return; }
+    await loadFavorites();
   }
 
   function deleteLog(id: string) {
@@ -311,16 +403,20 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
           <Text style={styles.inputLabel}>Menge in Gramm</Text>
           <TextInput style={styles.input} value={amount} onChangeText={setAmount} keyboardType="numeric" inputMode="decimal" placeholder="z. B. 150" placeholderTextColor={c.textMuted} returnKeyType="done" onSubmitEditing={addLog} />
           <Text style={styles.preview}>= {previewKcal} kcal</Text>
-          <Text style={styles.inputLabel}>Mahlzeit</Text>
-          <View style={styles.mealChips}>
-            {TRACKER_MEALS.map((m) => (
-              <TouchableOpacity key={m.key} style={[styles.mealChip, mealType === m.key && styles.mealChipActive]} onPress={() => setMealType(m.key)} activeOpacity={0.8}>
-                <Text style={[styles.mealChipText, mealType === m.key && styles.mealChipTextActive]}>{m.icon} {m.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          {addingTo !== 'favorite' && (
+            <>
+              <Text style={styles.inputLabel}>Mahlzeit</Text>
+              <View style={styles.mealChips}>
+                {TRACKER_MEALS.map((m) => (
+                  <TouchableOpacity key={m.key} style={[styles.mealChip, mealType === m.key && styles.mealChipActive]} onPress={() => setMealType(m.key)} activeOpacity={0.8}>
+                    <Text style={[styles.mealChipText, mealType === m.key && styles.mealChipTextActive]}>{m.icon} {m.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </>
+          )}
           <TouchableOpacity style={[styles.primaryBtn, saving && { opacity: 0.6 }]} onPress={addLog} disabled={saving}>
-            {saving ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.primaryText}>Zum Tagebuch hinzufügen</Text>}
+            {saving ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.primaryText}>{addingTo === 'favorite' ? 'Zur Favoriten-Liste hinzufügen' : 'Zum Tagebuch hinzufügen'}</Text>}
           </TouchableOpacity>
           {error && <Text style={styles.error}>{error}</Text>}
         </ScrollView>
@@ -367,53 +463,143 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
 
   if (mode === 'pick') {
     return (
-      <SwipeBack onBack={() => { setMode('diary'); setSearch(''); }} c={c} behind={renderDiary()}>
+      <SwipeBack onBack={pickBack} c={c} behind={addingTo === 'favorite' ? renderFavNew() : renderDiary()}>
         {renderPick()}
       </SwipeBack>
     );
   }
 
+  if (mode === 'favnew') {
+    return (
+      <SwipeBack onBack={cancelFavNew} c={c} behind={renderPick()}>
+        {renderFavNew()}
+      </SwipeBack>
+    );
+  }
+
   function renderPick() {
+    const forFav = addingTo === 'favorite';
+    const showZutaten = forFav || pickTab === 'zutaten';
     return (
       <View style={[styles.container, embedded && styles.embedded]}>
-        <BackButton onPress={() => { setMode('diary'); setSearch(''); }} c={c} />
-        <Text style={styles.title}>Zutat auswählen</Text>
-        <View style={styles.allergyNote}><Text style={styles.allergyText}>{ALLERGY_HINT}</Text></View>
-        <TextInput style={styles.input} value={search} onChangeText={setSearch} placeholder="Suchen (z. B. Banane)…" placeholderTextColor={c.textMuted} autoCorrect={false} />
-        <TouchableOpacity style={styles.newFoodBtn} onPress={openNewFood} activeOpacity={0.85}>
-          <Text style={styles.newFoodText}>➕  Eigenes Lebensmittel anlegen</Text>
-        </TouchableOpacity>
-        <Text style={styles.countHint}>{searching ? 'Suche…' : `${searchResults.length} ${searchResults.length === 1 ? 'Eintrag' : 'Einträge'}${searchResults.length >= 2000 ? '+' : ''}`}</Text>
-        <FlatList
-          style={{ flex: 1 }}
-          data={searchResults}
-          keyExtractor={(f) => f.id}
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{ paddingBottom: 40 }}
-          initialNumToRender={15}
-          maxToRenderPerBatch={20}
-          windowSize={10}
-          removeClippedSubviews
-          renderItem={({ item: f }) => {
-            const own = !!userId && f.user_id === userId;
-            return (
-              <TouchableOpacity style={styles.foodRow} onPress={() => { setSelectedFood(f); setAmount('100'); setError(null); setBackTarget('pick'); setMode('amount'); }} activeOpacity={0.7}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.foodName}>{f.name}</Text>
-                  <Text style={styles.foodMeta}>{f.category}{own ? '  ·  eigenes' : ''}</Text>
-                </View>
-                <Text style={styles.foodKcal}>{f.kcal} kcal</Text>
-                {own && (
-                  <TouchableOpacity onPress={() => confirmDeleteFood(f)} style={styles.foodDel} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`${f.name} löschen`}>
+        <BackButton onPress={pickBack} c={c} />
+        <Text style={styles.title}>{forFav ? 'Zutat hinzufügen' : 'Hinzufügen'}</Text>
+        {!forFav && (
+          <View style={{ marginBottom: 12 }}>
+            <Segmented
+              options={[{ key: 'zutaten', label: 'Zutaten' }, { key: 'favoriten', label: 'Favoriten' }]}
+              value={pickTab}
+              onChange={(k) => setPickTab(k as 'zutaten' | 'favoriten')}
+              c={c}
+            />
+          </View>
+        )}
+        {showZutaten ? (
+          <>
+            <View style={styles.allergyNote}><Text style={styles.allergyText}>{ALLERGY_HINT}</Text></View>
+            <TextInput style={styles.input} value={search} onChangeText={setSearch} placeholder="Suchen (z. B. Banane)…" placeholderTextColor={c.textMuted} autoCorrect={false} />
+            <TouchableOpacity style={styles.newFoodBtn} onPress={openNewFood} activeOpacity={0.85}>
+              <Text style={styles.newFoodText}>➕  Eigenes Lebensmittel anlegen</Text>
+            </TouchableOpacity>
+            <Text style={styles.countHint}>{searching ? 'Suche…' : `${searchResults.length} ${searchResults.length === 1 ? 'Eintrag' : 'Einträge'}${searchResults.length >= 2000 ? '+' : ''}`}</Text>
+            <FlatList
+              style={{ flex: 1 }}
+              data={searchResults}
+              keyExtractor={(f) => f.id}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ paddingBottom: 40 }}
+              initialNumToRender={15}
+              maxToRenderPerBatch={20}
+              windowSize={10}
+              removeClippedSubviews
+              renderItem={({ item: f }) => {
+                const own = !!userId && f.user_id === userId;
+                return (
+                  <TouchableOpacity style={styles.foodRow} onPress={() => { setSelectedFood(f); setAmount('100'); setError(null); setBackTarget('pick'); setMode('amount'); }} activeOpacity={0.7}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.foodName}>{f.name}</Text>
+                      <Text style={styles.foodMeta}>{f.category}{own ? '  ·  eigenes' : ''}</Text>
+                    </View>
+                    <Text style={styles.foodKcal}>{f.kcal} kcal</Text>
+                    {own && (
+                      <TouchableOpacity onPress={() => confirmDeleteFood(f)} style={styles.foodDel} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`${f.name} löschen`}>
+                        <Text style={styles.foodDelText}>🗑</Text>
+                      </TouchableOpacity>
+                    )}
+                  </TouchableOpacity>
+                );
+              }}
+              ListEmptyComponent={searching ? null : <Text style={styles.noResult}>Kein Treffer{search.trim() ? ` für „${search.trim()}"` : ''}. Leg es als eigenes Lebensmittel an ☝️</Text>}
+            />
+          </>
+        ) : (
+          <>
+            <Text style={styles.subtitle}>Tippe einen Favoriten an – alle Zutaten landen auf einmal in „{TRACKER_MEALS.find((m) => m.key === mealType)?.label ?? 'der Mahlzeit'}".</Text>
+            <TouchableOpacity style={styles.newFoodBtn} onPress={startNewFavorite} activeOpacity={0.85}>
+              <Text style={styles.newFoodText}>➕  Neuen Favoriten erstellen</Text>
+            </TouchableOpacity>
+            <FlatList
+              style={{ flex: 1, marginTop: 4 }}
+              data={favorites}
+              keyExtractor={(f) => f.id}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ paddingBottom: 40 }}
+              renderItem={({ item: fav }) => (
+                <TouchableOpacity style={styles.foodRow} onPress={() => applyFavorite(fav)} activeOpacity={0.7}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.foodName}>⭐  {fav.name}</Text>
+                    <Text style={styles.foodMeta}>{fav.items.length} {fav.items.length === 1 ? 'Zutat' : 'Zutaten'}  ·  {favKcal(fav)} kcal</Text>
+                  </View>
+                  <TouchableOpacity onPress={() => confirmDeleteFavorite(fav)} style={styles.foodDel} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`${fav.name} löschen`}>
                     <Text style={styles.foodDelText}>🗑</Text>
                   </TouchableOpacity>
-                )}
-              </TouchableOpacity>
-            );
-          }}
-          ListEmptyComponent={searching ? null : <Text style={styles.noResult}>Kein Treffer{search.trim() ? ` für „${search.trim()}"` : ''}. Leg es als eigenes Lebensmittel an ☝️</Text>}
-        />
+                </TouchableOpacity>
+              )}
+              ListEmptyComponent={<Text style={styles.noResult}>Noch keine Favoriten. Erstelle z. B. dein tägliches Frühstück ☝️</Text>}
+            />
+          </>
+        )}
       </View>
+    );
+  }
+
+  function renderFavNew() {
+    const draft = favDraft ?? { name: '', items: [] };
+    const totalKcal = draft.items.reduce((s, it) => s + Math.round((it.kcal * it.amount_g) / 100), 0);
+    return (
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+          <BackButton onPress={cancelFavNew} c={c} />
+          <Text style={styles.title}>Favorit erstellen</Text>
+          <Text style={styles.subtitle}>Speichere eine Mahlzeit, z. B. dein tägliches Frühstück.</Text>
+          <Text style={styles.inputLabel}>Name</Text>
+          <TextInput style={styles.input} value={draft.name} onChangeText={(v) => setFavDraft({ name: v, items: draft.items })} placeholder="z. B. Mein Frühstück" placeholderTextColor={c.textMuted} />
+          <Text style={styles.inputLabel}>Zutaten ({draft.items.length})</Text>
+          {draft.items.length === 0 ? (
+            <Text style={styles.mealEmpty}>Noch keine Zutat. Tippe „Zutat hinzufügen".</Text>
+          ) : (
+            draft.items.map((it, idx) => (
+              <View key={idx} style={[styles.entryRow, idx > 0 && styles.entryDivider]}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.entryName} numberOfLines={1}>{it.name}</Text>
+                  <Text style={styles.entryMeta}>{it.amount_g} g  ·  {Math.round((it.kcal * it.amount_g) / 100)} kcal</Text>
+                </View>
+                <TouchableOpacity onPress={() => removeDraftItem(idx)} style={styles.del} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`${it.name} entfernen`}>
+                  <Text style={styles.delText}>✕</Text>
+                </TouchableOpacity>
+              </View>
+            ))
+          )}
+          <TouchableOpacity style={styles.newFoodBtn} onPress={addItemToFavorite} activeOpacity={0.85}>
+            <Text style={styles.newFoodText}>➕  Zutat hinzufügen</Text>
+          </TouchableOpacity>
+          {draft.items.length > 0 && <Text style={styles.preview}>Gesamt: {totalKcal} kcal</Text>}
+          <TouchableOpacity style={[styles.primaryBtn, savingFav && { opacity: 0.6 }]} onPress={saveFavorite} disabled={savingFav}>
+            {savingFav ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.primaryText}>Favorit speichern</Text>}
+          </TouchableOpacity>
+          {favErr && <Text style={styles.error}>{favErr}</Text>}
+        </ScrollView>
+      </KeyboardAvoidingView>
     );
   }
 
@@ -457,7 +643,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
 
       {/* Aktionen */}
       <View style={styles.actionRow}>
-        <TouchableOpacity style={styles.addBtnRow} onPress={() => { setMealType(mealByHour()); setError(null); setMode('pick'); }} activeOpacity={0.85}>
+        <TouchableOpacity style={styles.addBtnRow} onPress={() => openPick(mealByHour())} activeOpacity={0.85}>
           <Text style={styles.addText}>➕  Hinzufügen</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.scanBtn} onPress={() => { setError(null); setScannerOpen(true); }} activeOpacity={0.85}>
@@ -493,7 +679,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
               <Text style={styles.mealTitle}>{m.icon}  {m.label}</Text>
               <View style={styles.mealHeaderRight}>
                 {mealKcal > 0 && <Text style={styles.mealKcal}>{mealKcal} kcal</Text>}
-                <TouchableOpacity style={styles.mealAdd} onPress={() => { setMealType(m.key); setError(null); setMode('pick'); }} activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`Zu ${m.label} hinzufügen`}>
+                <TouchableOpacity style={styles.mealAdd} onPress={() => openPick(m.key)} activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`Zu ${m.label} hinzufügen`}>
                   <Text style={styles.mealAddText}>＋</Text>
                 </TouchableOpacity>
               </View>
