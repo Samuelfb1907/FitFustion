@@ -11,7 +11,7 @@ import Ambient from '../components/Ambient';
 function translateError(msg: string): string {
   const m = msg.toLowerCase();
   if (m.includes('invalid login credentials')) return 'E-Mail oder Passwort ist falsch.';
-  if (m.includes('already registered')) return 'Diese E-Mail ist bereits registriert. Bitte logge dich ein.';
+  if (m.includes('already registered')) return 'Mit diesen Daten ist keine Registrierung möglich. Falls du bereits ein Konto hast, melde dich bitte an.';
   if (m.includes('password should be at least')) return 'Das Passwort ist zu kurz (mindestens 8 Zeichen).';
   if (m.includes('invalid email') || m.includes('unable to validate email')) return 'Bitte eine gültige E-Mail-Adresse eingeben.';
   if (m.includes('email not confirmed')) return 'Bitte bestätige zuerst deine E-Mail (Postfach prüfen).';
@@ -32,6 +32,14 @@ export default function AuthScreen() {
   const [focused, setFocused] = useState<'email' | 'pw' | null>(null);
   const pwRef = useRef<TextInput>(null);
   const [showPw, setShowPw] = useState(false);
+  // Passwort-Zuruecksetzen per 6-stelligem Code (funktioniert ohne Deep-Link)
+  const [showReset, setShowReset] = useState(false);
+  const [resetStep, setResetStep] = useState<'request' | 'code'>('request');
+  const [resetCode, setResetCode] = useState('');
+  const [resetNewPw, setResetNewPw] = useState('');
+  const [resetBusy, setResetBusy] = useState(false);
+  const [resetMsg, setResetMsg] = useState<string | null>(null);
+  const [resetErr, setResetErr] = useState(false);
 
   function show(message: string, error: boolean) { setInfo(message); setIsError(error); }
   function switchMode(m: 'login' | 'register') { setMode(m); setInfo(null); }
@@ -57,12 +65,29 @@ export default function AuthScreen() {
     setLoading(false);
   }
 
-  async function forgotPassword() {
+  function openReset() {
     if (!email) { show('Bitte zuerst deine E-Mail-Adresse oben eingeben.', true); return; }
-    setLoading(true);
+    setResetStep('request'); setResetCode(''); setResetNewPw(''); setResetMsg(null); setResetErr(false);
+    setShowReset(true);
+  }
+  async function sendResetCode() {
+    setResetBusy(true); setResetMsg(null);
     const { error } = await supabase.auth.resetPasswordForEmail(email);
-    setLoading(false);
-    show(error ? translateError(error.message) : 'E-Mail zum Zurücksetzen gesendet – bitte Postfach prüfen.', !!error);
+    setResetBusy(false);
+    if (error) { setResetMsg(translateError(error.message)); setResetErr(true); return; }
+    setResetStep('code'); setResetMsg('Wir haben dir einen 6-stelligen Code per E-Mail geschickt.'); setResetErr(false);
+  }
+  async function confirmReset() {
+    if (resetCode.trim().length < 6) { setResetMsg('Bitte den 6-stelligen Code eingeben.'); setResetErr(true); return; }
+    if (resetNewPw.length < 8) { setResetMsg('Neues Passwort: mindestens 8 Zeichen.'); setResetErr(true); return; }
+    setResetBusy(true); setResetMsg(null);
+    const { error: vErr } = await supabase.auth.verifyOtp({ email, token: resetCode.trim(), type: 'recovery' });
+    if (vErr) { setResetBusy(false); setResetMsg('Code ungültig oder abgelaufen.'); setResetErr(true); return; }
+    const { error: uErr } = await supabase.auth.updateUser({ password: resetNewPw });
+    setResetBusy(false);
+    if (uErr) { setResetMsg('Konnte Passwort nicht setzen: ' + uErr.message); setResetErr(true); return; }
+    // verifyOtp hat eine Session gesetzt -> App wechselt automatisch (eingeloggt).
+    setShowReset(false);
   }
 
   const submitDisabled = loading || (mode === 'register' && !accepted);
@@ -130,7 +155,7 @@ export default function AuthScreen() {
             </View>
 
             {mode === 'login' && (
-              <TouchableOpacity onPress={forgotPassword} disabled={loading} style={styles.forgotWrap} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
+              <TouchableOpacity onPress={openReset} disabled={loading} style={styles.forgotWrap} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
                 <Text style={styles.forgot}>Passwort vergessen?</Text>
               </TouchableOpacity>
             )}
@@ -172,6 +197,37 @@ export default function AuthScreen() {
           <TouchableOpacity onPress={() => setShowLegal(false)} style={{ marginTop: 14 }}>
             <Text style={styles.modalClose}>Schließen</Text>
           </TouchableOpacity>
+        </View>
+      </Modal>
+
+      <Modal visible={showReset} animationType="slide" transparent onRequestClose={() => setShowReset(false)}>
+        <View style={styles.resetOverlay}>
+          <View style={styles.resetCard}>
+            <Text style={styles.modalTitle}>Passwort zurücksetzen</Text>
+            {resetStep === 'request' ? (
+              <>
+                <Text style={styles.resetText}>Wir senden einen 6-stelligen Code an:</Text>
+                <Text style={styles.resetEmail}>{email || '—'}</Text>
+                <TouchableOpacity style={styles.button} onPress={sendResetCode} disabled={resetBusy} activeOpacity={0.85}>
+                  {resetBusy ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.buttonText}>Code senden</Text>}
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <Text style={styles.fieldLabel}>Code aus der E-Mail</Text>
+                <TextInput style={styles.fieldInput} value={resetCode} onChangeText={setResetCode} keyboardType="number-pad" placeholder="6-stelliger Code" placeholderTextColor={c.textMuted} maxLength={8} autoCapitalize="none" />
+                <Text style={[styles.fieldLabel, { marginTop: 12 }]}>Neues Passwort</Text>
+                <TextInput style={styles.fieldInput} value={resetNewPw} onChangeText={setResetNewPw} secureTextEntry autoCapitalize="none" placeholder="mindestens 8 Zeichen" placeholderTextColor={c.textMuted} />
+                <TouchableOpacity style={styles.button} onPress={confirmReset} disabled={resetBusy} activeOpacity={0.85}>
+                  {resetBusy ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.buttonText}>Passwort setzen & einloggen</Text>}
+                </TouchableOpacity>
+              </>
+            )}
+            {resetMsg && <Text style={[styles.info, { color: resetErr ? c.danger : c.success, marginTop: 12 }]}>{resetMsg}</Text>}
+            <TouchableOpacity onPress={() => setShowReset(false)} style={{ marginTop: 14 }}>
+              <Text style={styles.modalClose}>Abbrechen</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </Modal>
     </View>
@@ -228,5 +284,9 @@ function makeStyles(c: Colors) {
     modalRoot: { flex: 1, backgroundColor: c.bg, paddingHorizontal: 22, paddingTop: 60, paddingBottom: 24 },
     modalTitle: { fontSize: 20, fontWeight: '800', color: c.heading, marginBottom: 14 },
     modalClose: { textAlign: 'center', color: c.textMuted, fontSize: 14 },
+    resetOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', paddingHorizontal: 22 },
+    resetCard: { backgroundColor: c.card, borderRadius: 18, padding: 22, borderWidth: 1, borderColor: c.cardBorder },
+    resetText: { fontSize: 14, color: c.textMuted, lineHeight: 19 },
+    resetEmail: { fontSize: 15, color: c.heading, fontWeight: '700', marginTop: 4, marginBottom: 4 },
   });
 }

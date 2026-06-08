@@ -1,6 +1,6 @@
 // Einstellungen: Profil-Unterseite, Dark-Mode-Schalter, Abmelden und übliche App-Einstellungen.
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Platform, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Platform, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { supabase } from '../lib/supabase';
@@ -26,12 +26,19 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
   const c = useColors();
   const styles = useMemo(() => makeStyles(c), [c]);
 
-  const [view, setView] = useState<'menu' | 'profile' | 'legal' | 'privacy' | 'impressum'>('menu');
+  const [view, setView] = useState<'menu' | 'profile' | 'legal' | 'privacy' | 'impressum' | 'password'>('menu');
   const [rem, setRem] = useState<ReminderPrefs | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [msgErr, setMsgErr] = useState(false);
   const [busy, setBusy] = useState(false);
   const [stepsConnected, setStepsConnected] = useState(false);
+  // In-App-Passwortaenderung
+  const [pwCur, setPwCur] = useState('');
+  const [pwNew, setPwNew] = useState('');
+  const [pwNew2, setPwNew2] = useState('');
+  const [pwBusy, setPwBusy] = useState(false);
+  const [pwMsg, setPwMsg] = useState<string | null>(null);
+  const [pwErr, setPwErr] = useState(false);
 
   function showMsg(text: string, err: boolean) { setMsg(text); setMsgErr(err); }
 
@@ -76,13 +83,22 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
     await applyReminders(next);
   }
 
-  async function resetPassword() {
-    if (!session?.user?.email) return;
-    setBusy(true);
-    setMsg(null);
-    const { error } = await supabase.auth.resetPasswordForEmail(session.user.email);
-    setBusy(false);
-    showMsg(error ? 'Fehler: ' + error.message : 'E-Mail zum Zurücksetzen wurde gesendet (Postfach prüfen).', !!error);
+  // In-App-Passwortaenderung: aktuelles Passwort verifizieren -> neues setzen.
+  async function changePassword() {
+    const email = session?.user?.email;
+    if (!email) return;
+    if (pwNew.length < 8) { setPwMsg('Neues Passwort: mindestens 8 Zeichen.'); setPwErr(true); return; }
+    if (pwNew !== pwNew2) { setPwMsg('Die neuen Passwörter stimmen nicht überein.'); setPwErr(true); return; }
+    setPwBusy(true); setPwMsg(null);
+    // 1) aktuelles Passwort pruefen (Re-Auth), damit nicht ein offenes Handy reicht
+    const { error: signErr } = await supabase.auth.signInWithPassword({ email, password: pwCur });
+    if (signErr) { setPwBusy(false); setPwMsg('Aktuelles Passwort ist falsch.'); setPwErr(true); return; }
+    // 2) neues Passwort setzen
+    const { error: upErr } = await supabase.auth.updateUser({ password: pwNew });
+    setPwBusy(false);
+    if (upErr) { setPwMsg('Konnte Passwort nicht ändern: ' + upErr.message); setPwErr(true); return; }
+    setPwCur(''); setPwNew(''); setPwNew2('');
+    setPwMsg('Passwort geändert ✓'); setPwErr(false);
   }
   function confirmRedoOnboarding() {
     Alert.alert(
@@ -165,6 +181,31 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
     );
   }
 
+  // Unterseite: Passwort ändern (in-app, mit Verifizierung des aktuellen Passworts)
+  if (view === 'password') {
+    return (
+      <SwipeBack onBack={() => setView('menu')} c={c} behind={renderMenu()}>
+        <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: BOTTOM_PAD }} keyboardShouldPersistTaps="handled">
+          <BackButton onPress={() => setView('menu')} c={c} />
+          <Text style={[styles.title, { marginTop: 10 }]}>Passwort ändern</Text>
+          <View style={[styles.card, { padding: 16 }]}>
+            <Text style={styles.pwLabel}>Aktuelles Passwort</Text>
+            <TextInput style={styles.pwInput} value={pwCur} onChangeText={setPwCur} secureTextEntry autoCapitalize="none" placeholder="Aktuelles Passwort" placeholderTextColor={c.textMuted} />
+            <Text style={styles.pwLabel}>Neues Passwort</Text>
+            <TextInput style={styles.pwInput} value={pwNew} onChangeText={setPwNew} secureTextEntry autoCapitalize="none" placeholder="mindestens 8 Zeichen" placeholderTextColor={c.textMuted} />
+            <Text style={styles.pwLabel}>Neues Passwort wiederholen</Text>
+            <TextInput style={styles.pwInput} value={pwNew2} onChangeText={setPwNew2} secureTextEntry autoCapitalize="none" placeholder="wiederholen" placeholderTextColor={c.textMuted} returnKeyType="done" onSubmitEditing={changePassword} />
+            <TouchableOpacity style={[styles.pwBtn, pwBusy && { opacity: 0.6 }]} onPress={changePassword} disabled={pwBusy} activeOpacity={0.85}>
+              {pwBusy ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.pwBtnText}>Passwort ändern</Text>}
+            </TouchableOpacity>
+            {pwMsg && <Text style={[styles.msg, { color: pwErr ? c.danger : c.success, marginTop: 12 }]}>{pwMsg}</Text>}
+          </View>
+          <Text style={styles.hint}>Passwort vergessen? Melde dich ab und nutze im Login „Passwort vergessen?".</Text>
+        </ScrollView>
+      </SwipeBack>
+    );
+  }
+
   // Unterseite: Rechtliches
   if (view === 'legal') {
     return (
@@ -229,8 +270,8 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
           <Text style={styles.rowLabel}>E-Mail</Text>
           <Text style={styles.rowValue} numberOfLines={1}>{session?.user?.email}</Text>
         </View>
-        <TouchableOpacity style={styles.linkRow} onPress={resetPassword} disabled={busy}>
-          <Text style={styles.link}>Passwort zurücksetzen</Text>
+        <TouchableOpacity style={styles.linkRow} onPress={() => { setPwMsg(null); setView('password'); }}>
+          <Text style={styles.link}>🔑  Passwort ändern</Text>
         </TouchableOpacity>
       </View>
 
@@ -363,6 +404,10 @@ function makeStyles(c: Colors) {
     stepBtnText: { fontSize: 18, color: c.primary, fontWeight: '700' },
     stepVal: { fontSize: 15, color: c.heading, fontWeight: '700', minWidth: 48, textAlign: 'center' },
     msg: { color: c.success, textAlign: 'center', marginTop: 14, fontSize: 14 },
+    pwLabel: { fontSize: 13, fontWeight: '600', color: c.text, marginTop: 12, marginBottom: 6 },
+    pwInput: { borderWidth: 1, borderColor: c.border, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, backgroundColor: c.inputBg, color: c.text },
+    pwBtn: { backgroundColor: c.primary, borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginTop: 18 },
+    pwBtnText: { color: c.onPrimary, fontSize: 16, fontWeight: '700' },
     logoutBtn: { marginTop: 24, borderRadius: 14, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: c.danger },
     logoutText: { color: c.danger, fontSize: 16, fontWeight: '700' },
   });
