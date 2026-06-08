@@ -28,6 +28,7 @@ Alle `.sql`-Dateien werden **manuell** im Supabase **SQL Editor** ausgeführt
 | 20 | `020_drop_allergies.sql` | Allergie-Spalte aus profiles entfernt (Datenminimierung) |
 | 21 | `021_leaderboard_view.sql` | Leaderboard-View (is_me statt fremder UUIDs) |
 | 22 | `022_meal_favorites.sql` | Favoriten (gespeicherte Mahlzeiten) für den Essens-Tracker |
+| 23 | `023_hardening.sql` | Härtung (Audit): Leaderboard-UUID-Leak schließen (View), Werte-/Bereichs-CHECKs |
 
 ## Hinweise
 - **Reihenfolge zählt:** Spätere Migrationen bauen auf früheren auf.
