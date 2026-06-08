@@ -773,7 +773,8 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
         </View>
       )}
 
-      {/* Mahlzeiten */}
+      {/* Tagebuch (nach Mahlzeiten gruppiert) */}
+      <Text style={styles.sectionHead}>TAGEBUCH</Text>
       {TRACKER_MEALS.map((m) => {
         const items = logs.filter((e) => normalizeMeal(e.meal_type) === m.key);
         const mealKcal = items.reduce((s, e) => s + kcalOf(e), 0);
