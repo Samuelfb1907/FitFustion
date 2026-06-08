@@ -6,7 +6,7 @@
 //
 // `behind` + `c` optional: ohne sie verhaelt sich SwipeBack wie ein einfaches
 // Weg-Wischen (transparente Seite) – fuer einen schrittweisen Rollout.
-import { ReactNode, useRef } from 'react';
+import { ReactNode, useRef, useState } from 'react';
 import { Animated, Dimensions, PanResponder, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { Colors } from '../contexts/ThemeContext';
 import Ambient from './Ambient';
@@ -29,6 +29,21 @@ export default function SwipeBack({
   const onBackRef = useRef(onBack);
   onBackRef.current = onBack;
   const tx = useRef(new Animated.Value(0)).current;
+
+  // Damit die Rand-Wischgeste auch greift, wenn diese SwipeBack in einem
+  // eingerueckten Container sitzt (z.B. Essen-Hub mit Seitenrand): den eigenen
+  // Bildschirm-Versatz messen und die wischbare Seite bis an den ECHTEN
+  // Bildschirmrand ziehen (negativer Aussenabstand), den Inhalt per Padding aber
+  // wieder an seine Position schieben. Bei randlosen Seiten ist der Versatz 0.
+  const outerRef = useRef<View>(null);
+  const [insetL, setInsetL] = useState(0);
+  const [insetR, setInsetR] = useState(0);
+  const measure = () => {
+    outerRef.current?.measureInWindow((x, _y, w) => {
+      setInsetL(Math.max(0, Math.round(x)));
+      setInsetR(Math.max(0, Math.round(SCREEN_W - x - w)));
+    });
+  };
 
   const responder = useRef(
     PanResponder.create({
@@ -66,7 +81,7 @@ export default function SwipeBack({
   const behindOpacity = tx.interpolate({ inputRange: [0, 1], outputRange: [0, 1], extrapolate: 'clamp' });
 
   return (
-    <View style={[{ flex: 1 }, style]}>
+    <View ref={outerRef} onLayout={measure} style={[{ flex: 1 }, style]}>
       {behind != null && (
         <Animated.View
           style={[StyleSheet.absoluteFill, c ? { backgroundColor: c.bg } : null, { opacity: behindOpacity, transform: [{ translateX: behindTx }] }]}
@@ -77,7 +92,12 @@ export default function SwipeBack({
         </Animated.View>
       )}
       <Animated.View
-        style={[styles.page, c ? { backgroundColor: c.bg } : null, { transform: [{ translateX: tx }] }]}
+        style={[
+          styles.page,
+          c ? { backgroundColor: c.bg } : null,
+          // Seite bis zum echten Bildschirmrand ziehen (Geste am Rand), Inhalt per Padding zurueck.
+          { marginLeft: -insetL, marginRight: -insetR, paddingLeft: insetL, paddingRight: insetR, transform: [{ translateX: tx }] },
+        ]}
         {...responder.panHandlers}
       >
         {c && <Ambient c={c} />}
