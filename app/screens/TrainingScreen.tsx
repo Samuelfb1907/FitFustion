@@ -194,7 +194,7 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
 
   if (selectedExercise) {
     return (
-      <SwipeBack onBack={() => setSelectedExercise(null)} c={c} behind={listView}>
+      <SwipeBack key="train-exercise" onBack={() => setSelectedExercise(null)} c={c} behind={listView}>
         <ExerciseDetail
           exercise={selectedExercise}
           onBack={() => setSelectedExercise(null)}
@@ -207,7 +207,7 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
 
   if (selectedMuscle) {
     return (
-      <SwipeBack onBack={() => setSelectedMuscle(null)} c={c} behind={hubView}>
+      <SwipeBack key="train-muscle" onBack={() => setSelectedMuscle(null)} c={c} behind={hubView}>
         {listView}
       </SwipeBack>
     );

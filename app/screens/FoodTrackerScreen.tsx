@@ -394,7 +394,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     const a = Number(amount.replace(',', '.')) || 0;
     const previewKcal = Math.round((selectedFood.kcal * a) / 100);
     return (
-      <SwipeBack onBack={() => setMode(backTarget)} c={c} behind={backTarget === 'pick' ? renderPick() : renderDiary()}>
+      <SwipeBack key="food-amount" onBack={() => setMode(backTarget)} c={c} behind={backTarget === 'pick' ? renderPick() : renderDiary()}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
           <BackButton onPress={() => setMode(backTarget)} c={c} />
@@ -427,7 +427,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
 
   if (mode === 'newfood') {
     return (
-      <SwipeBack onBack={() => setMode('pick')} c={c} behind={renderPick()}>
+      <SwipeBack key="food-newfood" onBack={() => setMode('pick')} c={c} behind={renderPick()}>
       <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
         <BackButton onPress={() => setMode('pick')} c={c} />
         <Text style={styles.title}>Neues Lebensmittel</Text>
@@ -463,7 +463,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
 
   if (mode === 'pick') {
     return (
-      <SwipeBack onBack={pickBack} c={c} behind={addingTo === 'favorite' ? renderFavNew() : renderDiary()}>
+      <SwipeBack key="food-pick" onBack={pickBack} c={c} behind={addingTo === 'favorite' ? renderFavNew() : renderDiary()}>
         {renderPick()}
       </SwipeBack>
     );
@@ -471,7 +471,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
 
   if (mode === 'favnew') {
     return (
-      <SwipeBack onBack={cancelFavNew} c={c} behind={renderPick()}>
+      <SwipeBack key="food-favnew" onBack={cancelFavNew} c={c} behind={renderPick()}>
         {renderFavNew()}
       </SwipeBack>
     );
