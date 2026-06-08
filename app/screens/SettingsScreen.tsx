@@ -50,7 +50,18 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
     if (healthSupported()) hasStepsPermission().then(setStepsConnected).catch(() => {});
   }, []);
 
-  async function connectHealth() {
+  function connectHealth() {
+    // Pflicht-Hinweis (Google) VOR der Berechtigungsabfrage: was wird gelesen + wohin.
+    Alert.alert(
+      'Mit Health Connect verbinden',
+      'FitAvo liest deine Schritte und – falls vorhanden – die von deiner Uhr gemessenen aktiven Kalorien. Diese Werte werden NUR auf deinem Gerät verwendet (zur Anrechnung aufs Tagesziel) und nicht an unsere Server übertragen oder dort gespeichert. Du kannst die Berechtigung jederzeit in Health Connect widerrufen.',
+      [
+        { text: 'Abbrechen', style: 'cancel' },
+        { text: 'Verbinden', onPress: doConnectHealth },
+      ],
+    );
+  }
+  async function doConnectHealth() {
     setBusy(true); setMsg(null);
     const available = await healthAvailable();
     if (!available) {

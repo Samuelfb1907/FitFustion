@@ -30,6 +30,7 @@ Alle `.sql`-Dateien werden **manuell** im Supabase **SQL Editor** ausgeführt
 | 22 | `022_meal_favorites.sql` | Favoriten (gespeicherte Mahlzeiten) für den Essens-Tracker |
 | 23 | `023_hardening.sql` | Härtung (Audit): Leaderboard-UUID-Leak schließen (View), Werte-/Bereichs-CHECKs |
 | 24 | `024_leaderboard_trust.sql` | Leaderboard-Punkte serverseitig per Trigger (fälschungssicher) + Mengen-Limits |
+| 25 | `025_consent.sql` | Server-seitiger Einwilligungs-Nachweis (profiles.disclaimer_version + consented_at) |
 
 ## Hinweise
 - **Reihenfolge zählt:** Spätere Migrationen bauen auf früheren auf.

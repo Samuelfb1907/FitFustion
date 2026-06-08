@@ -15,7 +15,7 @@ function medal(rank: number): string {
 }
 
 export default function LeaderboardScreen({ embedded }: { embedded?: boolean }) {
-  const { session, profile } = useAuth();
+  const { session } = useAuth();
   const userId = session?.user?.id;
   const c = useColors();
   const styles = useMemo(() => makeStyles(c), [c]);
@@ -29,7 +29,8 @@ export default function LeaderboardScreen({ embedded }: { embedded?: boolean }) 
   const [nameInput, setNameInput] = useState('');
   const [busy, setBusy] = useState(false);
 
-  const defaultName = (profile?.first_name ?? '').trim() || 'Anonym';
+  // Datenschutz: standardmaessig anonym - der echte Name wird NICHT vorausgewaehlt.
+  const defaultName = 'Anonym';
 
   useEffect(() => { init(); }, [userId]);
 
@@ -114,7 +115,7 @@ export default function LeaderboardScreen({ embedded }: { embedded?: boolean }) 
           </Text>
           <View style={styles.privacy}>
             <Text style={styles.privacyText}>
-              🔒 Freiwillig & privat-freundlich: Es wird nur dein gewählter Anzeigename und die Anzahl deiner aktiven Tage gezeigt. Du kannst jederzeit wieder aussteigen.
+              🔒 Freiwillig: Dein gewählter Anzeigename und die Anzahl deiner aktiven Tage sind für ALLE Teilnehmer sichtbar. Wähle daher gern einen Spitznamen statt deines echten Namens. Du kannst jederzeit wieder aussteigen.
             </Text>
           </View>
           <Text style={styles.label}>Dein Anzeigename</Text>

@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import Ambient from '../components/Ambient';
 import { buildBirthDate, isUnderMinAge, MIN_AGE_YEARS } from '../lib/birthdate';
+import { DISCLAIMER_VERSION } from '../lib/legal';
 
 type Opt = { label: string; value: string };
 
@@ -120,6 +121,9 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
       id: userId, first_name: firstName.trim(), birth_date, gender,
       weight_kg: num(weight), height_cm: num(height), activity_level: activity, experience_level: experience, training_environment: environment,
     });
+    // Einwilligung serverseitig vermerken (best-effort: schlaegt fehl, solange
+    // Migration 025 noch nicht lief -> blockiert das Onboarding NICHT).
+    await supabase.from('profiles').update({ disclaimer_version: DISCLAIMER_VERSION, consented_at: new Date().toISOString() }).eq('id', userId);
     let targetDate: string | null = null;
     if (goal === 'lose_weight') { const d = new Date(); d.setDate(d.getDate() + Number(timeframe) * 7); targetDate = d.toISOString().slice(0, 10); }
     // Nur EIN aktives Ziel zulassen (Unique-Index goals_one_active_per_user): altes vorher deaktivieren
