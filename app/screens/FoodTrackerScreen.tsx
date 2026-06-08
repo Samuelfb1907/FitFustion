@@ -1,6 +1,6 @@
 // Kalorien-Tracker / Tagebuch (themed): eigene Zutaten auswählen, Menge angeben, Tag tracken.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Platform, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Modal, Platform, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
@@ -18,6 +18,7 @@ import { hasStepsPermission, getTodayActivity } from '../lib/health';
 import BackButton from '../components/BackButton';
 import SwipeBack from '../components/SwipeBack';
 import Segmented from '../components/Segmented';
+import { parseMeal, ParsedItem } from '../lib/parseMeal';
 import { CARD_SHADOW as shadow } from '../lib/ui';
 
 type Food = { id: string; name: string; category: string | null; kcal: number; protein: number; carbs: number; fat: number; user_id?: string | null };
@@ -88,6 +89,11 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   const [favErr, setFavErr] = useState<string | null>(null);
   const [favMsg, setFavMsg] = useState<string | null>(null);
   const [usualByMeal, setUsualByMeal] = useState<Partial<Record<MealType, UsualMeal>>>({});
+  // "Sprich's einfach": Mahlzeit in Sprache eingeben -> KI erkennt
+  const [nlText, setNlText] = useState('');
+  const [nlBusy, setNlBusy] = useState(false);
+  const [nlErr, setNlErr] = useState<string | null>(null);
+  const [nlItems, setNlItems] = useState<ParsedItem[] | null>(null);
   const busyRef = useRef(false); // verhindert doppelte Tagebuch-Eintraege bei schnellem Doppel-Tippen
 
   useEffect(() => { init(); }, [userId]);
@@ -252,6 +258,58 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       await loadLogs();
       await loadQuick();
     } finally { busyRef.current = false; }
+  }
+
+  // ---- "Sprich's einfach": Satz -> KI-Erkennung -> Bestaetigung -> Tagebuch ----
+  async function recognizeMeal() {
+    const text = nlText.trim();
+    if (!text || nlBusy) return;
+    setNlBusy(true); setNlErr(null);
+    try {
+      const items = await parseMeal(text, mealByHour());
+      if (!items.length) { setNlErr('Nichts erkannt. Formuliere es etwas anders.'); return; }
+      setNlItems(items);
+    } catch {
+      setNlErr('Erkennung gerade nicht verfügbar. Bitte später erneut versuchen.');
+    } finally {
+      setNlBusy(false);
+    }
+  }
+  // Erkannte Eintraege ins Tagebuch: vorhandenes Lebensmittel abgleichen, sonst neu anlegen.
+  async function applyNlItems() {
+    if (!userId || !nlItems || !nlItems.length || busyRef.current) return;
+    busyRef.current = true; setNlBusy(true); setNlErr(null);
+    try {
+      const rows: any[] = [];
+      for (const it of nlItems) {
+        let foodId: string | null = null;
+        const { data: exact } = await supabase.from('foods').select('id').ilike('name', it.name).limit(1);
+        if (exact && exact.length) foodId = exact[0].id;
+        if (!foodId) {
+          const { data: like } = await supabase.from('foods').select('id').ilike('name', `%${it.name}%`).order('name').limit(1);
+          if (like && like.length) foodId = like[0].id;
+        }
+        if (!foodId) {
+          const { data: created, error: cErr } = await supabase.from('foods')
+            .insert({ name: it.name, category: 'KI-erkannt', kcal: it.kcal, protein: it.protein, carbs: it.carbs, fat: it.fat, user_id: userId })
+            .select('id').single();
+          if (!cErr && created) foodId = created.id;
+          else {
+            const { data: again } = await supabase.from('foods').select('id').ilike('name', it.name).limit(1);
+            if (again && again.length) foodId = again[0].id;
+          }
+        }
+        if (foodId) rows.push({ user_id: userId, food_id: foodId, amount_g: it.amount_g, log_date: todayStr(), meal_type: it.meal_type });
+      }
+      if (rows.length) {
+        const { error } = await supabase.from('food_logs').insert(rows);
+        if (error) { setNlErr('Konnte nicht eintragen: ' + (error.message ?? '')); return; }
+      }
+      setNlItems(null); setNlText('');
+      await loadLogs(); await loadQuick(); await loadUsual();
+    } finally {
+      setNlBusy(false); busyRef.current = false;
+    }
   }
 
   async function quickAdd(qf: QuickFood) {
@@ -730,6 +788,24 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
         </View>
       </View>
 
+      {/* "Sprich's einfach": Mahlzeit in Sprache eingeben -> KI erkennt automatisch */}
+      <View style={styles.nlCard}>
+        <Text style={styles.nlTitle}>✍️  Schreib, was du gegessen hast</Text>
+        <TextInput
+          style={styles.nlInput}
+          value={nlText}
+          onChangeText={setNlText}
+          placeholder="z. B. 2 Eier, ein Toast und ein Kaffee"
+          placeholderTextColor={c.textMuted}
+          multiline
+          editable={!nlBusy}
+        />
+        <TouchableOpacity style={[styles.nlBtn, (nlBusy || !nlText.trim()) && { opacity: 0.5 }]} onPress={recognizeMeal} disabled={nlBusy || !nlText.trim()} activeOpacity={0.85}>
+          {nlBusy && !nlItems ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.nlBtnText}>🪄  Automatisch erkennen</Text>}
+        </TouchableOpacity>
+        {nlErr && <Text style={styles.error}>{nlErr}</Text>}
+      </View>
+
       <Text style={styles.disclaimer}>{NUTRITION_DISCLAIMER}</Text>
 
       {/* Aktionen */}
@@ -809,6 +885,33 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       {error && <Text style={styles.error}>{error}</Text>}
     </ScrollView>
     <BarcodeScanner visible={scannerOpen} c={c} onClose={() => setScannerOpen(false)} onScanned={handleScanned} />
+    <Modal visible={!!nlItems} transparent animationType="slide" onRequestClose={() => setNlItems(null)}>
+      <View style={styles.nlOverlay}>
+        <View style={styles.nlSheet}>
+          <Text style={styles.nlSheetTitle}>Erkannt – passt das?</Text>
+          <ScrollView style={{ maxHeight: 320 }} keyboardShouldPersistTaps="handled">
+            {(nlItems ?? []).map((it, idx) => (
+              <View key={idx} style={[styles.entryRow, idx > 0 && styles.entryDivider]}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.entryName} numberOfLines={1}>{it.name}</Text>
+                  <Text style={styles.entryMeta}>{it.amount_g} g  ·  {Math.round((it.kcal * it.amount_g) / 100)} kcal  ·  {TRACKER_MEALS.find((m) => m.key === it.meal_type)?.label ?? ''}</Text>
+                </View>
+                <TouchableOpacity onPress={() => setNlItems((cur) => (cur ?? []).filter((_, i) => i !== idx))} style={styles.del} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`${it.name} entfernen`}>
+                  <Text style={styles.delText}>✕</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+            {nlItems?.length === 0 && <Text style={styles.mealEmpty}>Nichts mehr übrig – tippe Abbrechen.</Text>}
+          </ScrollView>
+          <TouchableOpacity style={[styles.primaryBtn, (nlBusy || !nlItems?.length) && { opacity: 0.5 }]} onPress={applyNlItems} disabled={nlBusy || !nlItems?.length} activeOpacity={0.85}>
+            {nlBusy ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.primaryText}>Ins Tagebuch eintragen</Text>}
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setNlItems(null)} style={{ marginTop: 12 }}>
+            <Text style={styles.nlClose}>Abbrechen</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
     </>
   );
   }
@@ -880,6 +983,15 @@ function makeStyles(c: Colors) {
     usualItems: { fontSize: 12, color: c.textMuted, marginTop: 2 },
     usualBtn: { backgroundColor: c.primary, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, marginLeft: 10 },
     usualBtnText: { color: c.onPrimary, fontWeight: '800', fontSize: 14 },
+    nlCard: { backgroundColor: c.card, borderRadius: 14, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: c.primary },
+    nlTitle: { fontSize: 14, fontWeight: '800', color: c.heading, marginBottom: 8 },
+    nlInput: { borderWidth: 1, borderColor: c.border, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 15, backgroundColor: c.inputBg, color: c.text, minHeight: 44 },
+    nlBtn: { backgroundColor: c.primary, borderRadius: 12, paddingVertical: 12, alignItems: 'center', marginTop: 10 },
+    nlBtnText: { color: c.onPrimary, fontSize: 15, fontWeight: '800' },
+    nlOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'flex-end' },
+    nlSheet: { backgroundColor: c.bg, borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 22, paddingBottom: 32 },
+    nlSheetTitle: { fontSize: 18, fontWeight: '800', color: c.heading, marginBottom: 10 },
+    nlClose: { textAlign: 'center', color: c.textMuted, fontSize: 14 },
     inputLabel: { fontSize: 14, color: c.text, fontWeight: '600', marginTop: 8, marginBottom: 6 },
     input: { borderWidth: 1, borderColor: c.border, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 16, backgroundColor: c.inputBg, color: c.text },
     preview: { fontSize: 18, fontWeight: '700', color: c.heading, marginTop: 14 },
