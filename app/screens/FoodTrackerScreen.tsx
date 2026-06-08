@@ -94,6 +94,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   const [nlBusy, setNlBusy] = useState(false);
   const [nlErr, setNlErr] = useState<string | null>(null);
   const [nlItems, setNlItems] = useState<ParsedItem[] | null>(null);
+  const [nlMeal, setNlMeal] = useState<MealType>(mealByHour());
   const busyRef = useRef(false); // verhindert doppelte Tagebuch-Eintraege bei schnellem Doppel-Tippen
 
   useEffect(() => { init(); }, [userId]);
@@ -268,12 +269,19 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     try {
       const items = await parseMeal(text, mealByHour());
       if (!items.length) { setNlErr('Nichts erkannt. Formuliere es etwas anders.'); return; }
-      setNlItems(items);
+      const m = items[0]?.meal_type ?? mealByHour();
+      setNlMeal(m);
+      setNlItems(items.map((it) => ({ ...it, meal_type: m })));
     } catch {
       setNlErr('Erkennung gerade nicht verfügbar. Bitte später erneut versuchen.');
     } finally {
       setNlBusy(false);
     }
+  }
+  // Mahlzeit fuer alle erkannten Eintraege im Bestaetigungs-Dialog waehlen.
+  function setNlMealAll(meal: MealType) {
+    setNlMeal(meal);
+    setNlItems((cur) => (cur ?? []).map((it) => ({ ...it, meal_type: meal })));
   }
   // Menge (Gramm) eines erkannten Eintrags im Bestaetigungs-Dialog anpassen.
   function setNlAmount(idx: number, text: string) {
@@ -896,6 +904,17 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       <View style={styles.nlOverlay}>
         <View style={styles.nlSheet}>
           <Text style={styles.nlSheetTitle}>Erkannt – passt das?</Text>
+          <Text style={styles.nlMealLabel}>Für welche Mahlzeit?</Text>
+          <View style={styles.nlMealRow}>
+            {TRACKER_MEALS.map((m) => {
+              const active = nlMeal === m.key;
+              return (
+                <TouchableOpacity key={m.key} onPress={() => setNlMealAll(m.key)} style={[styles.nlChip, active && styles.nlChipActive]} activeOpacity={0.8} accessibilityRole="button" accessibilityState={{ selected: active }}>
+                  <Text style={[styles.nlChipText, active && styles.nlChipTextActive]}>{m.icon} {m.label}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
           <ScrollView style={{ maxHeight: 320 }} keyboardShouldPersistTaps="handled">
             {(nlItems ?? []).map((it, idx) => (
               <View key={idx} style={[styles.entryRow, idx > 0 && styles.entryDivider]}>
@@ -914,7 +933,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
                       accessibilityLabel={`Menge für ${it.name} in Gramm`}
                     />
                     <Text style={styles.nlAmtUnit}>g</Text>
-                    <Text style={styles.entryMeta} numberOfLines={1}>  ·  {Math.round((it.kcal * it.amount_g) / 100)} kcal  ·  {TRACKER_MEALS.find((m) => m.key === it.meal_type)?.label ?? ''}</Text>
+                    <Text style={styles.entryMeta} numberOfLines={1}>  ·  {Math.round((it.kcal * it.amount_g) / 100)} kcal</Text>
                   </View>
                 </View>
                 <TouchableOpacity onPress={() => setNlItems((cur) => (cur ?? []).filter((_, i) => i !== idx))} style={styles.del} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`${it.name} entfernen`}>
@@ -1019,6 +1038,12 @@ function makeStyles(c: Colors) {
     nlAmtInput: { minWidth: 52, paddingVertical: 3, paddingHorizontal: 8, borderWidth: 1, borderColor: c.border, borderRadius: 8, backgroundColor: c.inputBg, color: c.text, fontSize: 13, fontWeight: '700', textAlign: 'right' },
     nlAmtUnit: { color: c.textMuted, fontSize: 13, marginLeft: 4 },
     nlHint: { color: c.danger, fontSize: 12, marginTop: 8 },
+    nlMealLabel: { color: c.textMuted, fontSize: 13, fontWeight: '600', marginBottom: 8 },
+    nlMealRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 6 },
+    nlChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, borderWidth: 1, borderColor: c.border, backgroundColor: c.card, marginRight: 8, marginBottom: 8 },
+    nlChipActive: { backgroundColor: c.primary, borderColor: c.primary },
+    nlChipText: { color: c.text, fontSize: 13, fontWeight: '700' },
+    nlChipTextActive: { color: c.onPrimary },
     inputLabel: { fontSize: 14, color: c.text, fontWeight: '600', marginTop: 8, marginBottom: 6 },
     input: { borderWidth: 1, borderColor: c.border, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 16, backgroundColor: c.inputBg, color: c.text },
     preview: { fontSize: 18, fontWeight: '700', color: c.heading, marginTop: 14 },
