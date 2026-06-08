@@ -551,8 +551,11 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   function renderPick() {
     const forFav = addingTo === 'favorite';
     const showZutaten = forFav || pickTab === 'zutaten';
-    return (
-      <View style={[styles.container, embedded && styles.embedded]}>
+    // Kopfbereich (Zurueck, Titel, Umschalter, Suche ...) ist Teil des scrollbaren
+    // Listenkopfs -> beim Runterscrollen verschwindet er und die Liste nimmt die
+    // ganze Seite ein (eine durchgehende Scroll-Seite).
+    const header = (
+      <View>
         <BackButton onPress={pickBack} c={c} />
         <Text style={styles.title}>{forFav ? 'Zutat hinzufügen' : 'Hinzufügen'}</Text>
         {!forFav && (
@@ -573,35 +576,6 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
               <Text style={styles.newFoodText}>➕  Eigenes Lebensmittel anlegen</Text>
             </TouchableOpacity>
             <Text style={styles.countHint}>{searching ? 'Suche…' : `${searchResults.length} ${searchResults.length === 1 ? 'Eintrag' : 'Einträge'}${searchResults.length >= 2000 ? '+' : ''}`}</Text>
-            <FlatList
-              style={{ flex: 1 }}
-              data={searchResults}
-              keyExtractor={(f) => f.id}
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={{ paddingBottom: 40 }}
-              initialNumToRender={15}
-              maxToRenderPerBatch={20}
-              windowSize={10}
-              removeClippedSubviews
-              renderItem={({ item: f }) => {
-                const own = !!userId && f.user_id === userId;
-                return (
-                  <TouchableOpacity style={styles.foodRow} onPress={() => { setSelectedFood(f); setAmount('100'); setError(null); setBackTarget('pick'); setMode('amount'); }} activeOpacity={0.7}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.foodName}>{f.name}</Text>
-                      <Text style={styles.foodMeta}>{f.category}{own ? '  ·  eigenes' : ''}</Text>
-                    </View>
-                    <Text style={styles.foodKcal}>{f.kcal} kcal</Text>
-                    {own && (
-                      <TouchableOpacity onPress={() => confirmDeleteFood(f)} style={styles.foodDel} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`${f.name} löschen`}>
-                        <Text style={styles.foodDelText}>🗑</Text>
-                      </TouchableOpacity>
-                    )}
-                  </TouchableOpacity>
-                );
-              }}
-              ListEmptyComponent={searching ? null : <Text style={styles.noResult}>Kein Treffer{search.trim() ? ` für „${search.trim()}"` : ''}. Leg es als eigenes Lebensmittel an ☝️</Text>}
-            />
           </>
         ) : (
           <>
@@ -609,28 +583,67 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
             <TouchableOpacity style={styles.newFoodBtn} onPress={startNewFavorite} activeOpacity={0.85}>
               <Text style={styles.newFoodText}>➕  Neuen Favoriten erstellen</Text>
             </TouchableOpacity>
-            <FlatList
-              style={{ flex: 1, marginTop: 4 }}
-              data={favorites}
-              keyExtractor={(f) => f.id}
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={{ paddingBottom: 40 }}
-              renderItem={({ item: fav }) => (
-                <TouchableOpacity style={styles.foodRow} onPress={() => applyFavorite(fav)} activeOpacity={0.7}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.foodName}>⭐  {fav.name}</Text>
-                    <Text style={styles.foodMeta}>{fav.items.length} {fav.items.length === 1 ? 'Zutat' : 'Zutaten'}  ·  {favKcal(fav)} kcal</Text>
-                  </View>
-                  <TouchableOpacity onPress={() => confirmDeleteFavorite(fav)} style={styles.foodDel} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`${fav.name} löschen`}>
-                    <Text style={styles.foodDelText}>🗑</Text>
-                  </TouchableOpacity>
-                </TouchableOpacity>
-              )}
-              ListEmptyComponent={<Text style={styles.noResult}>Noch keine Favoriten. Erstelle z. B. dein tägliches Frühstück ☝️</Text>}
-            />
           </>
         )}
       </View>
+    );
+
+    // Die Liste IST die Seite: Kopf scrollt mit weg, Eintraege nutzen die volle Hoehe.
+    if (showZutaten) {
+      return (
+        <FlatList
+          style={[styles.container, embedded && styles.embedded]}
+          contentContainerStyle={{ paddingBottom: 40 }}
+          data={searchResults}
+          keyExtractor={(f) => f.id}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          ListHeaderComponent={header}
+          initialNumToRender={15}
+          maxToRenderPerBatch={20}
+          windowSize={10}
+          renderItem={({ item: f }) => {
+            const own = !!userId && f.user_id === userId;
+            return (
+              <TouchableOpacity style={styles.foodRow} onPress={() => { setSelectedFood(f); setAmount('100'); setError(null); setBackTarget('pick'); setMode('amount'); }} activeOpacity={0.7}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.foodName}>{f.name}</Text>
+                  <Text style={styles.foodMeta}>{f.category}{own ? '  ·  eigenes' : ''}</Text>
+                </View>
+                <Text style={styles.foodKcal}>{f.kcal} kcal</Text>
+                {own && (
+                  <TouchableOpacity onPress={() => confirmDeleteFood(f)} style={styles.foodDel} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`${f.name} löschen`}>
+                    <Text style={styles.foodDelText}>🗑</Text>
+                  </TouchableOpacity>
+                )}
+              </TouchableOpacity>
+            );
+          }}
+          ListEmptyComponent={searching ? null : <Text style={styles.noResult}>Kein Treffer{search.trim() ? ` für „${search.trim()}"` : ''}. Leg es als eigenes Lebensmittel an ☝️</Text>}
+        />
+      );
+    }
+    return (
+      <FlatList
+        style={[styles.container, embedded && styles.embedded]}
+        contentContainerStyle={{ paddingBottom: 40 }}
+        data={favorites}
+        keyExtractor={(f) => f.id}
+        keyboardShouldPersistTaps="handled"
+        ListHeaderComponent={header}
+        renderItem={({ item: fav }) => (
+          <TouchableOpacity style={styles.foodRow} onPress={() => applyFavorite(fav)} activeOpacity={0.7}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.foodName}>⭐  {fav.name}</Text>
+              <Text style={styles.foodMeta}>{fav.items.length} {fav.items.length === 1 ? 'Zutat' : 'Zutaten'}  ·  {favKcal(fav)} kcal</Text>
+            </View>
+            <TouchableOpacity onPress={() => confirmDeleteFavorite(fav)} style={styles.foodDel} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`${fav.name} löschen`}>
+              <Text style={styles.foodDelText}>🗑</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        )}
+        ListEmptyComponent={<Text style={styles.noResult}>Noch keine Favoriten. Erstelle z. B. dein tägliches Frühstück ☝️</Text>}
+      />
     );
   }
 
