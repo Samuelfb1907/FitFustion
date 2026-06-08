@@ -8,7 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import ExerciseDetail from '../components/ExerciseDetail';
 import Segmented from '../components/Segmented';
-import PlanScreen from './PlanScreen';
+import PlanScreen, { Selected } from './PlanScreen';
 import { useFocusTick } from '../lib/useFocusTick';
 import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
@@ -43,6 +43,8 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
   const [mError, setMError] = useState<string | null>(null);
   const [exError, setExError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [planEx, setPlanEx] = useState<Selected | null>(null);
+  const [planRefresh, setPlanRefresh] = useState(0);
 
   const allowedDiff = ALLOWED_DIFF[profile?.experience_level ?? 'beginner'] ?? ['beginner'];
   const allowedEquip = ALLOWED_EQUIP[profile?.training_environment ?? 'gym'] ?? ALLOWED_EQUIP.gym;
@@ -81,6 +83,7 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
     setSeg('free');
     setSelectedExercise(null);
     setSelectedMuscle(null);
+    setPlanEx(null);
   });
 
   async function openMuscle(m: Muscle) {
@@ -118,7 +121,7 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
       />
       {seg === 'plan' ? (
         <View style={{ flex: 1, marginTop: 14 }}>
-          <PlanScreen embedded />
+          <PlanScreen embedded onOpenExercise={setPlanEx} refreshTick={planRefresh} />
         </View>
       ) : mLoading ? (
         <ActivityIndicator size="large" color={c.primary} style={{ marginTop: 40 }} />
@@ -210,7 +213,23 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
     );
   }
 
-  return hubView;
+  return (
+    <View style={{ flex: 1 }}>
+      {hubView}
+      {planEx && (
+        <View style={StyleSheet.absoluteFill}>
+          <SwipeBack onBack={() => { setPlanEx(null); setPlanRefresh((t) => t + 1); }} c={c}>
+            <ExerciseDetail
+              exercise={planEx.exercise}
+              muscleKey={planEx.muscleKey}
+              muscleName={planEx.muscleName}
+              onBack={() => { setPlanEx(null); setPlanRefresh((t) => t + 1); }}
+            />
+          </SwipeBack>
+        </View>
+      )}
+    </View>
+  );
 }
 
 function makeStyles(c: Colors) {

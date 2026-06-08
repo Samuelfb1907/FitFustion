@@ -4,7 +4,6 @@ import { ActivityIndicator, Alert, Modal, RefreshControl, ScrollView, StyleSheet
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
-import ExerciseDetail from '../components/ExerciseDetail';
 import { WEEKDAYS, todayWeekday } from '../lib/weekdays';
 import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
@@ -61,9 +60,9 @@ const SCHEDULE_BY_DAYS: Record<number, number[]> = {
 
 type PlanEx = { rowId: string; exId: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null; muscleKey: string | null; muscleName: string | null; sets: number; reps: number };
 type DayView = { id: string; day_index: number; focus: string | null; exercises: PlanEx[] };
-type Selected = { exercise: { id: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null }; muscleKey: string | null; muscleName: string | null };
+export type Selected = { exercise: { id: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null }; muscleKey: string | null; muscleName: string | null };
 
-export default function PlanScreen({ embedded }: { embedded?: boolean }) {
+export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { embedded?: boolean; onOpenExercise?: (sel: Selected) => void; refreshTick?: number }) {
   const { session, profile } = useAuth();
   const userId = session?.user?.id;
   const c = useColors();
@@ -78,7 +77,6 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
   const [days, setDays] = useState<DayView[]>([]);
   const [mode, setMode] = useState<'view' | 'create'>('create');
   const [selectedDays, setSelectedDays] = useState(3);
-  const [selected, setSelected] = useState<Selected | null>(null);
   const [doneToday, setDoneToday] = useState<Set<string>>(new Set());
   const [schedule, setSchedule] = useState<Record<number, string>>({}); // Wochentag -> plan_day_id
   const [editWeekday, setEditWeekday] = useState<number | null>(null);
@@ -104,6 +102,7 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
   }, [schedule, days]);
 
   useEffect(() => { loadPlan(); }, [userId]);
+  useEffect(() => { if (refreshTick) loadDoneToday(); }, [refreshTick]);
 
   async function loadPlan(silent = false) {
     if (!userId) { setLoading(false); return; }
@@ -306,25 +305,6 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
     ]);
   }
 
-  if (selected) {
-    const closeSel = () => { setSelected(null); loadDoneToday(); };
-    return (
-      <>
-        {renderPlan()}
-        <Modal transparent visible animationType="none" onRequestClose={closeSel}>
-          <SwipeBack onBack={closeSel} c={c}>
-            <ExerciseDetail
-              exercise={selected.exercise}
-              muscleKey={selected.muscleKey}
-              muscleName={selected.muscleName}
-              onBack={closeSel}
-            />
-          </SwipeBack>
-        </Modal>
-      </>
-    );
-  }
-
   if (addingToDay) {
     const day = days.find((d) => d.id === addingToDay);
     const existing = new Set(day?.exercises.map((e) => e.exId) ?? []);
@@ -484,7 +464,7 @@ export default function PlanScreen({ embedded }: { embedded?: boolean }) {
                 </View>
               ) : (
                 <TouchableOpacity key={ex.rowId} style={styles.exItem} activeOpacity={0.7}
-                  onPress={() => setSelected({ exercise: { id: ex.exId, name: ex.name, difficulty: ex.difficulty, equipment: ex.equipment, description: ex.description, instructions: ex.instructions }, muscleKey: ex.muscleKey, muscleName: ex.muscleName })}>
+                  onPress={() => onOpenExercise?.({ exercise: { id: ex.exId, name: ex.name, difficulty: ex.difficulty, equipment: ex.equipment, description: ex.description, instructions: ex.instructions }, muscleKey: ex.muscleKey, muscleName: ex.muscleName })}>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.exName, doneToday.has(ex.exId) && { color: c.success, fontWeight: '700' }]}>{doneToday.has(ex.exId) ? '✓ ' : ''}{ex.name}</Text>
                     <Text style={styles.exMeta}>{ex.sets} × {ex.reps} · {DIFF_LABELS[ex.difficulty] ?? ex.difficulty}{ex.muscleName ? ` · ${ex.muscleName}` : ''}</Text>
