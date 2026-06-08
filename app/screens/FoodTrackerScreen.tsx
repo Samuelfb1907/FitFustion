@@ -892,6 +892,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     </ScrollView>
     <BarcodeScanner visible={scannerOpen} c={c} onClose={() => setScannerOpen(false)} onScanned={handleScanned} />
     <Modal visible={!!nlItems} transparent animationType="slide" onRequestClose={() => setNlItems(null)}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.nlOverlay}>
         <View style={styles.nlSheet}>
           <Text style={styles.nlSheetTitle}>Erkannt – passt das?</Text>
@@ -932,6 +933,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
           </TouchableOpacity>
         </View>
       </View>
+      </KeyboardAvoidingView>
     </Modal>
     </>
   );
