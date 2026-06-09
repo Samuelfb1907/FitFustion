@@ -556,7 +556,7 @@ function makeStyles(c: Colors) {
     exEditRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderTopColor: c.border, borderTopWidth: StyleSheet.hairlineWidth },
     editControls: { flexDirection: 'row', gap: 16, marginTop: 8 },
     stepperWrap: { alignItems: 'flex-start' },
-    stepperLabel: { fontSize: 11, color: c.textMuted, marginBottom: 4, fontWeight: '600' },
+    stepperLabel: { fontSize: 12, color: c.textMuted, marginBottom: 4, fontWeight: '600' },
     stepper: { flexDirection: 'row', alignItems: 'center', gap: 10 },
     stepBtn: { width: 30, height: 30, borderRadius: 8, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center', backgroundColor: c.inputBg },
     stepBtnText: { fontSize: 18, color: c.primary, fontWeight: '700' },

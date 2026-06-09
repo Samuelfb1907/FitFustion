@@ -72,5 +72,5 @@ const styles = StyleSheet.create({
   pageHidden: { flex: 1, display: 'none' },
   tabBar: { flexDirection: 'row', paddingTop: 10, paddingBottom: Platform.OS === 'ios' ? 30 : 12 },
   tabBtn: { flex: 1, alignItems: 'center', paddingHorizontal: 2 },
-  tabLabel: { fontSize: 10, marginTop: 2 },
+  tabLabel: { fontSize: 11, marginTop: 2 },
 });

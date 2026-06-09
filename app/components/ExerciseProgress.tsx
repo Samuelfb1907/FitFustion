@@ -201,7 +201,7 @@ function makeStyles(c: Colors) {
     chartWrap: { alignItems: 'center' },
     chartAxis: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 2 },
     axisLabel: { fontSize: 11, color: c.textMuted },
-    caption: { fontSize: 11, color: c.textMuted, marginTop: 8, textAlign: 'center' },
+    caption: { fontSize: 12, color: c.textMuted, marginTop: 8, textAlign: 'center' },
     hint: { fontSize: 14, color: c.textMuted, lineHeight: 20, paddingVertical: 6 },
     row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 11, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.border },
     rowLast: { borderBottomWidth: 0 },

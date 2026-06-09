@@ -1,12 +1,14 @@
 // Schmaler Hinweis-Balken oben, wenn das Geraet KEINE Internetverbindung hat.
 // Global in App.tsx eingehaengt -> erscheint auf jedem Screen. Blockiert keine Taps.
 import { useEffect, useState } from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '../contexts/ThemeContext';
 
 export default function OfflineBanner() {
   const c = useColors();
+  const insets = useSafeAreaInsets();
   const [offline, setOffline] = useState(false);
 
   useEffect(() => {
@@ -21,7 +23,7 @@ export default function OfflineBanner() {
   if (!offline) return null;
   return (
     <View
-      style={[styles.bar, { backgroundColor: c.danger, paddingTop: Platform.OS === 'ios' ? 50 : 12 }]}
+      style={[styles.bar, { backgroundColor: c.danger, paddingTop: insets.top + 10 }]}
       pointerEvents="none"
       accessibilityRole="alert"
     >

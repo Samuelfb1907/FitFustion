@@ -228,7 +228,7 @@ function makeStyles(c: Colors) {
     myTile: { ...shadow, flexDirection: 'row', alignItems: 'center', backgroundColor: c.hero, borderRadius: 16, padding: 18, marginTop: 12 },
     myRankCircle: { width: 52, height: 52, borderRadius: 26, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center', marginRight: 14 },
     myRankText: { color: '#fff', fontSize: 22, fontWeight: '800' },
-    myLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 11, fontWeight: '800', letterSpacing: 1 },
+    myLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: '800', letterSpacing: 1 },
     myValue: { color: '#fff', fontSize: 16, fontWeight: '700', marginTop: 3 },
 
     // Rangliste-Zeilen

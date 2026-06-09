@@ -88,7 +88,7 @@ function makeStyles(c: Colors) {
     proteinWrap: { alignItems: 'flex-end', marginLeft: 10 },
     protein: { fontSize: 18, fontWeight: '800', color: c.primary },
     proteinUnit: { fontSize: 13, fontWeight: '700', color: c.primary },
-    proteinLbl: { fontSize: 11, color: c.textMuted },
+    proteinLbl: { fontSize: 12, color: c.textMuted },
     empty: { fontSize: 14, color: c.textMuted, textAlign: 'center', marginTop: 18 },
   });
 }

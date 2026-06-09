@@ -1,5 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { isSupabaseConfigured } from './lib/supabase';
@@ -47,13 +48,15 @@ function Root() {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <ErrorBoundary>
-          <Root />
-        </ErrorBoundary>
-      </AuthProvider>
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <ErrorBoundary>
+            <Root />
+          </ErrorBoundary>
+        </AuthProvider>
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }
 

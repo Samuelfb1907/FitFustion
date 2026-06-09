@@ -2,7 +2,7 @@
 // Header (Begruessung + Level/Streak) -> Kalorien-Karte -> 3 Uebersichts-Kacheln
 // (Wasser/Training/Gewicht, fuehren in ihren Bereich) -> Training-laeuft -> Tagesziele.
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Modal, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
@@ -52,6 +52,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
   const [nutrition, setNutrition] = useState<NutritionResult | null>(null);
   const [goalLabel, setGoalLabel] = useState('');
   const [stats, setStats] = useState<GameStats | null>(null);
+  const [achOpen, setAchOpen] = useState(false);
   const [eaten, setEaten] = useState<Eaten>({ kcal: 0, p: 0, c: 0, f: 0 });
   const [activeSession, setActiveSession] = useState<string | null>(null);
   const [activeSets, setActiveSets] = useState(0);
@@ -263,7 +264,11 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
                 <GlassFill radius={16} />
                 <View style={styles.cardHead}>
                   <Text style={styles.cardLabel}>TAGESZIELE</Text>
-                  {stats && <Text style={styles.headRight}>🏆 {earnedCount}/{ACHIEVEMENTS.length}</Text>}
+                  {stats && (
+                    <TouchableOpacity onPress={() => setAchOpen(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`Erfolge ansehen, ${earnedCount} von ${ACHIEVEMENTS.length} freigeschaltet`}>
+                      <Text style={styles.headRight}>🏆 {earnedCount}/{ACHIEVEMENTS.length} ›</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
                 {dailyGoals({ trainedToday: goalsData.trainedToday, trackedToday: goalsData.trackedToday, eatenKcal: eaten.kcal, targetKcal: nutrition.targetCalories + Math.max(trainingKcal, activityKcal), eatenProtein: eaten.p, targetProtein: nutrition.proteinG }).map((g, i, arr) => (
                   <GoalRow key={g.key} g={g} last={i === arr.length - 1} c={c} styles={styles} />
@@ -275,6 +280,35 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
           </View>
         )}
       </ScrollView>
+
+      <Modal visible={achOpen} animationType="slide" transparent onRequestClose={() => setAchOpen(false)}>
+        <View style={styles.achBackdrop}>
+          <View style={styles.achSheet}>
+            <View style={styles.achHead}>
+              <Text style={styles.achTitle}>Erfolge</Text>
+              <Text style={styles.achCount}>🏆 {earnedCount}/{ACHIEVEMENTS.length}</Text>
+            </View>
+            <ScrollView contentContainerStyle={{ paddingBottom: 12 }} showsVerticalScrollIndicator={false}>
+              {ACHIEVEMENTS.map((a) => {
+                const earned = !!stats && a.earned(stats, lv.level);
+                return (
+                  <View key={a.key} style={[styles.achRow, !earned && styles.achRowLocked]} accessible accessibilityLabel={`${a.name}, ${a.description} ${earned ? 'freigeschaltet' : 'noch gesperrt'}`}>
+                    <Text style={styles.achIcon}>{earned ? a.icon : '🔒'}</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.achName}>{a.name}</Text>
+                      <Text style={styles.achDesc}>{a.description}</Text>
+                    </View>
+                    {earned && <Text style={styles.achTick}>✓</Text>}
+                  </View>
+                );
+              })}
+            </ScrollView>
+            <TouchableOpacity style={styles.achClose} onPress={() => setAchOpen(false)} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel="Erfolge schließen">
+              <Text style={styles.achCloseText}>Schließen</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -336,6 +370,19 @@ function makeStyles(c: Colors) {
     cardLabel: { fontSize: 12, fontWeight: '700', letterSpacing: 0.6, color: c.textMuted },
     bonusLine: { fontSize: 12, fontWeight: '700', color: c.primary, textAlign: 'center', marginTop: 10 },
     headRight: { fontSize: 13, fontWeight: '700', color: c.textMuted },
+    achBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+    achSheet: { backgroundColor: c.bg, borderTopLeftRadius: 22, borderTopRightRadius: 22, paddingHorizontal: 16, paddingTop: 18, paddingBottom: 24, maxHeight: '82%' },
+    achHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
+    achTitle: { fontSize: 20, fontWeight: '800', color: c.heading },
+    achCount: { fontSize: 14, fontWeight: '700', color: c.primary },
+    achRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 14, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: c.cardBorder },
+    achRowLocked: { opacity: 0.55 },
+    achIcon: { fontSize: 26, marginRight: 14 },
+    achName: { fontSize: 15, fontWeight: '700', color: c.heading },
+    achDesc: { fontSize: 13, color: c.textMuted, marginTop: 2 },
+    achTick: { fontSize: 18, fontWeight: '800', color: c.success, marginLeft: 10 },
+    achClose: { marginTop: 10, backgroundColor: c.primary, borderRadius: 14, paddingVertical: 14, alignItems: 'center' },
+    achCloseText: { color: c.onPrimary, fontSize: 16, fontWeight: '700' },
 
     // Makros
     macros: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 18 },
@@ -343,13 +390,13 @@ function makeStyles(c: Colors) {
     macroDot: { width: 8, height: 8, borderRadius: 4, marginBottom: 7 },
     macroValue: { fontSize: 15, fontWeight: '700', color: c.heading },
     macroMax: { fontSize: 12, fontWeight: '600', color: c.textMuted },
-    macroLabel: { fontSize: 11, color: c.textMuted, marginTop: 3, textAlign: 'center' },
+    macroLabel: { fontSize: 12, color: c.textMuted, marginTop: 3, textAlign: 'center' },
 
     // Uebersichts-Kacheln
     stat: { ...shadow, flex: 1, backgroundColor: c.card, borderRadius: 16, paddingVertical: 16, paddingHorizontal: 12, borderWidth: 1, borderColor: c.cardBorder },
-    statLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 0.6, color: c.textMuted },
+    statLabel: { fontSize: 12, fontWeight: '700', letterSpacing: 0.6, color: c.textMuted },
     statValue: { fontSize: 20, fontWeight: '800', color: c.heading, marginTop: 8 },
-    statSub: { fontSize: 11, color: c.textMuted, marginTop: 2 },
+    statSub: { fontSize: 12, color: c.textMuted, marginTop: 2 },
     statBar: { height: 5, backgroundColor: c.track, borderRadius: 3, overflow: 'hidden', marginTop: 10 },
     statFill: { height: 5, backgroundColor: c.primary, borderRadius: 3 },
 

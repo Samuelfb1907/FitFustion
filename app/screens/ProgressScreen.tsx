@@ -497,7 +497,7 @@ function makeStyles(c: Colors) {
     deltaGrid: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 14, gap: 8 },
     deltaCell: { flex: 1, backgroundColor: c.inputBg, borderRadius: 16, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: c.cardBorder },
     deltaCellVal: { fontSize: 17, fontWeight: '800' },
-    deltaCellLabel: { fontSize: 11, color: c.textMuted, marginTop: 2 },
+    deltaCellLabel: { fontSize: 12, color: c.textMuted, marginTop: 2 },
 
     goalWrap: { marginTop: 14 },
     goalHead: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
@@ -529,7 +529,7 @@ function makeStyles(c: Colors) {
     statValue: { fontSize: 22, fontWeight: 'bold', color: c.heading, marginTop: 6 },
     statLabel: { fontSize: 12, color: c.textMuted, marginTop: 2, textAlign: 'center' },
 
-    caption: { fontSize: 11, color: c.textMuted, marginTop: 8 },
+    caption: { fontSize: 12, color: c.textMuted, marginTop: 8 },
     hint: { fontSize: 14, color: c.textMuted, lineHeight: 20, paddingVertical: 6 },
 
     row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 11, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.border },
