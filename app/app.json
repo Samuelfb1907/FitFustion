@@ -37,11 +37,15 @@
             "backgroundColor": "#0F1216"
           }
         }
-      ]
+      ],
+      "expo-font"
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.samuelfb1907.fitavo"
+      "bundleIdentifier": "com.samuelfb1907.fitavo",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.samuelfb1907.fitavo",
