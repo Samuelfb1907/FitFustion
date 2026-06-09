@@ -181,7 +181,7 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
       {onBack && <BackButton onPress={onBack} c={c} label="Einstellungen" />}
       <Text style={styles.title}>Profil</Text>
       <Text style={styles.subtitle}>Deine Daten – jederzeit anpassbar</Text>

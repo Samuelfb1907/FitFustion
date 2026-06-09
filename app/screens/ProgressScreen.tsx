@@ -272,6 +272,8 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
         style={{ flex: 1, marginTop: 8 }}
         contentContainerStyle={{ paddingBottom: 48 }}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
       >
       <Text style={styles.subtitle}>Deine Entwicklung auf einen Blick 📈</Text>

@@ -381,10 +381,13 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     }
     busyRef.current = true;
     setSaving(true); setError(null);
+    const addedName = selectedFood.name;
     try {
       const { error: e } = await supabase.from('food_logs').insert({ user_id: userId, food_id: selectedFood.id, amount_g: a, log_date: todayStr(), meal_type: mealType });
       if (e) { setError(errorMessage(e)); return; }
       setSelectedFood(null); setAmount('100'); setSearch(''); setMode('diary');
+      setQuickMsg(`✓ ${addedName} (${a} g) hinzugefügt`);
+      setTimeout(() => setQuickMsg(null), 2500);
       await loadLogs();
       await loadQuick();
     } finally {
