@@ -11,6 +11,7 @@ import { grp, unwrap } from '../lib/format';
 import ErrorRetry from './ErrorRetry';
 import { errorMessage } from '../lib/errors';
 import BackButton from './BackButton';
+import GlassFill from './GlassFill';
 
 type DayStat = { date: string; maxWeight: number; bestReps: number; maxReps: number; volume: number };
 
@@ -95,6 +96,7 @@ export default function ExerciseProgress({
         <>
           {/* REKORD */}
           <View style={styles.card}>
+            <GlassFill radius={16} />
             <Text style={styles.cardTitle}>🏆  Rekord</Text>
             <View style={styles.recRow}>
               {weighted ? (
@@ -123,6 +125,7 @@ export default function ExerciseProgress({
 
           {/* VERLAUF */}
           <View style={styles.card}>
+            <GlassFill radius={16} />
             <Text style={styles.cardTitle}>{weighted ? '📈  Gewichtsverlauf' : '📈  Wiederholungs-Verlauf'}</Text>
             {(weighted ? weightDays.length : days.length) >= 2 ? (
               <View style={styles.chartWrap}>
@@ -148,6 +151,7 @@ export default function ExerciseProgress({
           {/* VOLUMEN */}
           {weighted && (
             <View style={styles.card}>
+              <GlassFill radius={16} />
               <Text style={styles.cardTitle}>📊  Volumen je Einheit</Text>
               <BarChart
                 values={recent.slice().reverse().map((d) => d.volume)}
@@ -163,6 +167,7 @@ export default function ExerciseProgress({
 
           {/* LETZTE EINHEITEN */}
           <View style={styles.card}>
+            <GlassFill radius={16} />
             <Text style={styles.cardTitle}>🕑  Letzte Einheiten</Text>
             {recent.map((d, i) => (
               <View key={d.date} style={[styles.row, i === recent.length - 1 && styles.rowLast]}>

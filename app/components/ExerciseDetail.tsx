@@ -8,6 +8,7 @@ import ExerciseFigure from './ExerciseFigure';
 import BackButton from './BackButton';
 import ExerciseGif, { GIF_AVAILABLE } from './ExerciseGif';
 import RestTimer from './RestTimer';
+import GlassFill from './GlassFill';
 import { exerciseGifId } from '../lib/exerciseMedia';
 import { startOfTodayISO } from '../lib/date';
 import { DIFF_LABELS, EQUIP_LABELS } from '../lib/training';
@@ -164,11 +165,13 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
       </View>
       {gifId && hasGif && !gifFailed ? (
         <View style={styles.illusCard}>
+          <GlassFill radius={16} />
           <ExerciseGif exerciseId={gifId} c={c} onFail={() => setGifFailed(true)} />
           <Text style={styles.illusCaption}>So wird's gemacht{muscleName ? ` · Zielmuskel: ${muscleName}` : ''}</Text>
         </View>
       ) : muscleKey ? (
         <View style={styles.illusCard}>
+          <GlassFill radius={16} />
           <ExerciseFigure muscleKey={muscleKey} c={c} width={150} />
           <Text style={styles.illusCaption}>Zielmuskel: {muscleName ?? '—'}</Text>
         </View>
@@ -197,6 +200,7 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
       ))}
 
       <View style={styles.logCard}>
+        <GlassFill radius={16} />
         <Text style={styles.h2}>Training mitschreiben</Text>
         {loading ? (
           <ActivityIndicator color={c.primary} style={{ marginVertical: 12 }} />

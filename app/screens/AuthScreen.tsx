@@ -7,6 +7,7 @@ import { useColors, Colors } from '../contexts/ThemeContext';
 import LegalText from '../components/LegalText';
 import { DISCLAIMER_VERSION } from '../lib/legal';
 import Ambient from '../components/Ambient';
+import GlassFill from '../components/GlassFill';
 
 function translateError(msg: string): string {
   const m = msg.toLowerCase();
@@ -203,6 +204,7 @@ export default function AuthScreen() {
       <Modal visible={showReset} animationType="slide" transparent onRequestClose={() => setShowReset(false)}>
         <View style={styles.resetOverlay}>
           <View style={styles.resetCard}>
+            <GlassFill radius={18} />
             <Text style={styles.modalTitle}>Passwort zurücksetzen</Text>
             {resetStep === 'request' ? (
               <>

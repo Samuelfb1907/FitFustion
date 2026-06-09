@@ -18,6 +18,7 @@ import { hasStepsPermission, getTodayActivity } from '../lib/health';
 import BackButton from '../components/BackButton';
 import SwipeBack from '../components/SwipeBack';
 import Segmented from '../components/Segmented';
+import GlassFill from '../components/GlassFill';
 import { parseMeal, ParsedItem } from '../lib/parseMeal';
 import { CARD_SHADOW as shadow } from '../lib/ui';
 
@@ -645,6 +646,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
             <View style={styles.allergyNote}><Text style={styles.allergyText}>{ALLERGY_HINT}</Text></View>
             <TextInput style={styles.input} value={search} onChangeText={setSearch} placeholder="Suchen (z. B. Banane)…" placeholderTextColor={c.textMuted} autoCorrect={false} />
             <TouchableOpacity style={styles.newFoodBtn} onPress={openNewFood} activeOpacity={0.85}>
+              <GlassFill radius={16} />
               <Text style={styles.newFoodText}>➕  Eigenes Lebensmittel anlegen</Text>
             </TouchableOpacity>
             <Text style={styles.countHint}>{searching ? 'Suche…' : `${searchResults.length} ${searchResults.length === 1 ? 'Eintrag' : 'Einträge'}${searchResults.length >= 2000 ? '+' : ''}`}</Text>
@@ -653,6 +655,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
           <>
             <Text style={styles.subtitle}>Tippe einen Favoriten an – alle Zutaten landen auf einmal in „{TRACKER_MEALS.find((m) => m.key === mealType)?.label ?? 'der Mahlzeit'}".</Text>
             <TouchableOpacity style={styles.newFoodBtn} onPress={startNewFavorite} activeOpacity={0.85}>
+              <GlassFill radius={16} />
               <Text style={styles.newFoodText}>➕  Neuen Favoriten erstellen</Text>
             </TouchableOpacity>
           </>
@@ -678,6 +681,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
             const own = !!userId && f.user_id === userId;
             return (
               <TouchableOpacity style={styles.foodRow} onPress={() => { setSelectedFood(f); setAmount('100'); setError(null); setBackTarget('pick'); setMode('amount'); }} activeOpacity={0.7}>
+                <GlassFill radius={16} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.foodName}>{f.name}</Text>
                   <Text style={styles.foodMeta}>{f.category}{own ? '  ·  eigenes' : ''}</Text>
@@ -705,6 +709,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
         ListHeaderComponent={header}
         renderItem={({ item: fav }) => (
           <TouchableOpacity style={styles.foodRow} onPress={() => applyFavorite(fav)} activeOpacity={0.7}>
+            <GlassFill radius={16} />
             <View style={{ flex: 1 }}>
               <Text style={styles.foodName}>⭐  {fav.name}</Text>
               <Text style={styles.foodMeta}>{fav.items.length} {fav.items.length === 1 ? 'Zutat' : 'Zutaten'}  ·  {favKcal(fav)} kcal</Text>
@@ -747,6 +752,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
             ))
           )}
           <TouchableOpacity style={styles.newFoodBtn} onPress={addItemToFavorite} activeOpacity={0.85}>
+            <GlassFill radius={16} />
             <Text style={styles.newFoodText}>➕  Zutat hinzufügen</Text>
           </TouchableOpacity>
           {draft.items.length > 0 && <Text style={styles.preview}>Gesamt: {totalKcal} kcal</Text>}
@@ -778,6 +784,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
 
       {/* HEUTE-Übersicht */}
       <View style={styles.todayCard}>
+        <GlassFill radius={16} />
         <View style={styles.todayRow}>
           <View style={styles.todayCol}><Text style={styles.todayVal}>{totalKcal}</Text><Text style={styles.todayLbl}>gegessen</Text></View>
           <View style={styles.todaySep} />
@@ -804,6 +811,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
 
       {/* "Sprich's einfach": Mahlzeit in Sprache eingeben -> KI erkennt automatisch */}
       <View style={styles.nlCard}>
+        <GlassFill radius={14} />
         <Text style={styles.nlTitle}>✍️  Schreib, was du gegessen hast</Text>
         <TextInput
           style={styles.nlInput}
@@ -828,6 +836,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
           <Text style={styles.addText}>➕  Hinzufügen</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.scanBtn} onPress={() => { setError(null); setScannerOpen(true); }} activeOpacity={0.85}>
+          <GlassFill radius={14} />
           <Text style={styles.scanText}>📷  Scannen</Text>
         </TouchableOpacity>
       </View>
@@ -835,6 +844,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       {/* "Mein üblicher Tag": die übliche Mahlzeit mit 1 Tipp hinzufügen */}
       {showUsual && usual && (
         <View style={styles.usualCard}>
+          <GlassFill radius={14} />
           <View style={{ flex: 1 }}>
             <Text style={styles.usualTitle}>⭐  Dein übliches {TRACKER_MEALS.find((m) => m.key === curMeal)?.label ?? 'Essen'}</Text>
             <Text style={styles.usualItems} numberOfLines={2}>{usual.items.map((i) => i.food.name).join(' · ')}  ·  {usual.kcal} kcal</Text>
@@ -854,6 +864,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingRight: 4 }} keyboardShouldPersistTaps="handled">
             {quickFoods.map((qf) => (
               <TouchableOpacity key={qf.food.id} style={styles.quickChip} onPress={() => quickAdd(qf)} activeOpacity={0.8}>
+                <GlassFill radius={12} />
                 <Text style={styles.quickName} numberOfLines={1}>{qf.food.name}</Text>
                 <Text style={styles.quickMeta}>+{qf.amount} g · {Math.round((qf.food.kcal * qf.amount) / 100)} kcal</Text>
               </TouchableOpacity>
@@ -870,6 +881,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
         const mealKcal = items.reduce((s, e) => s + kcalOf(e), 0);
         return (
           <View key={m.key} style={styles.mealCard}>
+            <GlassFill radius={14} />
             <View style={styles.mealHeader}>
               <Text style={styles.mealTitle}>{m.icon}  {m.label}</Text>
               <View style={styles.mealHeaderRight}>
@@ -910,6 +922,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
               const active = nlMeal === m.key;
               return (
                 <TouchableOpacity key={m.key} onPress={() => setNlMealAll(m.key)} style={[styles.nlChip, active && styles.nlChipActive]} activeOpacity={0.8} accessibilityRole="button" accessibilityState={{ selected: active }}>
+                  <GlassFill radius={999} />
                   <Text style={[styles.nlChipText, active && styles.nlChipTextActive]}>{m.icon} {m.label}</Text>
                 </TouchableOpacity>
               );

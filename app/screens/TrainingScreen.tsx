@@ -17,6 +17,7 @@ import { CARD_SHADOW as shadow } from '../lib/ui';
 import BodyMuscleMap from '../components/BodyMuscleMap';
 import BackButton from '../components/BackButton';
 import SwipeBack from '../components/SwipeBack';
+import GlassFill from '../components/GlassFill';
 
 type Muscle = { id: string; key: string; name_de: string; body_region: string | null };
 type Exercise = { id: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null };
@@ -130,6 +131,7 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
         >
           <View style={styles.bodyCard}>
+            <GlassFill radius={16} />
             <BodyMuscleMap
               onSelect={(key) => { const m = muscles.find((x) => x.key === key); if (m) openMuscle(m); }}
               c={c}
@@ -138,6 +140,7 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
           </View>
           <Text style={styles.sectionLabel}>ODER AUS DER LISTE</Text>
           <View style={styles.muscleList}>
+            <GlassFill radius={14} />
             {orderedMuscles.map((m, idx) => (
               <TouchableOpacity
                 key={m.id}
@@ -168,6 +171,7 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
         <ErrorRetry message={exError} onRetry={() => openMuscle(selectedMuscle)} />
       ) : exercises.length === 0 ? (
         <View style={styles.note}>
+          <GlassFill radius={16} />
           <Text style={styles.noteText}>Keine passenden Übungen gefunden. Tipp: Mit mehr Equipment (Profil) schaltest du weitere frei.</Text>
         </View>
       ) : (
@@ -175,6 +179,7 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
           <Text style={styles.countHint}>{exercises.length} {exercises.length === 1 ? 'Übung' : 'Übungen'}</Text>
           {exercises.map((ex) => (
             <TouchableOpacity key={ex.id} style={styles.exRow} onPress={() => setSelectedExercise(ex)} activeOpacity={0.7}>
+              <GlassFill radius={14} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.exName}>{ex.name}</Text>
                 <Text style={styles.exMeta}>{DIFF_LABELS[ex.difficulty] ?? ex.difficulty} · {EQUIP_LABELS[ex.equipment] ?? ex.equipment}</Text>

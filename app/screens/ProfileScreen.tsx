@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { buildBirthDate, splitBirthDate } from '../lib/birthdate';
 import BackButton from '../components/BackButton';
+import GlassFill from '../components/GlassFill';
 
 type Opt = { label: string; value: string };
 const GENDERS: Opt[] = [
@@ -160,6 +161,7 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
           const active = value === o.value;
           return (
             <TouchableOpacity key={o.value} style={[styles.choice, active && styles.choiceActive]} onPress={() => onChange(o.value)}>
+              <GlassFill radius={14} />
               <Text style={[styles.choiceText, active && styles.choiceTextActive]}>{o.label}</Text>
             </TouchableOpacity>
           );

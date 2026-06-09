@@ -9,6 +9,7 @@ import { useColors, Colors } from '../contexts/ThemeContext';
 import { computeNutrition, ageFromBirthDate, NutritionResult, Gender, ActivityLevel, GoalType } from '../lib/nutrition';
 import { computeXp, levelInfo, computeStreak, ACHIEVEMENTS, GameStats } from '../lib/gamification';
 import CalorieGauge from '../components/CalorieGauge';
+import GlassFill from '../components/GlassFill';
 import { todayTrainingKcal } from '../lib/trainingBonus';
 import { hasStepsPermission, getTodayActivity } from '../lib/health';
 import { dailyGoals, Goal } from '../lib/goals';
@@ -209,6 +210,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
               </View>
               {stats && (
                 <View style={styles.levelPill}>
+                  <GlassFill radius={999} />
                   <Text style={styles.levelText}>🔥 {stats.streak}</Text>
                   <View style={styles.levelSep} />
                   <Text style={styles.levelText}>Lv {lv.level}</Text>
@@ -219,6 +221,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
             {/* KALORIEN */}
             {nutrition && (
               <View style={styles.card}>
+                <GlassFill radius={16} />
                 <Text style={styles.cardLabel}>HEUTE{goalLabel ? ` · ${goalLabel.toUpperCase()}` : ''}</Text>
                 <View style={{ alignItems: 'center', marginTop: 12 }}>
                   <CalorieGauge target={nutrition.targetCalories + trainingKcal + activityKcal} eaten={eaten.kcal} />
@@ -243,6 +246,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
             {/* TRAINING LÄUFT */}
             {activeSession && (
               <View style={styles.activeCard}>
+                <GlassFill radius={16} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.activeTitle}>Training läuft</Text>
                   <Text style={styles.activeSub}>{activeSets} {activeSets === 1 ? 'Satz' : 'Sätze'} heute mitgeschrieben</Text>
@@ -256,6 +260,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
             {/* TAGESZIELE */}
             {nutrition && goalsData && (
               <View style={styles.card}>
+                <GlassFill radius={16} />
                 <View style={styles.cardHead}>
                   <Text style={styles.cardLabel}>TAGESZIELE</Text>
                   {stats && <Text style={styles.headRight}>🏆 {earnedCount}/{ACHIEVEMENTS.length}</Text>}
@@ -287,6 +292,7 @@ function Macro({ label, eaten, target, color, styles }: { label: string; eaten: 
 function Stat({ label, value, sub, pct, onPress, styles }: { label: string; value: string; sub: string; pct?: number; onPress: () => void; styles: any }) {
   return (
     <TouchableOpacity style={styles.stat} onPress={onPress} activeOpacity={0.85}>
+      <GlassFill radius={16} />
       <Text style={styles.statLabel}>{label}</Text>
       <Text style={styles.statValue} numberOfLines={1}>{value}</Text>
       <Text style={styles.statSub} numberOfLines={1}>{sub}</Text>

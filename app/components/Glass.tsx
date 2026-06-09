@@ -30,7 +30,7 @@ export default function Glass({
         style,
       ]}
     >
-      <BlurView intensity={intensity ?? (dark ? 36 : 55)} tint={dark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+      <BlurView intensity={intensity ?? (dark ? 46 : 66)} tint={dark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
       <View style={[StyleSheet.absoluteFill, { backgroundColor: c.glass }]} pointerEvents="none" />
       {children}
     </View>

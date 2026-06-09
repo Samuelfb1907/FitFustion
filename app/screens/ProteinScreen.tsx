@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { FlatList, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useColors, Colors } from '../contexts/ThemeContext';
+import GlassFill from '../components/GlassFill';
 import { CARD_SHADOW as shadow } from '../lib/ui';
 import { PROTEIN_FOODS } from '../lib/proteinFoods';
 
@@ -33,6 +34,7 @@ export default function ProteinScreen({ embedded }: { embedded?: boolean }) {
         <View>
           {!embedded && <Text style={styles.title}>Protein</Text>}
           <View style={styles.introCard}>
+            <GlassFill radius={16} />
             <Text style={styles.introTitle}>💪 Protein pro 100 g</Text>
             <Text style={styles.introText}>Sortiert von viel zu wenig. Die Werte sind Richtwerte und können je nach Produkt und Marke abweichen.</Text>
           </View>
@@ -49,6 +51,7 @@ export default function ProteinScreen({ embedded }: { embedded?: boolean }) {
       }
       renderItem={({ item, index }) => (
         <View style={styles.row}>
+          <GlassFill radius={14} />
           <Text style={styles.rank}>{index + 1}</Text>
           <View style={{ flex: 1 }}>
             <Text style={styles.name}>{item.name}</Text>

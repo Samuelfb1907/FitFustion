@@ -12,6 +12,7 @@ import { DIFF_LABELS, ALLOWED_DIFF, ALLOWED_EQUIP } from '../lib/training';
 import { CARD_SHADOW as shadow } from '../lib/ui';
 import BackButton from '../components/BackButton';
 import SwipeBack from '../components/SwipeBack';
+import GlassFill from '../components/GlassFill';
 
 // startOfTodayISO -> lib/date.ts; Schwierigkeits-/Equipment-Konstanten -> lib/training.ts
 const SPLITS: Record<number, { focus: string; muscles: string[] }[]> = {
@@ -326,6 +327,7 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
               <ScrollView contentContainerStyle={{ paddingBottom: 40, paddingTop: 10 }} keyboardShouldPersistTaps="handled">
                 {filtered.map((e) => (
                   <TouchableOpacity key={e.id} style={styles.pickRow} onPress={() => addExercise(e.id)} activeOpacity={0.7}>
+                    <GlassFill radius={16} />
                     <View style={{ flex: 1 }}>
                       <Text style={styles.exName}>{e.name}</Text>
                       <Text style={styles.exMeta}>{DIFF_LABELS[e.difficulty] ?? e.difficulty}{e.muscleName ? ` · ${e.muscleName}` : ''}</Text>
@@ -374,6 +376,7 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
             const active = selectedDays === n;
             return (
               <TouchableOpacity key={n} style={[styles.dayOpt, active && styles.dayOptActive]} onPress={() => setSelectedDays(n)}>
+                <GlassFill radius={16} />
                 <Text style={[styles.dayOptText, active && styles.dayOptTextActive]}>{n}</Text>
               </TouchableOpacity>
             );
@@ -402,14 +405,17 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
       <Text style={styles.subtitle}>{planName}</Text>
       <View style={styles.topBtns}>
         <TouchableOpacity style={[styles.secondaryBtn, styles.topBtn]} onPress={() => { setEditMode(false); setMode('create'); }}>
+          <GlassFill radius={14} />
           <Text style={styles.secondaryText}>Neuer Plan</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.secondaryBtn, styles.topBtn, editMode && styles.editActive]} onPress={() => { setEditWeekday(null); setEditMode((v) => !v); }}>
+          <GlassFill radius={14} />
           <Text style={[styles.secondaryText, editMode && { color: c.onPrimary }]}>{editMode ? '✓ Fertig' : '✏️ Bearbeiten'}</Text>
         </TouchableOpacity>
       </View>
       {!editMode && (
       <View style={styles.weekCard}>
+        <GlassFill radius={16} />
         <Text style={styles.weekTitle}>📅 Wochenplan</Text>
         <Text style={styles.weekHint}>Tippe einen Wochentag, um ihm einen Trainingstag (oder Ruhetag) zuzuordnen.</Text>
         {WEEKDAYS.map((wd, i) => {
@@ -443,6 +449,7 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
       <Text style={styles.tapHint}>{editMode ? 'Sätze/Wdh anpassen, Übungen entfernen 🗑 oder unten hinzufügen.' : 'Tippe eine Übung an für Animation, Anleitung & Mitschreiben.'}</Text>
       {days.map((d) => (
         <View key={d.id} style={styles.dayCard}>
+          <GlassFill radius={16} />
           <Text style={styles.dayTitle}>Tag {d.day_index}</Text>
           <Text style={styles.dayFocus}>{d.focus}</Text>
           {d.exercises.length === 0 && !editMode ? (

@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, Text, TouchableOpacity, Vibration, View } from 'react-native';
 import { Colors } from '../contexts/ThemeContext';
+import GlassFill from './GlassFill';
 
 const PRESETS = [60, 90, 120, 180];
 const fmtPreset = (s: number) => (s % 60 === 0 ? `${s / 60} min` : `${s} s`);
@@ -68,6 +69,7 @@ export default function RestTimer({ c, autoStartSignal, defaultSeconds = 90 }: {
       <View style={styles.presets}>
         {PRESETS.map((p) => (
           <TouchableOpacity key={p} style={[styles.preset, duration === p && styles.presetActive]} onPress={() => start(p)} activeOpacity={0.8}>
+            <GlassFill radius={10} />
             <Text style={[styles.presetText, duration === p && styles.presetTextActive]}>{fmtPreset(p)}</Text>
           </TouchableOpacity>
         ))}
@@ -86,7 +88,7 @@ export default function RestTimer({ c, autoStartSignal, defaultSeconds = 90 }: {
             <Text style={styles.btnText}>{paused ? '▶  Weiter' : '▶  Start'}</Text>
           </TouchableOpacity>
         )}
-        <TouchableOpacity style={styles.btnGhost} onPress={reset} activeOpacity={0.85}><Text style={styles.btnGhostText}>↺  Reset</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.btnGhost} onPress={reset} activeOpacity={0.85}><GlassFill radius={10} /><Text style={styles.btnGhostText}>↺  Reset</Text></TouchableOpacity>
       </View>
     </View>
   );

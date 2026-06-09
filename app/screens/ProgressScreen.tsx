@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { LineChart, BarChart } from '../components/Charts';
 import SwipeBack from '../components/SwipeBack';
+import GlassFill from '../components/GlassFill';
 import ExerciseProgress from '../components/ExerciseProgress';
 import ErrorRetry from '../components/ErrorRetry';
 import Segmented from '../components/Segmented';
@@ -283,6 +284,7 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
         <>
           {/* GEWICHT */}
           <View style={styles.card}>
+            <GlassFill radius={16} />
             <Text style={styles.cardTitle}>⚖️  Gewichtsverlauf</Text>
             <View style={styles.weightRow}>
               <View style={styles.weightCol}>
@@ -368,6 +370,7 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
           <View style={styles.statGrid}>
             {statCards.map((s) => (
               <View key={s.label} style={styles.statCard}>
+                <GlassFill radius={16} />
                 <Text style={styles.statIcon}>{s.icon}</Text>
                 <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
                   {s.value}
@@ -379,6 +382,7 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
 
           {/* VOLUMEN JE WOCHE */}
           <View style={styles.card}>
+            <GlassFill radius={16} />
             <Text style={styles.cardTitle}>📊  Volumen je Woche</Text>
             {stats.volume > 0 ? (
               <>
@@ -399,6 +403,7 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
 
           {/* REKORDE */}
           <View style={styles.card}>
+            <GlassFill radius={16} />
             <Text style={styles.cardTitle}>🏆  Persönliche Rekorde</Text>
             {records.length > 0 ? (
               records.map((r, i) => (
@@ -415,6 +420,7 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
           {/* UEBUNGS-FORTSCHRITT */}
           {exList.length > 0 && (
             <View style={styles.card}>
+              <GlassFill radius={16} />
               <Text style={styles.cardTitle}>📈  Übungs-Fortschritt</Text>
               <Text style={[styles.caption, { marginTop: 0, marginBottom: 8 }]}>Tippe eine Übung für Verlauf & Rekord.</Text>
               {exList.slice(0, 12).map((e, i) => (
@@ -428,6 +434,7 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
 
           {/* HISTORIE */}
           <View style={styles.card}>
+            <GlassFill radius={16} />
             <Text style={styles.cardTitle}>🕑  Trainingshistorie</Text>
             {history.length > 0 ? (
               history.map((h, i) => (

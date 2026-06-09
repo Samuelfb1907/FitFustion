@@ -15,6 +15,7 @@ import { useFocusTick } from '../lib/useFocusTick';
 import { healthSupported, healthAvailable, hasStepsPermission, requestHealthPermission, openHealthSettings } from '../lib/health';
 import BackButton from '../components/BackButton';
 import SwipeBack from '../components/SwipeBack';
+import GlassFill from '../components/GlassFill';
 
 // Unterer Abstand fuer Scroll-Inhalte: auf Android (Edge-to-Edge) deutlich groesser,
 // damit der letzte Text auf keinem Geraet hinter der System-/Navigationsleiste landet.
@@ -200,6 +201,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
           <BackButton onPress={() => setView('menu')} c={c} />
           <Text style={[styles.title, { marginTop: 10 }]}>Passwort ändern</Text>
           <View style={[styles.card, { padding: 16 }]}>
+            <GlassFill radius={16} />
             <Text style={styles.pwLabel}>Aktuelles Passwort</Text>
             <TextInput style={styles.pwInput} value={pwCur} onChangeText={setPwCur} secureTextEntry autoCapitalize="none" placeholder="Aktuelles Passwort" placeholderTextColor={c.textMuted} />
             <Text style={styles.pwLabel}>Neues Passwort</Text>
@@ -225,6 +227,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
         <BackButton onPress={() => setView('menu')} c={c} />
         <Text style={[styles.title, { marginTop: 10 }]}>Rechtliches</Text>
         <View style={[styles.card, { padding: 16 }]}>
+          <GlassFill radius={16} />
           <LegalText c={c} />
         </View>
         <Text style={styles.hint}>Stand: Vorlage. Vor einer Veröffentlichung anwaltlich prüfen. Impressum & Datenschutzerklärung findest du separat in den Einstellungen.</Text>
@@ -241,6 +244,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
         <BackButton onPress={() => setView('menu')} c={c} />
         <Text style={[styles.title, { marginTop: 10 }]}>Datenschutzerklärung</Text>
         <View style={[styles.card, { padding: 16 }]}>
+          <GlassFill radius={16} />
           <LegalText c={c} sections={PRIVACY_SECTIONS} />
         </View>
         <Text style={styles.hint}>Vorlage – Platzhalter [...] ausfüllen und vor Veröffentlichung anwaltlich prüfen (zusätzlich Impressum & AVV mit Supabase).</Text>
@@ -257,6 +261,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
         <BackButton onPress={() => setView('menu')} c={c} />
         <Text style={[styles.title, { marginTop: 10 }]}>Impressum</Text>
         <View style={[styles.card, { padding: 16 }]}>
+          <GlassFill radius={16} />
           <LegalText c={c} sections={IMPRESSUM_SECTIONS} />
         </View>
         <Text style={styles.hint}>Vorlage nach § 5 DDG – Platzhalter [...] mit deinen Angaben (ladungsfähige Anschrift) ausfüllen und vor Veröffentlichung prüfen lassen.</Text>
@@ -274,6 +279,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
 
       <Text style={styles.section}>KONTO</Text>
       <View style={styles.card}>
+        <GlassFill radius={16} />
         <TouchableOpacity style={styles.linkRow} onPress={() => setView('profile')}>
           <Text style={styles.link}>👤  Profil bearbeiten</Text>
         </TouchableOpacity>
@@ -288,6 +294,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
 
       <Text style={styles.section}>DARSTELLUNG</Text>
       <View style={styles.card}>
+        <GlassFill radius={16} />
         <View style={styles.row}>
           <Text style={styles.rowLabel}>🌙  Dunkler Modus</Text>
           <Switch value={theme === 'dark'} onValueChange={toggleTheme} />
@@ -296,6 +303,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
 
       <Text style={styles.section}>ERINNERUNGEN</Text>
       <View style={styles.card}>
+        <GlassFill radius={16} />
         <View style={styles.row}>
           <Text style={styles.rowLabel}>🔔  Erinnerungen aktiv</Text>
           <Switch value={!!rem?.enabled} onValueChange={(v) => { if (rem) updateRem({ ...rem, enabled: v }); }} />
@@ -343,6 +351,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
         <>
           <Text style={styles.section}>GESUNDHEIT</Text>
           <View style={styles.card}>
+            <GlassFill radius={16} />
             <TouchableOpacity style={styles.linkRow} onPress={connectHealth} disabled={busy}>
               <Text style={styles.link}>🚶  {stepsConnected ? 'Schritte verbunden ✓ (Health Connect)' : 'Mit Health Connect verbinden'}</Text>
             </TouchableOpacity>
@@ -353,6 +362,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
 
       <Text style={styles.section}>DATEN</Text>
       <View style={styles.card}>
+        <GlassFill radius={16} />
         <TouchableOpacity style={styles.linkRow} onPress={confirmRedoOnboarding}>
           <Text style={styles.link}>Onboarding erneut durchlaufen</Text>
         </TouchableOpacity>
@@ -360,6 +370,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
 
       <Text style={styles.section}>DATENSCHUTZ (DSGVO)</Text>
       <View style={styles.card}>
+        <GlassFill radius={16} />
         <TouchableOpacity style={styles.linkRow} onPress={exportData} disabled={busy}>
           <Text style={styles.link}>📤  Meine Daten exportieren</Text>
         </TouchableOpacity>
@@ -373,6 +384,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
 
       <Text style={styles.section}>RECHTLICHES</Text>
       <View style={styles.card}>
+        <GlassFill radius={16} />
         <TouchableOpacity style={styles.linkRow} onPress={() => setView('legal')}>
           <Text style={styles.link}>📄  Haftungsausschluss & Gesundheitshinweis</Text>
         </TouchableOpacity>
@@ -383,6 +395,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
 
       <Text style={styles.section}>ÜBER</Text>
       <View style={styles.card}>
+        <GlassFill radius={16} />
         <View style={styles.row}><Text style={styles.rowLabel}>App</Text><Text style={styles.rowValue}>FitAvo</Text></View>
         <View style={styles.row}><Text style={styles.rowLabel}>Version</Text><Text style={styles.rowValue}>1.0.0</Text></View>
       </View>

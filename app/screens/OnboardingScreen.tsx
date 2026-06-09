@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import Ambient from '../components/Ambient';
+import GlassFill from '../components/GlassFill';
 import { buildBirthDate, isUnderMinAge, MIN_AGE_YEARS } from '../lib/birthdate';
 import { DISCLAIMER_VERSION } from '../lib/legal';
 
@@ -40,6 +41,7 @@ function Choice({ options, value, onChange, styles }: { options: Opt[]; value: s
         const active = value === o.value;
         return (
           <TouchableOpacity key={o.value} style={[styles.choice, active && styles.choiceActive]} onPress={() => onChange(o.value)}>
+            <GlassFill radius={14} />
             <Text style={[styles.choiceText, active && styles.choiceTextActive]}>{o.label}</Text>
           </TouchableOpacity>
         );
@@ -185,7 +187,7 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
 
       <View style={styles.nav}>
         {step > 1 ? (
-          <TouchableOpacity style={[styles.navBtn, styles.navBack]} onPress={back} disabled={saving}><Text style={styles.navBackText}>Zurück</Text></TouchableOpacity>
+          <TouchableOpacity style={[styles.navBtn, styles.navBack]} onPress={back} disabled={saving}><GlassFill radius={16} /><Text style={styles.navBackText}>Zurück</Text></TouchableOpacity>
         ) : (<View style={{ flex: 1 }} />)}
         <TouchableOpacity style={[styles.navBtn, styles.navNext, saving && { opacity: 0.6 }]} onPress={next} disabled={saving}>
           {saving ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.navNextText}>{step < totalSteps ? 'Weiter' : 'Fertig'}</Text>}

@@ -55,7 +55,7 @@ export default function MainTabs() {
         {mounted.progress && <Page active={tab === 'progress'}><ProgressScreen focusTick={ticks.progress} /></Page>}
         {mounted.settings && <Page active={tab === 'settings'}><SettingsScreen focusTick={ticks.settings} /></Page>}
       </View>
-      <BlurView intensity={dark ? 40 : 60} tint={dark ? 'dark' : 'light'} style={styles.tabBar}>
+      <BlurView intensity={dark ? 50 : 72} tint={dark ? 'dark' : 'light'} style={styles.tabBar}>
         <View style={[StyleSheet.absoluteFill, { backgroundColor: c.glass, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.hairline }]} pointerEvents="none" />
         <TabButton label="Start" icon="home" active={tab === 'home'} onPress={() => go('home')} c={c} />
         <TabButton label="Training" icon="barbell" active={tab === 'training'} onPress={() => go('training')} c={c} />

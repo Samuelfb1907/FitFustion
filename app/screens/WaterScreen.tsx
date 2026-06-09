@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { useFocusTick } from '../lib/useFocusTick';
 import ErrorRetry from '../components/ErrorRetry';
+import GlassFill from '../components/GlassFill';
 import { errorMessage } from '../lib/errors';
 import { todayStr } from '../lib/date';
 import { CARD_SHADOW as shadow } from '../lib/ui';
@@ -114,6 +115,7 @@ export default function WaterScreen({ embedded, focusTick }: { embedded?: boolea
         <View style={styles.grid}>
           {/* HERO-KACHEL */}
           <View style={styles.heroTile}>
+            <GlassFill radius={16} />
             <Text style={styles.bigMl}>{total}<Text style={styles.bigUnit}> ml</Text></Text>
             <Text style={styles.goalLine}>Ziel: {WATER_GOAL} ml{reached ? '  ·  erreicht 🎉' : ''}</Text>
             <View style={styles.track}>
@@ -129,12 +131,15 @@ export default function WaterScreen({ embedded, focusTick }: { embedded?: boolea
           {/* ADD-KACHELN */}
           <View style={styles.row}>
             <TouchableOpacity style={styles.addTile} onPress={() => add(250)} activeOpacity={0.85}>
+              <GlassFill radius={14} />
               <Text style={styles.addEmoji}>💧</Text><Text style={styles.addText}>+250 ml</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.addTile} onPress={() => add(500)} activeOpacity={0.85}>
+              <GlassFill radius={14} />
               <Text style={styles.addEmoji}>💦</Text><Text style={styles.addText}>+500 ml</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.addTile} onPress={() => add(750)} activeOpacity={0.85}>
+              <GlassFill radius={14} />
               <Text style={styles.addEmoji}>🚰</Text><Text style={styles.addText}>+750 ml</Text>
             </TouchableOpacity>
           </View>
@@ -144,6 +149,7 @@ export default function WaterScreen({ embedded, focusTick }: { embedded?: boolea
 
           {/* HEUTE GETRUNKEN */}
           <View style={styles.tile}>
+            <GlassFill radius={16} />
             <Text style={styles.tileLabel}>HEUTE GETRUNKEN</Text>
             {rows.length === 0 ? (
               <Text style={styles.empty}>Noch nichts getrunken. Trink ein Glas! 💧</Text>

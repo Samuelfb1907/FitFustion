@@ -5,6 +5,7 @@ import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text,
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import Segmented from '../components/Segmented';
+import GlassFill from '../components/GlassFill';
 import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
 import { CARD_SHADOW as shadow } from '../lib/ui';
@@ -107,6 +108,7 @@ export default function LeaderboardScreen({ embedded }: { embedded?: boolean }) 
       <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
         {!embedded && <Text style={styles.title}>Bestenliste</Text>}
         <View style={styles.tile}>
+          <GlassFill radius={16} />
           <Text style={styles.joinIcon}>🏆</Text>
           <Text style={styles.joinTitle}>Mach mit beim Wettbewerb!</Text>
           <Text style={styles.joinText}>
@@ -171,6 +173,7 @@ export default function LeaderboardScreen({ embedded }: { embedded?: boolean }) 
 
       {/* Liste */}
       <View style={styles.tile}>
+        <GlassFill radius={16} />
         <Text style={styles.tileLabel}>RANGLISTE</Text>
         {scored.length === 0 ? (
           <Text style={styles.empty}>Noch niemand dabei – sei die/der Erste! 🚀</Text>
@@ -190,6 +193,7 @@ export default function LeaderboardScreen({ embedded }: { embedded?: boolean }) 
 
       {/* Teilnahme-Fußzeile */}
       <View style={styles.tile}>
+        <GlassFill radius={16} />
         <Text style={styles.footerNote}>Du nimmst teil. Es zählen Tage, an denen du etwas getrackt oder trainiert hast.</Text>
         <TouchableOpacity style={styles.leaveBtn} onPress={confirmLeave} disabled={busy} activeOpacity={0.85}>
           <Text style={styles.leaveText}>Nicht mehr teilnehmen</Text>
