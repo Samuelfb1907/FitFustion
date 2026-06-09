@@ -271,7 +271,7 @@ function makeStyles(c: Colors) {
     desc: { fontSize: 15, color: c.text, lineHeight: 22, marginBottom: 16 },
     h2: { fontSize: 17, fontWeight: '700', color: c.heading, marginBottom: 8 },
     illusWrap: { position: 'relative', marginTop: 30 },
-    coachClip: { position: 'absolute', top: -113, right: 6, width: 176, height: 113, overflow: 'hidden', zIndex: 6 },
+    coachClip: { position: 'absolute', top: -104, right: 6, width: 176, height: 116, overflow: 'hidden', zIndex: 6 },
     coach: { position: 'absolute', top: 0, left: 0, width: 176, height: 176 },
     illusCard: { backgroundColor: c.card, borderRadius: 16, paddingVertical: 16, paddingHorizontal: 14, alignItems: 'center', marginBottom: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     illusCaption: { fontSize: 13, color: c.textMuted, marginTop: 8, fontWeight: '600' },
