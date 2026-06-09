@@ -78,7 +78,7 @@ export const DISCLAIMER_SECTIONS: { h: string; p: string }[] = [
 export const PRIVACY_SECTIONS: { h: string; p: string }[] = [
   {
     h: 'Verantwortlicher',
-    p: 'Verantwortlich für die Datenverarbeitung in FitAvo ist: Samuel Sinemli, Wilhelmsthaler Straße 2, 34379 Calden, Deutschland. E-Mail: Info@Vitavo.eu.',
+    p: 'Verantwortlich für die Datenverarbeitung in FitAvo ist: Samuel Sinemli, Wilhelmsthaler Straße 2, 34379 Calden, Deutschland. E-Mail: Info@fitavo.eu.',
   },
   {
     h: 'Welche Daten wir verarbeiten',
@@ -110,7 +110,7 @@ export const PRIVACY_SECTIONS: { h: string; p: string }[] = [
   },
   {
     h: 'Keine Werbung / keine automatisierten Entscheidungen',
-    p: 'Wir geben deine Daten nicht zu Werbezwecken weiter und nutzen keine automatisierte Entscheidungsfindung oder Profiling mit rechtlicher Wirkung. Kontakt bei Fragen: Info@Vitavo.eu.',
+    p: 'Wir geben deine Daten nicht zu Werbezwecken weiter und nutzen keine automatisierte Entscheidungsfindung oder Profiling mit rechtlicher Wirkung. Kontakt bei Fragen: Info@fitavo.eu.',
   },
   {
     h: 'Stand & Änderungen',
@@ -126,7 +126,7 @@ export const IMPRESSUM_SECTIONS: { h: string; p: string }[] = [
   },
   {
     h: 'Kontakt',
-    p: 'E-Mail: Info@Vitavo.eu',
+    p: 'E-Mail: Info@fitavo.eu',
   },
   {
     h: 'Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV',
