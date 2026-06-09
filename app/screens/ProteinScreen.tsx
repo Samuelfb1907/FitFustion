@@ -51,7 +51,6 @@ export default function ProteinScreen({ embedded }: { embedded?: boolean }) {
       }
       renderItem={({ item, index }) => (
         <View style={styles.row}>
-          <GlassFill radius={14} />
           <Text style={styles.rank}>{index + 1}</Text>
           <View style={{ flex: 1 }}>
             <Text style={styles.name}>{item.name}</Text>

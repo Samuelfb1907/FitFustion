@@ -700,7 +700,6 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
             const own = !!userId && f.user_id === userId;
             return (
               <TouchableOpacity style={styles.foodRow} onPress={() => { setSelectedFood(f); setAmount('100'); setError(null); setBackTarget('pick'); setMode('amount'); }} activeOpacity={0.7}>
-                <GlassFill radius={16} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.foodName}>{f.name}</Text>
                   <Text style={styles.foodMeta}>{f.category}{own ? '  ·  eigenes' : ''}</Text>
@@ -728,7 +727,6 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
         ListHeaderComponent={header}
         renderItem={({ item: fav }) => (
           <TouchableOpacity style={styles.foodRow} onPress={() => applyFavorite(fav)} activeOpacity={0.7}>
-            <GlassFill radius={16} />
             <View style={{ flex: 1 }}>
               <Text style={styles.foodName}>⭐  {fav.name}</Text>
               <Text style={styles.foodMeta}>{fav.items.length} {fav.items.length === 1 ? 'Zutat' : 'Zutaten'}  ·  {favKcal(fav)} kcal</Text>
