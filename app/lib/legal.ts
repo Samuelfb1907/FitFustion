@@ -78,7 +78,7 @@ export const DISCLAIMER_SECTIONS: { h: string; p: string }[] = [
 export const PRIVACY_SECTIONS: { h: string; p: string }[] = [
   {
     h: 'Verantwortlicher',
-    p: 'Verantwortlich für die Datenverarbeitung in FitAvo ist: [Name], [Anschrift], E-Mail: [Kontakt-E-Mail]. (Bitte vor Veröffentlichung ausfüllen.)',
+    p: 'Verantwortlich für die Datenverarbeitung in FitAvo ist: Samuel Sinemli, Wilhelmsthaler Straße 2, 34379 Calden, Deutschland. E-Mail: Info@Vitavo.eu.',
   },
   {
     h: 'Welche Daten wir verarbeiten',
@@ -110,11 +110,11 @@ export const PRIVACY_SECTIONS: { h: string; p: string }[] = [
   },
   {
     h: 'Keine Werbung / keine automatisierten Entscheidungen',
-    p: 'Wir geben deine Daten nicht zu Werbezwecken weiter und nutzen keine automatisierte Entscheidungsfindung oder Profiling mit rechtlicher Wirkung. Kontakt bei Fragen: [Kontakt-E-Mail].',
+    p: 'Wir geben deine Daten nicht zu Werbezwecken weiter und nutzen keine automatisierte Entscheidungsfindung oder Profiling mit rechtlicher Wirkung. Kontakt bei Fragen: Info@Vitavo.eu.',
   },
   {
     h: 'Stand & Änderungen',
-    p: 'Stand dieser Datenschutzerklärung: [Datum eintragen]. Wir können diese Erklärung anpassen, z. B. bei neuen Funktionen oder geänderter Rechtslage; es gilt die jeweils aktuelle, in der App abrufbare Fassung.',
+    p: 'Stand dieser Datenschutzerklärung: 9. Juni 2026. Wir können diese Erklärung anpassen, z. B. bei neuen Funktionen oder geänderter Rechtslage; es gilt die jeweils aktuelle, in der App abrufbare Fassung.',
   },
 ];
 
@@ -122,19 +122,15 @@ export const PRIVACY_SECTIONS: { h: string; p: string }[] = [
 export const IMPRESSUM_SECTIONS: { h: string; p: string }[] = [
   {
     h: 'Angaben gemäß § 5 DDG',
-    p: '[Vor- und Nachname / ggf. Firma]\n[Straße und Hausnummer]\n[PLZ und Ort]\n[Land]\n\n(Bitte vor Veröffentlichung ausfüllen. Erforderlich ist eine ladungsfähige Anschrift – ein Postfach genügt nicht.)',
+    p: 'Samuel Sinemli\nWilhelmsthaler Straße 2\n34379 Calden\nDeutschland',
   },
   {
     h: 'Kontakt',
-    p: 'E-Mail: [deine-kontakt@e-mail.de]\nTelefon (optional): [Telefonnummer]',
+    p: 'E-Mail: Info@Vitavo.eu',
   },
   {
     h: 'Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV',
-    p: '[Vor- und Nachname]\n[Anschrift wie oben]',
-  },
-  {
-    h: 'Umsatzsteuer-ID',
-    p: 'Umsatzsteuer-Identifikationsnummer gemäß § 27 a UStG: [USt-IdNr. – oder streichen, falls nicht vorhanden / Kleinunternehmer nach § 19 UStG].',
+    p: 'Samuel Sinemli\nWilhelmsthaler Straße 2, 34379 Calden',
   },
   {
     h: 'EU-Streitschlichtung',
