@@ -20,6 +20,7 @@ import SwipeBack from '../components/SwipeBack';
 import Segmented from '../components/Segmented';
 import GlassFill from '../components/GlassFill';
 import { parseMeal, ParsedItem } from '../lib/parseMeal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CARD_SHADOW as shadow } from '../lib/ui';
 
 type Food = { id: string; name: string; category: string | null; kcal: number; protein: number; carbs: number; fat: number; user_id?: string | null };
@@ -96,6 +97,9 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   const [nlErr, setNlErr] = useState<string | null>(null);
   const [nlItems, setNlItems] = useState<ParsedItem[] | null>(null);
   const [nlMeal, setNlMeal] = useState<MealType>(mealByHour());
+  const [aiConsent, setAiConsent] = useState(false);
+  const [aiConsentAsk, setAiConsentAsk] = useState(false);
+  useEffect(() => { AsyncStorage.getItem('fitavo.aiConsentAt').then((v) => { if (v) setAiConsent(true); }).catch(() => {}); }, []);
   const busyRef = useRef(false); // verhindert doppelte Tagebuch-Eintraege bei schnellem Doppel-Tippen
 
   useEffect(() => { init(); }, [userId]);
@@ -262,8 +266,23 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     } finally { busyRef.current = false; }
   }
 
-  // ---- "Sprich's einfach": Satz -> KI-Erkennung -> Bestaetigung -> Tagebuch ----
+  // ---- "Sprich's einfach": Satz -> (Einwilligung) -> KI-Erkennung -> Bestaetigung -> Tagebuch ----
+  // Vor der ERSTEN KI-Nutzung holen wir eine ausdrueckliche Einwilligung (Art. 9 DSGVO,
+  // Drittland-Uebermittlung des Freitexts an Anthropic/USA). Nachweis: lokal + serverseitig.
   async function recognizeMeal() {
+    if (!nlText.trim() || nlBusy) return;
+    if (!aiConsent) { setAiConsentAsk(true); return; }
+    await runRecognize();
+  }
+  async function acceptAiConsent() {
+    const now = new Date().toISOString();
+    setAiConsent(true);
+    setAiConsentAsk(false);
+    try { await AsyncStorage.setItem('fitavo.aiConsentAt', now); } catch {}
+    if (userId) supabase.from('profiles').update({ ai_consent_at: now }).eq('id', userId).then(() => {}, () => {});
+    runRecognize();
+  }
+  async function runRecognize() {
     const text = nlText.trim();
     if (!text || nlBusy) return;
     setNlBusy(true); setNlErr(null);
@@ -813,6 +832,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       <View style={styles.nlCard}>
         <GlassFill radius={14} />
         <Text style={styles.nlTitle}>✍️  Schreib, was du gegessen hast</Text>
+        <Text style={styles.nlConsentHint}>ℹ️ Analyse per KI (Anthropic, USA) – freiwillig, in Einstellungen widerrufbar.</Text>
         <TextInput
           style={styles.nlInput}
           value={nlText}
@@ -967,6 +987,20 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       </View>
       </KeyboardAvoidingView>
     </Modal>
+    <Modal visible={aiConsentAsk} transparent animationType="fade" onRequestClose={() => setAiConsentAsk(false)}>
+      <View style={styles.nlOverlay}>
+        <View style={styles.nlSheet}>
+          <Text style={styles.nlSheetTitle}>KI-Mahlzeitenerkennung aktivieren?</Text>
+          <Text style={styles.consentBody}>Für „Sprich's einfach" wird dein eingegebener Text (z. B. „2 Eier und ein Toast") zur Auswertung an unseren Dienstleister Anthropic (USA) übermittelt und in Lebensmittel mit Nährwerten zerlegt. Da das Gesundheitsdaten sein können, brauchen wir dafür deine ausdrückliche Einwilligung (Art. 9 DSGVO).{'\n\n'}Freiwillig, jederzeit in den Einstellungen widerrufbar. Die Eingaben werden nicht zum KI-Training verwendet. Bitte keine sensiblen Daten eingeben, die über die Mahlzeitenbeschreibung hinausgehen.</Text>
+          <TouchableOpacity style={styles.primaryBtn} onPress={acceptAiConsent} activeOpacity={0.85}>
+            <Text style={styles.primaryText}>Einverstanden & fortfahren</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setAiConsentAsk(false)} style={{ marginTop: 12 }}>
+            <Text style={styles.nlClose}>Abbrechen</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
     </>
   );
   }
@@ -1039,7 +1073,9 @@ function makeStyles(c: Colors) {
     usualBtn: { backgroundColor: c.primary, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, marginLeft: 10 },
     usualBtnText: { color: c.onPrimary, fontWeight: '800', fontSize: 14 },
     nlCard: { backgroundColor: c.card, borderRadius: 14, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: c.primary },
-    nlTitle: { fontSize: 14, fontWeight: '800', color: c.heading, marginBottom: 8 },
+    nlTitle: { fontSize: 14, fontWeight: '800', color: c.heading, marginBottom: 4 },
+    nlConsentHint: { fontSize: 11, color: c.textMuted, lineHeight: 15, marginBottom: 8 },
+    consentBody: { fontSize: 14, color: c.text, lineHeight: 20, marginBottom: 18 },
     nlInput: { borderWidth: 1, borderColor: c.border, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 15, backgroundColor: c.inputBg, color: c.text, minHeight: 44 },
     nlBtn: { backgroundColor: c.primary, borderRadius: 12, paddingVertical: 12, alignItems: 'center', marginTop: 10 },
     nlBtnText: { color: c.onPrimary, fontSize: 15, fontWeight: '800' },

@@ -10,6 +10,7 @@ import ProfileScreen from './ProfileScreen';
 import LegalText from '../components/LegalText';
 import { PRIVACY_SECTIONS, IMPRESSUM_SECTIONS } from '../lib/legal';
 import { exportUserData, deleteAccount } from '../lib/gdpr';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loadReminderPrefs, saveReminderPrefs, applyReminders, ensurePermission, ReminderPrefs } from '../lib/reminders';
 import { useFocusTick } from '../lib/useFocusTick';
 import { healthSupported, healthAvailable, hasStepsPermission, requestHealthPermission, openHealthSettings } from '../lib/health';
@@ -153,6 +154,14 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
     } finally {
       setBusy(false);
     }
+  }
+
+  // DSGVO: KI-Einwilligung (Art. 9) widerrufen - vor erneuter Nutzung wird wieder gefragt.
+  async function revokeAiConsent() {
+    const uid = session?.user?.id;
+    try { await AsyncStorage.removeItem('fitavo.aiConsentAt'); } catch {}
+    if (uid) supabase.from('profiles').update({ ai_consent_at: null }).eq('id', uid).then(() => {}, () => {});
+    showMsg('KI-Einwilligung widerrufen. Vor der nächsten Nutzung wird wieder gefragt.', false);
   }
 
   // DSGVO: Konto & alle Daten löschen (Recht auf Löschung)
@@ -384,6 +393,9 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
         </TouchableOpacity>
         <TouchableOpacity style={styles.linkRow} onPress={() => setView('privacy')}>
           <Text style={styles.link}>🔒  Datenschutzerklärung</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.linkRow} onPress={revokeAiConsent}>
+          <Text style={styles.link}>🤖  KI-Einwilligung widerrufen</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.linkRow} onPress={confirmDeleteAccount} disabled={busy}>
           <Text style={[styles.link, { color: c.danger }]}>🗑  Konto & alle Daten löschen</Text>
