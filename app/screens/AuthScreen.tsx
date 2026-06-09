@@ -244,7 +244,7 @@ function makeStyles(c: Colors) {
     scroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 28, paddingTop: 48, paddingBottom: 48 },
 
     brand: { alignItems: 'center', marginBottom: 26 },
-    logoImg: { width: 184, height: 184, marginBottom: 14, shadowColor: c.primary, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.5, shadowRadius: 16 },
+    logoImg: { width: 184, height: 184, marginBottom: 14 },
     wordmark: { fontSize: 34, fontWeight: '900', color: c.heading, letterSpacing: 0.2 },
     tagline: { fontSize: 14, fontWeight: '600', color: c.textMuted, marginTop: 10, textAlign: 'center' },
 
