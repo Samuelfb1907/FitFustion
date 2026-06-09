@@ -25,7 +25,19 @@
         }
       ],
       "./plugins/withHealthConnect",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#EAF7F0",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "dark": {
+            "backgroundColor": "#0F1216"
+          }
+        }
+      ]
     ],
     "ios": {
       "supportsTablet": true,
