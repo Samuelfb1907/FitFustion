@@ -26,6 +26,9 @@ export default function Segmented({
               key={o.key}
               activeOpacity={0.85}
               onPress={() => onChange(o.key)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: active }}
+              accessibilityLabel={o.label}
               style={[styles.seg, active && { backgroundColor: c.primary }]}
             >
               <Text numberOfLines={1} style={[styles.label, { color: active ? c.onPrimary : c.textMuted }]}>
@@ -42,6 +45,6 @@ export default function Segmented({
 const styles = StyleSheet.create({
   wrap: { padding: 4 },
   row: { flexDirection: 'row', gap: 4 },
-  seg: { flex: 1, paddingVertical: 9, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  seg: { flex: 1, minHeight: 42, paddingVertical: 9, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   label: { fontSize: 14, fontWeight: '700' },
 });

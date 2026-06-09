@@ -40,7 +40,7 @@ function Choice({ options, value, onChange, styles }: { options: Opt[]; value: s
       {options.map((o) => {
         const active = value === o.value;
         return (
-          <TouchableOpacity key={o.value} style={[styles.choice, active && styles.choiceActive]} onPress={() => onChange(o.value)}>
+          <TouchableOpacity key={o.value} style={[styles.choice, active && styles.choiceActive]} onPress={() => onChange(o.value)} accessibilityRole="radio" accessibilityState={{ selected: active }} accessibilityLabel={o.label}>
             <GlassFill radius={14} />
             <Text style={[styles.choiceText, active && styles.choiceTextActive]}>{o.label}</Text>
           </TouchableOpacity>

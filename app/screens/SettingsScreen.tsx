@@ -314,7 +314,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
         <GlassFill radius={16} />
         <View style={styles.row}>
           <Text style={styles.rowLabel}>🌙  Dunkler Modus</Text>
-          <Switch value={theme === 'dark'} onValueChange={toggleTheme} />
+          <Switch value={theme === 'dark'} onValueChange={toggleTheme} accessibilityLabel="Dunkler Modus" />
         </View>
       </View>
 
@@ -323,17 +323,17 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
         <GlassFill radius={16} />
         <View style={styles.row}>
           <Text style={styles.rowLabel}>🔔  Erinnerungen aktiv</Text>
-          <Switch value={!!rem?.enabled} onValueChange={(v) => { if (rem) updateRem({ ...rem, enabled: v }); }} />
+          <Switch value={!!rem?.enabled} onValueChange={(v) => { if (rem) updateRem({ ...rem, enabled: v }); }} accessibilityLabel="Erinnerungen aktiv" />
         </View>
         {rem?.enabled && (
           <>
             <View style={styles.row}>
               <Text style={styles.rowLabel}>💧  Wasser trinken</Text>
-              <Switch value={rem.water} onValueChange={(v) => updateRem({ ...rem, water: v })} />
+              <Switch value={rem.water} onValueChange={(v) => updateRem({ ...rem, water: v })} accessibilityLabel="Erinnerung Wasser trinken" />
             </View>
             <View style={styles.row}>
               <Text style={styles.rowLabel}>💪  Training</Text>
-              <Switch value={rem.training} onValueChange={(v) => updateRem({ ...rem, training: v })} />
+              <Switch value={rem.training} onValueChange={(v) => updateRem({ ...rem, training: v })} accessibilityLabel="Erinnerung Training" />
             </View>
             {rem.training && (
               <View style={styles.row}>
@@ -347,7 +347,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
             )}
             <View style={styles.row}>
               <Text style={styles.rowLabel}>💬  Tägliche Motivation</Text>
-              <Switch value={!!rem?.motivation} onValueChange={(v) => { if (rem) updateRem({ ...rem, motivation: v }); }} />
+              <Switch value={!!rem?.motivation} onValueChange={(v) => { if (rem) updateRem({ ...rem, motivation: v }); }} accessibilityLabel="Tägliche Motivation" />
             </View>
             {rem.motivation && (
               <View style={styles.row}>

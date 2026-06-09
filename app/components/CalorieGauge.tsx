@@ -47,9 +47,10 @@ export default function CalorieGauge({ target, eaten }: { target: number; eaten:
   const shownRemaining = Math.round(target - eaten * p);
   const curOver = shownRemaining < 0;
   const fgPath = arcPath(cx, cy, r, 0, fillFraction, Math.max(2, Math.round(60 * fillFraction)));
+  const a11yLabel = 'Kalorien: ' + Math.round(eaten).toLocaleString('de-DE') + ' von ' + target.toLocaleString('de-DE') + ' kcal gegessen, ' + Math.abs(Math.round(target - eaten)).toLocaleString('de-DE') + ' kcal ' + (target - eaten < 0 ? 'über dem Ziel' : 'übrig');
 
   return (
-    <View style={styles.wrap}>
+    <View style={styles.wrap} accessible accessibilityLabel={a11yLabel}>
       <View style={{ width: W, height }}>
         <Svg width={W} height={height}>
           <Path d={bgPath} stroke={c.track} strokeWidth={stroke} strokeLinecap="round" fill="none" />

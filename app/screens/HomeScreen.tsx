@@ -224,9 +224,9 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
                 <GlassFill radius={16} />
                 <Text style={styles.cardLabel}>HEUTE{goalLabel ? ` · ${goalLabel.toUpperCase()}` : ''}</Text>
                 <View style={{ alignItems: 'center', marginTop: 12 }}>
-                  <CalorieGauge target={nutrition.targetCalories + trainingKcal + activityKcal} eaten={eaten.kcal} />
+                  <CalorieGauge target={nutrition.targetCalories + Math.max(trainingKcal, activityKcal)} eaten={eaten.kcal} />
                 </View>
-                {trainingKcal > 0 && <Text style={styles.bonusLine}>🔥 +{trainingKcal} kcal durch Training heute (geschätzt)</Text>}
+                {trainingKcal > 0 && activityKcal === 0 && <Text style={styles.bonusLine}>🔥 +{trainingKcal} kcal durch Training heute (geschätzt)</Text>}
                 {activityKcal > 0 && <Text style={styles.bonusLine}>🚶 {steps > 0 ? `${steps.toLocaleString('de-DE')} Schritte · ` : ''}+{activityKcal} kcal {activityMeasured ? 'aktiv (gemessen)' : '(geschätzt)'}</Text>}
                 <View style={styles.macros}>
                   <Macro label="Protein" eaten={eaten.p} target={nutrition.proteinG} color={c.accent} styles={styles} />
@@ -265,7 +265,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
                   <Text style={styles.cardLabel}>TAGESZIELE</Text>
                   {stats && <Text style={styles.headRight}>🏆 {earnedCount}/{ACHIEVEMENTS.length}</Text>}
                 </View>
-                {dailyGoals({ trainedToday: goalsData.trainedToday, trackedToday: goalsData.trackedToday, eatenKcal: eaten.kcal, targetKcal: nutrition.targetCalories + trainingKcal + activityKcal, eatenProtein: eaten.p, targetProtein: nutrition.proteinG }).map((g, i, arr) => (
+                {dailyGoals({ trainedToday: goalsData.trainedToday, trackedToday: goalsData.trackedToday, eatenKcal: eaten.kcal, targetKcal: nutrition.targetCalories + Math.max(trainingKcal, activityKcal), eatenProtein: eaten.p, targetProtein: nutrition.proteinG }).map((g, i, arr) => (
                   <GoalRow key={g.key} g={g} last={i === arr.length - 1} c={c} styles={styles} />
                 ))}
               </View>
