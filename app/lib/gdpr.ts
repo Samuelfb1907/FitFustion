@@ -4,7 +4,7 @@ import { supabase } from './supabase';
 // Reihenfolge: Kinder vor Eltern (FK-sicher); foods erst NACH food_logs; profiles zuletzt.
 const USER_TABLES = [
   'set_logs', 'workout_sessions', 'plan_schedule', 'workout_plan_exercises', 'workout_plan_days', 'workout_plans',
-  'food_logs', 'water_logs', 'progress_entries', 'goals', 'user_achievements',
+  'food_logs', 'meal_favorites', 'water_logs', 'progress_entries', 'goals', 'user_achievements',
 ];
 
 // Sammelt alle personenbezogenen Daten des Nutzers als JSON-Objekt.

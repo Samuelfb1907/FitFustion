@@ -172,8 +172,16 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
     setBusy(true); setMsg(null);
     try {
       const res = await deleteAccount(uid);
-      if (res.serverDeleted || res.dataDeleted) {
-        await supabase.auth.signOut(); // beendet die Sitzung -> zurück zum Login
+      if (res.serverDeleted) {
+        await supabase.auth.signOut(); // Konto + Daten entfernt -> zurück zum Login
+      } else if (res.dataDeleted) {
+        // Daten geloescht, aber das Auth-Konto konnte serverseitig nicht entfernt werden:
+        // ehrlich kommunizieren statt vollstaendige Loeschung vorzutaeuschen.
+        Alert.alert(
+          'Daten gelöscht',
+          'Alle deine Daten wurden gelöscht. Dein Login-Konto (E-Mail) konnte aktuell nicht automatisch vollständig entfernt werden. Für die endgültige Löschung des Kontos schreib uns bitte an Info@fitavo.eu. Du wirst jetzt abgemeldet.',
+          [{ text: 'OK', onPress: () => supabase.auth.signOut() }],
+        );
       } else {
         setBusy(false);
         showMsg('Löschung fehlgeschlagen (' + res.failed.join(', ') + '). Bitte erneut versuchen.', true);

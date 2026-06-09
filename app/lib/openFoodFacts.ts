@@ -32,12 +32,15 @@ export async function fetchOpenFoodFacts(barcode: string): Promise<OffProduct | 
     const brand = String(p.brands || '').split(',')[0]?.trim();
     const name = brand && !baseName.toLowerCase().includes(brand.toLowerCase()) ? `${baseName} (${brand})` : baseName;
 
+    // Auf die in der DB erlaubten Bereiche begrenzen (kcal 0..1000, Makros 0..100 pro 100 g),
+    // damit fehlerhafte/Extremwerte (z. B. Crowd-Fehler) nicht am CHECK (23514) scheitern.
+    const clamp = (v: number, hi: number) => Math.max(0, Math.min(hi, v));
     return {
       name: name.slice(0, 80),
-      kcal: Math.round(kcal),
-      protein: round1(num(n['proteins_100g']) ?? 0),
-      carbs: round1(num(n['carbohydrates_100g']) ?? 0),
-      fat: round1(num(n['fat_100g']) ?? 0),
+      kcal: clamp(Math.round(kcal), 1000),
+      protein: clamp(round1(num(n['proteins_100g']) ?? 0), 100),
+      carbs: clamp(round1(num(n['carbohydrates_100g']) ?? 0), 100),
+      fat: clamp(round1(num(n['fat_100g']) ?? 0), 100),
     };
   } catch {
     return null;

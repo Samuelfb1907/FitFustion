@@ -117,7 +117,7 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
       }
       if (!sid) return;
       const { error: iErr } = await supabase.from('set_logs').insert({
-        user_id: userId, session_id: sid, exercise_id: exercise.id, set_index: sets.length + 1, reps: r, weight_kg: w,
+        user_id: userId, session_id: sid, exercise_id: exercise.id, set_index: (sets.length ? Math.max(...sets.map((s) => s.set_index)) : 0) + 1, reps: r, weight_kg: w,
       });
       if (iErr) setError(iErr.message);
       else { await refreshSets(sid); setReps(''); setEnded(false); setRestSignal((n) => n + 1); }
