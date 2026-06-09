@@ -1,8 +1,10 @@
-// Untere Tab-Leiste (themed) – 5 Reiter. Bereiche bleiben gemountet (sofortiger Wechsel);
+// Untere Tab-Leiste (Liquid Glass) - 5 Reiter. Bereiche bleiben gemountet (sofortiger Wechsel);
 // beim Antippen springt der Reiter per focusTick auf seine Startansicht zurueck und laedt leise neu.
 import { useState, ReactNode } from 'react';
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useColors, Colors } from '../contexts/ThemeContext';
+import { BlurView } from 'expo-blur';
+import { Ionicons } from '@expo/vector-icons';
+import { useColors, useTheme, Colors } from '../contexts/ThemeContext';
 import HomeScreen from './HomeScreen';
 import TrainingScreen from './TrainingScreen';
 import EssenScreen from './EssenScreen';
@@ -15,8 +17,7 @@ type Tab = 'home' | 'training' | 'essen' | 'progress' | 'settings';
 function TabButton({ label, icon, active, onPress, c }: { label: string; icon: string; active: boolean; onPress: () => void; c: Colors }) {
   return (
     <TouchableOpacity style={styles.tabBtn} onPress={onPress} activeOpacity={0.7} accessibilityRole="tab" accessibilityState={{ selected: active }} accessibilityLabel={label}>
-      <View style={[styles.indicator, active && { backgroundColor: c.primary }]} />
-      <Text style={[styles.tabIcon, { opacity: active ? 1 : 0.45 }]}>{icon}</Text>
+      <Ionicons name={(active ? icon : `${icon}-outline`) as any} size={23} color={active ? c.primary : c.textMuted} style={{ marginBottom: 3 }} />
       <Text style={[styles.tabLabel, { color: active ? c.primary : c.textMuted, fontWeight: active ? '700' : '500' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
         {label}
       </Text>
@@ -34,6 +35,8 @@ export default function MainTabs() {
   const [mounted, setMounted] = useState<Record<Tab, boolean>>({ home: true, training: false, essen: false, progress: false, settings: false });
   const [ticks, setTicks] = useState<Record<Tab, number>>({ home: 0, training: 0, essen: 0, progress: 0, settings: 0 });
   const c = useColors();
+  const { theme } = useTheme();
+  const dark = theme === 'dark';
 
   // Reiter aktivieren: erstmalig mounten, focusTick erhoehen (-> Startansicht + leiser Refresh), anzeigen.
   const go = (t: Tab) => {
@@ -52,13 +55,14 @@ export default function MainTabs() {
         {mounted.progress && <Page active={tab === 'progress'}><ProgressScreen focusTick={ticks.progress} /></Page>}
         {mounted.settings && <Page active={tab === 'settings'}><SettingsScreen focusTick={ticks.settings} /></Page>}
       </View>
-      <View style={[styles.tabBar, { backgroundColor: c.card, borderTopColor: c.border }]}>
-        <TabButton label="Start" icon="🏠" active={tab === 'home'} onPress={() => go('home')} c={c} />
-        <TabButton label="Training" icon="💪" active={tab === 'training'} onPress={() => go('training')} c={c} />
-        <TabButton label="Essen" icon="🍽️" active={tab === 'essen'} onPress={() => go('essen')} c={c} />
-        <TabButton label="Fortschritt" icon="📈" active={tab === 'progress'} onPress={() => go('progress')} c={c} />
-        <TabButton label="Einstellungen" icon="⚙️" active={tab === 'settings'} onPress={() => go('settings')} c={c} />
-      </View>
+      <BlurView intensity={dark ? 40 : 60} tint={dark ? 'dark' : 'light'} style={styles.tabBar}>
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: c.glass, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.hairline }]} pointerEvents="none" />
+        <TabButton label="Start" icon="home" active={tab === 'home'} onPress={() => go('home')} c={c} />
+        <TabButton label="Training" icon="barbell" active={tab === 'training'} onPress={() => go('training')} c={c} />
+        <TabButton label="Essen" icon="restaurant" active={tab === 'essen'} onPress={() => go('essen')} c={c} />
+        <TabButton label="Fortschritt" icon="stats-chart" active={tab === 'progress'} onPress={() => go('progress')} c={c} />
+        <TabButton label="Einstellungen" icon="settings" active={tab === 'settings'} onPress={() => go('settings')} c={c} />
+      </BlurView>
     </View>
   );
 }
@@ -66,9 +70,7 @@ export default function MainTabs() {
 const styles = StyleSheet.create({
   page: { flex: 1 },
   pageHidden: { flex: 1, display: 'none' },
-  tabBar: { flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 8, paddingBottom: Platform.OS === 'ios' ? 30 : 12 },
+  tabBar: { flexDirection: 'row', paddingTop: 10, paddingBottom: Platform.OS === 'ios' ? 30 : 12 },
   tabBtn: { flex: 1, alignItems: 'center', paddingHorizontal: 2 },
-  indicator: { width: 26, height: 3, borderRadius: 2, backgroundColor: 'transparent', marginBottom: 6 },
-  tabIcon: { fontSize: 20 },
-  tabLabel: { fontSize: 10, marginTop: 4 },
+  tabLabel: { fontSize: 10, marginTop: 2 },
 });

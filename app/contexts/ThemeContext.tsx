@@ -22,22 +22,27 @@ export type Colors = {
   accent: string;    // lebendige Akzentfarbe (Highlights)
   hero: string;      // dunkle Hero-Flaeche fuer Karten
   muscle: string;    // Grundfarbe der Muskeln im Koerper-Diagramm
+  glass: string;       // Toenung ueber dem Blur (Liquid Glass)
+  glassStrong: string; // staerkere Toenung (Sheets/Dialoge)
+  hairline: string;    // feiner Glas-Rand / Lichtkante
 };
 
 // "Clean Light" Design-System: viel Weissraum, neutrale Graustufen + EIN edler
 // Smaragd-Akzent, hoher Lese-Kontrast, flache Flaechen mit feinen Raendern.
 // Funktioniert in Hell UND Dunkel (Dark Mode bleibt erhalten).
 const LIGHT: Colors = {
-  bg: '#F5F6F8', card: '#FFFFFF', text: '#1B1F24', textMuted: '#6B727C', heading: '#0E1217',
-  primary: '#0E9F6E', onPrimary: '#FFFFFF', border: '#E8EAED', cardBorder: '#84CDB1', inputBg: '#F2F4F6',
-  danger: '#E5484D', success: '#0E9F6E', track: '#ECEEF1',
+  bg: '#F5F6F8', card: 'rgba(255,255,255,0.72)', text: '#1B1F24', textMuted: '#6B727C', heading: '#0E1217',
+  primary: '#0E9F6E', onPrimary: '#FFFFFF', border: 'rgba(20,24,28,0.08)', cardBorder: 'rgba(14,159,110,0.28)', inputBg: 'rgba(20,24,28,0.05)',
+  danger: '#E5484D', success: '#0E9F6E', track: 'rgba(20,24,28,0.08)',
   accent: '#0E9F6E', hero: '#0E1217', muscle: '#E2E6EA',
+  glass: 'rgba(255,255,255,0.5)', glassStrong: 'rgba(255,255,255,0.74)', hairline: 'rgba(20,24,28,0.10)',
 };
 const DARK: Colors = {
-  bg: '#0F1216', card: '#181C21', text: '#E8EBEF', textMuted: '#969EA8', heading: '#F3F5F7',
-  primary: '#16B486', onPrimary: '#04231A', border: '#252A30', cardBorder: '#33785A', inputBg: '#1D2228',
-  danger: '#FF6B6B', success: '#1FB587', track: '#252A30',
+  bg: '#0F1216', card: 'rgba(38,44,52,0.62)', text: '#E8EBEF', textMuted: '#969EA8', heading: '#F3F5F7',
+  primary: '#16B486', onPrimary: '#04231A', border: 'rgba(255,255,255,0.10)', cardBorder: 'rgba(31,181,135,0.30)', inputBg: 'rgba(255,255,255,0.08)',
+  danger: '#FF6B6B', success: '#1FB587', track: 'rgba(255,255,255,0.08)',
   accent: '#1FB587', hero: '#11221C', muscle: '#2A2F36',
+  glass: 'rgba(18,22,28,0.45)', glassStrong: 'rgba(18,22,28,0.70)', hairline: 'rgba(255,255,255,0.14)',
 };
 
 type ThemeCtx = {
