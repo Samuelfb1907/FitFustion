@@ -99,9 +99,7 @@ export default function AuthScreen() {
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <View style={styles.brand}>
-            <View style={styles.logoBadge}>
-              <Image source={require('../assets/avocado.png')} style={styles.logoImg} resizeMode="cover" />
-            </View>
+            <Image source={require('../assets/avocado.png')} style={styles.logoImg} resizeMode="contain" />
             <Text style={styles.wordmark}>FitAvo</Text>
             <Text style={styles.tagline}>Trainiere smarter. Iss bewusster. 🥑</Text>
           </View>
@@ -246,8 +244,7 @@ function makeStyles(c: Colors) {
     scroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 28, paddingTop: 48, paddingBottom: 48 },
 
     brand: { alignItems: 'center', marginBottom: 26 },
-    logoBadge: { width: 152, height: 152, borderRadius: 40, backgroundColor: '#FFFFFF', marginBottom: 18, shadowColor: c.primary, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.5, shadowRadius: 22, elevation: 12 },
-    logoImg: { width: 152, height: 152, borderRadius: 40, overflow: 'hidden' },
+    logoImg: { width: 184, height: 184, marginBottom: 14, shadowColor: c.primary, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.5, shadowRadius: 16 },
     wordmark: { fontSize: 34, fontWeight: '900', color: c.heading, letterSpacing: 0.2 },
     tagline: { fontSize: 14, fontWeight: '600', color: c.textMuted, marginTop: 10, textAlign: 'center' },
 
