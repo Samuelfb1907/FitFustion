@@ -339,9 +339,9 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
               <View style={styles.row}>
                 <Text style={styles.rowLabel}>Trainingszeit</Text>
                 <View style={styles.stepper}>
-                  <TouchableOpacity style={styles.stepBtn} onPress={() => updateRem({ ...rem, trainingHour: Math.max(5, rem.trainingHour - 1) })}><Text style={styles.stepBtnText}>−</Text></TouchableOpacity>
+                  <TouchableOpacity style={styles.stepBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel="Trainingszeit eine Stunde früher" onPress={() => updateRem({ ...rem, trainingHour: Math.max(5, rem.trainingHour - 1) })}><Text style={styles.stepBtnText}>−</Text></TouchableOpacity>
                   <Text style={styles.stepVal}>{String(rem.trainingHour).padStart(2, '0')}:00</Text>
-                  <TouchableOpacity style={styles.stepBtn} onPress={() => updateRem({ ...rem, trainingHour: Math.min(22, rem.trainingHour + 1) })}><Text style={styles.stepBtnText}>+</Text></TouchableOpacity>
+                  <TouchableOpacity style={styles.stepBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel="Trainingszeit eine Stunde später" onPress={() => updateRem({ ...rem, trainingHour: Math.min(22, rem.trainingHour + 1) })}><Text style={styles.stepBtnText}>+</Text></TouchableOpacity>
                 </View>
               </View>
             )}
@@ -353,9 +353,9 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
               <View style={styles.row}>
                 <Text style={styles.rowLabel}>Motivations-Uhrzeit</Text>
                 <View style={styles.stepper}>
-                  <TouchableOpacity style={styles.stepBtn} onPress={() => updateRem({ ...rem, motivationHour: Math.max(5, rem.motivationHour - 1) })}><Text style={styles.stepBtnText}>−</Text></TouchableOpacity>
+                  <TouchableOpacity style={styles.stepBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel="Motivations-Uhrzeit eine Stunde früher" onPress={() => updateRem({ ...rem, motivationHour: Math.max(5, rem.motivationHour - 1) })}><Text style={styles.stepBtnText}>−</Text></TouchableOpacity>
                   <Text style={styles.stepVal}>{String(rem.motivationHour).padStart(2, '0')}:00</Text>
-                  <TouchableOpacity style={styles.stepBtn} onPress={() => updateRem({ ...rem, motivationHour: Math.min(22, rem.motivationHour + 1) })}><Text style={styles.stepBtnText}>+</Text></TouchableOpacity>
+                  <TouchableOpacity style={styles.stepBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel="Motivations-Uhrzeit eine Stunde später" onPress={() => updateRem({ ...rem, motivationHour: Math.min(22, rem.motivationHour + 1) })}><Text style={styles.stepBtnText}>+</Text></TouchableOpacity>
                 </View>
               </View>
             )}
