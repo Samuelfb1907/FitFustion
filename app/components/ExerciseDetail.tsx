@@ -1,6 +1,6 @@
 // Übungsdetail (themed) mit "Training mitschreiben": Sätze (Wdh + Gewicht) speichern.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
@@ -163,29 +163,17 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
         <Text style={styles.badge}>{DIFF_LABELS[exercise.difficulty] ?? exercise.difficulty}</Text>
         <Text style={styles.badge}>{EQUIP_LABELS[exercise.equipment] ?? exercise.equipment}</Text>
       </View>
-      {(gifId && hasGif && !gifFailed) || muscleKey ? (
-        <View style={styles.illusWrap}>
-          {/* Coach-Avocado: Koerper lugt ueber die Kartenkante (hinter der Karte) ... */}
-          <View style={styles.coachBodyClip} pointerEvents="none">
-            <Image source={require('../assets/avocado-point.png')} style={styles.coachImgBody} resizeMode="contain" />
-          </View>
-          {gifId && hasGif && !gifFailed ? (
-            <View style={styles.illusCard}>
-              <GlassFill radius={16} />
-              <ExerciseGif exerciseId={gifId} c={c} onFail={() => setGifFailed(true)} />
-              <Text style={styles.illusCaption}>So wird's gemacht{muscleName ? ` · Zielmuskel: ${muscleName}` : ''}</Text>
-            </View>
-          ) : muscleKey ? (
-            <View style={styles.illusCard}>
-              <GlassFill radius={16} />
-              <ExerciseFigure muscleKey={muscleKey} c={c} width={150} />
-              <Text style={styles.illusCaption}>Zielmuskel: {muscleName ?? '—'}</Text>
-            </View>
-          ) : null}
-          {/* ... und die Haende liegen VORNE auf der Karte */}
-          <View style={styles.coachArmsClip} pointerEvents="none">
-            <Image source={require('../assets/avocado-arms.png')} style={styles.coachImgArms} resizeMode="contain" />
-          </View>
+      {gifId && hasGif && !gifFailed ? (
+        <View style={styles.illusCard}>
+          <GlassFill radius={16} />
+          <ExerciseGif exerciseId={gifId} c={c} onFail={() => setGifFailed(true)} />
+          <Text style={styles.illusCaption}>So wird's gemacht{muscleName ? ` · Zielmuskel: ${muscleName}` : ''}</Text>
+        </View>
+      ) : muscleKey ? (
+        <View style={styles.illusCard}>
+          <GlassFill radius={16} />
+          <ExerciseFigure muscleKey={muscleKey} c={c} width={150} />
+          <Text style={styles.illusCaption}>Zielmuskel: {muscleName ?? '—'}</Text>
         </View>
       ) : null}
 
@@ -275,11 +263,6 @@ function makeStyles(c: Colors) {
     badge: { backgroundColor: c.inputBg, color: c.primary, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, fontSize: 13, overflow: 'hidden' },
     desc: { fontSize: 15, color: c.text, lineHeight: 22, marginBottom: 16 },
     h2: { fontSize: 17, fontWeight: '700', color: c.heading, marginBottom: 8 },
-    illusWrap: { position: 'relative', marginTop: 30 },
-    coachBodyClip: { position: 'absolute', top: -109, left: '50%', marginLeft: -105, width: 210, height: 110, overflow: 'hidden', zIndex: 1 },
-    coachImgBody: { position: 'absolute', top: 0, left: 0, width: 210, height: 210 },
-    coachArmsClip: { position: 'absolute', top: 0, left: '50%', marginLeft: -105, width: 210, height: 44, overflow: 'hidden', zIndex: 6 },
-    coachImgArms: { position: 'absolute', top: -109, left: 0, width: 210, height: 210 },
     illusCard: { backgroundColor: c.card, borderRadius: 16, paddingVertical: 16, paddingHorizontal: 14, alignItems: 'center', marginBottom: 16, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     illusCaption: { fontSize: 13, color: c.textMuted, marginTop: 8, fontWeight: '600' },
     stepRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10 },
