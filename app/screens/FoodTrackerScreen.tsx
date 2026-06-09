@@ -485,11 +485,14 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     const kcal = Number(nf.kcal.replace(',', '.'));
     if (!name) { setFoodErr('Bitte einen Namen eingeben.'); return; }
     if (!kcal || kcal <= 0) { setFoodErr('Bitte gültige Kalorien (pro 100 g) eingeben.'); return; }
+    if (kcal > 1000) { setFoodErr('Kalorien pro 100 g wirken zu hoch (max. 1000). Bitte den Wert pro 100 g eingeben.'); return; }
     const num = (s: string) => Math.max(0, Number(s.replace(',', '.')) || 0);
+    const protein = num(nf.protein), carbs = num(nf.carbs), fat = num(nf.fat);
+    if (protein > 100 || carbs > 100 || fat > 100) { setFoodErr('Protein, Kohlenhydrate und Fett sind Angaben pro 100 g (je max. 100 g).'); return; }
     setSavingFood(true); setFoodErr(null);
     const { data, error } = await supabase
       .from('foods')
-      .insert({ name, category: nf.cat.trim() || 'Eigene', kcal, protein: num(nf.protein), carbs: num(nf.carbs), fat: num(nf.fat), user_id: userId })
+      .insert({ name, category: nf.cat.trim() || 'Eigene', kcal, protein, carbs, fat, user_id: userId })
       .select('id, name, category, kcal, protein, carbs, fat, user_id')
       .single();
     setSavingFood(false);

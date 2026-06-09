@@ -125,7 +125,7 @@ app/
               ExerciseDetail (GIF/Fallback + Schritte + Tipps + Mitschreiben + "Training beenden") ·
               CalorieGauge · Charts · Segmented
   lib/ supabase · nutrition · meals · gamification · exerciseMedia (Name->GIF-ID) · goals (Tagesziele/Challenges) · reminders
-  screens/ Auth · Onboarding(5 Schritte) · MainTabs(5 Reiter: Start|Training|Essen|Fortschritt|Einstellungen)
+  screens/ Auth · Onboarding(4 Schritte) · MainTabs(5 Reiter: Start|Training|Essen|Fortschritt|Einstellungen)
            HomeScreen – Hero, "Training laeuft"-Banner, Kalorien-Gauge, **WASSER**, **Tagesziele**, **Challenges**, Schnellzugriff, Erfolge
            TrainingScreen – HUB: Freies Training (Koerper->Uebungen->Detail) | Plan
            PlanScreen – Trainingsplan: Uebungen ANTIPPBAR -> ExerciseDetail, ✓ heute erledigt, Zielmuskel; Muskel via separater muscles-Abfrage (NICHT nested embed -> mehrdeutig!)

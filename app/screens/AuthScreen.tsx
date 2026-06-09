@@ -163,7 +163,7 @@ export default function AuthScreen() {
             )}
 
             {mode === 'register' && (
-              <TouchableOpacity style={styles.acceptRow} onPress={() => setAccepted((a) => !a)} activeOpacity={0.7}>
+              <TouchableOpacity style={styles.acceptRow} onPress={() => setAccepted((a) => !a)} activeOpacity={0.7} accessibilityRole="checkbox" accessibilityState={{ checked: accepted }} accessibilityLabel="Haftungsausschluss und Gesundheitshinweis akzeptieren">
                 <View style={[styles.checkbox, accepted && styles.checkboxOn]}>{accepted && <Text style={styles.checkmark}>✓</Text>}</View>
                 <Text style={styles.acceptText}>
                   Ich habe den{' '}

@@ -9,7 +9,7 @@ auf Basis deiner persönlichen Daten und Ziele. Läuft im **Browser** und auf de
 
 ## ✨ Features (umgesetzt)
 - 🔐 **Registrierung & Login** (Supabase Auth) inkl. **Haftungsausschluss-Bestätigung** & „Passwort vergessen?"
-- 🧭 **Onboarding** in 5 Schritten (persönliche Daten, Erfahrung, Umgebung, Ziel)
+- 🧭 **Onboarding** in 4 Schritten (persönliche Daten, Erfahrung, Umgebung, Ziel)
 - 🔥 **Täglicher Kalorien- & Makrobedarf** aus dem Profil (Mifflin-St-Jeor)
 - 💪 **Training-Hub**: Freies Training mit **realistischem, klickbarem Körper** (m/w) → Übungen (nach Level & Equipment) → Detail mit **animiertem GIF**, Anleitung, **Mitschreiben** & **Pausen-Timer** · **automatischer Trainingsplan** mit **Wochenkalender** & Tag-Bearbeiten
 - 🍽️ **Essen-Hub**: **Kalorien-Tracker** (Mahlzeiten Frühstück/Mittag/Abend/Snack, **Schnellzugriff**), **Barcode-Scanner** (Open Food Facts), **eigene Lebensmittel** · **Wasser-Tracker**
@@ -45,7 +45,7 @@ fitness-app/
 │  │                             weekdays, reminders, openFoodFacts, barcodeFood, exerciseMedia, gdpr, legal, useFocusTick
 │  ├─ screens/                   Auth, Onboarding, MainTabs, Home, Training-/Essen-Hub,
 │  │                             Plan, FoodTracker, Water, Progress, Settings, Profile
-│  └─ db/                        schema.sql + Migrationen 002–017
+│  └─ db/                        schema.sql + Migrationen 002–027
 ├─ supabase/functions/           Edge Function delete-account (DSGVO, optional)
 ├─ AUDIT.md · RECHTLICHES.md · SUPABASE_FUNCTIONS.md   Audit/To-dos, Rechtstexte, Function-Doku
 ├─ HANDOVER.md                   Detaillierter Projektstand
