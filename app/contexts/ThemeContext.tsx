@@ -31,18 +31,18 @@ export type Colors = {
 // Smaragd-Akzent, hoher Lese-Kontrast, flache Flaechen mit feinen Raendern.
 // Funktioniert in Hell UND Dunkel (Dark Mode bleibt erhalten).
 const LIGHT: Colors = {
-  bg: '#F5F6F8', card: 'rgba(255,255,255,0.72)', text: '#1B1F24', textMuted: '#6B727C', heading: '#0E1217',
-  primary: '#0E9F6E', onPrimary: '#FFFFFF', border: 'rgba(20,24,28,0.08)', cardBorder: 'rgba(14,159,110,0.28)', inputBg: 'rgba(20,24,28,0.05)',
+  bg: '#F5F6F8', card: 'rgba(255,255,255,0.58)', text: '#1B1F24', textMuted: '#6B727C', heading: '#0E1217',
+  primary: '#0E9F6E', onPrimary: '#FFFFFF', border: 'rgba(20,24,28,0.10)', cardBorder: 'rgba(14,159,110,0.30)', inputBg: 'rgba(20,24,28,0.05)',
   danger: '#E5484D', success: '#0E9F6E', track: 'rgba(20,24,28,0.08)',
   accent: '#0E9F6E', hero: '#0E1217', muscle: '#E2E6EA',
-  glass: 'rgba(255,255,255,0.5)', glassStrong: 'rgba(255,255,255,0.74)', hairline: 'rgba(20,24,28,0.10)',
+  glass: 'rgba(255,255,255,0.38)', glassStrong: 'rgba(255,255,255,0.64)', hairline: 'rgba(20,24,28,0.10)',
 };
 const DARK: Colors = {
-  bg: '#0F1216', card: 'rgba(38,44,52,0.62)', text: '#E8EBEF', textMuted: '#969EA8', heading: '#F3F5F7',
-  primary: '#16B486', onPrimary: '#04231A', border: 'rgba(255,255,255,0.10)', cardBorder: 'rgba(31,181,135,0.30)', inputBg: 'rgba(255,255,255,0.08)',
+  bg: '#0F1216', card: 'rgba(34,40,49,0.46)', text: '#E8EBEF', textMuted: '#969EA8', heading: '#F3F5F7',
+  primary: '#16B486', onPrimary: '#04231A', border: 'rgba(255,255,255,0.12)', cardBorder: 'rgba(31,181,135,0.34)', inputBg: 'rgba(255,255,255,0.08)',
   danger: '#FF6B6B', success: '#1FB587', track: 'rgba(255,255,255,0.08)',
   accent: '#1FB587', hero: '#11221C', muscle: '#2A2F36',
-  glass: 'rgba(18,22,28,0.45)', glassStrong: 'rgba(18,22,28,0.70)', hairline: 'rgba(255,255,255,0.14)',
+  glass: 'rgba(16,20,26,0.28)', glassStrong: 'rgba(16,20,26,0.62)', hairline: 'rgba(255,255,255,0.16)',
 };
 
 type ThemeCtx = {
