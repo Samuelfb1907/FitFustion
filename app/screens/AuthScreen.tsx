@@ -1,6 +1,6 @@
 // Login-/Registrierungs-Screen – Clean-Light, mit dezentem Smaragd-Hintergrund (Ambient).
 import { useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { useColors, Colors } from '../contexts/ThemeContext';
@@ -99,14 +99,17 @@ export default function AuthScreen() {
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <View style={styles.brand}>
-            <View style={styles.logo}><Text style={styles.logoMark}>F</Text></View>
+            <View style={styles.logoBadge}>
+              <Image source={require('../assets/avocado.png')} style={styles.logoImg} resizeMode="cover" />
+            </View>
             <Text style={styles.wordmark}>FitAvo</Text>
-            <Text style={styles.tagline}>Dein Begleiter für Training & Ernährung</Text>
+            <Text style={styles.tagline}>Trainiere smarter. Iss bewusster. 🥑</Text>
           </View>
 
           <View style={styles.form}>
-            <Text style={styles.heading}>{mode === 'login' ? 'Anmelden' : 'Konto erstellen'}</Text>
-            <Text style={styles.sub}>{mode === 'login' ? 'Melde dich an, um weiterzumachen.' : 'In unter einer Minute startklar.'}</Text>
+            <GlassFill radius={22} />
+            <Text style={styles.heading}>{mode === 'login' ? 'Willkommen zurück' : 'Werde Teil von FitAvo'}</Text>
+            <Text style={styles.sub}>{mode === 'login' ? 'Schön, dass du wieder da bist 👋' : 'In unter einer Minute startklar 🚀'}</Text>
 
             {info && (
               <View style={[styles.infoBox, { borderLeftColor: isError ? c.danger : c.success }]}>
@@ -240,22 +243,22 @@ function makeStyles(c: Colors) {
   return StyleSheet.create({
     root: { flex: 1, backgroundColor: c.bg },
     flex: { flex: 1 },
-    scroll: { flexGrow: 1, justifyContent: 'flex-start', paddingHorizontal: 28, paddingTop: 64, paddingBottom: 48 },
+    scroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 28, paddingTop: 48, paddingBottom: 48 },
 
-    brand: { alignItems: 'center', marginBottom: 36 },
-    logo: { width: 60, height: 60, borderRadius: 18, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
-    logoMark: { color: c.onPrimary, fontSize: 30, fontWeight: '800' },
-    wordmark: { fontSize: 28, fontWeight: '800', color: c.heading, letterSpacing: 0.2 },
-    tagline: { fontSize: 13, fontWeight: '500', color: c.textMuted, marginTop: 8, textAlign: 'center' },
+    brand: { alignItems: 'center', marginBottom: 26 },
+    logoBadge: { width: 152, height: 152, borderRadius: 40, backgroundColor: '#FFFFFF', marginBottom: 18, shadowColor: c.primary, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.5, shadowRadius: 22, elevation: 12 },
+    logoImg: { width: 152, height: 152, borderRadius: 40, overflow: 'hidden' },
+    wordmark: { fontSize: 34, fontWeight: '900', color: c.heading, letterSpacing: 0.2 },
+    tagline: { fontSize: 14, fontWeight: '600', color: c.textMuted, marginTop: 10, textAlign: 'center' },
 
-    form: { width: '100%', maxWidth: 420, alignSelf: 'center' },
+    form: { width: '100%', maxWidth: 420, alignSelf: 'center', borderRadius: 22, padding: 22, borderWidth: StyleSheet.hairlineWidth, borderColor: c.hairline, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.12, shadowRadius: 18, elevation: 6 },
     heading: { fontSize: 22, fontWeight: '800', color: c.heading },
     sub: { fontSize: 14, color: c.textMuted, marginTop: 6 },
 
     fieldWrap: { marginTop: 18 },
     fieldLabel: { fontSize: 13, fontWeight: '600', color: c.text, marginBottom: 8 },
     fieldInput: {
-      backgroundColor: c.inputBg, borderWidth: 1.5, borderColor: 'transparent', borderRadius: 12,
+      backgroundColor: c.inputBg, borderWidth: 1.5, borderColor: c.border, borderRadius: 12,
       paddingHorizontal: 14, paddingVertical: 14, fontSize: 16, color: c.text,
     },
     fieldInputFocused: { borderColor: c.primary, backgroundColor: c.card },
