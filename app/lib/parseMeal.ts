@@ -15,6 +15,16 @@ export type ParsedItem = {
 
 const MEALS: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
 
+// Typisierter Fehler, damit die UI z. B. das Tageslimit (429) freundlich anzeigen kann.
+export class ParseMealError extends Error {
+  code: string;
+  constructor(code: string, message: string) {
+    super(message);
+    this.name = 'ParseMealError';
+    this.code = code;
+  }
+}
+
 function clamp(v: unknown, lo: number, hi: number): number {
   const n = Number(v);
   if (!isFinite(n)) return lo;
@@ -25,7 +35,16 @@ export async function parseMeal(text: string, defaultMeal: MealType): Promise<Pa
   const { data, error } = await supabase.functions.invoke('parse-meal', {
     body: { text: text.trim().slice(0, 500), defaultMeal },
   });
-  if (error) throw error;
+  if (error) {
+    // Bei Nicht-200 (z. B. 429 Tageslimit) steckt der JSON-Body in error.context.
+    const ctx: any = (error as any).context;
+    let body: any = null;
+    if (ctx && typeof ctx.json === 'function') { try { body = await ctx.json(); } catch { body = null; } }
+    if (body?.error === 'rate_limited') {
+      throw new ParseMealError('rate_limited', body.message || 'Tageslimit fuer KI-Analysen erreicht. Bitte morgen erneut versuchen.');
+    }
+    throw error;
+  }
   if (data && (data as any).error) throw new Error((data as any).error);
   const raw = Array.isArray((data as any)?.items) ? (data as any).items : [];
   return raw

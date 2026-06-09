@@ -292,8 +292,11 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       const m = items[0]?.meal_type ?? mealByHour();
       setNlMeal(m);
       setNlItems(items.map((it) => ({ ...it, meal_type: m })));
-    } catch {
-      setNlErr('Erkennung gerade nicht verfügbar. Bitte später erneut versuchen.');
+    } catch (e) {
+      const msg = (e as any)?.code === 'rate_limited'
+        ? (e as Error).message
+        : 'Erkennung gerade nicht verfügbar. Bitte später erneut versuchen.';
+      setNlErr(msg);
     } finally {
       setNlBusy(false);
     }

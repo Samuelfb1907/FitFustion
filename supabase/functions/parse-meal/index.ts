@@ -7,6 +7,13 @@
 // eingeloggten Nutzer-Token auf.
 //   supabase secrets set ANTHROPIC_API_KEY=...
 //   supabase functions deploy parse-meal
+//
+// Schutz vor Kostenexplosion (Denial-of-Wallet):
+//   - Nutzer-ID wird aus dem JWT ermittelt (zusaetzlich zur Gateway-Pruefung).
+//   - Pro Nutzer gilt ein TAGESLIMIT (DAILY_LIMIT) ueber die DB-Funktion bump_ai_usage
+//     (Migration 027_ai_rate_limit.sql). Ohne diese Migration laeuft die Function
+//     "fail-open" weiter (kein Limit), damit die Reihenfolge von Deploy/Migration egal ist.
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -17,6 +24,7 @@ const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...cors, 'content-type': 'application/json' } });
 
 const MEALS = ['breakfast', 'lunch', 'dinner', 'snack'];
+const DAILY_LIMIT = 60; // KI-Analysen pro Nutzer und Tag (reichlich fuer echte Nutzung, bremst Missbrauch)
 
 // Strukturierte Ausgabe erzwingen (Structured Outputs) -> garantiert gueltiges JSON.
 const SCHEMA = {
@@ -50,10 +58,42 @@ Deno.serve(async (req: Request) => {
     const key = Deno.env.get('ANTHROPIC_API_KEY');
     if (!key) return json({ error: 'server not configured' }, 500);
 
+    // 1) Aufrufer aus dem mitgesendeten JWT ermitteln (Defense-in-Depth + Nutzer-ID fuer das Limit).
+    const url = Deno.env.get('SUPABASE_URL')!;
+    const anon = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const authHeader = req.headers.get('Authorization') ?? '';
+    const userClient = createClient(url, anon, { global: { headers: { Authorization: authHeader } } });
+    const { data: { user }, error: uErr } = await userClient.auth.getUser();
+    if (uErr || !user) return json({ error: 'unauthorized' }, 401);
+
+    // 2) Eingabe pruefen (bevor wir das Limit verbrauchen).
     const payload = await req.json().catch(() => ({} as any));
     const text: string = typeof payload.text === 'string' ? payload.text : '';
     if (!text.trim() || text.length > 500) return json({ error: 'invalid text' }, 400);
     const meal = MEALS.includes(payload.defaultMeal) ? payload.defaultMeal : 'snack';
+
+    // 3) Tageslimit pruefen+hochzaehlen (atomar in der DB). Fehlt die DB-Funktion noch
+    //    (Migration nicht eingespielt), laufen wir bewusst fail-open weiter.
+    try {
+      const service = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+      if (service) {
+        const admin = createClient(url, service, { auth: { persistSession: false } });
+        const { data: allowed, error: rlErr } = await admin.rpc('bump_ai_usage', {
+          p_user: user.id,
+          p_limit: DAILY_LIMIT,
+        });
+        if (rlErr) {
+          console.error('parse-meal rate-limit check failed (fail-open):', rlErr.message);
+        } else if (allowed === false) {
+          return json(
+            { error: 'rate_limited', message: 'Tageslimit fuer KI-Analysen erreicht. Bitte morgen wieder versuchen oder Eintraege manuell hinzufuegen.' },
+            429,
+          );
+        }
+      }
+    } catch (e) {
+      console.error('parse-meal rate-limit error (fail-open):', e);
+    }
 
     const system =
       'Du bist ein praeziser Ernaehrungs-Parser fuer eine deutsche Tracking-App. ' +
@@ -78,7 +118,8 @@ Deno.serve(async (req: Request) => {
     });
     if (!r.ok) {
       const detail = (await r.text()).slice(0, 300);
-      return json({ error: 'ai error', detail }, 502);
+      console.error('parse-meal ai error:', r.status, detail);
+      return json({ error: 'ai_error' }, 502);
     }
     const data = await r.json();
     const txt = (data.content ?? []).find((b: any) => b.type === 'text')?.text ?? '{"items":[]}';
@@ -87,6 +128,7 @@ Deno.serve(async (req: Request) => {
     const items = Array.isArray(parsed.items) ? parsed.items : [];
     return json({ items });
   } catch (e) {
-    return json({ error: String(e) }, 500);
+    console.error('parse-meal error:', e);
+    return json({ error: 'server error' }, 500);
   }
 });
