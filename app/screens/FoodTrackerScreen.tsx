@@ -111,6 +111,9 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     setMode('diary'); setSelectedFood(null); setSearch(''); setError(null); setScannerOpen(false);
     setPickTab('zutaten'); setAddingTo('diary'); setFavDraft(null);
     loadLogs(); loadQuick(); loadFavorites(); loadUsual();
+    // KI-Einwilligung neu einlesen: so greift ein Widerruf (Einstellungen) sofort,
+    // sobald man zum Essen-Tab zurueckkehrt – ohne App-Neustart.
+    AsyncStorage.getItem('fitavo.aiConsentAt').then((v) => setAiConsent(!!v)).catch(() => {});
   });
 
   // Serverseitige Lebensmittel-Suche (debounced) – laedt NICHT mehr die ganze foods-Tabelle.
