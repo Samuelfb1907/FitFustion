@@ -132,7 +132,14 @@ export const EXERCISE_GIF_ID: Record<string, string> = {
   "Überkopf-Bizepscurl mit Theraband": "0986",
   "Seitheben mit Theraband": "0977",
   "Frontheben mit Theraband": "0978",
-  "Schulterdrücken mit Theraband": "0997"
+  "Schulterdrücken mit Theraband": "0997",
+  "Breite Liegestütze": "1311",
+  "Push-up Plus": "3145",
+  "Liegestütze mit Schulter-Tap": "0699",
+  "Uhr-Liegestütze": "0258",
+  "Archer-Liegestütze": "3294",
+  "Klatsch-Liegestütze": "1273",
+  "Einarmige Liegestütze": "0725"
 };
 
 export function exerciseGifId(name: string): string | null {
