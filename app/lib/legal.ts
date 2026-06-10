@@ -97,6 +97,10 @@ export const PRIVACY_SECTIONS: { h: string; p: string }[] = [
     p: 'Diese Funktion ist freiwillig. Wenn du sie nutzt, wird der von dir eingegebene Text (z. B. „2 Eier und ein Toast“) an unseren Auftragsverarbeiter Anthropic PBC (USA) übermittelt und dort automatisiert in einzelne Lebensmittel mit geschätzten Nährwerten zerlegt; das Ergebnis zeigen wir dir zur Bestätigung an, bevor etwas gespeichert wird. Rechtsgrundlage ist deine Einwilligung durch die Nutzung der Funktion (Art. 6 Abs. 1 lit. a, ggf. Art. 9 Abs. 2 lit. a DSGVO). Die Eingaben werden nicht zum Training von KI-Modellen verwendet. Bitte gib in dieses Feld keine sensiblen Daten ein, die über die Beschreibung deiner Mahlzeit hinausgehen. Nutzt du die Funktion nicht, findet keine solche Übermittlung statt.',
   },
   {
+    h: 'Abo, In-App-Käufe & Zahlungen',
+    p: 'Premium-Funktionen kannst du als monatlich kündbares Abo (25 €/Monat) buchen. Kauf und Abrechnung erfolgen ausschließlich über deinen App-Store-Account (Apple App Store bzw. Google Play); diese Anbieter sind dafür eigenständig Verantwortliche und verarbeiten deine Zahlungsdaten. Wir selbst erhalten und speichern KEINE Zahlungsdaten (z. B. Kreditkartennummern) – bei uns wird lediglich gespeichert, ob dein Konto ein aktives Premium-Abo besitzt. Zur technischen Verwaltung und Prüfung der Abos setzen wir den Dienstleister RevenueCat, Inc. (USA) als Auftragsverarbeiter ein; dabei werden eine pseudonyme Nutzer-Kennung und der Kaufstatus verarbeitet. Die Übermittlung in die USA ist über die EU-Standardvertragsklauseln (Art. 46 DSGVO) abgesichert; ein Auftragsverarbeitungsvertrag (AVV) gemäß Art. 28 DSGVO wird geschlossen.',
+  },
+  {
     h: 'Speicherdauer',
     p: 'Wir speichern deine Daten, solange dein Konto besteht. Löschst du dein Konto (Einstellungen → Datenschutz → „Konto & alle Daten löschen"), werden deine personenbezogenen Daten entfernt.',
   },
@@ -114,7 +118,7 @@ export const PRIVACY_SECTIONS: { h: string; p: string }[] = [
   },
   {
     h: 'Stand & Änderungen',
-    p: 'Stand dieser Datenschutzerklärung: 9. Juni 2026. Wir können diese Erklärung anpassen, z. B. bei neuen Funktionen oder geänderter Rechtslage; es gilt die jeweils aktuelle, in der App abrufbare Fassung.',
+    p: 'Stand dieser Datenschutzerklärung: 10. Juni 2026. Wir können diese Erklärung anpassen, z. B. bei neuen Funktionen oder geänderter Rechtslage; es gilt die jeweils aktuelle, in der App abrufbare Fassung.',
   },
 ];
 
@@ -147,5 +151,58 @@ export const IMPRESSUM_SECTIONS: { h: string; p: string }[] = [
   {
     h: 'Urheberrecht',
     p: 'Die vom Betreiber erstellten Inhalte und Werke in dieser App unterliegen dem deutschen Urheberrecht. Inhalte Dritter (z. B. Übungs-Animationen von ExerciseDB, Lebensmitteldaten von Open Food Facts) stammen aus den genannten Quellen. Vervielfältigung und Nutzung nur für den privaten, nicht kommerziellen Gebrauch.',
+  },
+];
+
+// Nutzungsbedingungen / AGB (Vorlage, keine Rechtsberatung – vor Release pruefen lassen).
+// Genutzt von der Paywall (Pflicht-Link) und den Einstellungen.
+export const TERMS_SECTIONS: { h: string; p: string }[] = [
+  {
+    h: '1. Anbieter & Geltungsbereich',
+    p: 'Anbieter der App „FitAvo" ist Samuel Sinemli, Wilhelmsthaler Straße 2, 34379 Calden, Deutschland (E-Mail: Info@fitavo.eu). Diese Nutzungsbedingungen gelten für die Nutzung der App, insbesondere für das kostenpflichtige Premium-Abo. Mit der Nutzung erkennst du sie an.',
+  },
+  {
+    h: '2. Leistungen – Gratis & Premium',
+    p: 'FitAvo ist in einer kostenlosen Basis-Version nutzbar (u. a. manuelles Tracking von Kalorien, Wasser, Gewicht sowie Freies Training). Mit „FitAvo Premium" werden zusätzliche Funktionen freigeschaltet: KI-gestützte Mahlzeitenerkennung, Barcode-Scanner, Teilnahme an der Bestenliste, alle Übungen je Muskelgruppe (statt zwei), Level/XP/Erfolge sowie eigene Trainingspläne. Der Funktionsumfang kann sich weiterentwickeln.',
+  },
+  {
+    h: '3. Premium-Abo, Preis & Laufzeit',
+    p: 'Das Premium-Abo kostet 25,00 € pro Monat (inkl. etwaiger gesetzlicher Steuern, soweit nicht anders angegeben). Kauf und Abrechnung erfolgen ausschließlich über deinen App-Store-Account (Apple App Store bzw. Google Play). Es handelt sich um ein automatisch verlängerndes Abonnement mit einer Laufzeit von einem Monat: Es verlängert sich um jeweils einen weiteren Monat zum dann gültigen Preis, sofern du es nicht mindestens 24 Stunden vor Ende des laufenden Zeitraums kündigst.',
+  },
+  {
+    h: '4. Kündigung',
+    p: 'Du kannst das Abo jederzeit zum Ende des laufenden Abrechnungszeitraums kündigen – direkt in den Konto-Einstellungen deines App Stores: bei iOS unter „Einstellungen → [dein Name] → Abonnements", bei Android unter „Google Play → Profil → Zahlungen & Abos → Abos". Da die Abwicklung über Apple/Google läuft, ist eine Kündigung über uns technisch nicht möglich.',
+  },
+  {
+    h: '5. Widerrufsrecht bei digitalen Inhalten',
+    p: 'Premium ist ein digitaler Dienst, der sofort bereitgestellt wird. Mit dem Kauf stimmst du ausdrücklich zu, dass die Leistung sofort beginnt, und bestätigst, dass dein Widerrufsrecht mit Beginn der Ausführung erlischt (§ 356 Abs. 5 BGB). Rückerstattungen richten sich nach den Bedingungen von Apple bzw. Google und werden von diesen abgewickelt.',
+  },
+  {
+    h: '6. Preisänderungen',
+    p: 'Künftige Preisänderungen werden dir rechtzeitig vor Inkrafttreten angekündigt; sie gelten nur für künftige Abrechnungszeiträume. Bist du nicht einverstanden, kannst du das Abo zum Ende des laufenden Zeitraums kündigen.',
+  },
+  {
+    h: '7. Pflichten bei der Nutzung',
+    p: 'Du nutzt die App eigenverantwortlich und nicht missbräuchlich. Es ist untersagt, die App oder ihre Inhalte (z. B. Übungsdaten/-animationen) automatisiert auszulesen, zu vervielfältigen, weiterzuverbreiten oder Sicherheitsmechanismen zu umgehen. Zugangsdaten sind vertraulich zu behandeln.',
+  },
+  {
+    h: '8. Gesundheits- & Haftungshinweis',
+    p: 'FitAvo ersetzt keine ärztliche, ernährungs- oder trainingsbezogene Beratung und ist kein Medizinprodukt. Ergänzend gilt der „Haftungsausschluss & Gesundheitshinweis" (in der App abrufbar). Die Nutzung erfolgt auf eigenes Risiko; die zwingende gesetzliche Haftung – insbesondere für Vorsatz, grobe Fahrlässigkeit sowie für Leben, Körper und Gesundheit – bleibt unberührt.',
+  },
+  {
+    h: '9. Verfügbarkeit',
+    p: 'Es besteht kein Anspruch auf ununterbrochene Verfügbarkeit. Funktionen können sich ändern, eingeschränkt werden oder entfallen, soweit dies für dich zumutbar ist (bei wesentlichen Premium-Leistungen unter Berücksichtigung des gezahlten Entgelts).',
+  },
+  {
+    h: '10. Änderungen dieser Bedingungen',
+    p: 'Wir können diese Nutzungsbedingungen anpassen, z. B. bei neuen Funktionen oder geänderter Rechtslage. Über wesentliche Änderungen informieren wir in geeigneter Weise; es gilt die jeweils in der App abrufbare Fassung.',
+  },
+  {
+    h: '11. Anwendbares Recht & salvatorische Klausel',
+    p: 'Es gilt das Recht der Bundesrepublik Deutschland unter Ausschluss des UN-Kaufrechts; zwingende Verbraucherschutzvorschriften deines Wohnsitzstaates bleiben unberührt. Sollte eine Bestimmung unwirksam sein, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt.',
+  },
+  {
+    h: 'Stand',
+    p: 'Stand dieser Nutzungsbedingungen: 10. Juni 2026.',
   },
 ];

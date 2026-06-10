@@ -8,7 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme, useColors, Colors } from '../contexts/ThemeContext';
 import ProfileScreen from './ProfileScreen';
 import LegalText from '../components/LegalText';
-import { PRIVACY_SECTIONS, IMPRESSUM_SECTIONS } from '../lib/legal';
+import { PRIVACY_SECTIONS, IMPRESSUM_SECTIONS, TERMS_SECTIONS } from '../lib/legal';
 import { exportUserData, deleteAccount } from '../lib/gdpr';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loadReminderPrefs, saveReminderPrefs, applyReminders, ensurePermission, ReminderPrefs } from '../lib/reminders';
@@ -37,7 +37,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
     await refreshProfile();
   }
 
-  const [view, setView] = useState<'menu' | 'profile' | 'legal' | 'privacy' | 'impressum' | 'password'>('menu');
+  const [view, setView] = useState<'menu' | 'profile' | 'legal' | 'privacy' | 'impressum' | 'terms' | 'password'>('menu');
   const [rem, setRem] = useState<ReminderPrefs | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [msgErr, setMsgErr] = useState(false);
@@ -296,6 +296,23 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
     );
   }
 
+  // Unterseite: Nutzungsbedingungen (AGB)
+  if (view === 'terms') {
+    return (
+      <SwipeBack onBack={() => setView('menu')} c={c} behind={renderMenu()}>
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: BOTTOM_PAD }}>
+        <BackButton onPress={() => setView('menu')} c={c} />
+        <Text style={[styles.title, { marginTop: 10 }]}>Nutzungsbedingungen</Text>
+        <View style={[styles.card, { padding: 16 }]}>
+          <GlassFill radius={16} />
+          <LegalText c={c} sections={TERMS_SECTIONS} />
+        </View>
+        <Text style={styles.hint}>Vorlage – vor einer Veröffentlichung anwaltlich prüfen lassen.</Text>
+      </ScrollView>
+      </SwipeBack>
+    );
+  }
+
   return renderMenu();
 
   function renderMenu() {
@@ -431,6 +448,9 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
         </TouchableOpacity>
         <TouchableOpacity style={styles.linkRow} onPress={() => setView('impressum')}>
           <Text style={styles.link}>🏛  Impressum</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.linkRow} onPress={() => setView('terms')}>
+          <Text style={styles.link}>📃  Nutzungsbedingungen</Text>
         </TouchableOpacity>
       </View>
 

@@ -8,6 +8,8 @@
 import { createContext, useCallback, useContext, useState, ReactNode } from 'react';
 import { Alert, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useColors, Colors } from '../contexts/ThemeContext';
+import LegalText from './LegalText';
+import { TERMS_SECTIONS, PRIVACY_SECTIONS } from '../lib/legal';
 
 export const PREMIUM_PRICE = '25 € / Monat';
 
@@ -38,44 +40,70 @@ export function PaywallProvider({ children }: { children: ReactNode }) {
 function PaywallSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const c = useColors();
   const s = makeStyles(c);
+  const [legal, setLegal] = useState<null | 'terms' | 'privacy'>(null);
+  const close = () => { setLegal(null); onClose(); };
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={close}>
       <View style={s.backdrop}>
         <View style={s.sheet}>
-          <Text style={s.kicker}>FitAvo</Text>
-          <Text style={s.title}>Premium 🥑</Text>
-          <Text style={s.price}>{PREMIUM_PRICE} · monatlich kündbar</Text>
+          {legal ? (
+            <>
+              <Text style={s.title}>{legal === 'terms' ? 'Nutzungsbedingungen' : 'Datenschutzerklärung'}</Text>
+              <ScrollView style={{ maxHeight: 440 }} contentContainerStyle={{ paddingVertical: 10 }} showsVerticalScrollIndicator={false}>
+                <LegalText c={c} sections={legal === 'terms' ? TERMS_SECTIONS : PRIVACY_SECTIONS} />
+              </ScrollView>
+              <TouchableOpacity style={s.cta} activeOpacity={0.85} onPress={() => setLegal(null)} accessibilityRole="button" accessibilityLabel="Zurück">
+                <Text style={s.ctaText}>Zurück</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <Text style={s.kicker}>FitAvo</Text>
+              <Text style={s.title}>Premium 🥑</Text>
+              <Text style={s.price}>{PREMIUM_PRICE} · monatlich kündbar</Text>
 
-          <ScrollView style={{ maxHeight: 320 }} contentContainerStyle={{ paddingVertical: 6 }} showsVerticalScrollIndicator={false}>
-            {BENEFITS.map(([icon, title, desc]) => (
-              <View key={title} style={s.row}>
-                <Text style={s.icon}>{icon}</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={s.rowTitle}>{title}</Text>
-                  <Text style={s.rowDesc}>{desc}</Text>
-                </View>
+              <ScrollView style={{ maxHeight: 280 }} contentContainerStyle={{ paddingVertical: 6 }} showsVerticalScrollIndicator={false}>
+                {BENEFITS.map(([icon, title, desc]) => (
+                  <View key={title} style={s.row}>
+                    <Text style={s.icon}>{icon}</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={s.rowTitle}>{title}</Text>
+                      <Text style={s.rowDesc}>{desc}</Text>
+                    </View>
+                  </View>
+                ))}
+              </ScrollView>
+
+              <TouchableOpacity
+                style={s.cta}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel="Premium freischalten"
+                onPress={() => {
+                  close();
+                  Alert.alert(
+                    'Bald verfügbar',
+                    'Die Bezahlung wird mit der fertigen App (App Store / Play Store) aktiviert.\n\nZum Ausprobieren kannst du Premium vorübergehend in den Einstellungen ein- und ausschalten.',
+                  );
+                }}
+              >
+                <Text style={s.ctaText}>Premium freischalten</Text>
+              </TouchableOpacity>
+
+              <Text style={s.fineprint}>
+                Das Abo verlängert sich automatisch um je 1 Monat ({PREMIUM_PRICE}), bis du kündigst. Die Abrechnung läuft über dein Apple-/Google-Konto. Kündigung jederzeit in dessen Abo-Einstellungen.
+              </Text>
+              <View style={s.linksRow}>
+                <Text style={s.link} onPress={() => setLegal('terms')}>Nutzungsbedingungen</Text>
+                <Text style={s.linkDot}>·</Text>
+                <Text style={s.link} onPress={() => setLegal('privacy')}>Datenschutz</Text>
               </View>
-            ))}
-          </ScrollView>
 
-          <TouchableOpacity
-            style={s.cta}
-            activeOpacity={0.85}
-            accessibilityRole="button"
-            accessibilityLabel="Premium freischalten"
-            onPress={() => {
-              onClose();
-              Alert.alert(
-                'Bald verfügbar',
-                'Die Bezahlung wird mit der fertigen App (App Store / Play Store) aktiviert.\n\nZum Ausprobieren kannst du Premium vorübergehend in den Einstellungen ein- und ausschalten.',
-              );
-            }}
-          >
-            <Text style={s.ctaText}>Premium freischalten</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={onClose} style={s.later} accessibilityRole="button" accessibilityLabel="Schließen">
-            <Text style={s.laterText}>Vielleicht später</Text>
-          </TouchableOpacity>
+              <TouchableOpacity onPress={close} style={s.later} accessibilityRole="button" accessibilityLabel="Schließen">
+                <Text style={s.laterText}>Vielleicht später</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       </View>
     </Modal>
@@ -95,7 +123,11 @@ function makeStyles(c: Colors) {
     rowDesc: { fontSize: 13, color: c.textMuted, marginTop: 1, lineHeight: 18 },
     cta: { marginTop: 14, backgroundColor: c.primary, borderRadius: 16, paddingVertical: 16, alignItems: 'center' },
     ctaText: { color: c.onPrimary, fontSize: 17, fontWeight: '800' },
-    later: { marginTop: 12, alignItems: 'center' },
+    later: { marginTop: 10, alignItems: 'center' },
     laterText: { color: c.textMuted, fontSize: 15, fontWeight: '600' },
+    fineprint: { color: c.textMuted, fontSize: 11, lineHeight: 15, marginTop: 12, textAlign: 'center' },
+    linksRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 8, gap: 8 },
+    link: { color: c.primary, fontSize: 13, fontWeight: '600', textDecorationLine: 'underline' },
+    linkDot: { color: c.textMuted, fontSize: 13 },
   });
 }
