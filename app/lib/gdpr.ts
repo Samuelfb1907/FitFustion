@@ -6,6 +6,9 @@ const USER_TABLES = [
   'set_logs', 'workout_sessions', 'plan_schedule', 'workout_plan_exercises', 'workout_plan_days', 'workout_plans',
   'food_logs', 'meal_favorites', 'water_logs', 'progress_entries', 'goals', 'user_achievements',
 ];
+// Hinweis: meals/nutrition_plans wurden in Migration 019 entfernt -> stehen bewusst NICHT hier.
+// ai_usage (KI-Tageslimit) hat keine Client-RLS-Policy; es wird bei der Konto-Loeschung ueber
+// die Edge Function "delete-account" (auth.users-Cascade) serverseitig mitgeloescht.
 
 // Sammelt alle personenbezogenen Daten des Nutzers als JSON-Objekt.
 export async function exportUserData(userId: string): Promise<Record<string, any>> {

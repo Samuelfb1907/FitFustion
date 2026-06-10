@@ -34,15 +34,21 @@ async function deleteChunks(key: string): Promise<void> {
 export const SecureStorageAdapter = {
   getItem: (key: string): Promise<string | null> => readChunks(key),
   setItem: async (key: string, value: string): Promise<void> => {
-    await deleteChunks(key); // evtl. alte Chunks aufraeumen
     if (value.length <= CHUNK) {
+      await deleteChunks(key); // evtl. alte Chunks aufraeumen
       await SecureStore.setItemAsync(key, value);
       return;
     }
+    // Robust gegen Abbruch: zuerst ALLE neuen Chunks schreiben, den Kopf (Anzahl)
+    // ZULETZT. So zeigt der Kopf erst dann auf die Daten, wenn alle Chunks da sind.
     const count = Math.ceil(value.length / CHUNK);
     for (let i = 0; i < count; i++) {
       await SecureStore.setItemAsync(`${key}.${i}`, value.slice(i * CHUNK, (i + 1) * CHUNK));
     }
+    // ueberzaehlige Chunks eines frueheren (groesseren) Werts entfernen
+    const prevHead = await SecureStore.getItemAsync(key);
+    const prevCount = prevHead && prevHead.startsWith(META) ? (parseInt(prevHead.slice(META.length), 10) || 0) : 0;
+    for (let i = count; i < prevCount; i++) await SecureStore.deleteItemAsync(`${key}.${i}`);
     await SecureStore.setItemAsync(key, `${META}${count}`);
   },
   removeItem: async (key: string): Promise<void> => {

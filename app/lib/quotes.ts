@@ -6,7 +6,7 @@ export const MOTIVATION_QUOTES: string[] = [
   'Kleine Schritte jeden Tag führen zu großen Ergebnissen.',
   'Dein einziger Gegner bist du selbst von gestern.',
   'Aufgeben gibt es nicht – nur kurze Pausen.',
-  'Schweiß ist nur Fett, das weint.',
+  'Jede Bewegung ist ein Gewinn für deinen Körper.',
   'Du musst nicht perfekt sein, nur besser als gestern.',
   'Fortschritt statt Perfektion.',
   'Der schwerste Schritt ist der zur Tür hinaus.',

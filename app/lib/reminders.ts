@@ -57,7 +57,9 @@ export async function applyReminders(p: ReminderPrefs): Promise<void> {
     // (rotierende Sprueche, zufaelliger Startpunkt). Wird bei jedem App-Start neu aufgefuellt.
     if (p.motivation && MOTIVATION_QUOTES.length > 0) {
       const DAYS = 45; // unter iOS-Limit (64) bleiben, kombiniert mit Wasser/Training
-      const start = Math.floor(Math.random() * MOTIVATION_QUOTES.length);
+      // Startindex deterministisch pro Tag -> mehrfacher App-Start am selben Tag
+      // erzeugt denselben Plan (kein Neu-Wuerfeln, keine doppelten/verlorenen Termine).
+      const start = Math.floor(Date.now() / 86400000) % MOTIVATION_QUOTES.length;
       const now = new Date();
       for (let i = 0; i < DAYS; i++) {
         const d = new Date(now);

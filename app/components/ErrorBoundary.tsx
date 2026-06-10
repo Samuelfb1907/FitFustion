@@ -3,7 +3,7 @@
 // versuchen". Bewusst eigenstaendige Farben (kein Theme-Hook), falls der Fehler
 // im Theme/Provider liegt. Spaeter kann componentDidCatch an Sentry o.ae. melden.
 import { Component, ReactNode } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Appearance, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 type Props = { children: ReactNode };
 type State = { hasError: boolean };
@@ -24,15 +24,20 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (!this.state.hasError) return this.props.children;
+    // Farben nach dem System-Schema (unabhaengig vom Theme-Provider, der ggf. gerade kaputt ist).
+    const dark = Appearance.getColorScheme() === 'dark';
+    const col = dark
+      ? { bg: '#0B0F0E', title: '#F2F5F4', text: '#9AA5A1' }
+      : { bg: '#EEF1F6', title: '#0E1217', text: '#555C66' };
     return (
-      <View style={styles.root}>
+      <View style={[styles.root, { backgroundColor: col.bg }]}>
         <Text style={styles.emoji}>😕</Text>
-        <Text style={styles.title}>Etwas ist schiefgelaufen</Text>
-        <Text style={styles.text}>
+        <Text style={[styles.title, { color: col.title }]}>Etwas ist schiefgelaufen</Text>
+        <Text style={[styles.text, { color: col.text }]}>
           Die App hatte einen unerwarteten Fehler. Tippe auf „Erneut versuchen". Falls es weiter
           passiert, schließe die App und öffne sie neu.
         </Text>
-        <TouchableOpacity style={styles.btn} onPress={this.reset} activeOpacity={0.85} accessibilityRole="button">
+        <TouchableOpacity style={styles.btn} onPress={this.reset} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel="Erneut versuchen">
           <Text style={styles.btnText}>Erneut versuchen</Text>
         </TouchableOpacity>
       </View>

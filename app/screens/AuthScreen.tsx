@@ -5,7 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import LegalText from '../components/LegalText';
-import { DISCLAIMER_VERSION } from '../lib/legal';
+import { DISCLAIMER_VERSION, TERMS_SECTIONS, PRIVACY_SECTIONS } from '../lib/legal';
 import Ambient from '../components/Ambient';
 import GlassFill from '../components/GlassFill';
 
@@ -29,7 +29,7 @@ export default function AuthScreen() {
   const [info, setInfo] = useState<string | null>(null);
   const [isError, setIsError] = useState(false);
   const [accepted, setAccepted] = useState(false);
-  const [showLegal, setShowLegal] = useState(false);
+  const [showLegal, setShowLegal] = useState<null | 'disclaimer' | 'terms' | 'privacy'>(null);
   const [focused, setFocused] = useState<'email' | 'pw' | null>(null);
   const pwRef = useRef<TextInput>(null);
   const [showPw, setShowPw] = useState(false);
@@ -59,7 +59,7 @@ export default function AuthScreen() {
       if (error) show(translateError(error.message), true);
       else {
         // Zustimmung zum Haftungsausschluss dokumentieren (Zeitpunkt + Version)
-        try { await AsyncStorage.setItem('fitavo.disclaimerAccepted', JSON.stringify({ version: DISCLAIMER_VERSION, at: new Date().toISOString() })); } catch {}
+        try { await AsyncStorage.setItem('fitavo.disclaimerAccepted', JSON.stringify({ version: DISCLAIMER_VERSION, at: new Date().toISOString(), health: true, terms: true, privacy: true })); } catch {}
         if (!data.session) { show('Fast geschafft! Bitte bestätige deine E-Mail und logge dich dann ein.', false); setMode('login'); }
       }
     }
@@ -163,12 +163,14 @@ export default function AuthScreen() {
             )}
 
             {mode === 'register' && (
-              <TouchableOpacity style={styles.acceptRow} onPress={() => setAccepted((a) => !a)} activeOpacity={0.7} accessibilityRole="checkbox" accessibilityState={{ checked: accepted }} accessibilityLabel="Haftungsausschluss und Gesundheitshinweis akzeptieren">
+              <TouchableOpacity style={styles.acceptRow} onPress={() => setAccepted((a) => !a)} activeOpacity={0.7} accessibilityRole="checkbox" accessibilityState={{ checked: accepted }} accessibilityLabel="Rechtliches akzeptieren und in die Verarbeitung von Gesundheitsdaten einwilligen">
                 <View style={[styles.checkbox, accepted && styles.checkboxOn]}>{accepted && <Text style={styles.checkmark}>✓</Text>}</View>
                 <Text style={styles.acceptText}>
-                  Ich habe den{' '}
-                  <Text style={styles.acceptLink} onPress={() => setShowLegal(true)}>Haftungsausschluss & Gesundheitshinweis</Text>
-                  {' '}gelesen und akzeptiere ihn.
+                  Ich akzeptiere den{' '}
+                  <Text style={styles.acceptLink} onPress={() => setShowLegal('disclaimer')}>Haftungsausschluss</Text>, die{' '}
+                  <Text style={styles.acceptLink} onPress={() => setShowLegal('terms')}>Nutzungsbedingungen</Text>
+                  {' '}und die{' '}
+                  <Text style={styles.acceptLink} onPress={() => setShowLegal('privacy')}>Datenschutzerklärung</Text>. Ich willige ausdrücklich ein, dass meine Gesundheits- und Fitnessdaten (z. B. Gewicht, Größe, Training, Ernährung) zur Bereitstellung der App verarbeitet werden (Art. 9 DSGVO).
                 </Text>
               </TouchableOpacity>
             )}
@@ -187,17 +189,16 @@ export default function AuthScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      <Modal visible={showLegal} animationType="slide" onRequestClose={() => setShowLegal(false)}>
+      <Modal visible={!!showLegal} animationType="slide" onRequestClose={() => setShowLegal(null)}>
         <View style={styles.modalRoot}>
-          <Text style={styles.modalTitle}>Haftungsausschluss & Gesundheitshinweis</Text>
+          <Text style={styles.modalTitle}>
+            {showLegal === 'terms' ? 'Nutzungsbedingungen' : showLegal === 'privacy' ? 'Datenschutzerklärung' : 'Haftungsausschluss & Gesundheitshinweis'}
+          </Text>
           <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
-            <LegalText c={c} />
+            <LegalText c={c} sections={showLegal === 'terms' ? TERMS_SECTIONS : showLegal === 'privacy' ? PRIVACY_SECTIONS : undefined} />
           </ScrollView>
-          <TouchableOpacity style={styles.button} onPress={() => { setAccepted(true); setShowLegal(false); }} activeOpacity={0.85}>
-            <Text style={styles.buttonText}>Gelesen & akzeptieren</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => setShowLegal(false)} style={{ marginTop: 14 }}>
-            <Text style={styles.modalClose}>Schließen</Text>
+          <TouchableOpacity style={styles.button} onPress={() => setShowLegal(null)} activeOpacity={0.85}>
+            <Text style={styles.buttonText}>Schließen</Text>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -218,7 +219,7 @@ export default function AuthScreen() {
             ) : (
               <>
                 <Text style={styles.fieldLabel}>Code aus der E-Mail</Text>
-                <TextInput style={styles.fieldInput} value={resetCode} onChangeText={setResetCode} keyboardType="number-pad" placeholder="6-stelliger Code" placeholderTextColor={c.textMuted} maxLength={8} autoCapitalize="none" />
+                <TextInput style={styles.fieldInput} value={resetCode} onChangeText={setResetCode} keyboardType="number-pad" placeholder="6-stelliger Code" placeholderTextColor={c.textMuted} maxLength={6} autoCapitalize="none" />
                 <Text style={[styles.fieldLabel, { marginTop: 12 }]}>Neues Passwort</Text>
                 <TextInput style={styles.fieldInput} value={resetNewPw} onChangeText={setResetNewPw} secureTextEntry autoCapitalize="none" placeholder="mindestens 8 Zeichen" placeholderTextColor={c.textMuted} />
                 <TouchableOpacity style={styles.button} onPress={confirmReset} disabled={resetBusy} activeOpacity={0.85}>

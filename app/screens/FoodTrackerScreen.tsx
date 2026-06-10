@@ -193,17 +193,19 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
 
   async function loadLogs() {
     if (!userId) return;
-    const { data } = await supabase.from('food_logs').select('id, amount_g, meal_type, foods(id, name, category, kcal, protein, carbs, fat)').eq('user_id', userId).eq('log_date', todayStr()).order('created_at');
+    const { data, error } = await supabase.from('food_logs').select('id, amount_g, meal_type, foods(id, name, category, kcal, protein, carbs, fat)').eq('user_id', userId).eq('log_date', todayStr()).order('created_at');
+    if (error) throw error; // Fehler nicht verschlucken -> sonst zeigt das Tagebuch faelschlich 0 kcal
     setLogs((data ?? []).map((row: any) => ({ id: row.id, amount_g: row.amount_g, meal_type: row.meal_type ?? null, food: Array.isArray(row.foods) ? row.foods[0] : row.foods })));
   }
 
   // Haeufigste/zuletzt genutzte Lebensmittel aus der Historie fuer den Schnellzugriff
   async function loadQuick() {
     if (!userId) return;
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('food_logs')
       .select('amount_g, foods(id, name, category, kcal, protein, carbs, fat, user_id)')
       .eq('user_id', userId).order('created_at', { ascending: false }).limit(120);
+    if (error) throw error;
     const map = new Map<string, { food: Food; amount: number; count: number; order: number }>();
     ((data ?? []) as any[]).forEach((row, idx) => {
       const food = Array.isArray(row.foods) ? row.foods[0] : row.foods;
@@ -223,10 +225,11 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   // die an mind. 2 Tagen geloggt wurden (= ueblich). Rein clientseitig, ohne KI.
   async function loadUsual() {
     if (!userId) { setUsualByMeal({}); return; }
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('food_logs')
       .select('meal_type, amount_g, log_date, foods(id, name, category, kcal, protein, carbs, fat, user_id)')
       .eq('user_id', userId).gte('log_date', daysAgoStr(35)).order('created_at', { ascending: false }).limit(400);
+    if (error) throw error;
     const byMeal: Record<string, Map<string, { food: Food; days: Set<string>; amounts: number[] }>> = {};
     ((data ?? []) as any[]).forEach((row) => {
       const food = Array.isArray(row.foods) ? row.foods[0] : row.foods;
@@ -405,7 +408,8 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   // ---- Favoriten (gespeicherte Mahlzeiten) ----------------------------------
   async function loadFavorites() {
     if (!userId) return;
-    const { data } = await supabase.from('meal_favorites').select('id, name, items').eq('user_id', userId).order('created_at', { ascending: false });
+    const { data, error } = await supabase.from('meal_favorites').select('id, name, items').eq('user_id', userId).order('created_at', { ascending: false });
+    if (error) throw error;
     setFavorites((data ?? []).map((r: any) => ({ id: r.id, name: r.name, items: Array.isArray(r.items) ? (r.items as FavItem[]) : [] })));
   }
 

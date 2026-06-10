@@ -102,7 +102,11 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
     setError(null);
     const r = parseInt(reps, 10);
     if (!r || r <= 0) { setError('Bitte gültige Wiederholungen eingeben.'); return; }
-    const w = weight.trim() ? Number(weight.replace(',', '.')) : null;
+    let w: number | null = null;
+    if (weight.trim()) {
+      w = Number(weight.replace(',', '.'));
+      if (!isFinite(w) || w < 0 || w > 1000) { setError('Bitte ein gültiges Gewicht eingeben (0–1000 kg).'); return; }
+    }
     if (!userId) return;
     if (savingRef.current) return; // synchroner Lock gegen schnellen Doppel-Tipp
     savingRef.current = true;

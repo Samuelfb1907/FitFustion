@@ -212,7 +212,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
                 <Text style={styles.name}>{profile?.first_name || 'Willkommen'}</Text>
               </View>
               {stats && (
-                <TouchableOpacity style={styles.levelPill} activeOpacity={isPremium ? 1 : 0.7} disabled={isPremium} onPress={() => openPaywall('level')}>
+                <TouchableOpacity style={styles.levelPill} activeOpacity={isPremium ? 1 : 0.7} disabled={isPremium} onPress={() => openPaywall('level')} accessibilityRole="button" accessibilityLabel={isPremium ? `Level ${lv.level}, Streak ${stats.streak} Tage` : 'Premium freischalten, um zu leveln'}>
                   <GlassFill radius={999} />
                   <Text style={styles.levelText}>🔥 {stats.streak}</Text>
                   <View style={styles.levelSep} />
@@ -254,7 +254,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
                   <Text style={styles.activeTitle}>Training läuft</Text>
                   <Text style={styles.activeSub}>{activeSets} {activeSets === 1 ? 'Satz' : 'Sätze'} heute mitgeschrieben</Text>
                 </View>
-                <TouchableOpacity style={styles.activeBtn} onPress={endTraining} activeOpacity={0.85}>
+                <TouchableOpacity style={styles.activeBtn} onPress={endTraining} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel="Training beenden">
                   <Text style={styles.activeBtnText}>Beenden</Text>
                 </TouchableOpacity>
               </View>
@@ -327,7 +327,7 @@ function Macro({ label, eaten, target, color, styles }: { label: string; eaten: 
 
 function Stat({ label, value, sub, pct, onPress, styles }: { label: string; value: string; sub: string; pct?: number; onPress: () => void; styles: any }) {
   return (
-    <TouchableOpacity style={styles.stat} onPress={onPress} activeOpacity={0.85}>
+    <TouchableOpacity style={styles.stat} onPress={onPress} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={`${label}: ${value}, ${sub}`}>
       <GlassFill radius={16} />
       <Text style={styles.statLabel}>{label}</Text>
       <Text style={styles.statValue} numberOfLines={1}>{value}</Text>

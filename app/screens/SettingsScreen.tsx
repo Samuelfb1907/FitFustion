@@ -24,19 +24,10 @@ import Segmented from '../components/Segmented';
 const BOTTOM_PAD = Platform.OS === 'android' ? 120 : 48;
 
 export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
-  const { session, refreshProfile, isPremium } = useAuth();
+  const { session, refreshProfile } = useAuth();
   const { mode, setMode } = useTheme();
   const c = useColors();
   const styles = useMemo(() => makeStyles(c), [c]);
-
-  // Nur fuer die Testphase: Premium per Schalter umstellen. In der echten App
-  // setzt das der Bezahl-Dienst (RevenueCat) serverseitig.
-  async function togglePremium(v: boolean) {
-    const userId = session?.user?.id;
-    if (!userId) return;
-    await supabase.from('profiles').update({ is_premium: v }).eq('id', userId);
-    await refreshProfile();
-  }
 
   const [view, setView] = useState<'menu' | 'profile' | 'legal' | 'privacy' | 'impressum' | 'terms' | 'password'>('menu');
   const [rem, setRem] = useState<ReminderPrefs | null>(null);
@@ -257,7 +248,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
           <GlassFill radius={16} />
           <LegalText c={c} />
         </View>
-        <Text style={styles.hint}>Stand: Vorlage. Vor einer Veröffentlichung anwaltlich prüfen. Impressum & Datenschutzerklärung findest du separat in den Einstellungen.</Text>
+        <Text style={styles.hint}>Impressum & Datenschutzerklärung findest du separat in den Einstellungen.</Text>
       </ScrollView>
       </SwipeBack>
     );
@@ -274,7 +265,6 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
           <GlassFill radius={16} />
           <LegalText c={c} sections={PRIVACY_SECTIONS} />
         </View>
-        <Text style={styles.hint}>Vorlage – Platzhalter [...] ausfüllen und vor Veröffentlichung anwaltlich prüfen (zusätzlich Impressum & AVV mit Supabase).</Text>
       </ScrollView>
       </SwipeBack>
     );
@@ -291,7 +281,6 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
           <GlassFill radius={16} />
           <LegalText c={c} sections={IMPRESSUM_SECTIONS} />
         </View>
-        <Text style={styles.hint}>Vorlage nach § 5 DDG – Platzhalter [...] mit deinen Angaben (ladungsfähige Anschrift) ausfüllen und vor Veröffentlichung prüfen lassen.</Text>
       </ScrollView>
       </SwipeBack>
     );
@@ -308,7 +297,6 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
           <GlassFill radius={16} />
           <LegalText c={c} sections={TERMS_SECTIONS} />
         </View>
-        <Text style={styles.hint}>Vorlage – vor einer Veröffentlichung anwaltlich prüfen lassen.</Text>
       </ScrollView>
       </SwipeBack>
     );
@@ -353,18 +341,6 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
             </Text>
           )}
         </View>
-      </View>
-
-      <Text style={styles.section}>PREMIUM (TEST)</Text>
-      <View style={styles.card}>
-        <GlassFill radius={16} />
-        <View style={styles.row}>
-          <Text style={styles.rowLabel}>⭐  Premium aktiv (Test)</Text>
-          <Switch value={isPremium} onValueChange={togglePremium} accessibilityLabel="Premium aktiv (Test)" />
-        </View>
-        <Text style={{ color: c.textMuted, fontSize: 12, lineHeight: 16, paddingHorizontal: 2, paddingBottom: 2 }}>
-          Nur zum Testen: schaltet alle Premium-Funktionen frei. Die echte Bezahlung (25 €/Monat) kommt mit dem App-Build.
-        </Text>
       </View>
 
       <Text style={styles.section}>ERINNERUNGEN</Text>

@@ -77,9 +77,15 @@ export default function WaterScreen({ embedded, focusTick }: { embedded?: boolea
     }
   }
   async function removeOne(id: string) {
-    const { error: e } = await supabase.from('water_logs').delete().eq('id', id);
-    if (e) { setError(errorMessage(e)); return; }
-    await load(true);
+    if (busyRef.current) return;
+    busyRef.current = true;
+    try {
+      const { error: e } = await supabase.from('water_logs').delete().eq('id', id);
+      if (e) { setError(errorMessage(e)); return; }
+      await load(true);
+    } finally {
+      busyRef.current = false;
+    }
   }
   async function undoLast() {
     if (!rows.length) return;

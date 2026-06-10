@@ -10,7 +10,7 @@ export default function BackButton({ onPress, c, label = 'Zurück' }: { onPress:
       hitSlop={{ top: 16, bottom: 16, left: 16, right: 28 }}
       style={styles.btn}
       accessibilityRole="button"
-      accessibilityLabel="Zurück"
+      accessibilityLabel={label}
     >
       <Text style={[styles.chev, { color: c.primary }]}>‹</Text>
       <Text style={[styles.label, { color: c.primary }]}>{label}</Text>

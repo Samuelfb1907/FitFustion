@@ -4,6 +4,8 @@
 --  SO FÜHRST DU ES AUS:
 --    1. Supabase-Dashboard öffnen -> linke Leiste: "SQL Editor"
 --    2. "New query" -> diesen GESAMTEN Inhalt einfügen -> "Run" (Strg+Enter)
+--    3. DANACH die Migrationen 002 bis 034 IN REIHENFOLGE ausführen (siehe README.md).
+--       Dieses Basis-Skript allein ergibt KEINE vollständige Datenbank.
 --
 --  Das Skript ist idempotent (mehrfach ausführbar): vorhandene Objekte werden
 --  nicht doppelt angelegt. Row Level Security (RLS) sorgt dafür, dass jeder
@@ -137,31 +139,11 @@ create index if not exists set_logs_session_idx on public.set_logs(session_id);
 
 -- ----------------------------------------------------------------------------
 -- 7) ERNÄHRUNG
+--    Das Tracking nutzt foods + food_logs (per Migration 005/006 angelegt).
+--    Die fruehen Tabellen nutrition_plans/meals wurden in Migration 019 entfernt
+--    und stehen daher bewusst NICHT mehr hier (sonst kaemen sie beim erneuten
+--    Ausfuehren von schema.sql wieder zurueck).
 -- ----------------------------------------------------------------------------
-create table if not exists public.nutrition_plans (
-  id              uuid primary key default gen_random_uuid(),
-  user_id         uuid not null references auth.users(id) on delete cascade,
-  plan_date       date not null default current_date,
-  calories_target int,
-  protein_g       int,
-  carbs_g         int,
-  fat_g           int,
-  created_at      timestamptz not null default now()
-);
-create index if not exists nutrition_user_idx on public.nutrition_plans(user_id);
-
-create table if not exists public.meals (
-  id                uuid primary key default gen_random_uuid(),
-  user_id           uuid not null references auth.users(id) on delete cascade,
-  nutrition_plan_id uuid not null references public.nutrition_plans(id) on delete cascade,
-  meal_type         text not null check (meal_type in ('breakfast','lunch','dinner','snack')),
-  name              text not null,
-  calories          int,
-  protein_g         int,
-  carbs_g           int,
-  fat_g             int
-);
-create index if not exists meals_plan_idx on public.meals(nutrition_plan_id);
 
 -- ----------------------------------------------------------------------------
 -- 8) FORTSCHRITT (Gewichtsverlauf)
@@ -253,7 +235,7 @@ declare t text;
 begin
   foreach t in array array[
     'goals','workout_plans','workout_plan_days','workout_plan_exercises',
-    'workout_sessions','set_logs','nutrition_plans','meals',
+    'workout_sessions','set_logs',
     'progress_entries','user_achievements'
   ]
   loop

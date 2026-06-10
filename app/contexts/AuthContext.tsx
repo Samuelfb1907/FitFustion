@@ -7,6 +7,13 @@
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import {
+  configurePurchases,
+  loginPurchases,
+  logoutPurchases,
+  addPremiumListener,
+  isPremiumFromInfo,
+} from '../lib/purchases';
 
 export type Profile = {
   id: string;
@@ -40,6 +47,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [authReady, setAuthReady] = useState(false);          // erste Session-Prüfung fertig?
   const [profileUserId, setProfileUserId] = useState<string | null>(null); // für wen ist das Profil geladen?
+  const [rcPremium, setRcPremium] = useState(false);          // Premium laut RevenueCat (echter Kauf)
+
+  // 0) RevenueCat (In-App-Käufe) einmalig initialisieren.
+  useEffect(() => {
+    configurePurchases();
+  }, []);
 
   // 1) Session-Lebenszyklus – im Callback NUR die Session setzen (kein await auf DB!)
   useEffect(() => {
@@ -82,6 +95,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [authReady, session?.user?.id]);
 
+  // 3) RevenueCat-Identität an den eingeloggten Nutzer koppeln + auf Kauf-Änderungen hören.
+  //    So zählt ein Kauf zum richtigen Konto und Premium schaltet sofort frei.
+  useEffect(() => {
+    if (!authReady) return;
+    const userId = session?.user?.id ?? null;
+    if (!userId) {
+      setRcPremium(false);
+      logoutPurchases();
+      return;
+    }
+    let active = true;
+    const remove = addPremiumListener((p) => {
+      if (active) setRcPremium(p);
+    });
+    loginPurchases(userId).then((info) => {
+      if (active) setRcPremium(isPremiumFromInfo(info));
+    });
+    return () => {
+      active = false;
+      remove();
+    };
+  }, [authReady, session?.user?.id]);
+
   // Von aussen aufrufbar (z. B. nach dem Onboarding)
   const refreshProfile = useCallback(async () => {
     const userId = session?.user?.id;
@@ -98,7 +134,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Wir "laden" noch, solange die Session-Prüfung läuft ODER das Profil für den
   // aktuell eingeloggten Nutzer noch nicht geladen ist.
   const loading = !authReady || (!!session?.user && profileUserId !== session.user.id);
-  const isPremium = !!profile?.is_premium;
+
+  // Premium ist aktiv, wenn RevenueCat einen Kauf meldet ODER der (Test-)Schalter im Profil an ist.
+  const isPremium = rcPremium || !!profile?.is_premium;
 
   return (
     <AuthContext.Provider value={{ session, profile, loading, isPremium, refreshProfile }}>

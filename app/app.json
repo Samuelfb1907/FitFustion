@@ -3,6 +3,7 @@
     "name": "FitAvo",
     "slug": "app",
     "version": "1.0.0",
+    "scheme": "fitavo",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",

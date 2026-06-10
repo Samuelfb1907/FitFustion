@@ -117,6 +117,7 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
     else if (!experience) err = 'Bitte wähle dein Erfahrungslevel.';
     else if (!environment) err = 'Bitte wähle deine Trainingsumgebung.';
     else if (!goal) err = 'Bitte wähle ein Ziel.';
+    else if (goal === 'lose_weight' && !(num(targetWeight) >= 30 && num(targetWeight) <= 300)) err = 'Bitte ein gültiges Zielgewicht (30–300 kg) eingeben.';
     if (err) { setMsg(err); setIsError(true); return; }
     setSaving(true);
     setMsg(null);
@@ -134,18 +135,32 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
       training_environment: environment,
     });
 
-    // Ziel aktualisieren: altes aktives deaktivieren, neues anlegen
-    await supabase.from('goals').update({ is_active: false }).eq('user_id', userId).eq('is_active', true);
-    const { error: gErr } = await supabase.from('goals').insert({
-      user_id: userId,
+    // Ziel aktualisieren: bestehendes aktives Ziel IN PLACE updaten (kein Zeilen-Wachstum
+    // bei jedem Speichern); nur neu anlegen, falls noch keins existiert.
+    const goalRow = {
       goal_type: goal,
       target_weight_kg: goal === 'lose_weight' && targetWeight ? num(targetWeight) : null,
       is_active: true,
-    });
+    };
+    const { data: activeGoal } = await supabase
+      .from('goals')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    let gErr: any = null;
+    if (activeGoal?.id) {
+      ({ error: gErr } = await supabase.from('goals').update(goalRow).eq('id', activeGoal.id));
+    } else {
+      ({ error: gErr } = await supabase.from('goals').insert({ user_id: userId, ...goalRow }));
+    }
 
     setSaving(false);
     if (pErr || gErr) {
-      setMsg('Speichern fehlgeschlagen: ' + (pErr?.message || gErr?.message));
+      console.error('Profil speichern:', pErr?.message || gErr?.message);
+      setMsg('Speichern fehlgeschlagen. Bitte prüfe deine Internetverbindung und versuche es erneut.');
       setIsError(true);
     } else {
       setMsg('Profil gespeichert ✓');

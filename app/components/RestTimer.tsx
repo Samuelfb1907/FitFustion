@@ -16,6 +16,7 @@ export default function RestTimer({ c, autoStartSignal, defaultSeconds = 90 }: {
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const endRef = useRef<number>(0); // Ziel-Endzeitpunkt (ms) -> Timer haengt an der echten Uhr
 
   function clearTimer() {
     if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
@@ -26,27 +27,30 @@ export default function RestTimer({ c, autoStartSignal, defaultSeconds = 90 }: {
     setDuration(d);
     setRemaining(d);
     setDone(false);
+    endRef.current = Date.now() + d * 1000;
     setRunning(true);
   }
-  function resume() { setDone(false); setRunning(true); }
+  function resume() { endRef.current = Date.now() + remaining * 1000; setDone(false); setRunning(true); }
   function pause() { setRunning(false); clearTimer(); }
   function reset() { pause(); setRemaining(duration); setDone(false); }
 
   // Sekunden-Tick, laeuft nur solange running === true
   useEffect(() => {
     if (!running) return;
-    intervalRef.current = setInterval(() => {
-      setRemaining((r) => {
-        if (r <= 1) {
-          clearTimer();
-          setRunning(false);
-          setDone(true);
-          try { Vibration.vibrate(Platform.OS === 'android' ? [0, 300, 150, 300] : 600); } catch {}
-          return 0;
-        }
-        return r - 1;
-      });
-    }, 1000);
+    // An die echte Uhrzeit gekoppelt (endRef): laeuft auch nach Hintergrund/Throttling korrekt weiter.
+    const tick = () => {
+      const left = Math.max(0, Math.round((endRef.current - Date.now()) / 1000));
+      if (left <= 0) {
+        clearTimer();
+        setRunning(false);
+        setRemaining(0);
+        setDone(true);
+        try { Vibration.vibrate(Platform.OS === 'android' ? [0, 300, 150, 300] : 600); } catch {}
+      } else {
+        setRemaining(left);
+      }
+    };
+    intervalRef.current = setInterval(tick, 1000);
     return clearTimer;
   }, [running]);
 

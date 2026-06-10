@@ -66,6 +66,21 @@ Deno.serve(async (req: Request) => {
     const { data: { user }, error: uErr } = await userClient.auth.getUser();
     if (uErr || !user) return json({ error: 'unauthorized' }, 401);
 
+    // 1b) Premium-Gate (serverseitig): nur zahlende Nutzer duerfen die KI nutzen.
+    //     Bevorzugt mit Service-Role gelesen (zuverlaessig, ohne RLS). Bei reinem
+    //     Lesefehler bewusst fail-open (der Client gated zusaetzlich, das Tageslimit bremst).
+    const service = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const admin = service ? createClient(url, service, { auth: { persistSession: false } }) : null;
+    try {
+      const reader = admin ?? userClient;
+      const { data: prof } = await reader.from('profiles').select('is_premium').eq('id', user.id).maybeSingle();
+      if (prof && prof.is_premium !== true) {
+        return json({ error: 'premium_required', message: 'Die KI-Erkennung ist Teil von FitAvo Premium.' }, 403);
+      }
+    } catch (e) {
+      console.error('parse-meal premium check failed (fail-open):', e);
+    }
+
     // 2) Eingabe pruefen (bevor wir das Limit verbrauchen).
     const payload = await req.json().catch(() => ({} as any));
     const text: string = typeof payload.text === 'string' ? payload.text : '';
@@ -75,9 +90,7 @@ Deno.serve(async (req: Request) => {
     // 3) Tageslimit pruefen+hochzaehlen (atomar in der DB). Fehlt die DB-Funktion noch
     //    (Migration nicht eingespielt), laufen wir bewusst fail-open weiter.
     try {
-      const service = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-      if (service) {
-        const admin = createClient(url, service, { auth: { persistSession: false } });
+      if (admin) {
         const { data: allowed, error: rlErr } = await admin.rpc('bump_ai_usage', {
           p_user: user.id,
           p_limit: DAILY_LIMIT,

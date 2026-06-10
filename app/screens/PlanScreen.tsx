@@ -14,6 +14,9 @@ import BackButton from '../components/BackButton';
 import SwipeBack from '../components/SwipeBack';
 import GlassFill from '../components/GlassFill';
 
+// Debounce gegen Doppeltap: verhindert, dass ein schneller Doppelklick zwei Detail-Overlays oeffnet.
+let lastExerciseOpen = 0;
+
 // startOfTodayISO -> lib/date.ts; Schwierigkeits-/Equipment-Konstanten -> lib/training.ts
 const SPLITS: Record<number, { focus: string; muscles: string[] }[]> = {
   2: [
@@ -178,10 +181,11 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
     const next: Record<number, string> = { ...effectiveSchedule };
     if (dayId) next[weekday] = dayId; else delete next[weekday];
     setSchedule(next);
-    const rows = Object.entries(next).map(([wd, pid]) => ({ user_id: userId, weekday: Number(wd), plan_day_id: pid }));
-    await supabase.from('plan_schedule').delete().eq('user_id', userId);
-    if (rows.length) {
-      const { error } = await supabase.from('plan_schedule').insert(rows);
+    // Nur DIESEN Wochentag aendern (nicht den ganzen Plan loeschen) -> ein Fehler
+    // beim Speichern kann nicht mehr die komplette Woche ausloeschen.
+    await supabase.from('plan_schedule').delete().eq('user_id', userId).eq('weekday', weekday);
+    if (dayId) {
+      const { error } = await supabase.from('plan_schedule').insert({ user_id: userId, weekday, plan_day_id: dayId });
       if (error) { Alert.alert('Nicht gespeichert', errorMessage(error)); loadPlan(true); }
     }
   }
@@ -471,7 +475,7 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
                 </View>
               ) : (
                 <TouchableOpacity key={ex.rowId} style={styles.exItem} activeOpacity={0.7}
-                  onPress={() => onOpenExercise?.({ exercise: { id: ex.exId, name: ex.name, difficulty: ex.difficulty, equipment: ex.equipment, description: ex.description, instructions: ex.instructions }, muscleKey: ex.muscleKey, muscleName: ex.muscleName })}>
+                  onPress={() => { const now = Date.now(); if (now - lastExerciseOpen < 600) return; lastExerciseOpen = now; onOpenExercise?.({ exercise: { id: ex.exId, name: ex.name, difficulty: ex.difficulty, equipment: ex.equipment, description: ex.description, instructions: ex.instructions }, muscleKey: ex.muscleKey, muscleName: ex.muscleName }); }}>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.exName, doneToday.has(ex.exId) && { color: c.success, fontWeight: '700' }]}>{doneToday.has(ex.exId) ? '✓ ' : ''}{ex.name}</Text>
                     <Text style={styles.exMeta}>{ex.sets} × {ex.reps} · {DIFF_LABELS[ex.difficulty] ?? ex.difficulty}{ex.muscleName ? ` · ${ex.muscleName}` : ''}</Text>

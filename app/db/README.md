@@ -31,6 +31,15 @@ Alle `.sql`-Dateien werden **manuell** im Supabase **SQL Editor** ausgeführt
 | 23 | `023_hardening.sql` | Härtung (Audit): Leaderboard-UUID-Leak schließen (View), Werte-/Bereichs-CHECKs |
 | 24 | `024_leaderboard_trust.sql` | Leaderboard-Punkte serverseitig per Trigger (fälschungssicher) + Mengen-Limits |
 | 25 | `025_consent.sql` | Server-seitiger Einwilligungs-Nachweis (profiles.disclaimer_version + consented_at) |
+| 26 | `026_ai_consent.sql` | KI-Einwilligung (profiles.ai_consent_at) |
+| 27 | `027_ai_rate_limit.sql` | Tageslimit für KI-Analysen (ai_usage + bump_ai_usage) |
+| 28 | `028_more_chest_bodyweight.sql` | Mehr Brust-Übungen (Körpergewicht) |
+| 29 | `029_bodyweight_all_muscles.sql` | Körpergewichts-Übungen für alle Muskeln |
+| 30 | `030_gym_all_muscles.sql` | Geräte-Übungen für alle Muskeln |
+| 31 | `031_equipment_recategorize.sql` | „Kein Equipment" strikt (Geräte → equipment 'other') |
+| 32 | `032_exercises_max.sql` | Großer Übungs-Ausbau (+230) |
+| 33 | `033_premium.sql` | profiles.is_premium (Abo-Status) |
+| 34 | `034_protect_is_premium.sql` | is_premium gegen Client-Änderungen schützen (Trigger) |
 
 ## Hinweise
 - **Reihenfolge zählt:** Spätere Migrationen bauen auf früheren auf.

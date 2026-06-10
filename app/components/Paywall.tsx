@@ -2,14 +2,15 @@
 // Premium-Bildschirm (Bottom-Sheet) ueber der ganzen App. Gesperrte Funktionen
 // rufen openPaywall() auf, wenn ein Gratis-Nutzer sie antippt.
 //
-// Die ECHTE Bezahlung (Apple/Google via RevenueCat) wird erst im fertigen App-Build
-// angebunden. Bis dahin erklaert der "Freischalten"-Button das und verweist auf den
-// Test-Schalter in den Einstellungen.
+// Die Bezahlung laeuft ueber RevenueCat (Apple/Google). Der "Freischalten"-Button
+// startet den echten Kauf — nur in einem echten App-Build verfuegbar (nicht Expo Go).
+// Mit dem Test-Store-Schluessel laesst sich der Kauf ohne App/Play Store ausprobieren.
 import { createContext, useCallback, useContext, useState, ReactNode } from 'react';
 import { Alert, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import LegalText from './LegalText';
 import { TERMS_SECTIONS, PRIVACY_SECTIONS } from '../lib/legal';
+import { purchasePremium, restorePurchases } from '../lib/purchases';
 
 export const PREMIUM_PRICE = '25 € / Monat';
 
@@ -22,26 +23,74 @@ const BENEFITS = [
   ['🗓️', 'Trainingspläne', 'Erstelle eigene Pläne mit Wochenkalender.'],
 ];
 
+// Feature-spezifischer Hinweis oben in der Paywall (je nachdem, was angetippt wurde).
+const FEATURE_HINT: Record<string, string> = {
+  ki: 'Schalte die KI-Mahlzeitenerkennung frei',
+  scan: 'Schalte den Barcode-Scanner frei',
+  leaderboard: 'Tritt mit Premium der Bestenliste bei',
+  level: 'Sammle XP, Level & Erfolge mit Premium',
+  plan: 'Erstelle eigene Trainingspläne mit Premium',
+  exercises: 'Alle Übungen je Muskel mit Premium',
+};
+
 type Ctx = { openPaywall: (feature?: string) => void };
 const PaywallCtx = createContext<Ctx>({ openPaywall: () => {} });
 export function usePaywall() { return useContext(PaywallCtx); }
 
 export function PaywallProvider({ children }: { children: ReactNode }) {
   const [visible, setVisible] = useState(false);
-  const openPaywall = useCallback(() => setVisible(true), []);
+  const [feature, setFeature] = useState<string | undefined>(undefined);
+  const openPaywall = useCallback((f?: string) => { setFeature(f); setVisible(true); }, []);
   return (
     <PaywallCtx.Provider value={{ openPaywall }}>
       {children}
-      <PaywallSheet visible={visible} onClose={() => setVisible(false)} />
+      <PaywallSheet visible={visible} feature={feature} onClose={() => setVisible(false)} />
     </PaywallCtx.Provider>
   );
 }
 
-function PaywallSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+function PaywallSheet({ visible, feature, onClose }: { visible: boolean; feature?: string; onClose: () => void }) {
   const c = useColors();
   const s = makeStyles(c);
   const [legal, setLegal] = useState<null | 'terms' | 'privacy'>(null);
+  const [busy, setBusy] = useState(false);
   const close = () => { setLegal(null); onClose(); };
+
+  const handlePurchase = async () => {
+    if (busy) return;
+    setBusy(true);
+    const outcome = await purchasePremium();
+    setBusy(false);
+    if (outcome === 'success') {
+      close();
+      Alert.alert('Premium aktiviert 🎉', 'Viel Spaß mit allen Funktionen!');
+    } else if (outcome === 'unavailable') {
+      Alert.alert(
+        'Noch nicht verfügbar',
+        'Der Kauf ist gerade nicht möglich. Bitte stelle sicher, dass du eine aktuelle App-Version nutzt, und versuche es später erneut.',
+      );
+    } else if (outcome === 'error') {
+      Alert.alert('Kauf fehlgeschlagen', 'Bitte versuche es später erneut.');
+    }
+    // 'cancelled' -> nichts tun
+  };
+
+  const handleRestore = async () => {
+    if (busy) return;
+    setBusy(true);
+    const outcome = await restorePurchases();
+    setBusy(false);
+    if (outcome === 'success') {
+      close();
+      Alert.alert('Wiederhergestellt', 'Dein Premium-Zugang ist wieder aktiv.');
+    } else if (outcome === 'unavailable') {
+      Alert.alert('Nicht verfügbar', 'Wiederherstellen geht nur in einem echten App-Build.');
+    } else if (outcome === 'none') {
+      Alert.alert('Nichts gefunden', 'Es wurden keine früheren Käufe gefunden.');
+    } else {
+      Alert.alert('Wiederherstellen fehlgeschlagen', 'Bitte versuche es später erneut.');
+    }
+  };
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={close}>
       <View style={s.backdrop}>
@@ -61,6 +110,9 @@ function PaywallSheet({ visible, onClose }: { visible: boolean; onClose: () => v
               <Text style={s.kicker}>FitAvo</Text>
               <Text style={s.title}>Premium 🥑</Text>
               <Text style={s.price}>{PREMIUM_PRICE} · monatlich kündbar</Text>
+              {feature && FEATURE_HINT[feature] && (
+                <Text style={s.featureHint}>{FEATURE_HINT[feature]}</Text>
+              )}
 
               <ScrollView style={{ maxHeight: 280 }} contentContainerStyle={{ paddingVertical: 6 }} showsVerticalScrollIndicator={false}>
                 {BENEFITS.map(([icon, title, desc]) => (
@@ -75,24 +127,22 @@ function PaywallSheet({ visible, onClose }: { visible: boolean; onClose: () => v
               </ScrollView>
 
               <TouchableOpacity
-                style={s.cta}
+                style={[s.cta, busy && { opacity: 0.6 }]}
                 activeOpacity={0.85}
+                disabled={busy}
                 accessibilityRole="button"
                 accessibilityLabel="Premium freischalten"
-                onPress={() => {
-                  close();
-                  Alert.alert(
-                    'Bald verfügbar',
-                    'Die Bezahlung wird mit der fertigen App (App Store / Play Store) aktiviert.\n\nZum Ausprobieren kannst du Premium vorübergehend in den Einstellungen ein- und ausschalten.',
-                  );
-                }}
+                onPress={handlePurchase}
               >
-                <Text style={s.ctaText}>Premium freischalten</Text>
+                <Text style={s.ctaText}>{busy ? 'Wird verarbeitet…' : 'Premium freischalten'}</Text>
               </TouchableOpacity>
 
               <Text style={s.fineprint}>
                 Das Abo verlängert sich automatisch um je 1 Monat ({PREMIUM_PRICE}), bis du kündigst. Die Abrechnung läuft über dein Apple-/Google-Konto. Kündigung jederzeit in dessen Abo-Einstellungen.
               </Text>
+              <View style={s.linksRow}>
+                <Text style={s.link} onPress={handleRestore}>Käufe wiederherstellen</Text>
+              </View>
               <View style={s.linksRow}>
                 <Text style={s.link} onPress={() => setLegal('terms')}>Nutzungsbedingungen</Text>
                 <Text style={s.linkDot}>·</Text>
@@ -117,6 +167,7 @@ function makeStyles(c: Colors) {
     kicker: { fontSize: 13, fontWeight: '800', letterSpacing: 1, color: c.textMuted },
     title: { fontSize: 26, fontWeight: '800', color: c.heading, marginTop: 2 },
     price: { fontSize: 15, fontWeight: '700', color: c.primary, marginTop: 2, marginBottom: 12 },
+    featureHint: { fontSize: 14, fontWeight: '700', color: c.heading, marginTop: -4, marginBottom: 10 },
     row: { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 8 },
     icon: { fontSize: 22, marginRight: 12, marginTop: 1 },
     rowTitle: { fontSize: 15, fontWeight: '700', color: c.heading },
