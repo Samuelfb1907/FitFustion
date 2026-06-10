@@ -2,7 +2,7 @@
 // Nutzt react-native-body-highlighter (echte anatomische Pfade). Ein Tipp auf einen
 // Muskel ruft onSelect(key) -> der Training-Screen oeffnet direkt die Uebungen.
 // Bewusst clean: einheitlich getoente Figur, dezente Konturen, kein Klick-Geblinke.
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { Dimensions, Text, TouchableOpacity, View } from 'react-native';
 import Body, { ExtendedBodyPart, Slug } from 'react-native-body-highlighter';
 import { Colors } from '../contexts/ThemeContext';
@@ -24,7 +24,7 @@ function keyForSlug(slug: Slug | undefined, side: 'front' | 'back'): string | un
 
 const CLICKABLE_SLUGS = Object.keys(SLUG_TO_KEY) as Slug[];
 
-export default function BodyMuscleMap({
+function BodyMuscleMap({
   onSelect,
   c,
   gender = 'male',
@@ -98,3 +98,7 @@ export default function BodyMuscleMap({
     </View>
   );
 }
+
+// React.memo: das schwere Koerper-SVG nur neu rendern, wenn sich onSelect/c/gender
+// wirklich aendern -> kein Neuzeichnen bei jedem Muskel-Tipp (Performance).
+export default memo(BodyMuscleMap);

@@ -1,7 +1,7 @@
 // Training-Hub (themed): oben umschalten zwischen Freiem Training und Trainingsplan.
 // Freies Training: Koerperregion (Karte/Koerper) antippen -> gefilterte Uebungen -> Detail.
 // Zurueck per Wischen zeigt die vorherige Seite dahinter (SwipeBack mit `behind`).
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -105,6 +105,15 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
     }
   }
 
+  // Stabiler Callback fuer das Koerper-Modell, damit BodyMuscleMap (schweres SVG)
+  // NICHT bei jedem openMuscle-Re-Render neu gezeichnet wird (sonst spuerbare Verzoegerung).
+  const openMuscleRef = useRef(openMuscle);
+  openMuscleRef.current = openMuscle;
+  const openMuscleByKey = useCallback((key: string) => {
+    const m = muscles.find((x) => x.key === key);
+    if (m) openMuscleRef.current(m);
+  }, [muscles]);
+
   // --- Ansichten als Variablen (damit beim Zurueckwischen die Vorseite dahinter sichtbar ist) ---
   const hubView = (
     <View style={styles.container}>
@@ -133,7 +142,7 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
           <View style={styles.bodyCard}>
             <GlassFill radius={16} />
             <BodyMuscleMap
-              onSelect={(key) => { const m = muscles.find((x) => x.key === key); if (m) openMuscle(m); }}
+              onSelect={openMuscleByKey}
               c={c}
               gender={profile?.gender === 'female' ? 'female' : 'male'}
             />
