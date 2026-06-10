@@ -170,7 +170,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
     const uid = session?.user?.id;
     try { await AsyncStorage.removeItem('fitavo.aiConsentAt'); } catch {}
     if (uid) supabase.from('profiles').update({ ai_consent_at: null }).eq('id', uid).then(() => {}, () => {});
-    showMsg('KI-Einwilligung widerrufen. Vor der nächsten Nutzung wird wieder gefragt.', false);
+    Alert.alert('KI-Einwilligung widerrufen', 'Erledigt – vor der nächsten Nutzung der KI-Erkennung wirst du wieder um deine Zustimmung gebeten.');
   }
 
   // DSGVO: Konto & alle Daten löschen (Recht auf Löschung)
