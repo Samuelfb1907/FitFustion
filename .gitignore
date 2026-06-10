@@ -10,6 +10,9 @@ node_modules/
 dist/
 web-build/
 
+# Supabase CLI (lokaler Cache, kein Projektinhalt)
+supabase/.temp/
+
 # Generierter QR-Code fuer Expo Go (enthaelt lokale LAN-IP)
 build/expo-qr.png
 
