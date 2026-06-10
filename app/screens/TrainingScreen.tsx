@@ -223,7 +223,7 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
 
   if (selectedMuscle) {
     return (
-      <SwipeBack key="train-muscle" onBack={() => setSelectedMuscle(null)} c={c} behind={hubView}>
+      <SwipeBack key="train-muscle" onBack={() => setSelectedMuscle(null)} c={c}>
         {listView}
       </SwipeBack>
     );
