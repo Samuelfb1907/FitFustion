@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Dimensions, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { usePaywall } from '../components/Paywall';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { LineChart, BarChart } from '../components/Charts';
 import SwipeBack from '../components/SwipeBack';
@@ -41,7 +42,8 @@ function mondayOf(d: Date): Date {
 // unwrap -> lib/format.ts
 
 export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
-  const { session } = useAuth();
+  const { session, isPremium } = useAuth();
+  const { openPaywall } = usePaywall();
   const c = useColors();
   const styles = useMemo(() => makeStyles(c), [c]);
 
@@ -262,7 +264,7 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
       <Segmented
         options={[{ key: 'me', label: 'Meine Werte' }, { key: 'board', label: '🏆 Bestenliste' }]}
         value={seg}
-        onChange={(k) => setSeg(k as 'me' | 'board')}
+        onChange={(k) => { if (k === 'board' && !isPremium) { openPaywall('leaderboard'); return; } setSeg(k as 'me' | 'board'); }}
         c={c}
       />
       {seg === 'board' ? (

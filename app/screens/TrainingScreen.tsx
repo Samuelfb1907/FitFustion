@@ -18,6 +18,7 @@ import BodyMuscleMap from '../components/BodyMuscleMap';
 import BackButton from '../components/BackButton';
 import SwipeBack from '../components/SwipeBack';
 import GlassFill from '../components/GlassFill';
+import { usePaywall } from '../components/Paywall';
 
 type Muscle = { id: string; key: string; name_de: string; body_region: string | null };
 type Exercise = { id: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null };
@@ -26,7 +27,8 @@ type Exercise = { id: string; name: string; difficulty: string; equipment: strin
 const MUSCLE_ORDER = ['chest', 'back', 'shoulders', 'biceps', 'triceps', 'abs', 'legs', 'glutes', 'calves'];
 
 export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
-  const { profile } = useAuth();
+  const { profile, isPremium } = useAuth();
+  const { openPaywall } = usePaywall();
   const c = useColors();
   const styles = useMemo(() => makeStyles(c), [c]);
 
@@ -34,6 +36,7 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
   const [muscles, setMuscles] = useState<Muscle[]>([]);
   const [selectedMuscle, setSelectedMuscle] = useState<Muscle | null>(null);
   const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [moreCount, setMoreCount] = useState(0); // wie viele Uebungen Free zusaetzlich verpasst
   const [loadingExercises, setLoadingExercises] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [mLoading, setMLoading] = useState(true);
@@ -97,7 +100,10 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
         .in('equipment', allowedEquip)
         .order('difficulty');
       if (error) throw error;
-      setExercises(data ?? []);
+      const all = data ?? [];
+      // Gratis: nur 2 Uebungen pro Muskel; Premium: alle.
+      setExercises(isPremium ? all : all.slice(0, 2));
+      setMoreCount(isPremium ? 0 : Math.max(0, all.length - 2));
     } catch (e) {
       setExError(errorMessage(e));
     } finally {
@@ -122,7 +128,7 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
       <Segmented
         options={[{ key: 'free', label: 'Freies Training' }, { key: 'plan', label: 'Trainingsplan' }]}
         value={seg}
-        onChange={(k) => setSeg(k as 'free' | 'plan')}
+        onChange={(k) => { if (k === 'plan' && !isPremium) { openPaywall('plan'); return; } setSeg(k as 'free' | 'plan'); }}
         c={c}
       />
       {seg === 'plan' ? (
@@ -194,6 +200,15 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
           windowSize={7}
           removeClippedSubviews
           ListHeaderComponent={<Text style={styles.countHint}>{exercises.length} {exercises.length === 1 ? 'Übung' : 'Übungen'}</Text>}
+          ListFooterComponent={!isPremium && moreCount > 0 ? (
+            <TouchableOpacity style={styles.exRow} onPress={() => openPaywall('exercises')} activeOpacity={0.7}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.exName}>🔒  Noch {moreCount} {moreCount === 1 ? 'Übung' : 'Übungen'}</Text>
+                <Text style={styles.exMeta}>Mit Premium alle Übungen je Muskel freischalten</Text>
+              </View>
+              <Text style={styles.chev}>›</Text>
+            </TouchableOpacity>
+          ) : null}
           renderItem={({ item: ex }) => (
             <TouchableOpacity style={styles.exRow} onPress={() => setSelectedExercise(ex)} activeOpacity={0.7}>
               <View style={{ flex: 1 }}>

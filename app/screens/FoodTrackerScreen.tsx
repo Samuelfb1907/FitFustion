@@ -19,6 +19,7 @@ import BackButton from '../components/BackButton';
 import SwipeBack from '../components/SwipeBack';
 import Segmented from '../components/Segmented';
 import GlassFill from '../components/GlassFill';
+import { usePaywall } from '../components/Paywall';
 import { parseMeal, ParsedItem } from '../lib/parseMeal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CARD_SHADOW as shadow } from '../lib/ui';
@@ -50,8 +51,9 @@ function typicalAmount(amounts: number[]): number {
 // todayStr -> lib/date.ts
 
 export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: boolean; focusTick?: number }) {
-  const { session } = useAuth();
+  const { session, isPremium } = useAuth();
   const userId = session?.user?.id;
+  const { openPaywall } = usePaywall();
   const c = useColors();
   const styles = useMemo(() => makeStyles(c), [c]);
 
@@ -270,6 +272,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   // Vor der ERSTEN KI-Nutzung holen wir eine ausdrueckliche Einwilligung (Art. 9 DSGVO,
   // Drittland-Uebermittlung des Freitexts an Anthropic/USA). Nachweis: lokal + serverseitig.
   async function recognizeMeal() {
+    if (!isPremium) { openPaywall('ki'); return; }
     if (!nlText.trim() || nlBusy) return;
     if (!aiConsent) { setAiConsentAsk(true); return; }
     await runRecognize();
@@ -849,8 +852,8 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
           multiline
           editable={!nlBusy}
         />
-        <TouchableOpacity style={[styles.nlBtn, (nlBusy || !nlText.trim()) && { opacity: 0.5 }]} onPress={recognizeMeal} disabled={nlBusy || !nlText.trim()} activeOpacity={0.85}>
-          {nlBusy && !nlItems ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.nlBtnText}>🪄  Automatisch erkennen</Text>}
+        <TouchableOpacity style={[styles.nlBtn, isPremium && (nlBusy || !nlText.trim()) && { opacity: 0.5 }]} onPress={recognizeMeal} disabled={isPremium && (nlBusy || !nlText.trim())} activeOpacity={0.85}>
+          {nlBusy && !nlItems ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.nlBtnText}>{isPremium ? '🪄  Automatisch erkennen' : '🔒  Premium: Automatisch erkennen'}</Text>}
         </TouchableOpacity>
         {nlErr && <Text style={styles.error}>{nlErr}</Text>}
       </View>
@@ -862,9 +865,9 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
         <TouchableOpacity style={styles.addBtnRow} onPress={() => openPick(mealByHour())} activeOpacity={0.85}>
           <Text style={styles.addText}>➕  Hinzufügen</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.scanBtn} onPress={() => { setError(null); setScannerOpen(true); }} activeOpacity={0.85}>
+        <TouchableOpacity style={styles.scanBtn} onPress={() => { if (!isPremium) { openPaywall('scan'); return; } setError(null); setScannerOpen(true); }} activeOpacity={0.85}>
           <GlassFill radius={14} />
-          <Text style={styles.scanText}>📷  Scannen</Text>
+          <Text style={styles.scanText}>{isPremium ? '📷  Scannen' : '🔒  Scannen'}</Text>
         </TouchableOpacity>
       </View>
 

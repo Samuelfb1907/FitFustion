@@ -10,6 +10,7 @@ import { computeNutrition, ageFromBirthDate, NutritionResult, Gender, ActivityLe
 import { computeXp, levelInfo, computeStreak, ACHIEVEMENTS, GameStats } from '../lib/gamification';
 import CalorieGauge from '../components/CalorieGauge';
 import GlassFill from '../components/GlassFill';
+import { usePaywall } from '../components/Paywall';
 import { todayTrainingKcal } from '../lib/trainingBonus';
 import { hasStepsPermission, getTodayActivity } from '../lib/health';
 import { dailyGoals, Goal } from '../lib/goals';
@@ -42,7 +43,8 @@ function greeting(): string {
 }
 
 export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (tab: string) => void; focusTick?: number }) {
-  const { session, profile } = useAuth();
+  const { session, profile, isPremium } = useAuth();
+  const { openPaywall } = usePaywall();
   const c = useColors();
   const styles = useMemo(() => makeStyles(c), [c]);
   const [loading, setLoading] = useState(true);
@@ -210,12 +212,12 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
                 <Text style={styles.name}>{profile?.first_name || 'Willkommen'}</Text>
               </View>
               {stats && (
-                <View style={styles.levelPill}>
+                <TouchableOpacity style={styles.levelPill} activeOpacity={isPremium ? 1 : 0.7} disabled={isPremium} onPress={() => openPaywall('level')}>
                   <GlassFill radius={999} />
                   <Text style={styles.levelText}>🔥 {stats.streak}</Text>
                   <View style={styles.levelSep} />
-                  <Text style={styles.levelText}>Lv {lv.level}</Text>
-                </View>
+                  <Text style={styles.levelText}>{isPremium ? `Lv ${lv.level}` : 'Lv 🔒'}</Text>
+                </TouchableOpacity>
               )}
             </View>
 
