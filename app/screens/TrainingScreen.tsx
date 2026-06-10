@@ -120,31 +120,47 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
     if (m) openMuscleRef.current(m);
   }, [muscles]);
 
+  // Umschalt-Leiste (Freies Training / Trainingsplan). Im Freien Training Teil des
+  // Scroll-Inhalts -> scrollt beim Runterscrollen mit weg; sonst fest oben.
+  const segmented = (
+    <Segmented
+      options={[{ key: 'free', label: 'Freies Training' }, { key: 'plan', label: 'Trainingsplan' }]}
+      value={seg}
+      onChange={(k) => { if (k === 'plan' && !isPremium) { openPaywall('plan'); return; } setSeg(k as 'free' | 'plan'); }}
+      c={c}
+    />
+  );
+
   // --- Ansichten als Variablen (damit beim Zurueckwischen die Vorseite dahinter sichtbar ist) ---
   const hubView = (
     <View style={styles.container}>
       <Text style={styles.title}>Training</Text>
       <View style={{ height: 14 }} />
-      <Segmented
-        options={[{ key: 'free', label: 'Freies Training' }, { key: 'plan', label: 'Trainingsplan' }]}
-        value={seg}
-        onChange={(k) => { if (k === 'plan' && !isPremium) { openPaywall('plan'); return; } setSeg(k as 'free' | 'plan'); }}
-        c={c}
-      />
       {seg === 'plan' ? (
-        <View style={{ flex: 1, marginTop: 14 }}>
-          <PlanScreen embedded onOpenExercise={setPlanEx} refreshTick={planRefresh} />
-        </View>
+        <>
+          {segmented}
+          <View style={{ flex: 1, marginTop: 14 }}>
+            <PlanScreen embedded onOpenExercise={setPlanEx} refreshTick={planRefresh} />
+          </View>
+        </>
       ) : mLoading ? (
-        <ActivityIndicator size="large" color={c.primary} style={{ marginTop: 40 }} />
+        <>
+          {segmented}
+          <ActivityIndicator size="large" color={c.primary} style={{ marginTop: 40 }} />
+        </>
       ) : mError ? (
-        <ErrorRetry message={mError} onRetry={() => loadMuscles()} />
+        <>
+          {segmented}
+          <ErrorRetry message={mError} onRetry={() => loadMuscles()} />
+        </>
       ) : (
         <ScrollView
-          contentContainerStyle={{ paddingTop: 18, paddingBottom: 40 }}
+          contentContainerStyle={{ paddingTop: 0, paddingBottom: 40 }}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
         >
+          {segmented}
+          <View style={{ height: 18 }} />
           <View style={styles.bodyCard}>
             <GlassFill radius={16} />
             <BodyMuscleMap
