@@ -339,18 +339,20 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
       <Text style={styles.section}>DARSTELLUNG</Text>
       <View style={styles.card}>
         <GlassFill radius={16} />
-        <Text style={[styles.rowLabel, { marginBottom: 10 }]}>🌙  Erscheinungsbild</Text>
-        <Segmented
-          options={[{ key: 'system', label: 'Automatisch' }, { key: 'light', label: 'Hell' }, { key: 'dark', label: 'Dunkel' }]}
-          value={mode}
-          onChange={(k) => setMode(k as 'system' | 'light' | 'dark')}
-          c={c}
-        />
-        {mode === 'system' && (
-          <Text style={{ color: c.textMuted, fontSize: 12, lineHeight: 16, marginTop: 8 }}>
-            Folgt automatisch dem Hell-/Dunkel-Modus deines Geräts.
-          </Text>
-        )}
+        <View style={{ paddingHorizontal: 16, paddingVertical: 14 }}>
+          <Text style={{ fontSize: 16, color: c.text, lineHeight: 22, marginBottom: 12 }}>🌙  Erscheinungsbild</Text>
+          <Segmented
+            options={[{ key: 'system', label: 'Automatisch' }, { key: 'light', label: 'Hell' }, { key: 'dark', label: 'Dunkel' }]}
+            value={mode}
+            onChange={(k) => setMode(k as 'system' | 'light' | 'dark')}
+            c={c}
+          />
+          {mode === 'system' && (
+            <Text style={{ color: c.textMuted, fontSize: 12, lineHeight: 16, marginTop: 8 }}>
+              Folgt automatisch dem Hell-/Dunkel-Modus deines Geräts.
+            </Text>
+          )}
+        </View>
       </View>
 
       <Text style={styles.section}>PREMIUM (TEST)</Text>
