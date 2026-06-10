@@ -208,30 +208,36 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
     </View>
   ) : null;
 
-  if (selectedExercise) {
-    return (
-      <SwipeBack key="train-exercise" onBack={() => setSelectedExercise(null)} c={c} behind={listView}>
-        <ExerciseDetail
-          exercise={selectedExercise}
-          onBack={() => setSelectedExercise(null)}
-          muscleKey={selectedMuscle?.key ?? null}
-          muscleName={selectedMuscle?.name_de ?? null}
-        />
-      </SwipeBack>
-    );
-  }
-
-  if (selectedMuscle) {
-    return (
-      <SwipeBack key="train-muscle" onBack={() => setSelectedMuscle(null)} c={c}>
-        {listView}
-      </SwipeBack>
-    );
-  }
-
+  // Eine einzige Rueckgabe: der Hub (mit dem schweren Koerper-Modell) bleibt IMMER
+  // gemountet als unterste Ebene -> wird beim Antippen nie neu aufgebaut (schnell)
+  // und erscheint beim Zurueckwischen automatisch unter der daruebergelegten Ansicht.
   return (
     <View style={{ flex: 1 }}>
-      {hubView}
+      <View style={StyleSheet.absoluteFill} pointerEvents={selectedMuscle || selectedExercise || planEx ? 'none' : 'auto'}>
+        {hubView}
+      </View>
+
+      {selectedMuscle && !selectedExercise && (
+        <View style={StyleSheet.absoluteFill}>
+          <SwipeBack key="train-muscle" onBack={() => setSelectedMuscle(null)} c={c}>
+            {listView}
+          </SwipeBack>
+        </View>
+      )}
+
+      {selectedExercise && (
+        <View style={StyleSheet.absoluteFill}>
+          <SwipeBack key="train-exercise" onBack={() => setSelectedExercise(null)} c={c} behind={listView}>
+            <ExerciseDetail
+              exercise={selectedExercise}
+              onBack={() => setSelectedExercise(null)}
+              muscleKey={selectedMuscle?.key ?? null}
+              muscleName={selectedMuscle?.name_de ?? null}
+            />
+          </SwipeBack>
+        </View>
+      )}
+
       {planEx && (
         <View style={StyleSheet.absoluteFill}>
           <SwipeBack onBack={() => { setPlanEx(null); setPlanRefresh((t) => t + 1); }} c={c}>
