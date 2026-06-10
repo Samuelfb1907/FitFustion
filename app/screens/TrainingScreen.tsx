@@ -179,7 +179,6 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
           <Text style={styles.countHint}>{exercises.length} {exercises.length === 1 ? 'Übung' : 'Übungen'}</Text>
           {exercises.map((ex) => (
             <TouchableOpacity key={ex.id} style={styles.exRow} onPress={() => setSelectedExercise(ex)} activeOpacity={0.7}>
-              <GlassFill radius={14} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.exName}>{ex.name}</Text>
                 <Text style={styles.exMeta}>{DIFF_LABELS[ex.difficulty] ?? ex.difficulty} · {EQUIP_LABELS[ex.equipment] ?? ex.equipment}</Text>
