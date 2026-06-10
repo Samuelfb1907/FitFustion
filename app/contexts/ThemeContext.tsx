@@ -1,6 +1,7 @@
 // Theme-System: Hell-/Dunkel-Modus mit zentralem Farb-Satz, gespeichert auf dem Gerät.
 // Screens holen sich Farben per useColors() und passen sich so automatisch an.
 import { createContext, useContext, useEffect, useState, useCallback, useMemo, ReactNode } from 'react';
+import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type ThemeName = 'light' | 'dark';
@@ -45,46 +46,61 @@ const DARK: Colors = {
   glass: 'rgba(16,20,26,0.28)', glassStrong: 'rgba(16,20,26,0.62)', hairline: 'rgba(255,255,255,0.16)',
 };
 
+// Nutzer-Praeferenz: dem System folgen (Standard) oder fest hell/dunkel.
+export type ThemeMode = 'system' | 'light' | 'dark';
+
 type ThemeCtx = {
-  theme: ThemeName;
+  theme: ThemeName;   // tatsaechlich angezeigtes Theme (hell/dunkel)
+  mode: ThemeMode;    // Praeferenz: System folgen / fest hell / fest dunkel
   colors: Colors;
   toggleTheme: () => void;
   setTheme: (t: ThemeName) => void;
+  setMode: (m: ThemeMode) => void;
 };
 
 const ThemeContext = createContext<ThemeCtx>({
   theme: 'light',
+  mode: 'system',
   colors: LIGHT,
   toggleTheme: () => {},
   setTheme: () => {},
+  setMode: () => {},
 });
 
-const STORAGE_KEY = 'fitavo.theme';
+const MODE_KEY = 'fitavo.themeMode';   // 'system' | 'light' | 'dark'
+const LEGACY_KEY = 'fitavo.theme';     // alt: nur 'light' | 'dark'
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeName>('light');
+  const system = useColorScheme();                 // 'light' | 'dark' | null (folgt dem Geraet, live)
+  const [mode, setModeState] = useState<ThemeMode>('system');
 
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then((v) => {
-      if (v === 'dark' || v === 'light') setThemeState(v);
-    });
+    (async () => {
+      try {
+        const v = await AsyncStorage.getItem(MODE_KEY);
+        if (v === 'system' || v === 'light' || v === 'dark') { setModeState(v); return; }
+        // Einmalige Migration vom alten Schalter: bestehende manuelle Wahl beibehalten.
+        const legacy = await AsyncStorage.getItem(LEGACY_KEY);
+        if (legacy === 'light' || legacy === 'dark') setModeState(legacy);
+        // sonst bleibt 'system' (Standard: dem Geraet folgen)
+      } catch {}
+    })();
   }, []);
 
-  const setTheme = useCallback((t: ThemeName) => {
-    setThemeState(t);
-    AsyncStorage.setItem(STORAGE_KEY, t).catch(() => {});
+  const setMode = useCallback((m: ThemeMode) => {
+    setModeState(m);
+    AsyncStorage.setItem(MODE_KEY, m).catch(() => {});
   }, []);
 
-  const toggleTheme = useCallback(() => {
-    setThemeState((prev) => {
-      const next = prev === 'dark' ? 'light' : 'dark';
-      AsyncStorage.setItem(STORAGE_KEY, next).catch(() => {});
-      return next;
-    });
-  }, []);
+  // Effektives Theme: bei 'system' dem Geraet folgen, sonst die feste Wahl.
+  const theme: ThemeName = mode === 'system' ? (system === 'dark' ? 'dark' : 'light') : mode;
+
+  // Rueckwaertskompatibel: setTheme/toggleTheme setzen eine FESTE Wahl (hell/dunkel).
+  const setTheme = useCallback((t: ThemeName) => setMode(t), [setMode]);
+  const toggleTheme = useCallback(() => setMode(theme === 'dark' ? 'light' : 'dark'), [setMode, theme]);
 
   const colors = theme === 'dark' ? DARK : LIGHT;
-  const value = useMemo(() => ({ theme, colors, toggleTheme, setTheme }), [theme, colors, toggleTheme, setTheme]);
+  const value = useMemo(() => ({ theme, mode, colors, toggleTheme, setTheme, setMode }), [theme, mode, colors, toggleTheme, setTheme, setMode]);
 
   return (
     <ThemeContext.Provider value={value}>

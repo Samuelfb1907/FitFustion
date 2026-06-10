@@ -17,6 +17,7 @@ import { healthSupported, healthAvailable, hasStepsPermission, requestHealthPerm
 import BackButton from '../components/BackButton';
 import SwipeBack from '../components/SwipeBack';
 import GlassFill from '../components/GlassFill';
+import Segmented from '../components/Segmented';
 
 // Unterer Abstand fuer Scroll-Inhalte: auf Android (Edge-to-Edge) deutlich groesser,
 // damit der letzte Text auf keinem Geraet hinter der System-/Navigationsleiste landet.
@@ -24,7 +25,7 @@ const BOTTOM_PAD = Platform.OS === 'android' ? 120 : 48;
 
 export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
   const { session, refreshProfile, isPremium } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { mode, setMode } = useTheme();
   const c = useColors();
   const styles = useMemo(() => makeStyles(c), [c]);
 
@@ -338,10 +339,18 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
       <Text style={styles.section}>DARSTELLUNG</Text>
       <View style={styles.card}>
         <GlassFill radius={16} />
-        <View style={styles.row}>
-          <Text style={styles.rowLabel}>🌙  Dunkler Modus</Text>
-          <Switch value={theme === 'dark'} onValueChange={toggleTheme} accessibilityLabel="Dunkler Modus" />
-        </View>
+        <Text style={[styles.rowLabel, { marginBottom: 10 }]}>🌙  Erscheinungsbild</Text>
+        <Segmented
+          options={[{ key: 'system', label: 'Automatisch' }, { key: 'light', label: 'Hell' }, { key: 'dark', label: 'Dunkel' }]}
+          value={mode}
+          onChange={(k) => setMode(k as 'system' | 'light' | 'dark')}
+          c={c}
+        />
+        {mode === 'system' && (
+          <Text style={{ color: c.textMuted, fontSize: 12, lineHeight: 16, marginTop: 8 }}>
+            Folgt automatisch dem Hell-/Dunkel-Modus deines Geräts.
+          </Text>
+        )}
       </View>
 
       <Text style={styles.section}>PREMIUM (TEST)</Text>
