@@ -58,7 +58,11 @@ function BodyMuscleMap({
         />
       </View>
 
-      <View style={{ marginTop: 18, width: W, height: W * 2 }}>
+      <Text style={{ color: c.textMuted, fontSize: 13, marginTop: 16, fontWeight: '600' }}>
+        Tippe einen Muskel an
+      </Text>
+
+      <View style={{ marginTop: 10, width: W, height: W * 2 }}>
         <Body
           side={side}
           gender={gender}
@@ -91,10 +95,6 @@ function BodyMuscleMap({
           style={{ position: 'absolute', right: 0, top: W * 2 * 0.20, width: W * 0.26, height: W * 2 * 0.22 }}
         />
       </View>
-
-      <Text style={{ color: c.textMuted, fontSize: 13, marginTop: 14, fontWeight: '600' }}>
-        Tippe einen Muskel an
-      </Text>
     </View>
   );
 }
