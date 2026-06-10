@@ -14,12 +14,14 @@ export type Profile = {
   gender: string | null;
   experience_level: string | null;
   training_environment: string | null;
+  is_premium: boolean | null;
 };
 
 type AuthContextValue = {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
+  isPremium: boolean;
   refreshProfile: () => Promise<void>;
 };
 
@@ -27,10 +29,11 @@ const AuthContext = createContext<AuthContextValue>({
   session: null,
   profile: null,
   loading: true,
+  isPremium: false,
   refreshProfile: async () => {},
 });
 
-const PROFILE_COLUMNS = 'id, first_name, gender, experience_level, training_environment';
+const PROFILE_COLUMNS = 'id, first_name, gender, experience_level, training_environment, is_premium';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -95,9 +98,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Wir "laden" noch, solange die Session-Prüfung läuft ODER das Profil für den
   // aktuell eingeloggten Nutzer noch nicht geladen ist.
   const loading = !authReady || (!!session?.user && profileUserId !== session.user.id);
+  const isPremium = !!profile?.is_premium;
 
   return (
-    <AuthContext.Provider value={{ session, profile, loading, refreshProfile }}>
+    <AuthContext.Provider value={{ session, profile, loading, isPremium, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

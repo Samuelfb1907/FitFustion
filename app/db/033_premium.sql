@@ -1,0 +1,11 @@
+-- ============================================================================
+--  Migration 033 - Premium-Status (In-App-Abo)
+--  Im Supabase SQL Editor ausfuehren. Idempotent.
+--
+--  is_premium = true -> Nutzer hat das aktive Abo (alle Funktionen frei).
+--  HINWEIS (Produktion): In der echten App wird is_premium SERVERSEITIG gesetzt
+--  (RevenueCat-Webhook mit Service-Role), NICHT vom Client - sonst koennte sich
+--  jeder selbst freischalten. Fuer die Testphase darf der Nutzer es per Schalter
+--  in den Einstellungen umstellen (die bestehende profiles-Update-Policy erlaubt das).
+-- ============================================================================
+alter table public.profiles add column if not exists is_premium boolean not null default false;

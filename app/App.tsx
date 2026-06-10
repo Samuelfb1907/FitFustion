@@ -9,6 +9,7 @@ import OnboardingScreen from './screens/OnboardingScreen';
 import MainTabs from './screens/MainTabs';
 import OfflineBanner from './components/OfflineBanner';
 import ErrorBoundary from './components/ErrorBoundary';
+import { PaywallProvider } from './components/Paywall';
 
 function Root() {
   const { session, profile, loading, refreshProfile } = useAuth();
@@ -52,7 +53,9 @@ export default function App() {
       <ThemeProvider>
         <AuthProvider>
           <ErrorBoundary>
-            <Root />
+            <PaywallProvider>
+              <Root />
+            </PaywallProvider>
           </ErrorBoundary>
         </AuthProvider>
       </ThemeProvider>

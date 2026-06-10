@@ -23,10 +23,19 @@ import GlassFill from '../components/GlassFill';
 const BOTTOM_PAD = Platform.OS === 'android' ? 120 : 48;
 
 export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
-  const { session, refreshProfile } = useAuth();
+  const { session, refreshProfile, isPremium } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const c = useColors();
   const styles = useMemo(() => makeStyles(c), [c]);
+
+  // Nur fuer die Testphase: Premium per Schalter umstellen. In der echten App
+  // setzt das der Bezahl-Dienst (RevenueCat) serverseitig.
+  async function togglePremium(v: boolean) {
+    const userId = session?.user?.id;
+    if (!userId) return;
+    await supabase.from('profiles').update({ is_premium: v }).eq('id', userId);
+    await refreshProfile();
+  }
 
   const [view, setView] = useState<'menu' | 'profile' | 'legal' | 'privacy' | 'impressum' | 'password'>('menu');
   const [rem, setRem] = useState<ReminderPrefs | null>(null);
@@ -316,6 +325,18 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
           <Text style={styles.rowLabel}>🌙  Dunkler Modus</Text>
           <Switch value={theme === 'dark'} onValueChange={toggleTheme} accessibilityLabel="Dunkler Modus" />
         </View>
+      </View>
+
+      <Text style={styles.section}>PREMIUM (TEST)</Text>
+      <View style={styles.card}>
+        <GlassFill radius={16} />
+        <View style={styles.row}>
+          <Text style={styles.rowLabel}>⭐  Premium aktiv (Test)</Text>
+          <Switch value={isPremium} onValueChange={togglePremium} accessibilityLabel="Premium aktiv (Test)" />
+        </View>
+        <Text style={{ color: c.textMuted, fontSize: 12, lineHeight: 16, paddingHorizontal: 2, paddingBottom: 2 }}>
+          Nur zum Testen: schaltet alle Premium-Funktionen frei. Die echte Bezahlung (25 €/Monat) kommt mit dem App-Build.
+        </Text>
       </View>
 
       <Text style={styles.section}>ERINNERUNGEN</Text>
