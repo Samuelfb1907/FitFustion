@@ -7,7 +7,7 @@
 // die plattform-spezifischen Schluessel eintragen: EXPO_PUBLIC_REVENUECAT_IOS_KEY
 // (appl_) und EXPO_PUBLIC_REVENUECAT_ANDROID_KEY (goog_) - diese haben Vorrang.
 import { Platform } from 'react-native';
-import Purchases, { CustomerInfo, LOG_LEVEL, PurchasesPackage } from 'react-native-purchases';
+import Purchases, { CustomerInfo, LOG_LEVEL, PurchasesPackage, PurchasesStoreProduct } from 'react-native-purchases';
 
 const RC_KEY =
   (Platform.OS === 'ios'
@@ -63,26 +63,67 @@ export async function logoutPurchases(): Promise<void> {
   }
 }
 
-/** Holt das Monats-Paket aus dem aktuellen ("current") Offering. */
-async function getPremiumPackage(): Promise<PurchasesPackage | null> {
-  if (!configurePurchases()) return null;
-  try {
-    const offerings = await Purchases.getOfferings();
-    const current = offerings.current;
-    if (!current) return null;
-    return current.monthly ?? current.availablePackages[0] ?? null;
-  } catch {
-    return null;
+export type PurchaseOutcome = 'success' | 'cancelled' | 'unavailable' | 'none' | 'error';
+
+// --- Monats-/Jahres-Pakete fuer die Paywall -------------------------------
+
+export type PremiumPlan = {
+  pkg: PurchasesPackage;
+  priceString: string;                 // lokalisierter Vollpreis, z. B. "9,99 €"
+  pricePerMonthString: string | null;  // lokalisierter Monats-Aequivalentpreis (v. a. fuers Jahresabo)
+  priceAmount: number;                 // numerischer Preis, fuer die Ersparnis-Rechnung
+  freeTrialDays: number | null;        // Gratis-Testtage (z. B. 7), sonst null
+};
+
+export type PremiumPlans = { monthly: PremiumPlan | null; annual: PremiumPlan | null };
+
+/** Dauer eines GRATIS-Einfuehrungsangebots in Tagen (null, wenn keins oder kostenpflichtig). */
+function freeTrialDaysOf(p: PurchasesStoreProduct): number | null {
+  const intro = p.introPrice;
+  if (!intro || intro.price > 0) return null;
+  const n = intro.periodNumberOfUnits ?? 0;
+  switch (intro.periodUnit) {
+    case 'DAY': return n;
+    case 'WEEK': return n * 7;
+    case 'MONTH': return n * 30;
+    case 'YEAR': return n * 365;
+    default: return n;
   }
 }
 
-export type PurchaseOutcome = 'success' | 'cancelled' | 'unavailable' | 'none' | 'error';
+/** Liest den lokalisierten Monats-Aequivalentpreis defensiv aus (Feld je nach SDK-Version optional). */
+function pricePerMonthStringOf(p: PurchasesStoreProduct): string | null {
+  return (p as { pricePerMonthString?: string | null }).pricePerMonthString ?? null;
+}
 
-/** Startet den echten Kauf des Premium-Abos. */
-export async function purchasePremium(): Promise<PurchaseOutcome> {
+function toPlan(pkg: PurchasesPackage | null | undefined): PremiumPlan | null {
+  if (!pkg) return null;
+  const p = pkg.product;
+  return {
+    pkg,
+    priceString: p.priceString,
+    pricePerMonthString: pricePerMonthStringOf(p),
+    priceAmount: p.price,
+    freeTrialDays: freeTrialDaysOf(p),
+  };
+}
+
+/** Liest Monats- und Jahres-Paket aus dem aktuellen ("current") Offering. */
+export async function getPremiumPlans(): Promise<PremiumPlans> {
+  if (!configurePurchases()) return { monthly: null, annual: null };
+  try {
+    const offerings = await Purchases.getOfferings();
+    const current = offerings.current;
+    if (!current) return { monthly: null, annual: null };
+    return { monthly: toPlan(current.monthly), annual: toPlan(current.annual) };
+  } catch {
+    return { monthly: null, annual: null };
+  }
+}
+
+/** Kauft ein konkretes Paket (Monat ODER Jahr). */
+export async function purchasePlan(pkg: PurchasesPackage): Promise<PurchaseOutcome> {
   if (!configurePurchases()) return 'unavailable';
-  const pkg = await getPremiumPackage();
-  if (!pkg) return 'unavailable';
   try {
     const { customerInfo } = await Purchases.purchasePackage(pkg);
     return isPremiumFromInfo(customerInfo) ? 'success' : 'error';
