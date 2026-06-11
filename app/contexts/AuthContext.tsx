@@ -135,7 +135,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // aktuell eingeloggten Nutzer noch nicht geladen ist.
   const loading = !authReady || (!!session?.user && profileUserId !== session.user.id);
 
-  // Premium ist aktiv, wenn RevenueCat einen Kauf meldet ODER der (Test-)Schalter im Profil an ist.
+  // Premium ist aktiv, wenn RevenueCat einen Kauf meldet ODER der serverseitig
+  // (RevenueCat-Webhook) gesetzte profiles.is_premium true ist. Der Client kann is_premium
+  // nicht mehr selbst aendern (Migration 034/035).
   const isPremium = rcPremium || !!profile?.is_premium;
 
   return (

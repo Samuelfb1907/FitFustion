@@ -110,7 +110,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   useFocusTick(focusTick, () => {
     setMode('diary'); setSelectedFood(null); setSearch(''); setError(null); setScannerOpen(false);
     setPickTab('zutaten'); setAddingTo('diary'); setFavDraft(null);
-    loadLogs(); loadQuick(); loadFavorites(); loadUsual();
+    init(true);
     // KI-Einwilligung neu einlesen: so greift ein Widerruf (Einstellungen) sofort,
     // sobald man zum Essen-Tab zurueckkehrt – ohne App-Neustart.
     AsyncStorage.getItem('fitavo.aiConsentAt').then((v) => setAiConsent(!!v)).catch(() => {});
@@ -175,7 +175,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     }
     await loadLogs();
     await loadQuick();
-    await loadFavorites();
+    await init(true);
     await loadUsual();
     setLoadError(null);
     } catch (e) {
@@ -269,8 +269,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       if (e) { setError(errorMessage(e)); return; }
       setQuickMsg(`✓ Übliches ${TRACKER_MEALS.find((m) => m.key === meal)?.label ?? ''} hinzugefügt`);
       setTimeout(() => setQuickMsg(null), 2500);
-      await loadLogs();
-      await loadQuick();
+      await init(true);
     } finally { busyRef.current = false; }
   }
 
@@ -302,7 +301,9 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       setNlMeal(m);
       setNlItems(items.map((it) => ({ ...it, meal_type: m })));
     } catch (e) {
-      const msg = (e as any)?.code === 'rate_limited'
+      const code = (e as any)?.code;
+      if (code === 'premium_required') { openPaywall('ki'); return; }
+      const msg = code === 'rate_limited'
         ? (e as Error).message
         : 'Erkennung gerade nicht verfügbar. Bitte später erneut versuchen.';
       setNlErr(msg);
@@ -352,7 +353,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
         if (error) { setNlErr('Konnte nicht eintragen: ' + (error.message ?? '')); return; }
       }
       setNlItems(null); setNlText('');
-      await loadLogs(); await loadQuick(); await loadUsual();
+      await init(true);
     } finally {
       setNlBusy(false); busyRef.current = false;
     }
@@ -367,8 +368,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       if (e) { setError(errorMessage(e)); return; }
       setQuickMsg(`✓ ${qf.food.name} (${qf.amount} g) hinzugefügt`);
       setTimeout(() => setQuickMsg(null), 2500);
-      await loadLogs();
-      await loadQuick();
+      await init(true);
     } finally {
       busyRef.current = false;
     }
@@ -397,8 +397,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       setSelectedFood(null); setAmount('100'); setSearch(''); setMode('diary');
       setQuickMsg(`✓ ${addedName} (${a} g) hinzugefügt`);
       setTimeout(() => setQuickMsg(null), 2500);
-      await loadLogs();
-      await loadQuick();
+      await init(true);
     } finally {
       setSaving(false);
       busyRef.current = false;
@@ -448,7 +447,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     setSavingFav(false);
     if (error) { setFavErr('Speichern fehlgeschlagen: ' + (error.message ?? '')); return; }
     setFavDraft(null); setAddingTo('diary'); setPickTab('favoriten'); setMode('pick');
-    await loadFavorites();
+    await init(true);
   }
   // Favorit anwenden: alle Zutaten auf einmal in die gewaehlte Mahlzeit eintragen.
   async function applyFavorite(fav: Favorite) {
@@ -459,7 +458,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       const { error: e } = await supabase.from('food_logs').insert(rows);
       if (e) { setError('Konnte Favorit nicht hinzufügen. Vielleicht wurde eine Zutat gelöscht.'); setMode('diary'); return; }
       setMode('diary'); setSearch('');
-      await loadLogs(); await loadQuick();
+      await init(true);
     } finally { busyRef.current = false; }
   }
   function confirmDeleteFavorite(fav: Favorite) {
@@ -471,7 +470,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   async function doDeleteFavorite(id: string) {
     const { error } = await supabase.from('meal_favorites').delete().eq('id', id);
     if (error) { Alert.alert('Nicht möglich', errorMessage(error)); return; }
-    await loadFavorites();
+    await init(true);
   }
 
   function deleteLog(id: string) {
@@ -483,7 +482,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   async function doDeleteLog(id: string) {
     const { error } = await supabase.from('food_logs').delete().eq('id', id);
     if (error) { Alert.alert('Nicht möglich', errorMessage(error)); return; }
-    await loadLogs();
+    await init(true);
   }
 
   function openNewFood() {
@@ -547,7 +546,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     }
     return { totalKcal: kcal, totalP: Math.round(p), totalC: Math.round(cc), totalF: Math.round(f) };
   }, [logs]);
-  const effTarget = targetKcal != null ? targetKcal + trainingKcal + activityKcal : null;
+  const effTarget = targetKcal != null ? targetKcal + Math.max(trainingKcal, activityKcal) : null;
   const remaining = effTarget != null ? effTarget - totalKcal : null;
 
   if (loading) {
@@ -835,7 +834,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
         )}
         {(trainingKcal > 0 || activityKcal > 0) && (
           <Text style={styles.bonusLine} numberOfLines={1}>
-            {trainingKcal > 0 ? '🔥' : ''}{activityKcal > 0 ? '🚶' : ''}  +{trainingKcal + activityKcal} kcal extra{activityKcal > 0 && steps > 0 ? `  ·  ${steps.toLocaleString('de-DE')} Schritte` : ''}
+            {trainingKcal > 0 ? '🔥' : ''}{activityKcal > 0 ? '🚶' : ''}  +{Math.max(trainingKcal, activityKcal)} kcal extra{activityKcal > 0 && steps > 0 ? `  ·  ${steps.toLocaleString('de-DE')} Schritte` : ''}
           </Text>
         )}
         <View style={styles.macrosRow}>

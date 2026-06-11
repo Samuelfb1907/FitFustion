@@ -82,7 +82,7 @@ export const PRIVACY_SECTIONS: { h: string; p: string }[] = [
   },
   {
     h: 'Welche Daten wir verarbeiten',
-    p: 'Konto: E-Mail-Adresse. Profil: Vorname, Alter/Geburtsjahr, Geschlecht, Größe, Gewicht, Aktivitätslevel, Erfahrungslevel, Trainingsumgebung, Allergie-Angaben. Nutzungsdaten: Trainingseinheiten & Sätze, Trainingspläne, Essens-Tagebuch, Wasser- und Gewichtsverlauf, Erfolge. Bei Nutzung der KI-gestützten Mahlzeiten-Erkennung („Sprich’s einfach“) zusätzlich der von dir eingegebene Freitext zur Beschreibung deiner Mahlzeit. Einige davon sind Gesundheitsdaten (besondere Kategorie nach Art. 9 DSGVO).',
+    p: 'Konto: E-Mail-Adresse. Profil: Vorname, Alter/Geburtsjahr, Geschlecht, Größe, Gewicht, Aktivitätslevel, Erfahrungslevel, Trainingsumgebung. Nutzungsdaten: Trainingseinheiten & Sätze, Trainingspläne, Essens-Tagebuch, Wasser- und Gewichtsverlauf, Erfolge. Bei Nutzung der KI-gestützten Mahlzeiten-Erkennung („Sprich’s einfach“) zusätzlich der von dir eingegebene Freitext zur Beschreibung deiner Mahlzeit. Einige davon sind Gesundheitsdaten (besondere Kategorie nach Art. 9 DSGVO).',
   },
   {
     h: 'Zwecke & Rechtsgrundlage',
@@ -95,6 +95,10 @@ export const PRIVACY_SECTIONS: { h: string; p: string }[] = [
   {
     h: 'KI-gestützte Mahlzeiten-Erkennung („Sprich’s einfach“)',
     p: 'Diese Funktion ist freiwillig. Wenn du sie nutzt, wird der von dir eingegebene Text (z. B. „2 Eier und ein Toast“) an unseren Auftragsverarbeiter Anthropic PBC (USA) übermittelt und dort automatisiert in einzelne Lebensmittel mit geschätzten Nährwerten zerlegt; das Ergebnis zeigen wir dir zur Bestätigung an, bevor etwas gespeichert wird. Rechtsgrundlage ist deine Einwilligung durch die Nutzung der Funktion (Art. 6 Abs. 1 lit. a, ggf. Art. 9 Abs. 2 lit. a DSGVO). Die Eingaben werden nicht zum Training von KI-Modellen verwendet. Bitte gib in dieses Feld keine sensiblen Daten ein, die über die Beschreibung deiner Mahlzeit hinausgehen. Nutzt du die Funktion nicht, findet keine solche Übermittlung statt.',
+  },
+  {
+    h: 'Bestenliste (optional)',
+    p: 'Wenn du der freiwilligen Bestenliste beitrittst, ist dein selbst gewählter Anzeigename zusammen mit deiner Wochen-Punktzahl für andere Nutzer der App sichtbar. Du kannst jederzeit wieder austreten – dann wird dein Eintrag entfernt. Ohne Beitritt findet keine solche Veröffentlichung statt.',
   },
   {
     h: 'Abo, In-App-Käufe & Zahlungen',

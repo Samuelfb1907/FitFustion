@@ -33,8 +33,8 @@ export type Colors = {
 // Funktioniert in Hell UND Dunkel (Dark Mode bleibt erhalten).
 const LIGHT: Colors = {
   bg: '#EEF1F6', card: 'rgba(255,255,255,0.52)', text: '#1B1F24', textMuted: '#555C66', heading: '#0E1217',
-  primary: '#0B8A5E', onPrimary: '#FFFFFF', border: 'rgba(20,24,28,0.10)', cardBorder: 'rgba(14,159,110,0.30)', inputBg: 'rgba(20,24,28,0.05)',
-  danger: '#D33C41', success: '#0B8A5E', track: 'rgba(20,24,28,0.08)',
+  primary: '#097A50', onPrimary: '#FFFFFF', border: 'rgba(20,24,28,0.10)', cardBorder: 'rgba(14,159,110,0.30)', inputBg: 'rgba(20,24,28,0.05)',
+  danger: '#C9333A', success: '#097A50', track: 'rgba(20,24,28,0.08)',
   accent: '#0E9F6E', hero: '#0E1217', muscle: '#E2E6EA',
   glass: 'rgba(255,255,255,0.32)', glassStrong: 'rgba(255,255,255,0.6)', hairline: 'rgba(20,24,28,0.10)',
 };

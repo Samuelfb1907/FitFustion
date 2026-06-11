@@ -39,7 +39,8 @@ Alle `.sql`-Dateien werden **manuell** im Supabase **SQL Editor** ausgeführt
 | 31 | `031_equipment_recategorize.sql` | „Kein Equipment" strikt (Geräte → equipment 'other') |
 | 32 | `032_exercises_max.sql` | Großer Übungs-Ausbau (+230) |
 | 33 | `033_premium.sql` | profiles.is_premium (Abo-Status) |
-| 34 | `034_protect_is_premium.sql` | is_premium gegen Client-Änderungen schützen (Trigger) |
+| 34 | `034_protect_is_premium.sql` | is_premium gegen Client-Änderungen schützen (UPDATE-Trigger) |
+| 35 | `035_protect_is_premium_insert.sql` | is_premium-Schutz auf INSERT erweitern (DELETE+INSERT-Lücke schließen) |
 
 ## Hinweise
 - **Reihenfolge zählt:** Spätere Migrationen bauen auf früheren auf.

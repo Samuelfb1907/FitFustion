@@ -43,6 +43,9 @@ export async function parseMeal(text: string, defaultMeal: MealType): Promise<Pa
     if (body?.error === 'rate_limited') {
       throw new ParseMealError('rate_limited', body.message || 'Tageslimit fuer KI-Analysen erreicht. Bitte morgen erneut versuchen.');
     }
+    if (body?.error === 'premium_required') {
+      throw new ParseMealError('premium_required', body.message || 'Die KI-Erkennung ist Teil von FitAvo Premium.');
+    }
     throw error;
   }
   if (data && (data as any).error) throw new Error((data as any).error);

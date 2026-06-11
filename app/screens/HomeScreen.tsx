@@ -212,7 +212,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
                 <Text style={styles.name}>{profile?.first_name || 'Willkommen'}</Text>
               </View>
               {stats && (
-                <TouchableOpacity style={styles.levelPill} activeOpacity={isPremium ? 1 : 0.7} disabled={isPremium} onPress={() => openPaywall('level')} accessibilityRole="button" accessibilityLabel={isPremium ? `Level ${lv.level}, Streak ${stats.streak} Tage` : 'Premium freischalten, um zu leveln'}>
+                <TouchableOpacity style={styles.levelPill} activeOpacity={isPremium ? 1 : 0.7} disabled={isPremium} onPress={() => openPaywall('level')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button" accessibilityLabel={isPremium ? `Level ${lv.level}, Streak ${stats.streak} Tage` : 'Premium freischalten, um zu leveln'}>
                   <GlassFill radius={999} />
                   <Text style={styles.levelText}>🔥 {stats.streak}</Text>
                   <View style={styles.levelSep} />

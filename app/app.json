@@ -42,7 +42,7 @@
       "expo-font"
     ],
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.samuelfb1907.fitavo",
       "config": {
         "usesNonExemptEncryption": false
