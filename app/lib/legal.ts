@@ -102,7 +102,7 @@ export const PRIVACY_SECTIONS: { h: string; p: string }[] = [
   },
   {
     h: 'Abo, In-App-Käufe & Zahlungen',
-    p: 'Premium-Funktionen kannst du als monatlich kündbares Abo (9,99 €/Monat) buchen. Kauf und Abrechnung erfolgen ausschließlich über deinen App-Store-Account (Apple App Store bzw. Google Play); diese Anbieter sind dafür eigenständig Verantwortliche und verarbeiten deine Zahlungsdaten. Wir selbst erhalten und speichern KEINE Zahlungsdaten (z. B. Kreditkartennummern) – bei uns wird lediglich gespeichert, ob dein Konto ein aktives Premium-Abo besitzt. Zur technischen Verwaltung und Prüfung der Abos setzen wir den Dienstleister RevenueCat, Inc. (USA) als Auftragsverarbeiter ein; dabei werden eine pseudonyme Nutzer-Kennung und der Kaufstatus verarbeitet. Die Übermittlung in die USA ist über die EU-Standardvertragsklauseln (Art. 46 DSGVO) abgesichert; ein Auftragsverarbeitungsvertrag (AVV) gemäß Art. 28 DSGVO wird geschlossen.',
+    p: 'Premium-Funktionen kannst du als Abo buchen: 9,99 €/Monat oder 59,99 €/Jahr (für Neukunden in der Regel mit 7-tägiger kostenloser Testphase). Kauf und Abrechnung erfolgen ausschließlich über deinen App-Store-Account (Apple App Store bzw. Google Play); diese Anbieter sind dafür eigenständig Verantwortliche und verarbeiten deine Zahlungsdaten. Wir selbst erhalten und speichern KEINE Zahlungsdaten (z. B. Kreditkartennummern) – bei uns wird lediglich gespeichert, ob dein Konto ein aktives Premium-Abo besitzt. Zur technischen Verwaltung und Prüfung der Abos setzen wir den Dienstleister RevenueCat, Inc. (USA) als Auftragsverarbeiter ein; dabei werden eine pseudonyme Nutzer-Kennung und der Kaufstatus verarbeitet. Die Übermittlung in die USA ist über die EU-Standardvertragsklauseln (Art. 46 DSGVO) abgesichert; ein Auftragsverarbeitungsvertrag (AVV) gemäß Art. 28 DSGVO wird geschlossen.',
   },
   {
     h: 'Speicherdauer',
@@ -171,7 +171,7 @@ export const TERMS_SECTIONS: { h: string; p: string }[] = [
   },
   {
     h: '3. Premium-Abo, Preis & Laufzeit',
-    p: 'Das Premium-Abo kostet 9,99 € pro Monat (inkl. etwaiger gesetzlicher Steuern, soweit nicht anders angegeben). Kauf und Abrechnung erfolgen ausschließlich über deinen App-Store-Account (Apple App Store bzw. Google Play). Es handelt sich um ein automatisch verlängerndes Abonnement mit einer Laufzeit von einem Monat: Es verlängert sich um jeweils einen weiteren Monat zum dann gültigen Preis, sofern du es nicht mindestens 24 Stunden vor Ende des laufenden Zeitraums kündigst.',
+    p: 'Premium ist als Monats- oder Jahresabo erhältlich: 9,99 € pro Monat oder 59,99 € pro Jahr (inkl. etwaiger gesetzlicher Steuern, soweit nicht anders angegeben). Neukunden erhalten in der Regel eine kostenlose Testphase von 7 Tagen; nach deren Ablauf wird der gewählte Abopreis berechnet, sofern du nicht vorher kündigst. Kauf und Abrechnung erfolgen ausschließlich über deinen App-Store-Account (Apple App Store bzw. Google Play). Es handelt sich um ein automatisch verlängerndes Abonnement: Es verlängert sich um die jeweils gewählte Laufzeit (einen Monat bzw. ein Jahr) zum dann gültigen Preis, sofern du es nicht mindestens 24 Stunden vor Ende des laufenden Zeitraums kündigst.',
   },
   {
     h: '4. Kündigung',

@@ -175,7 +175,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     }
     await loadLogs();
     await loadQuick();
-    await init(true);
+    await loadFavorites();
     await loadUsual();
     setLoadError(null);
     } catch (e) {

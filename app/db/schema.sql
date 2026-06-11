@@ -4,7 +4,7 @@
 --  SO FÜHRST DU ES AUS:
 --    1. Supabase-Dashboard öffnen -> linke Leiste: "SQL Editor"
 --    2. "New query" -> diesen GESAMTEN Inhalt einfügen -> "Run" (Strg+Enter)
---    3. DANACH die Migrationen 002 bis 034 IN REIHENFOLGE ausführen (siehe README.md).
+--    3. DANACH die Migrationen 002 bis 035 IN REIHENFOLGE ausführen (siehe README.md).
 --       Dieses Basis-Skript allein ergibt KEINE vollständige Datenbank.
 --
 --  Das Skript ist idempotent (mehrfach ausführbar): vorhandene Objekte werden
