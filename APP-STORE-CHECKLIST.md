@@ -42,7 +42,7 @@ eintragen musst. Bezieht sich auf den echten Code (was die App wirklich erhebt/s
 - [ ] **Support-URL:** https://www.fitavo.eu/support/  (Seite anlegen – Text siehe unten)
 - [ ] **Marketing-URL** (optional): https://www.fitavo.eu/
 - [ ] **Altersfreigabe:** Fragebogen ehrlich ausfüllen (Gesundheits-/Fitness-Inhalte). Voraussichtlich 4+ bis 12+.
-- [ ] **Abo (auto-renewable)** in App Store Connect anlegen: 25,00 €/Monat, Produkt-ID z. B. `fitavo_premium_monthly`, mit lokalisierter Beschreibung + Anzeigename. Danach in RevenueCat verknüpfen.
+- [ ] **Abo (auto-renewable)** in App Store Connect anlegen: 9,99 €/Monat, Produkt-ID z. B. `fitavo_premium_monthly`, mit lokalisierter Beschreibung + Anzeigename. Danach in RevenueCat verknüpfen.
 - [ ] **iPad:** `supportsTablet:true` ist gesetzt → entweder iPad-Screenshots + iPad-Layout liefern, ODER in `app.json` auf `false` setzen (Entscheidung von dir).
 - [ ] **Demo-Account** für die Prüfung hinterlegen (siehe Review-Notizen).
 
@@ -63,7 +63,7 @@ Premium-Funktionen: Über das Demo-Konto sind alle Premium-Funktionen freigescha
 (KI-Mahlzeitenerkennung, Barcode-Scanner, Bestenliste, alle Übungen, Level, Trainingspläne).
 Die Paywall erscheint, wenn ein Gratis-Nutzer eine gesperrte Funktion (Schloss-Symbol) antippt.
 
-In-App-Kauf testen: Das Monats-Abo (25 €/Monat) ist als auto-renewable Subscription angelegt
+In-App-Kauf testen: Das Monats-Abo (9,99 €/Monat) ist als auto-renewable Subscription angelegt
 und kann im Sandbox-Modus gekauft werden. "Käufe wiederherstellen" ist in der Paywall verfügbar.
 
 Hinweis: Health Connect wird nur auf Android genutzt; auf iOS werden keine Gesundheitsberechtigungen abgefragt.
@@ -109,6 +109,6 @@ Anbieter: Samuel Sinemli · Wilhelmsthaler Straße 2 · 34379 Calden · Info@fit
 - Ernährung: Kalorien & Makros, KI-Erkennung „sag, was du gegessen hast", Barcode-Scanner.
 - Fortschritt: Gewichtsverlauf, Erfolge, Bestenliste.
 - Vertrauen: Deutsch, DSGVO/Made-in-Germany, faire Free-Version.
-- Premium: 25 €/Monat, monatlich kündbar.
+- Premium: 9,99 €/Monat, monatlich kündbar.
 
 > Differenzierung (für Store-Text & Marketing): **Körper-Karte als Übungsauswahl + „kein Equipment"-Modus + deutschsprachig/DSGVO-first.** Das nach vorne stellen, nicht generisches „Fitness + Ernährung".

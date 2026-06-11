@@ -12,7 +12,7 @@ import LegalText from './LegalText';
 import { TERMS_SECTIONS, PRIVACY_SECTIONS } from '../lib/legal';
 import { purchasePremium, restorePurchases } from '../lib/purchases';
 
-export const PREMIUM_PRICE = '25 € / Monat';
+export const PREMIUM_PRICE = '9,99 € / Monat';
 
 const BENEFITS = [
   ['🍽️', 'KI-Mahlzeitenerkennung', '„Sprich’s einfach" – einfach eintippen, was du gegessen hast.'],

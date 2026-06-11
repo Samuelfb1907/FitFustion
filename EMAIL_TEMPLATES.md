@@ -17,22 +17,22 @@ So einfügen: **Supabase-Dashboard → Authentication → Emails → Templates**
 
 **Betreff:**
 ```
-FitAvo – Passwort zurücksetzen
+Dein FitAvo-Code zum Passwort-Zurücksetzen
 ```
 
 **Inhalt (HTML):**
 ```html
 <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#1A2230;">
-  <h1 style="font-size:22px;color:#16224A;margin:0 0 4px;">FitAvo 🏋️</h1>
-  <h2 style="font-size:18px;color:#16224A;margin:16px 0 8px;">Passwort zurücksetzen</h2>
-  <p style="font-size:15px;line-height:1.5;">Du hast angefordert, dein Passwort zurückzusetzen. Gib diesen 6-stelligen Code in der FitAvo-App ein:</p>
+  <h1 style="font-size:22px;color:#0E9F6E;margin:0 0 4px;">FitAvo 🥑</h1>
+  <h2 style="font-size:18px;color:#0E1217;margin:16px 0 8px;">Passwort zurücksetzen</h2>
+  <p style="font-size:15px;line-height:1.5;color:#1A2230;">Du hast angefordert, dein Passwort zurückzusetzen. Gib diesen Code in der FitAvo-App ein:</p>
   <p style="text-align:center;margin:28px 0;">
-    <span style="font-size:34px;font-weight:800;letter-spacing:8px;color:#16224A;">{{ .Token }}</span>
+    <span style="display:inline-block;font-size:34px;font-weight:800;letter-spacing:10px;color:#0E1217;background:#EAF7F0;border-radius:12px;padding:14px 22px;">{{ .Token }}</span>
   </p>
-  <p style="font-size:13px;color:#7C8AA0;line-height:1.5;">Der Code ist etwa 1 Stunde gültig. Gib ihn im Fenster „Passwort zurücksetzen" der App ein.</p>
-  <p style="font-size:13px;color:#7C8AA0;line-height:1.5;margin-top:16px;">Wenn du das nicht warst, ignoriere diese E-Mail einfach – dein Passwort bleibt unverändert.</p>
+  <p style="font-size:13px;color:#6B727C;line-height:1.5;">Der Code ist etwa 1 Stunde gültig. Gib ihn im Fenster „Passwort zurücksetzen" der App ein.</p>
+  <p style="font-size:13px;color:#6B727C;line-height:1.5;margin-top:16px;">Wenn du das nicht warst, ignoriere diese E-Mail einfach – dein Passwort bleibt unverändert.</p>
   <hr style="border:none;border-top:1px solid #E4EAF3;margin:24px 0;">
-  <p style="font-size:12px;color:#7C8AA0;">FitAvo · automatisch versendete E-Mail</p>
+  <p style="font-size:12px;color:#9AA5B0;">FitAvo · automatisch versendete E-Mail · Info@fitavo.eu</p>
 </div>
 ```
 
