@@ -59,11 +59,11 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
   function connectHealth() {
     // Pflicht-Hinweis (Google) VOR der Berechtigungsabfrage: was wird gelesen + wohin.
     Alert.alert(
-      'Mit Health Connect verbinden',
-      'FitAvo liest deine Schritte und – falls vorhanden – die von deiner Uhr gemessenen aktiven Kalorien. Diese Werte werden NUR auf deinem Gerät verwendet (zur Anrechnung aufs Tagesziel) und nicht an unsere Server übertragen oder dort gespeichert. Du kannst die Berechtigung jederzeit in Health Connect widerrufen.',
+      t('settings.health.alert.connectTitle'),
+      t('settings.health.alert.connectBody'),
       [
-        { text: 'Abbrechen', style: 'cancel' },
-        { text: 'Verbinden', onPress: doConnectHealth },
+        { text: t('settings.btn.cancel'), style: 'cancel' },
+        { text: t('settings.btn.connect'), onPress: doConnectHealth },
       ],
     );
   }
@@ -73,11 +73,11 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
     if (!available) {
       setBusy(false);
       Alert.alert(
-        'Health Connect nötig',
-        'Bitte installiere/aktiviere die „Health Connect"-App (ab Android 14 vorinstalliert) und verbinde dann erneut.',
+        t('settings.health.alert.neededTitle'),
+        t('settings.health.alert.neededBody'),
         [
-          { text: 'Abbrechen', style: 'cancel' },
-          { text: 'Öffnen', onPress: () => { openHealthSettings(); } },
+          { text: t('settings.btn.cancel'), style: 'cancel' },
+          { text: t('settings.btn.open'), onPress: () => { openHealthSettings(); } },
         ],
       );
       return;
@@ -85,7 +85,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
     const ok = await requestHealthPermission();
     setBusy(false);
     setStepsConnected(ok);
-    showMsg(ok ? 'Verbunden ✓ – Schritte & Kalorien zählen jetzt mit.' : 'Keine Berechtigung erteilt.', !ok);
+    showMsg(ok ? t('settings.health.connected') : t('settings.health.noPermission'), !ok);
   }
 
   // Reiter erneut angetippt -> zurueck zum Einstellungs-Menue
@@ -93,7 +93,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
   async function updateRem(next: ReminderPrefs) {
     if (next.enabled && !rem?.enabled) {
       const ok = await ensurePermission();
-      if (!ok) { showMsg('Bitte Benachrichtigungen für die App erlauben (Handy-Einstellungen).', true); next = { ...next, enabled: false }; }
+      if (!ok) { showMsg(t('settings.rem.permissionNeeded'), true); next = { ...next, enabled: false }; }
     }
     setRem(next);
     await saveReminderPrefs(next);
@@ -104,26 +104,26 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
   async function changePassword() {
     const email = session?.user?.email;
     if (!email) return;
-    if (pwNew.length < 8) { setPwMsg('Neues Passwort: mindestens 8 Zeichen.'); setPwErr(true); return; }
-    if (pwNew !== pwNew2) { setPwMsg('Die neuen Passwörter stimmen nicht überein.'); setPwErr(true); return; }
+    if (pwNew.length < 8) { setPwMsg(t('settings.pw.minLength')); setPwErr(true); return; }
+    if (pwNew !== pwNew2) { setPwMsg(t('settings.pw.mismatch')); setPwErr(true); return; }
     setPwBusy(true); setPwMsg(null);
     // 1) aktuelles Passwort pruefen (Re-Auth), damit nicht ein offenes Handy reicht
     const { error: signErr } = await supabase.auth.signInWithPassword({ email, password: pwCur });
-    if (signErr) { setPwBusy(false); setPwMsg('Aktuelles Passwort ist falsch.'); setPwErr(true); return; }
+    if (signErr) { setPwBusy(false); setPwMsg(t('settings.pw.wrongCurrent')); setPwErr(true); return; }
     // 2) neues Passwort setzen
     const { error: upErr } = await supabase.auth.updateUser({ password: pwNew });
     setPwBusy(false);
-    if (upErr) { setPwMsg('Konnte Passwort nicht ändern: ' + upErr.message); setPwErr(true); return; }
+    if (upErr) { setPwMsg(t('settings.pw.changeFailed', { msg: upErr.message })); setPwErr(true); return; }
     setPwCur(''); setPwNew(''); setPwNew2('');
-    setPwMsg('Passwort geändert ✓'); setPwErr(false);
+    setPwMsg(t('settings.pw.changed')); setPwErr(false);
   }
   function confirmRedoOnboarding() {
     Alert.alert(
-      'Onboarding erneut durchlaufen?',
-      'Du gibst deine Profilangaben neu ein. Deine bisherigen Trainings- und Essensdaten bleiben erhalten.',
+      t('settings.data.redoTitle'),
+      t('settings.data.redoBody'),
       [
-        { text: 'Abbrechen', style: 'cancel' },
-        { text: 'Fortfahren', onPress: redoOnboarding },
+        { text: t('settings.btn.cancel'), style: 'cancel' },
+        { text: t('settings.btn.continue'), onPress: redoOnboarding },
       ],
     );
   }
@@ -149,12 +149,12 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
       const uri = FileSystem.documentDirectory + 'fitavo-datenexport.json';
       await FileSystem.writeAsStringAsync(uri, json);
       if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(uri, { mimeType: 'application/json', dialogTitle: 'FitAvo Datenexport' });
+        await Sharing.shareAsync(uri, { mimeType: 'application/json', dialogTitle: t('settings.privacy.exportDialogTitle') });
       } else {
-        showMsg('Teilen ist auf diesem Gerät nicht verfügbar.', true);
+        showMsg(t('settings.privacy.shareUnavailable'), true);
       }
     } catch (e: any) {
-      showMsg('Export fehlgeschlagen: ' + (e?.message ?? ''), true);
+      showMsg(t('settings.privacy.exportFailed', { msg: e?.message ?? '' }), true);
     } finally {
       setBusy(false);
     }
@@ -165,17 +165,17 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
     const uid = session?.user?.id;
     try { await AsyncStorage.removeItem('fitavo.aiConsentAt'); } catch {}
     if (uid) supabase.from('profiles').update({ ai_consent_at: null }).eq('id', uid).then(() => {}, () => {});
-    Alert.alert('KI-Einwilligung widerrufen', 'Erledigt – vor der nächsten Nutzung der KI-Erkennung wirst du wieder um deine Zustimmung gebeten.');
+    Alert.alert(t('settings.privacy.revokeAiTitle'), t('settings.privacy.revokeAiBody'));
   }
 
   // DSGVO: Konto & alle Daten löschen (Recht auf Löschung)
   function confirmDeleteAccount() {
     Alert.alert(
-      'Konto & alle Daten löschen?',
-      'Dadurch werden ALLE deine Daten (Profil, Training, Ernährung, Fortschritt) unwiderruflich gelöscht. Dieser Schritt kann nicht rückgängig gemacht werden.',
+      t('settings.privacy.deleteTitle'),
+      t('settings.privacy.deleteBody'),
       [
-        { text: 'Abbrechen', style: 'cancel' },
-        { text: 'Endgültig löschen', style: 'destructive', onPress: doDeleteAccount },
+        { text: t('settings.btn.cancel'), style: 'cancel' },
+        { text: t('settings.btn.deleteForever'), style: 'destructive', onPress: doDeleteAccount },
       ],
     );
   }
@@ -191,17 +191,17 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
         // Daten geloescht, aber das Auth-Konto konnte serverseitig nicht entfernt werden:
         // ehrlich kommunizieren statt vollstaendige Loeschung vorzutaeuschen.
         Alert.alert(
-          'Daten gelöscht',
-          'Alle deine Daten wurden gelöscht. Dein Login-Konto (E-Mail) konnte aktuell nicht automatisch vollständig entfernt werden. Für die endgültige Löschung des Kontos schreib uns bitte an Info@fitavo.eu. Du wirst jetzt abgemeldet.',
-          [{ text: 'OK', onPress: () => supabase.auth.signOut() }],
+          t('settings.privacy.dataDeletedTitle'),
+          t('settings.privacy.dataDeletedBody'),
+          [{ text: t('settings.btn.ok'), onPress: () => supabase.auth.signOut() }],
         );
       } else {
         setBusy(false);
-        showMsg('Löschung fehlgeschlagen (' + res.failed.join(', ') + '). Bitte erneut versuchen.', true);
+        showMsg(t('settings.privacy.deleteFailedDetail', { reason: res.failed.join(', ') }), true);
       }
     } catch (e: any) {
       setBusy(false);
-      showMsg('Löschung fehlgeschlagen: ' + (e?.message ?? ''), true);
+      showMsg(t('settings.privacy.deleteFailed', { msg: e?.message ?? '' }), true);
     }
   }
 
@@ -220,21 +220,21 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
       <SwipeBack onBack={() => setView('menu')} c={c} behind={renderMenu()}>
         <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: BOTTOM_PAD }} keyboardShouldPersistTaps="handled">
           <BackButton onPress={() => setView('menu')} c={c} />
-          <Text style={[styles.title, { marginTop: 10 }]}>Passwort ändern</Text>
+          <Text style={[styles.title, { marginTop: 10 }]}>{t('settings.pw.title')}</Text>
           <View style={[styles.card, { padding: 16 }]}>
             <GlassFill radius={16} />
-            <Text style={styles.pwLabel}>Aktuelles Passwort</Text>
-            <TextInput style={styles.pwInput} value={pwCur} onChangeText={setPwCur} secureTextEntry autoCapitalize="none" placeholder="Aktuelles Passwort" placeholderTextColor={c.textMuted} />
-            <Text style={styles.pwLabel}>Neues Passwort</Text>
-            <TextInput style={styles.pwInput} value={pwNew} onChangeText={setPwNew} secureTextEntry autoCapitalize="none" placeholder="mindestens 8 Zeichen" placeholderTextColor={c.textMuted} />
-            <Text style={styles.pwLabel}>Neues Passwort wiederholen</Text>
-            <TextInput style={styles.pwInput} value={pwNew2} onChangeText={setPwNew2} secureTextEntry autoCapitalize="none" placeholder="wiederholen" placeholderTextColor={c.textMuted} returnKeyType="done" onSubmitEditing={changePassword} />
+            <Text style={styles.pwLabel}>{t('settings.pw.current')}</Text>
+            <TextInput style={styles.pwInput} value={pwCur} onChangeText={setPwCur} secureTextEntry autoCapitalize="none" placeholder={t('settings.pw.current')} placeholderTextColor={c.textMuted} />
+            <Text style={styles.pwLabel}>{t('settings.pw.new')}</Text>
+            <TextInput style={styles.pwInput} value={pwNew} onChangeText={setPwNew} secureTextEntry autoCapitalize="none" placeholder={t('settings.pw.minHint')} placeholderTextColor={c.textMuted} />
+            <Text style={styles.pwLabel}>{t('settings.pw.repeat')}</Text>
+            <TextInput style={styles.pwInput} value={pwNew2} onChangeText={setPwNew2} secureTextEntry autoCapitalize="none" placeholder={t('settings.pw.repeatPlaceholder')} placeholderTextColor={c.textMuted} returnKeyType="done" onSubmitEditing={changePassword} />
             <TouchableOpacity style={[styles.pwBtn, pwBusy && { opacity: 0.6 }]} onPress={changePassword} disabled={pwBusy} activeOpacity={0.85}>
-              {pwBusy ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.pwBtnText}>Passwort ändern</Text>}
+              {pwBusy ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.pwBtnText}>{t('settings.pw.title')}</Text>}
             </TouchableOpacity>
             {pwMsg && <Text style={[styles.msg, { color: pwErr ? c.danger : c.success, marginTop: 12 }]}>{pwMsg}</Text>}
           </View>
-          <Text style={styles.hint}>Passwort vergessen? Melde dich ab und nutze im Login „Passwort vergessen?".</Text>
+          <Text style={styles.hint}>{t('settings.pw.forgotHint')}</Text>
         </ScrollView>
       </SwipeBack>
     );
@@ -246,12 +246,12 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
       <SwipeBack onBack={() => setView('menu')} c={c} behind={renderMenu()}>
       <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: BOTTOM_PAD }}>
         <BackButton onPress={() => setView('menu')} c={c} />
-        <Text style={[styles.title, { marginTop: 10 }]}>Rechtliches</Text>
+        <Text style={[styles.title, { marginTop: 10 }]}>{t('settings.legal.disclaimerTitle')}</Text>
         <View style={[styles.card, { padding: 16 }]}>
           <GlassFill radius={16} />
           <LegalText c={c} sections={getDisclaimerSections(lang)} />
         </View>
-        <Text style={styles.hint}>Impressum & Datenschutzerklärung findest du separat in den Einstellungen.</Text>
+        <Text style={styles.hint}>{t('settings.legal.disclaimerHint')}</Text>
       </ScrollView>
       </SwipeBack>
     );
@@ -263,7 +263,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
       <SwipeBack onBack={() => setView('menu')} c={c} behind={renderMenu()}>
       <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: BOTTOM_PAD }}>
         <BackButton onPress={() => setView('menu')} c={c} />
-        <Text style={[styles.title, { marginTop: 10 }]}>Datenschutzerklärung</Text>
+        <Text style={[styles.title, { marginTop: 10 }]}>{t('settings.legal.privacyTitle')}</Text>
         <View style={[styles.card, { padding: 16 }]}>
           <GlassFill radius={16} />
           <LegalText c={c} sections={getPrivacySections(lang)} />
@@ -279,7 +279,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
       <SwipeBack onBack={() => setView('menu')} c={c} behind={renderMenu()}>
       <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: BOTTOM_PAD }}>
         <BackButton onPress={() => setView('menu')} c={c} />
-        <Text style={[styles.title, { marginTop: 10 }]}>Impressum</Text>
+        <Text style={[styles.title, { marginTop: 10 }]}>{t('settings.legal.imprintTitle')}</Text>
         <View style={[styles.card, { padding: 16 }]}>
           <GlassFill radius={16} />
           <LegalText c={c} sections={getImprintSections(lang)} />
@@ -295,7 +295,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
       <SwipeBack onBack={() => setView('menu')} c={c} behind={renderMenu()}>
       <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: BOTTOM_PAD }}>
         <BackButton onPress={() => setView('menu')} c={c} />
-        <Text style={[styles.title, { marginTop: 10 }]}>Nutzungsbedingungen</Text>
+        <Text style={[styles.title, { marginTop: 10 }]}>{t('settings.legal.termsTitle')}</Text>
         <View style={[styles.card, { padding: 16 }]}>
           <GlassFill radius={16} />
           <LegalText c={c} sections={getTermsSections(lang)} />
@@ -316,14 +316,14 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
       <View style={styles.card}>
         <GlassFill radius={16} />
         <TouchableOpacity style={styles.linkRow} onPress={() => setView('profile')}>
-          <Text style={styles.link}>👤  Profil bearbeiten</Text>
+          <Text style={styles.link}>👤  {t('settings.menu.editProfile')}</Text>
         </TouchableOpacity>
         <View style={styles.row}>
-          <Text style={styles.rowLabel}>E-Mail</Text>
+          <Text style={styles.rowLabel}>{t('settings.menu.email')}</Text>
           <Text style={styles.rowValue} numberOfLines={1}>{session?.user?.email}</Text>
         </View>
         <TouchableOpacity style={styles.linkRow} onPress={() => { setPwMsg(null); setView('password'); }}>
-          <Text style={styles.link}>🔑  Passwort ändern</Text>
+          <Text style={styles.link}>🔑  {t('settings.menu.changePassword')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -331,16 +331,16 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
       <View style={styles.card}>
         <GlassFill radius={16} />
         <View style={{ paddingHorizontal: 16, paddingVertical: 14 }}>
-          <Text style={{ fontSize: 16, color: c.text, lineHeight: 22, marginBottom: 12 }}>🌙  Erscheinungsbild</Text>
+          <Text style={{ fontSize: 16, color: c.text, lineHeight: 22, marginBottom: 12 }}>🌙  {t('settings.appearance.title')}</Text>
           <Segmented
-            options={[{ key: 'system', label: 'Automatisch' }, { key: 'light', label: 'Hell' }, { key: 'dark', label: 'Dunkel' }]}
+            options={[{ key: 'system', label: t('settings.appearance.system') }, { key: 'light', label: t('settings.appearance.light') }, { key: 'dark', label: t('settings.appearance.dark') }]}
             value={mode}
             onChange={(k) => setMode(k as 'system' | 'light' | 'dark')}
             c={c}
           />
           {mode === 'system' && (
             <Text style={{ color: c.textMuted, fontSize: 12, lineHeight: 16, marginTop: 8 }}>
-              Folgt automatisch dem Hell-/Dunkel-Modus deines Geräts.
+              {t('settings.appearance.systemHint')}
             </Text>
           )}
         </View>
@@ -364,46 +364,46 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
       <View style={styles.card}>
         <GlassFill radius={16} />
         <View style={styles.row}>
-          <Text style={styles.rowLabel}>🔔  Erinnerungen aktiv</Text>
-          <Switch value={!!rem?.enabled} onValueChange={(v) => { if (rem) updateRem({ ...rem, enabled: v }); }} accessibilityLabel="Erinnerungen aktiv" />
+          <Text style={styles.rowLabel}>🔔  {t('settings.rem.active')}</Text>
+          <Switch value={!!rem?.enabled} onValueChange={(v) => { if (rem) updateRem({ ...rem, enabled: v }); }} accessibilityLabel={t('settings.rem.active')} />
         </View>
         {rem?.enabled && (
           <>
             <View style={styles.row}>
-              <Text style={styles.rowLabel}>💧  Wasser trinken</Text>
-              <Switch value={rem.water} onValueChange={(v) => updateRem({ ...rem, water: v })} accessibilityLabel="Erinnerung Wasser trinken" />
+              <Text style={styles.rowLabel}>💧  {t('settings.rem.water')}</Text>
+              <Switch value={rem.water} onValueChange={(v) => updateRem({ ...rem, water: v })} accessibilityLabel={t('settings.rem.waterA11y')} />
             </View>
             <View style={styles.row}>
-              <Text style={styles.rowLabel}>💪  Training</Text>
-              <Switch value={rem.training} onValueChange={(v) => updateRem({ ...rem, training: v })} accessibilityLabel="Erinnerung Training" />
+              <Text style={styles.rowLabel}>💪  {t('settings.rem.training')}</Text>
+              <Switch value={rem.training} onValueChange={(v) => updateRem({ ...rem, training: v })} accessibilityLabel={t('settings.rem.trainingA11y')} />
             </View>
             {rem.training && (
               <View style={styles.row}>
-                <Text style={styles.rowLabel}>Trainingszeit</Text>
+                <Text style={styles.rowLabel}>{t('settings.rem.trainingTime')}</Text>
                 <View style={styles.stepper}>
-                  <TouchableOpacity style={styles.stepBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel="Trainingszeit eine Stunde früher" onPress={() => updateRem({ ...rem, trainingHour: Math.max(5, rem.trainingHour - 1) })}><Text style={styles.stepBtnText}>−</Text></TouchableOpacity>
+                  <TouchableOpacity style={styles.stepBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('settings.rem.trainingTimeEarlier')} onPress={() => updateRem({ ...rem, trainingHour: Math.max(5, rem.trainingHour - 1) })}><Text style={styles.stepBtnText}>−</Text></TouchableOpacity>
                   <Text style={styles.stepVal}>{String(rem.trainingHour).padStart(2, '0')}:00</Text>
-                  <TouchableOpacity style={styles.stepBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel="Trainingszeit eine Stunde später" onPress={() => updateRem({ ...rem, trainingHour: Math.min(22, rem.trainingHour + 1) })}><Text style={styles.stepBtnText}>+</Text></TouchableOpacity>
+                  <TouchableOpacity style={styles.stepBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('settings.rem.trainingTimeLater')} onPress={() => updateRem({ ...rem, trainingHour: Math.min(22, rem.trainingHour + 1) })}><Text style={styles.stepBtnText}>+</Text></TouchableOpacity>
                 </View>
               </View>
             )}
             <View style={styles.row}>
-              <Text style={styles.rowLabel}>💬  Tägliche Motivation</Text>
-              <Switch value={!!rem?.motivation} onValueChange={(v) => { if (rem) updateRem({ ...rem, motivation: v }); }} accessibilityLabel="Tägliche Motivation" />
+              <Text style={styles.rowLabel}>💬  {t('settings.rem.motivation')}</Text>
+              <Switch value={!!rem?.motivation} onValueChange={(v) => { if (rem) updateRem({ ...rem, motivation: v }); }} accessibilityLabel={t('settings.rem.motivation')} />
             </View>
             {rem.motivation && (
               <View style={styles.row}>
-                <Text style={styles.rowLabel}>Motivations-Uhrzeit</Text>
+                <Text style={styles.rowLabel}>{t('settings.rem.motivationTime')}</Text>
                 <View style={styles.stepper}>
-                  <TouchableOpacity style={styles.stepBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel="Motivations-Uhrzeit eine Stunde früher" onPress={() => updateRem({ ...rem, motivationHour: Math.max(5, rem.motivationHour - 1) })}><Text style={styles.stepBtnText}>−</Text></TouchableOpacity>
+                  <TouchableOpacity style={styles.stepBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('settings.rem.motivationTimeEarlier')} onPress={() => updateRem({ ...rem, motivationHour: Math.max(5, rem.motivationHour - 1) })}><Text style={styles.stepBtnText}>−</Text></TouchableOpacity>
                   <Text style={styles.stepVal}>{String(rem.motivationHour).padStart(2, '0')}:00</Text>
-                  <TouchableOpacity style={styles.stepBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel="Motivations-Uhrzeit eine Stunde später" onPress={() => updateRem({ ...rem, motivationHour: Math.min(22, rem.motivationHour + 1) })}><Text style={styles.stepBtnText}>+</Text></TouchableOpacity>
+                  <TouchableOpacity style={styles.stepBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('settings.rem.motivationTimeLater')} onPress={() => updateRem({ ...rem, motivationHour: Math.min(22, rem.motivationHour + 1) })}><Text style={styles.stepBtnText}>+</Text></TouchableOpacity>
                 </View>
               </View>
             )}
           </>
         )}
-        <Text style={styles.hint}>💬 Über 100 Motivationssprüche, 1× täglich zur gewählten Zeit. Wasser: 10/13/16/19 Uhr · Training zur gewählten Zeit. Echte Benachrichtigungen erscheinen erst nach einem Development-Build (in Expo Go nicht).</Text>
+        <Text style={styles.hint}>{t('settings.rem.hint')}</Text>
       </View>
 
       {healthSupported() && (
@@ -412,9 +412,9 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
           <View style={styles.card}>
             <GlassFill radius={16} />
             <TouchableOpacity style={styles.linkRow} onPress={connectHealth} disabled={busy}>
-              <Text style={styles.link}>🚶  {stepsConnected ? 'Schritte verbunden ✓ (Health Connect)' : 'Mit Health Connect verbinden'}</Text>
+              <Text style={styles.link}>🚶  {stepsConnected ? t('settings.health.connectedLink') : t('settings.health.connectLink')}</Text>
             </TouchableOpacity>
-            <Text style={styles.hint}>Liest Schritte und – falls vorhanden – die von deiner Uhr gemessenen aktiven Kalorien und rechnet sie aufs Tagesziel. Nur im echten Build, nicht in Expo Go.</Text>
+            <Text style={styles.hint}>{t('settings.health.hint')}</Text>
           </View>
         </>
       )}
@@ -423,7 +423,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
       <View style={styles.card}>
         <GlassFill radius={16} />
         <TouchableOpacity style={styles.linkRow} onPress={confirmRedoOnboarding}>
-          <Text style={styles.link}>Onboarding erneut durchlaufen</Text>
+          <Text style={styles.link}>{t('settings.data.redoLink')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -431,16 +431,16 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
       <View style={styles.card}>
         <GlassFill radius={16} />
         <TouchableOpacity style={styles.linkRow} onPress={exportData} disabled={busy}>
-          <Text style={styles.link}>📤  Meine Daten exportieren</Text>
+          <Text style={styles.link}>📤  {t('settings.privacy.exportLink')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.linkRow} onPress={() => setView('privacy')}>
-          <Text style={styles.link}>🔒  Datenschutzerklärung</Text>
+          <Text style={styles.link}>🔒  {t('settings.privacy.policyLink')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.linkRow} onPress={revokeAiConsent}>
-          <Text style={styles.link}>🤖  KI-Einwilligung widerrufen</Text>
+          <Text style={styles.link}>🤖  {t('settings.privacy.revokeAiLink')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.linkRow} onPress={confirmDeleteAccount} disabled={busy}>
-          <Text style={[styles.link, { color: c.danger }]}>🗑  Konto & alle Daten löschen</Text>
+          <Text style={[styles.link, { color: c.danger }]}>🗑  {t('settings.privacy.deleteLink')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -448,21 +448,21 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
       <View style={styles.card}>
         <GlassFill radius={16} />
         <TouchableOpacity style={styles.linkRow} onPress={() => setView('legal')}>
-          <Text style={styles.link}>📄  Haftungsausschluss & Gesundheitshinweis</Text>
+          <Text style={styles.link}>📄  {t('settings.legal.disclaimerLink')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.linkRow} onPress={() => setView('impressum')}>
-          <Text style={styles.link}>🏛  Impressum</Text>
+          <Text style={styles.link}>🏛  {t('settings.legal.imprintLink')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.linkRow} onPress={() => setView('terms')}>
-          <Text style={styles.link}>📃  Nutzungsbedingungen</Text>
+          <Text style={styles.link}>📃  {t('settings.legal.termsLink')}</Text>
         </TouchableOpacity>
       </View>
 
       <Text style={styles.section}>{t('settings.section.about')}</Text>
       <View style={styles.card}>
         <GlassFill radius={16} />
-        <View style={styles.row}><Text style={styles.rowLabel}>App</Text><Text style={styles.rowValue}>FitAvo</Text></View>
-        <View style={styles.row}><Text style={styles.rowLabel}>Version</Text><Text style={styles.rowValue}>1.0.0</Text></View>
+        <View style={styles.row}><Text style={styles.rowLabel}>{t('settings.about.app')}</Text><Text style={styles.rowValue}>FitAvo</Text></View>
+        <View style={styles.row}><Text style={styles.rowLabel}>{t('settings.about.version')}</Text><Text style={styles.rowValue}>1.0.0</Text></View>
       </View>
 
       {busy && <ActivityIndicator color={c.primary} style={{ marginTop: 14 }} />}
