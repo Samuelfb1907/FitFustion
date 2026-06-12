@@ -140,6 +140,13 @@ export const de = {
   "food.a11yAddToMeal": "Zu {meal} hinzufügen",
   "food.a11yAddUsual": "Übliches {meal} hinzufügen",
   "food.a11yAmountFor": "Menge für {name} in Gramm",
+  "food.a11ySaveMealAsFavorite": "{meal} als Favorit speichern",
+
+  // Mahlzeit-Namen (Tagebuch-Abschnitte)
+  "food.meal.breakfast": "Frühstück",
+  "food.meal.lunch": "Mittagessen",
+  "food.meal.dinner": "Abendessen",
+  "food.meal.snack": "Snack",
 };
 
 export const en = {
@@ -282,4 +289,11 @@ export const en = {
   "food.a11yAddToMeal": "Add to {meal}",
   "food.a11yAddUsual": "Add usual {meal}",
   "food.a11yAmountFor": "Amount for {name} in grams",
+  "food.a11ySaveMealAsFavorite": "Save {meal} as favorite",
+
+  // Meal names (diary sections)
+  "food.meal.breakfast": "Breakfast",
+  "food.meal.lunch": "Lunch",
+  "food.meal.dinner": "Dinner",
+  "food.meal.snack": "Snack",
 };

@@ -59,6 +59,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   const t = useT();
   const { lang } = useLang();
   const legalShort = getLegalShort(lang);
+  const mealLabel = (k: MealType) => t(`food.meal.${k}`);
   const styles = useMemo(() => makeStyles(c), [c]);
 
   const [loading, setLoading] = useState(true);
@@ -271,7 +272,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       const rows = u.items.map((it) => ({ user_id: userId, food_id: it.food.id, amount_g: it.amount, log_date: todayStr(), meal_type: meal }));
       const { error: e } = await supabase.from('food_logs').insert(rows);
       if (e) { setError(errorMessage(e)); return; }
-      setQuickMsg(t('food.usualAdded', { meal: TRACKER_MEALS.find((m) => m.key === meal)?.label ?? '' }));
+      setQuickMsg(t('food.usualAdded', { meal: mealLabel(meal) }));
       setTimeout(() => setQuickMsg(null), 2500);
       await init(true);
     } finally { busyRef.current = false; }
@@ -431,6 +432,19 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
 
   function startNewFavorite() {
     setFavDraft({ name: '', items: [] }); setFavErr(null); setAddingTo('favorite'); setMode('favnew');
+  }
+  // Bereits geloggte Mahlzeit nachtraeglich als Favorit speichern: Eintraege -> Entwurf (umbenennbar).
+  function saveMealAsFavorite(meal: MealType, entries: LogEntry[]) {
+    const favItems: FavItem[] = [];
+    for (const e of entries) {
+      if (!e.food) continue;
+      favItems.push({ food_id: e.food.id, name: e.food.name, amount_g: e.amount_g, kcal: e.food.kcal, protein: e.food.protein, carbs: e.food.carbs, fat: e.food.fat });
+    }
+    if (!favItems.length) return;
+    setFavErr(null);
+    setFavDraft({ name: mealLabel(meal), items: favItems });
+    setAddingTo('favorite');
+    setMode('favnew');
   }
   function cancelFavNew() {
     setFavDraft(null); setAddingTo('diary'); setPickTab('favoriten'); setMode('pick');
@@ -594,7 +608,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
               <View style={styles.mealChips}>
                 {TRACKER_MEALS.map((m) => (
                   <TouchableOpacity key={m.key} style={[styles.mealChip, mealType === m.key && styles.mealChipActive]} onPress={() => setMealType(m.key)} activeOpacity={0.8}>
-                    <Text style={[styles.mealChipText, mealType === m.key && styles.mealChipTextActive]}>{m.icon} {m.label}</Text>
+                    <Text style={[styles.mealChipText, mealType === m.key && styles.mealChipTextActive]}>{m.icon} {mealLabel(m.key)}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -694,7 +708,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
           </>
         ) : (
           <>
-            <Text style={styles.subtitle}>{t('food.favHint', { meal: TRACKER_MEALS.find((m) => m.key === mealType)?.label ?? t('food.theMeal') })}</Text>
+            <Text style={styles.subtitle}>{t('food.favHint', { meal: mealLabel(mealType) })}</Text>
             <TouchableOpacity style={styles.newFoodBtn} onPress={startNewFavorite} activeOpacity={0.85}>
               <GlassFill radius={16} />
               <Text style={styles.newFoodText}>{t('food.createNewFavorite')}</Text>
@@ -886,10 +900,10 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
         <View style={styles.usualCard}>
           <GlassFill radius={14} />
           <View style={{ flex: 1 }}>
-            <Text style={styles.usualTitle}>{t('food.usualTitle', { meal: TRACKER_MEALS.find((m) => m.key === curMeal)?.label ?? t('food.aMeal') })}</Text>
+            <Text style={styles.usualTitle}>{t('food.usualTitle', { meal: mealLabel(curMeal) })}</Text>
             <Text style={styles.usualItems} numberOfLines={2}>{usual.items.map((i) => i.food.name).join(' · ')}  ·  {usual.kcal} kcal</Text>
           </View>
-          <TouchableOpacity style={styles.usualBtn} onPress={() => addUsual(curMeal)} disabled={busyRef.current} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={t('food.a11yAddUsual', { meal: TRACKER_MEALS.find((m) => m.key === curMeal)?.label ?? t('food.aMeal') })}>
+          <TouchableOpacity style={styles.usualBtn} onPress={() => addUsual(curMeal)} disabled={busyRef.current} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={t('food.a11yAddUsual', { meal: mealLabel(curMeal) })}>
             <Text style={styles.usualBtnText}>{t('food.oneTap')}</Text>
           </TouchableOpacity>
         </View>
@@ -923,10 +937,15 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
           <View key={m.key} style={styles.mealCard}>
             <GlassFill radius={14} />
             <View style={styles.mealHeader}>
-              <Text style={styles.mealTitle}>{m.icon}  {m.label}</Text>
+              <Text style={styles.mealTitle}>{m.icon}  {mealLabel(m.key)}</Text>
               <View style={styles.mealHeaderRight}>
                 {mealKcal > 0 && <Text style={styles.mealKcal}>{mealKcal} kcal</Text>}
-                <TouchableOpacity style={styles.mealAdd} onPress={() => openPick(m.key)} activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('food.a11yAddToMeal', { meal: m.label })}>
+                {items.length > 0 && (
+                  <TouchableOpacity style={styles.mealAdd} onPress={() => saveMealAsFavorite(m.key, items)} activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('food.a11ySaveMealAsFavorite', { meal: mealLabel(m.key) })}>
+                    <Text style={styles.mealAddText}>⭐</Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity style={styles.mealAdd} onPress={() => openPick(m.key)} activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('food.a11yAddToMeal', { meal: mealLabel(m.key) })}>
                   <Text style={styles.mealAddText}>＋</Text>
                 </TouchableOpacity>
               </View>
@@ -963,7 +982,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
               return (
                 <TouchableOpacity key={m.key} onPress={() => setNlMealAll(m.key)} style={[styles.nlChip, active && styles.nlChipActive]} activeOpacity={0.8} accessibilityRole="button" accessibilityState={{ selected: active }}>
                   <GlassFill radius={999} />
-                  <Text style={[styles.nlChipText, active && styles.nlChipTextActive]}>{m.icon} {m.label}</Text>
+                  <Text style={[styles.nlChipText, active && styles.nlChipTextActive]}>{m.icon} {mealLabel(m.key)}</Text>
                 </TouchableOpacity>
               );
             })}
