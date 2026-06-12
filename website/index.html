@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FitAvo – Dein smarter Fitness- & Ernährungs-Coach</title>
+  <meta name="description" content="FitAvo vereint Kalorien-Tracking, KI-Mahlzeiterkennung, Schrittzähler und über 300 Übungen in einer App – klar, motivierend und auf dich zugeschnitten." />
+  <meta name="theme-color" content="#0E9F6E" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="FitAvo – Trainiere smarter. Iss bewusster." />
+  <meta property="og:description" content="Kalorien-Tracking, KI-Mahlzeiterkennung, Schrittzähler & über 300 Übungen – alles in einer App." />
+  <meta property="og:url" content="https://www.fitavo.eu/" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="progress-bar" aria-hidden="true"></div>
+
+  <!-- ============================ Header ============================ -->
+  <header class="header">
+    <div class="container nav">
+      <a class="brand" href="/" aria-label="FitAvo Startseite">
+        <svg class="logo" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M32 4C21 4 15 16 15 31c0 16 9 29 17 29s17-13 17-29C49 16 43 4 32 4Z" fill="#0E7A50"/>
+          <path d="M32 13c-7.5 0-11.5 9-11.5 19.5C20.5 44 26 52 32 52s11.5-8 11.5-19.5C43.5 22 39.5 13 32 13Z" fill="#E6F8EF"/>
+          <ellipse cx="32" cy="37" rx="8.5" ry="9.5" fill="#8A5A33"/>
+          <ellipse cx="29.5" cy="34" rx="2.6" ry="3" fill="#A9744A"/>
+        </svg>
+        FitAvo
+      </a>
+      <nav class="nav-links" aria-label="Hauptnavigation">
+        <a href="#features">Funktionen</a>
+        <a href="#ablauf">So funktioniert's</a>
+        <a href="#preise">Preise</a>
+        <a href="#faq">FAQ</a>
+        <a class="btn btn-primary nav-cta" href="#download">App holen</a>
+      </nav>
+      <button class="nav-toggle" aria-label="Menü öffnen" aria-expanded="false"><span></span><span></span><span></span></button>
+    </div>
+  </header>
+
+  <!-- ============================= Hero ============================= -->
+  <section class="hero">
+    <div class="blobs" aria-hidden="true"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span></div>
+    <div class="container hero-grid">
+      <div class="hero-copy">
+        <span class="eyebrow reveal">🥑 Fitness & Ernährung in einer App</span>
+        <h1 class="reveal">Trainiere smarter.<br><span class="gradient-text">Iss bewusster.</span></h1>
+        <p class="lead reveal">FitAvo vereint Kalorien-Tracking, KI-Mahlzeiterkennung und über 300 Übungen – klar, motivierend und genau auf dein Ziel zugeschnitten.</p>
+        <div class="hero-cta reveal">
+          <a class="btn btn-primary btn-lg" href="#download">App holen</a>
+          <a class="btn btn-ghost btn-lg" href="#features">Funktionen entdecken</a>
+        </div>
+        <p class="hero-note reveal">✓ <strong>7 Tage kostenlos</strong> testen · jederzeit kündbar</p>
+      </div>
+
+      <div class="hero-visual reveal right">
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="phone-screen">
+              <div class="app-top">
+                <div class="greet">Hi Sam 👋</div>
+                <div class="av"></div>
+              </div>
+              <div class="ring-card">
+                <div class="ring" data-deg="250">
+                  <div class="val"><b>1.840</b><span>von 2.400 kcal</span></div>
+                </div>
+                <div class="macros">
+                  <div class="macro"><div class="bar"><i data-w="72" style="background:#0E9F6E"></i></div><small>Eiweiß</small></div>
+                  <div class="macro"><div class="bar"><i data-w="58" style="background:#E69500"></i></div><small>Kohlenh.</small></div>
+                  <div class="macro"><div class="bar"><i data-w="44" style="background:#E0556B"></i></div><small>Fett</small></div>
+                </div>
+              </div>
+              <div class="app-rows">
+                <div class="app-row"><div class="ico">🍳</div><div class="tx"><b>Frühstück</b><span>Rührei & Vollkornbrot</span></div><div class="kcal">420</div></div>
+                <div class="app-row"><div class="ico">🥗</div><div class="tx"><b>Mittag</b><span>Hähnchen-Bowl</span></div><div class="kcal">610</div></div>
+                <div class="app-row"><div class="ico">🚶</div><div class="tx"><b>Schritte</b><span>8.420 heute</span></div><div class="kcal">+310</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================== Features =========================== -->
+  <section class="section" id="features">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow reveal">Funktionen</span>
+        <h2 class="reveal">Alles, was du zum Dranbleiben brauchst</h2>
+        <p class="lead reveal">Eine App für Ernährung und Training – durchdacht, schnell und motivierend.</p>
+      </div>
+      <div class="features-grid" data-stagger>
+        <div class="feature reveal"><div class="ficon">🍽️</div><h3>KI-Mahlzeiterkennung</h3><p>Beschreib dein Essen in Worten – die KI erkennt Lebensmittel und Nährwerte automatisch.</p></div>
+        <div class="feature reveal"><div class="ficon">📷</div><h3>Barcode-Scanner</h3><p>Produkt scannen, fertig. Kalorien und Makros landen sofort im Tagebuch.</p></div>
+        <div class="feature reveal"><div class="ficon">💪</div><h3>Über 300 Übungen</h3><p>Mit Animationen, gefiltert nach Muskelgruppe und Equipment – auch ganz ohne Geräte.</p></div>
+        <div class="feature reveal"><div class="ficon">🚶</div><h3>Schrittzähler</h3><p>Deine Schritte werden automatisch als Aktivität auf dein Tagesziel angerechnet.</p></div>
+        <div class="feature reveal"><div class="ficon">🗓️</div><h3>Trainingspläne</h3><p>Persönliche Wochenpläne, die zu deinem Ziel und deiner Erfahrung passen.</p></div>
+        <div class="feature reveal"><div class="ficon">🏆</div><h3>Bestenliste</h3><p>Miss dich freiwillig mit anderen, sammle Punkte und bleib motiviert.</p></div>
+        <div class="feature reveal"><div class="ficon">📈</div><h3>Fortschritt</h3><p>Gewicht, Kalorien und Trainings immer übersichtlich im Blick.</p></div>
+        <div class="feature reveal"><div class="ficon">🌐</div><h3>Zweisprachig</h3><p>Komplett auf Deutsch und Englisch – mit einem Tipp in den Einstellungen umschaltbar.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ Ablauf ============================ -->
+  <section class="section steps" id="ablauf">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow reveal">So funktioniert's</span>
+        <h2 class="reveal">In drei Schritten startklar</h2>
+      </div>
+      <div class="steps-grid" data-stagger>
+        <div class="step reveal"><div class="num">1</div><h3>Profil anlegen</h3><p>Größe, Gewicht und Ziel angeben – FitAvo berechnet dein Kalorien- und Makroziel.</p></div>
+        <div class="step reveal"><div class="num">2</div><h3>Tracken</h3><p>Essen, Training und Wasser in Sekunden festhalten – per Suche, Scan oder KI.</p></div>
+        <div class="step reveal"><div class="num">3</div><h3>Dranbleiben</h3><p>Fortschritt sehen, Erfolge sammeln und Schritt für Schritt dein Ziel erreichen.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ Stats ============================ -->
+  <section class="section">
+    <div class="container">
+      <div class="stats-grid" data-stagger>
+        <div class="stat reveal"><div class="big gradient-text"><span data-count="300" data-suffix="+">0</span></div><div class="lbl">Übungen mit Animationen</div></div>
+        <div class="stat reveal"><div class="big gradient-text"><span data-count="100" data-suffix="+">0</span></div><div class="lbl">Motivationssprüche</div></div>
+        <div class="stat reveal"><div class="big gradient-text"><span data-count="2">0</span></div><div class="lbl">Sprachen (DE / EN)</div></div>
+        <div class="stat reveal"><div class="big gradient-text"><span data-count="7">0</span></div><div class="lbl">Tage Premium gratis</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ Preise ============================ -->
+  <section class="section" id="preise">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow reveal">Preise</span>
+        <h2 class="reveal">Fair & transparent</h2>
+        <p class="lead reveal">Starte kostenlos. Schalte mehr frei, wenn du mehr willst.</p>
+      </div>
+      <div class="pricing-grid">
+        <div class="price-card reveal left">
+          <h3>Gratis</h3>
+          <div class="price-amount"><span class="amt">0 €</span></div>
+          <p class="price-sub">Für immer kostenlos</p>
+          <ul class="price-list">
+            <li><span class="check">✓</span> Kalorien-, Wasser- & Gewichts-Tracking</li>
+            <li><span class="check">✓</span> Freies Training & Übungs-Basis</li>
+            <li><span class="check">✓</span> Manuelles Lebensmittel-Logging</li>
+            <li><span class="check">✓</span> Tages- & Fortschrittsübersicht</li>
+          </ul>
+          <a class="btn btn-ghost" href="#download" style="width:100%">Kostenlos starten</a>
+        </div>
+        <div class="price-card featured reveal right">
+          <span class="price-badge">Beliebt</span>
+          <h3>Premium</h3>
+          <div class="price-amount"><span class="amt">9,99 €</span><span class="per">/ Monat</span></div>
+          <p class="price-sub">oder 59,99 € / Jahr · 7 Tage gratis testen</p>
+          <ul class="price-list">
+            <li><span class="check">✓</span> <strong>KI-Mahlzeiterkennung</strong></li>
+            <li><span class="check">✓</span> Barcode-Scanner</li>
+            <li><span class="check">✓</span> Alle Übungen je Muskelgruppe</li>
+            <li><span class="check">✓</span> Persönliche Trainingspläne</li>
+            <li><span class="check">✓</span> Bestenliste, Level & Erfolge</li>
+          </ul>
+          <a class="btn btn-primary" href="#download" style="width:100%">Premium testen</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================= FAQ ============================= -->
+  <section class="section" id="faq">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow reveal">FAQ</span>
+        <h2 class="reveal">Häufige Fragen</h2>
+      </div>
+      <div class="faq reveal">
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false">Was kostet FitAvo?<span class="plus" aria-hidden="true"></span></button>
+          <div class="faq-a"><div class="faq-a-inner">Die Basis-Version ist dauerhaft kostenlos. Premium gibt es für 9,99 € pro Monat oder 59,99 € pro Jahr – für Neukunden mit einer 7-tägigen kostenlosen Testphase.</div></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false">Kann ich jederzeit kündigen?<span class="plus" aria-hidden="true"></span></button>
+          <div class="faq-a"><div class="faq-a-inner">Ja. Das Abo läuft über deinen App-Store-Account und ist dort jederzeit zum Ende des laufenden Zeitraums kündbar.</div></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false">Sind meine Daten sicher?<span class="plus" aria-hidden="true"></span></button>
+          <div class="faq-a"><div class="faq-a-inner">Deine Daten werden DSGVO-konform auf Servern in der EU (Frankfurt) gespeichert. Deine Schrittdaten bleiben ausschließlich auf deinem Gerät. Mehr dazu in der <a href="/datenschutzerklaerung/" style="color:var(--green-deep);font-weight:700">Datenschutzerklärung</a>.</div></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false">Brauche ich Geräte oder Equipment?<span class="plus" aria-hidden="true"></span></button>
+          <div class="faq-a"><div class="faq-a-inner">Nein. FitAvo bietet auch Übungen komplett ohne Equipment – nur mit deinem Körpergewicht. Mit Geräten stehen dir noch mehr Übungen zur Verfügung.</div></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false">Wie funktioniert die KI-Mahlzeiterkennung?<span class="plus" aria-hidden="true"></span></button>
+          <div class="faq-a"><div class="faq-a-inner">Du schreibst einfach, was du gegessen hast (z. B. „2 Eier und ein Toast"). Die KI schlägt passende Lebensmittel mit Nährwerten vor – du bestätigst, bevor etwas gespeichert wird.</div></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false">Auf welchen Geräten läuft FitAvo?<span class="plus" aria-hidden="true"></span></button>
+          <div class="faq-a"><div class="faq-a-inner">FitAvo erscheint zuerst für das iPhone im App Store. Eine Android-Version ist in Vorbereitung.</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ CTA / Download ============================ -->
+  <section class="section cta" id="download">
+    <div class="container">
+      <div class="cta-box reveal scale">
+        <h2>Bereit, dein Ziel zu erreichen?</h2>
+        <p class="lead">Lade FitAvo und starte mit 7 Tagen Premium gratis. Dein Coach für Ernährung und Training – immer dabei.</p>
+        <div class="badges">
+          <span class="store-badge soon"><span class="store-ico"></span><span><small>Bald im</small><b>App Store</b></span></span>
+          <span class="store-badge soon"><span class="store-ico">▶</span><span><small>In Vorbereitung</small><b>Google Play</b></span></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ Footer ============================ -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div class="brand">
+            <svg class="logo" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M32 4C21 4 15 16 15 31c0 16 9 29 17 29s17-13 17-29C49 16 43 4 32 4Z" fill="#0E7A50"/>
+              <path d="M32 13c-7.5 0-11.5 9-11.5 19.5C20.5 44 26 52 32 52s11.5-8 11.5-19.5C43.5 22 39.5 13 32 13Z" fill="#E6F8EF"/>
+              <ellipse cx="32" cy="37" rx="8.5" ry="9.5" fill="#8A5A33"/>
+            </svg>
+            FitAvo
+          </div>
+          <p>Trainiere smarter. Iss bewusster. Dein smarter Fitness- und Ernährungs-Coach fürs iPhone. 🥑</p>
+        </div>
+        <div>
+          <h4>Produkt</h4>
+          <ul class="footer-links">
+            <li><a href="#features">Funktionen</a></li>
+            <li><a href="#preise">Preise</a></li>
+            <li><a href="#faq">FAQ</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Rechtliches</h4>
+          <ul class="footer-links">
+            <li><a href="/impressum/">Impressum</a></li>
+            <li><a href="/datenschutzerklaerung/">Datenschutzerklärung</a></li>
+            <li><a href="/nutzungsbedingungen/">Nutzungsbedingungen</a></li>
+            <li><a href="mailto:Info@fitavo.eu">Info@fitavo.eu</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© <span id="year">2026</span> FitAvo · Samuel Sinemli</span>
+        <span>Mit 🥑 in Deutschland entwickelt</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/script.js" defer></script>
+</body>
+</html>

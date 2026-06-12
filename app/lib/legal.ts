@@ -126,7 +126,7 @@ export const PRIVACY_SECTIONS: { h: string; p: string }[] = [
   },
   {
     h: 'Stand & Änderungen',
-    p: 'Stand dieser Datenschutzerklärung: 10. Juni 2026. Wir können diese Erklärung anpassen, z. B. bei neuen Funktionen oder geänderter Rechtslage; es gilt die jeweils aktuelle, in der App abrufbare Fassung.',
+    p: 'Stand dieser Datenschutzerklärung: 12. Juni 2026. Wir können diese Erklärung anpassen, z. B. bei neuen Funktionen oder geänderter Rechtslage; es gilt die jeweils aktuelle, in der App abrufbare Fassung.',
   },
 ];
 
@@ -211,7 +211,7 @@ export const TERMS_SECTIONS: { h: string; p: string }[] = [
   },
   {
     h: 'Stand',
-    p: 'Stand dieser Nutzungsbedingungen: 10. Juni 2026.',
+    p: 'Stand dieser Nutzungsbedingungen: 12. Juni 2026.',
   },
 ];
 
@@ -345,7 +345,7 @@ export const PRIVACY_SECTIONS_EN: { h: string; p: string }[] = [
   },
   {
     h: 'Status & amendments',
-    p: 'Status of this privacy policy: 10 June 2026. We may amend this policy, e.g. in the event of new functions or changes in the legal situation; the version currently available in the app applies.',
+    p: 'Status of this privacy policy: 12 June 2026. We may amend this policy, e.g. in the event of new functions or changes in the legal situation; the version currently available in the app applies.',
   },
 ];
 
@@ -429,7 +429,7 @@ export const TERMS_SECTIONS_EN: { h: string; p: string }[] = [
   },
   {
     h: 'Status',
-    p: 'Status of these terms of use: 10 June 2026.',
+    p: 'Status of these terms of use: 12 June 2026.',
   },
 ];
 
