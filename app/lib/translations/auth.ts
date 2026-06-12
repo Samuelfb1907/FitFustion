@@ -53,6 +53,11 @@ export const de = {
   "auth.switch.linkRegister": "Jetzt registrieren",
   "auth.switch.linkLogin": "Zum Login",
 
+  // Sign in with Apple
+  "auth.or": "oder",
+  "auth.apple.consent": "Mit der Anmeldung über Apple akzeptierst du die Nutzungsbedingungen & Datenschutzerklärung.",
+  "auth.apple.failed": "Anmeldung mit Apple fehlgeschlagen. Bitte erneut versuchen.",
+
   // Rechtstexte-Modal
   "auth.modal.terms": "Nutzungsbedingungen",
   "auth.modal.privacy": "Datenschutzerklärung",
@@ -125,6 +130,11 @@ export const en = {
   "auth.switch.toLogin": "Already have an account? ",
   "auth.switch.linkRegister": "Sign up now",
   "auth.switch.linkLogin": "Go to login",
+
+  // Sign in with Apple
+  "auth.or": "or",
+  "auth.apple.consent": "By signing in with Apple you accept the Terms of Use & Privacy Policy.",
+  "auth.apple.failed": "Sign in with Apple failed. Please try again.",
 
   // Legal texts modal
   "auth.modal.terms": "Terms of Use",

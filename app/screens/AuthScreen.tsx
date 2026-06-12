@@ -1,14 +1,15 @@
 // Login-/Registrierungs-Screen – Clean-Light, mit dezentem Smaragd-Hintergrund (Ambient).
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Image, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
-import { useColors, Colors } from '../contexts/ThemeContext';
+import { useColors, useTheme, Colors } from '../contexts/ThemeContext';
 import { useT, useLang } from '../contexts/LanguageContext';
 import LegalText from '../components/LegalText';
 import { DISCLAIMER_VERSION, getTermsSections, getPrivacySections, getDisclaimerSections } from '../lib/legal';
 import Ambient from '../components/Ambient';
 import GlassFill from '../components/GlassFill';
+import * as AppleAuthentication from 'expo-apple-authentication';
 
 function translateError(msg: string, t: (key: string, params?: Record<string, string | number>) => string): string {
   const m = msg.toLowerCase();
@@ -24,6 +25,7 @@ export default function AuthScreen() {
   const c = useColors();
   const t = useT();
   const { lang } = useLang();
+  const { theme } = useTheme();
   const styles = useMemo(() => makeStyles(c), [c]);
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
@@ -44,6 +46,7 @@ export default function AuthScreen() {
   const [resetBusy, setResetBusy] = useState(false);
   const [resetMsg, setResetMsg] = useState<string | null>(null);
   const [resetErr, setResetErr] = useState(false);
+  const [appleAvailable, setAppleAvailable] = useState(false);
 
   function show(message: string, error: boolean) { setInfo(message); setIsError(error); }
   function switchMode(m: 'login' | 'register') { setMode(m); setInfo(null); }
@@ -92,6 +95,34 @@ export default function AuthScreen() {
     if (uErr) { setResetMsg(t('auth.err.couldNotSetPassword', { msg: uErr.message })); setResetErr(true); return; }
     // verifyOtp hat eine Session gesetzt -> App wechselt automatisch (eingeloggt).
     setShowReset(false);
+  }
+
+  // Sign in with Apple nur auf iOS-Geraeten anbieten, die es unterstuetzen.
+  useEffect(() => {
+    if (Platform.OS === 'ios') AppleAuthentication.isAvailableAsync().then(setAppleAvailable).catch(() => {});
+  }, []);
+  async function signInWithApple() {
+    setInfo(null);
+    try {
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+      if (!credential.identityToken) { show(t('auth.apple.failed'), true); return; }
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithIdToken({ provider: 'apple', token: credential.identityToken });
+      setLoading(false);
+      if (error) { show(translateError(error.message, t), true); return; }
+      // Anmeldung via Apple = Zustimmung zu den Rechtstexten dokumentieren (wie beim Signup).
+      try { await AsyncStorage.setItem('fitavo.disclaimerAccepted', JSON.stringify({ version: DISCLAIMER_VERSION, at: new Date().toISOString(), health: true, terms: true, privacy: true })); } catch {}
+      // Session ist gesetzt -> App wechselt automatisch (eingeloggt).
+    } catch (e: any) {
+      setLoading(false);
+      if (e?.code === 'ERR_REQUEST_CANCELED') return; // Nutzer hat abgebrochen
+      show(t('auth.apple.failed'), true);
+    }
   }
 
   const submitDisabled = loading || (mode === 'register' && !accepted);
@@ -181,6 +212,24 @@ export default function AuthScreen() {
             <TouchableOpacity style={[styles.button, submitDisabled && styles.buttonDisabled]} onPress={handleSubmit} disabled={submitDisabled} activeOpacity={0.85}>
               {loading ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.buttonText}>{mode === 'login' ? t('auth.button.login') : t('auth.button.register')}</Text>}
             </TouchableOpacity>
+
+            {appleAvailable && (
+              <>
+                <View style={styles.dividerRow}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>{t('auth.or')}</Text>
+                  <View style={styles.dividerLine} />
+                </View>
+                <AppleAuthentication.AppleAuthenticationButton
+                  buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+                  buttonStyle={theme === 'dark' ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                  cornerRadius={12}
+                  style={styles.appleBtn}
+                  onPress={signInWithApple}
+                />
+                <Text style={styles.appleConsent}>{t('auth.apple.consent')}</Text>
+              </>
+            )}
 
             <TouchableOpacity style={styles.switchWrap} onPress={() => switchMode(mode === 'login' ? 'register' : 'login')} activeOpacity={0.7}>
               <Text style={styles.switchText}>
@@ -272,6 +321,11 @@ function makeStyles(c: Colors) {
     button: { backgroundColor: c.primary, borderRadius: 12, paddingVertical: 16, alignItems: 'center', marginTop: 24 },
     buttonDisabled: { opacity: 0.45 },
     buttonText: { color: c.onPrimary, fontSize: 16, fontWeight: '700', letterSpacing: 0.2 },
+    dividerRow: { flexDirection: 'row', alignItems: 'center', marginTop: 18 },
+    dividerLine: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: c.border },
+    dividerText: { marginHorizontal: 12, color: c.textMuted, fontSize: 13, fontWeight: '600' },
+    appleBtn: { height: 48, marginTop: 14 },
+    appleConsent: { fontSize: 11, color: c.textMuted, textAlign: 'center', marginTop: 8, lineHeight: 15 },
 
     infoBox: { backgroundColor: c.inputBg, borderLeftWidth: 3, borderRadius: 10, paddingVertical: 12, paddingHorizontal: 14, marginTop: 18 },
     info: { fontSize: 14, lineHeight: 19 },
