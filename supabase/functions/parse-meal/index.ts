@@ -86,6 +86,7 @@ Deno.serve(async (req: Request) => {
     const text: string = typeof payload.text === 'string' ? payload.text : '';
     if (!text.trim() || text.length > 500) return json({ error: 'invalid text' }, 400);
     const meal = MEALS.includes(payload.defaultMeal) ? payload.defaultMeal : 'snack';
+    const lang = payload.lang === 'en' ? 'en' : 'de';
 
     // 3) Tageslimit pruefen+hochzaehlen (atomar in der DB). Fehlt die DB-Funktion noch
     //    (Migration nicht eingespielt), laufen wir bewusst fail-open weiter.
@@ -108,7 +109,7 @@ Deno.serve(async (req: Request) => {
       console.error('parse-meal rate-limit error (fail-open):', e);
     }
 
-    const system =
+    const systemDe =
       'Du bist ein praeziser Ernaehrungs-Parser fuer eine deutsche Tracking-App. ' +
       'Zerlege die Mahlzeit-Beschreibung des Nutzers in einzelne Lebensmittel. Fuer JEDES gib an:\n' +
       '- name: kurzer deutscher Name (z. B. "Vollkornbrot", "Ei", "Hafermilch-Latte").\n' +
@@ -117,6 +118,16 @@ Deno.serve(async (req: Request) => {
       '- meal_type: breakfast | lunch | dinner | snack. Wenn der Text es nennt ("zum Fruehstueck"), nutze das, sonst "' + meal + '".\n' +
       '- kcal, protein, carbs, fat: realistische Durchschnitts-Naehrwerte PRO 100 g (protein/carbs/fat in Gramm).\n' +
       'Nur tatsaechlich genannte Lebensmittel - keine Erfindungen. Antworte ausschliesslich im vorgegebenen JSON-Format.';
+    const systemEn =
+      'You are a precise nutrition parser for a fitness tracking app. ' +
+      'Break the user\'s meal description into individual foods. For EACH, provide:\n' +
+      '- name: short English name (e.g. "Whole-grain bread", "Egg", "Oat-milk latte").\n' +
+      '- amount_g: the TOTAL amount eaten in grams (drinks in ml ~= g). Estimate from everyday portions: ' +
+      '1 egg ~60 g, 1 slice of bread/toast ~30 g, 1 bread roll ~60 g, 1 glass/cup ~200 g, 1 serving ~150 g, 1 tbsp ~15 g.\n' +
+      '- meal_type: breakfast | lunch | dinner | snack. If the text indicates it ("for breakfast"), use that, otherwise "' + meal + '".\n' +
+      '- kcal, protein, carbs, fat: realistic average nutrition values PER 100 g (protein/carbs/fat in grams).\n' +
+      'Only foods actually mentioned - no inventions. Respond exclusively in the given JSON format.';
+    const system = lang === 'en' ? systemEn : systemDe;
 
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',

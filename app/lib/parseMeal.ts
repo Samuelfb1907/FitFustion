@@ -31,9 +31,9 @@ function clamp(v: unknown, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, Math.round(n)));
 }
 
-export async function parseMeal(text: string, defaultMeal: MealType): Promise<ParsedItem[]> {
+export async function parseMeal(text: string, defaultMeal: MealType, lang: 'de' | 'en' = 'de'): Promise<ParsedItem[]> {
   const { data, error } = await supabase.functions.invoke('parse-meal', {
-    body: { text: text.trim().slice(0, 500), defaultMeal },
+    body: { text: text.trim().slice(0, 500), defaultMeal, lang },
   });
   if (error) {
     // Bei Nicht-200 (z. B. 429 Tageslimit) steckt der JSON-Body in error.context.

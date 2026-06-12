@@ -299,7 +299,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     if (!text || nlBusy) return;
     setNlBusy(true); setNlErr(null);
     try {
-      const items = await parseMeal(text, mealByHour());
+      const items = await parseMeal(text, mealByHour(), lang);
       if (!items.length) { setNlErr(t('food.nlNothingRecognized')); return; }
       const m = items[0]?.meal_type ?? mealByHour();
       setNlMeal(m);
