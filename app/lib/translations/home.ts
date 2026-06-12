@@ -3,6 +3,17 @@ export const de = {
   "home.profileIncomplete": "Profildaten unvollständig.",
   "home.endTrainingFailedTitle": "Nicht möglich",
 
+  "home.greeting.morning": "Guten Morgen",
+  "home.greeting.day": "Guten Tag",
+  "home.greeting.evening": "Guten Abend",
+
+  "home.goal.lose_weight": "Abnehmen",
+  "home.goal.build_muscle": "Muskelaufbau",
+  "home.goal.gain_strength": "Kraft steigern",
+  "home.goal.endurance": "Ausdauer",
+  "home.goal.general_fitness": "Allgemeine Fitness",
+  "home.goal.get_defined": "Definieren",
+
   "home.levelStreakA11y": "Level {level}, Streak {streak} Tage",
   "home.unlockToLevelA11y": "Premium freischalten, um zu leveln",
   "home.levelLocked": "Lv 🔒",
@@ -54,6 +65,17 @@ export const en = {
   "home.welcome": "Welcome",
   "home.profileIncomplete": "Profile data incomplete.",
   "home.endTrainingFailedTitle": "Not possible",
+
+  "home.greeting.morning": "Good morning",
+  "home.greeting.day": "Good afternoon",
+  "home.greeting.evening": "Good evening",
+
+  "home.goal.lose_weight": "Lose weight",
+  "home.goal.build_muscle": "Build muscle",
+  "home.goal.gain_strength": "Gain strength",
+  "home.goal.endurance": "Endurance",
+  "home.goal.general_fitness": "General fitness",
+  "home.goal.get_defined": "Get defined",
 
   "home.levelStreakA11y": "Level {level}, streak {streak} days",
   "home.unlockToLevelA11y": "Unlock Premium to level up",

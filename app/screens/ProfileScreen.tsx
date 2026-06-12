@@ -11,36 +11,36 @@ import GlassFill from '../components/GlassFill';
 
 type Opt = { label: string; value: string };
 const GENDERS: Opt[] = [
-  { label: 'Männlich', value: 'male' },
-  { label: 'Weiblich', value: 'female' },
-  { label: 'Divers', value: 'diverse' },
-  { label: 'Keine Angabe', value: 'prefer_not' },
+  { label: 'profile.gender.male', value: 'male' },
+  { label: 'profile.gender.female', value: 'female' },
+  { label: 'profile.gender.diverse', value: 'diverse' },
+  { label: 'profile.gender.prefer_not', value: 'prefer_not' },
 ];
 const ACTIVITY: Opt[] = [
-  { label: 'Kaum aktiv', value: 'sedentary' },
-  { label: 'Leicht aktiv', value: 'light' },
-  { label: 'Mäßig aktiv', value: 'moderate' },
-  { label: 'Sehr aktiv', value: 'active' },
-  { label: 'Extrem aktiv', value: 'very_active' },
+  { label: 'profile.activity.sedentary', value: 'sedentary' },
+  { label: 'profile.activity.light', value: 'light' },
+  { label: 'profile.activity.moderate', value: 'moderate' },
+  { label: 'profile.activity.active', value: 'active' },
+  { label: 'profile.activity.very_active', value: 'very_active' },
 ];
 const GOALS: Opt[] = [
-  { label: 'Abnehmen', value: 'lose_weight' },
-  { label: 'Muskelaufbau', value: 'build_muscle' },
-  { label: 'Kraft steigern', value: 'gain_strength' },
-  { label: 'Ausdauer verbessern', value: 'endurance' },
-  { label: 'Allgemeine Fitness', value: 'general_fitness' },
-  { label: 'Körper definieren', value: 'get_defined' },
+  { label: 'profile.goal.lose_weight', value: 'lose_weight' },
+  { label: 'profile.goal.build_muscle', value: 'build_muscle' },
+  { label: 'profile.goal.gain_strength', value: 'gain_strength' },
+  { label: 'profile.goal.endurance', value: 'endurance' },
+  { label: 'profile.goal.general_fitness', value: 'general_fitness' },
+  { label: 'profile.goal.get_defined', value: 'get_defined' },
 ];
 const LEVELS: Opt[] = [
-  { label: 'Anfänger', value: 'beginner' },
-  { label: 'Etwas Erfahrung', value: 'some' },
-  { label: 'Fortgeschritten', value: 'advanced' },
-  { label: 'Profi', value: 'pro' },
+  { label: 'profile.level.beginner', value: 'beginner' },
+  { label: 'profile.level.some', value: 'some' },
+  { label: 'profile.level.advanced', value: 'advanced' },
+  { label: 'profile.level.pro', value: 'pro' },
 ];
 const ENVIRONMENTS: Opt[] = [
-  { label: 'Fitnessstudio', value: 'gym' },
-  { label: 'Home-Gym', value: 'home_gym' },
-  { label: 'Kein Equipment', value: 'no_equipment' },
+  { label: 'profile.environment.gym', value: 'gym' },
+  { label: 'profile.environment.home_gym', value: 'home_gym' },
+  { label: 'profile.environment.no_equipment', value: 'no_equipment' },
 ];
 
 export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
@@ -179,7 +179,7 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
           return (
             <TouchableOpacity key={o.value} style={[styles.choice, active && styles.choiceActive]} onPress={() => onChange(o.value)}>
               <GlassFill radius={14} />
-              <Text style={[styles.choiceText, active && styles.choiceTextActive]}>{o.label}</Text>
+              <Text style={[styles.choiceText, active && styles.choiceTextActive]}>{t(o.label)}</Text>
             </TouchableOpacity>
           );
         })}

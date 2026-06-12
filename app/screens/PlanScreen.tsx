@@ -21,34 +21,34 @@ let lastExerciseOpen = 0;
 // startOfTodayISO -> lib/date.ts; Schwierigkeits-/Equipment-Konstanten -> lib/training.ts
 const SPLITS: Record<number, { focus: string; muscles: string[] }[]> = {
   2: [
-    { focus: 'Ganzkörper A', muscles: ['chest', 'back', 'legs', 'abs'] },
-    { focus: 'Ganzkörper B', muscles: ['shoulders', 'legs', 'glutes', 'back'] },
+    { focus: 'plan.split.fullbody_a', muscles: ['chest', 'back', 'legs', 'abs'] },
+    { focus: 'plan.split.fullbody_b', muscles: ['shoulders', 'legs', 'glutes', 'back'] },
   ],
   3: [
-    { focus: 'Push – Brust, Schultern, Trizeps', muscles: ['chest', 'shoulders', 'triceps'] },
-    { focus: 'Pull – Rücken & Bizeps', muscles: ['back', 'biceps'] },
-    { focus: 'Beine & Bauch', muscles: ['legs', 'glutes', 'calves', 'abs'] },
+    { focus: 'plan.split.push1', muscles: ['chest', 'shoulders', 'triceps'] },
+    { focus: 'plan.split.pull1', muscles: ['back', 'biceps'] },
+    { focus: 'plan.split.legs_abs', muscles: ['legs', 'glutes', 'calves', 'abs'] },
   ],
   4: [
-    { focus: 'Brust & Trizeps', muscles: ['chest', 'triceps'] },
-    { focus: 'Rücken & Bizeps', muscles: ['back', 'biceps'] },
-    { focus: 'Beine & Waden', muscles: ['legs', 'glutes', 'calves'] },
-    { focus: 'Schultern & Bauch', muscles: ['shoulders', 'abs'] },
+    { focus: 'plan.split.chest_triceps', muscles: ['chest', 'triceps'] },
+    { focus: 'plan.split.back_biceps', muscles: ['back', 'biceps'] },
+    { focus: 'plan.split.legs_calves', muscles: ['legs', 'glutes', 'calves'] },
+    { focus: 'plan.split.shoulders_abs', muscles: ['shoulders', 'abs'] },
   ],
   5: [
-    { focus: 'Brust & Trizeps', muscles: ['chest', 'triceps'] },
-    { focus: 'Rücken & Bizeps', muscles: ['back', 'biceps'] },
-    { focus: 'Beine', muscles: ['legs', 'glutes', 'calves'] },
-    { focus: 'Schultern & Bauch', muscles: ['shoulders', 'abs'] },
-    { focus: 'Ganzkörper / Schwachstellen', muscles: ['chest', 'back', 'legs'] },
+    { focus: 'plan.split.chest_triceps', muscles: ['chest', 'triceps'] },
+    { focus: 'plan.split.back_biceps', muscles: ['back', 'biceps'] },
+    { focus: 'plan.split.legs', muscles: ['legs', 'glutes', 'calves'] },
+    { focus: 'plan.split.shoulders_abs', muscles: ['shoulders', 'abs'] },
+    { focus: 'plan.split.fullbody_weak', muscles: ['chest', 'back', 'legs'] },
   ],
   6: [
-    { focus: 'Push A', muscles: ['chest', 'shoulders', 'triceps'] },
-    { focus: 'Pull A', muscles: ['back', 'biceps'] },
-    { focus: 'Beine A', muscles: ['legs', 'glutes', 'calves'] },
-    { focus: 'Push B', muscles: ['shoulders', 'chest', 'triceps'] },
-    { focus: 'Pull B', muscles: ['back', 'biceps'] },
-    { focus: 'Beine B & Bauch', muscles: ['legs', 'glutes', 'abs'] },
+    { focus: 'plan.split.push_a', muscles: ['chest', 'shoulders', 'triceps'] },
+    { focus: 'plan.split.pull_a', muscles: ['back', 'biceps'] },
+    { focus: 'plan.split.legs_a', muscles: ['legs', 'glutes', 'calves'] },
+    { focus: 'plan.split.push_b', muscles: ['shoulders', 'chest', 'triceps'] },
+    { focus: 'plan.split.pull_b', muscles: ['back', 'biceps'] },
+    { focus: 'plan.split.legs_b_abs', muscles: ['legs', 'glutes', 'abs'] },
   ],
 };
 const DAY_OPTIONS = [2, 3, 4, 5, 6];
@@ -325,7 +325,7 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
           <View style={styles.container}>
             <BackButton onPress={() => setAddingToDay(null)} c={c} />
             <Text style={styles.title}>{t('plan.addExercise')}</Text>
-            <Text style={styles.subtitle}>{day?.focus ?? ''}</Text>
+            <Text style={styles.subtitle}>{day?.focus ? t(day.focus) : ''}</Text>
             <TextInput style={styles.input} value={pickerSearch} onChangeText={setPickerSearch} placeholder={t('plan.searchPlaceholder')} placeholderTextColor={c.textMuted} autoCorrect={false} />
             {pickerLoading ? (
               <ActivityIndicator color={c.primary} style={{ marginTop: 24 }} />
@@ -426,7 +426,8 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
         <Text style={styles.weekHint}>{t('plan.weekHint')}</Text>
         {WEEKDAYS.map((wd, i) => {
           const dayId = effectiveSchedule[i];
-          const focus = dayId ? (days.find((d) => d.id === dayId)?.focus ?? t('plan.training')) : null;
+          const rawFocus = dayId ? (days.find((d) => d.id === dayId)?.focus ?? null) : null;
+          const focus = dayId ? (rawFocus ? t(rawFocus) : t('plan.training')) : null;
           const isToday = i === todayWeekday();
           return (
             <View key={i}>
@@ -438,7 +439,7 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
                 <View style={styles.weekPicker}>
                   {days.map((d) => (
                     <TouchableOpacity key={d.id} style={[styles.weekOpt, dayId === d.id && styles.weekOptActive]} onPress={() => assignDay(i, d.id)} activeOpacity={0.7}>
-                      <Text style={[styles.weekOptText, dayId === d.id && styles.weekOptTextActive]}>{t('plan.dayLabel', { n: d.day_index })}{d.focus}</Text>
+                      <Text style={[styles.weekOptText, dayId === d.id && styles.weekOptTextActive]}>{t('plan.dayLabel', { n: d.day_index })}{d.focus ? t(d.focus) : ''}</Text>
                     </TouchableOpacity>
                   ))}
                   <TouchableOpacity style={[styles.weekOpt, !dayId && styles.weekOptActive]} onPress={() => assignDay(i, null)} activeOpacity={0.7}>
@@ -457,7 +458,7 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
         <View key={d.id} style={styles.dayCard}>
           <GlassFill radius={16} />
           <Text style={styles.dayTitle}>{t('plan.dayTitle', { n: d.day_index })}</Text>
-          <Text style={styles.dayFocus}>{d.focus}</Text>
+          <Text style={styles.dayFocus}>{d.focus ? t(d.focus) : ''}</Text>
           {d.exercises.length === 0 && !editMode ? (
             <Text style={styles.muted}>{t('plan.noMatchingExercises')}</Text>
           ) : (

@@ -9,9 +9,9 @@
 import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from 'react';
 import { ActivityIndicator, Alert, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useColors, Colors } from '../contexts/ThemeContext';
-import { useT } from '../contexts/LanguageContext';
+import { useT, useLang } from '../contexts/LanguageContext';
 import LegalText from './LegalText';
-import { TERMS_SECTIONS, PRIVACY_SECTIONS } from '../lib/legal';
+import { getTermsSections, getPrivacySections } from '../lib/legal';
 import { getPremiumPlans, purchasePlan, restorePurchases, PremiumPlan, PremiumPlans } from '../lib/purchases';
 
 // Anzeige-Fallback, falls der echte Store-Preis (noch) nicht geladen werden kann.
@@ -58,6 +58,7 @@ type PlanKey = 'monthly' | 'annual';
 function PaywallSheet({ visible, feature, onClose }: { visible: boolean; feature?: string; onClose: () => void }) {
   const c = useColors();
   const t = useT();
+  const { lang } = useLang();
   const s = makeStyles(c);
   const [legal, setLegal] = useState<null | 'terms' | 'privacy'>(null);
   const [busy, setBusy] = useState(false);
@@ -145,7 +146,7 @@ function PaywallSheet({ visible, feature, onClose }: { visible: boolean; feature
             <>
               <Text style={s.title}>{legal === 'terms' ? t('paywall.legal.termsTitle') : t('paywall.legal.privacyTitle')}</Text>
               <ScrollView style={{ maxHeight: 440 }} contentContainerStyle={{ paddingVertical: 10 }} showsVerticalScrollIndicator={false}>
-                <LegalText c={c} sections={legal === 'terms' ? TERMS_SECTIONS : PRIVACY_SECTIONS} />
+                <LegalText c={c} sections={legal === 'terms' ? getTermsSections(lang) : getPrivacySections(lang)} />
               </ScrollView>
               <TouchableOpacity style={s.cta} activeOpacity={0.85} onPress={() => setLegal(null)} accessibilityRole="button" accessibilityLabel={t('paywall.back')}>
                 <Text style={s.ctaText}>{t('paywall.back')}</Text>

@@ -13,37 +13,37 @@ import { DISCLAIMER_VERSION } from '../lib/legal';
 type Opt = { label: string; value: string };
 
 const GENDERS: Opt[] = [
-  { label: 'Männlich', value: 'male' }, { label: 'Weiblich', value: 'female' },
-  { label: 'Divers', value: 'diverse' }, { label: 'Keine Angabe', value: 'prefer_not' },
+  { label: 'onboarding.gender.male', value: 'male' }, { label: 'onboarding.gender.female', value: 'female' },
+  { label: 'onboarding.gender.diverse', value: 'diverse' }, { label: 'onboarding.gender.prefer_not', value: 'prefer_not' },
 ];
 const ACTIVITY: Opt[] = [
-  { label: 'Kaum aktiv', value: 'sedentary' }, { label: 'Leicht aktiv', value: 'light' },
-  { label: 'Mäßig aktiv', value: 'moderate' }, { label: 'Sehr aktiv', value: 'active' }, { label: 'Extrem aktiv', value: 'very_active' },
+  { label: 'onboarding.activity.sedentary', value: 'sedentary' }, { label: 'onboarding.activity.light', value: 'light' },
+  { label: 'onboarding.activity.moderate', value: 'moderate' }, { label: 'onboarding.activity.active', value: 'active' }, { label: 'onboarding.activity.very_active', value: 'very_active' },
 ];
 const EXPERIENCE: Opt[] = [
-  { label: 'Anfänger', value: 'beginner' }, { label: 'Etwas erfahren', value: 'some' },
-  { label: 'Fortgeschritten', value: 'advanced' }, { label: 'Profi', value: 'pro' },
+  { label: 'onboarding.experience.beginner', value: 'beginner' }, { label: 'onboarding.experience.some', value: 'some' },
+  { label: 'onboarding.experience.advanced', value: 'advanced' }, { label: 'onboarding.experience.pro', value: 'pro' },
 ];
 const ENVIRONMENT: Opt[] = [
-  { label: 'Fitnessstudio', value: 'gym' }, { label: 'Home-Gym', value: 'home_gym' }, { label: 'Ohne Equipment', value: 'no_equipment' },
+  { label: 'onboarding.environment.gym', value: 'gym' }, { label: 'onboarding.environment.home_gym', value: 'home_gym' }, { label: 'onboarding.environment.no_equipment', value: 'no_equipment' },
 ];
 const GOALS: Opt[] = [
-  { label: 'Abnehmen', value: 'lose_weight' }, { label: 'Muskelaufbau', value: 'build_muscle' }, { label: 'Kraft steigern', value: 'gain_strength' },
-  { label: 'Ausdauer verbessern', value: 'endurance' }, { label: 'Allgemeine Fitness', value: 'general_fitness' }, { label: 'Körper definieren', value: 'get_defined' },
+  { label: 'onboarding.goal.lose_weight', value: 'lose_weight' }, { label: 'onboarding.goal.build_muscle', value: 'build_muscle' }, { label: 'onboarding.goal.gain_strength', value: 'gain_strength' },
+  { label: 'onboarding.goal.endurance', value: 'endurance' }, { label: 'onboarding.goal.general_fitness', value: 'general_fitness' }, { label: 'onboarding.goal.get_defined', value: 'get_defined' },
 ];
 const TIMEFRAMES: Opt[] = [
-  { label: '8 Wochen', value: '8' }, { label: '12 Wochen', value: '12' }, { label: '16 Wochen', value: '16' }, { label: '24 Wochen', value: '24' },
+  { label: 'onboarding.timeframe.8', value: '8' }, { label: 'onboarding.timeframe.12', value: '12' }, { label: 'onboarding.timeframe.16', value: '16' }, { label: 'onboarding.timeframe.24', value: '24' },
 ];
 
-function Choice({ options, value, onChange, styles }: { options: Opt[]; value: string; onChange: (v: string) => void; styles: any }) {
+function Choice({ options, value, onChange, styles, t }: { options: Opt[]; value: string; onChange: (v: string) => void; styles: any; t: (key: string, vars?: Record<string, string | number>) => string }) {
   return (
     <View style={styles.choiceWrap}>
       {options.map((o) => {
         const active = value === o.value;
         return (
-          <TouchableOpacity key={o.value} style={[styles.choice, active && styles.choiceActive]} onPress={() => onChange(o.value)} accessibilityRole="radio" accessibilityState={{ selected: active }} accessibilityLabel={o.label}>
+          <TouchableOpacity key={o.value} style={[styles.choice, active && styles.choiceActive]} onPress={() => onChange(o.value)} accessibilityRole="radio" accessibilityState={{ selected: active }} accessibilityLabel={t(o.label)}>
             <GlassFill radius={14} />
-            <Text style={[styles.choiceText, active && styles.choiceTextActive]}>{o.label}</Text>
+            <Text style={[styles.choiceText, active && styles.choiceTextActive]}>{t(o.label)}</Text>
           </TouchableOpacity>
         );
       })}
@@ -159,27 +159,27 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
               <TextInput style={[styles.input, styles.dateFieldYear]} value={birthYear} onChangeText={setBirthYear} placeholder={t('onboarding.placeholder.year')} placeholderTextColor={c.textMuted} keyboardType="numeric" inputMode="numeric" maxLength={4} />
             </View>
             <Text style={styles.label}>{t('onboarding.label.gender')}</Text>
-            <Choice options={GENDERS} value={gender} onChange={setGender} styles={styles} />
+            <Choice options={GENDERS} value={gender} onChange={setGender} styles={styles} t={t} />
             <Text style={styles.label}>{t('onboarding.label.weight')}</Text>
             <TextInput style={styles.input} value={weight} onChangeText={setWeight} placeholder={t('onboarding.placeholder.weight')} placeholderTextColor={c.textMuted} keyboardType="numeric" inputMode="decimal" />
             <Text style={styles.label}>{t('onboarding.label.height')}</Text>
             <TextInput style={styles.input} value={height} onChangeText={setHeight} placeholder={t('onboarding.placeholder.height')} placeholderTextColor={c.textMuted} keyboardType="numeric" inputMode="decimal" />
             <Text style={styles.label}>{t('onboarding.label.activity')}</Text>
-            <Choice options={ACTIVITY} value={activity} onChange={setActivity} styles={styles} />
+            <Choice options={ACTIVITY} value={activity} onChange={setActivity} styles={styles} t={t} />
           </View>
         )}
-        {step === 2 && (<View><Text style={styles.title}>{t('onboarding.step2.title')}</Text><Choice options={EXPERIENCE} value={experience} onChange={setExperience} styles={styles} /></View>)}
-        {step === 3 && (<View><Text style={styles.title}>{t('onboarding.step3.title')}</Text><Choice options={ENVIRONMENT} value={environment} onChange={setEnvironment} styles={styles} /></View>)}
+        {step === 2 && (<View><Text style={styles.title}>{t('onboarding.step2.title')}</Text><Choice options={EXPERIENCE} value={experience} onChange={setExperience} styles={styles} t={t} /></View>)}
+        {step === 3 && (<View><Text style={styles.title}>{t('onboarding.step3.title')}</Text><Choice options={ENVIRONMENT} value={environment} onChange={setEnvironment} styles={styles} t={t} /></View>)}
         {step === 4 && (
           <View>
             <Text style={styles.title}>{t('onboarding.step4.title')}</Text>
-            <Choice options={GOALS} value={goal} onChange={setGoal} styles={styles} />
+            <Choice options={GOALS} value={goal} onChange={setGoal} styles={styles} t={t} />
             {goal === 'lose_weight' && (
               <View style={{ marginTop: 8 }}>
                 <Text style={styles.label}>{t('onboarding.label.targetWeight')}</Text>
                 <TextInput style={styles.input} value={targetWeight} onChangeText={setTargetWeight} placeholder={t('onboarding.placeholder.targetWeight')} placeholderTextColor={c.textMuted} keyboardType="numeric" inputMode="decimal" />
                 <Text style={styles.label}>{t('onboarding.label.timeframe')}</Text>
-                <Choice options={TIMEFRAMES} value={timeframe} onChange={setTimeframe} styles={styles} />
+                <Choice options={TIMEFRAMES} value={timeframe} onChange={setTimeframe} styles={styles} t={t} />
               </View>
             )}
           </View>

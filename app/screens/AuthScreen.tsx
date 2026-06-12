@@ -4,9 +4,9 @@ import { ActivityIndicator, Image, KeyboardAvoidingView, Modal, Platform, Scroll
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { useColors, Colors } from '../contexts/ThemeContext';
-import { useT } from '../contexts/LanguageContext';
+import { useT, useLang } from '../contexts/LanguageContext';
 import LegalText from '../components/LegalText';
-import { DISCLAIMER_VERSION, TERMS_SECTIONS, PRIVACY_SECTIONS } from '../lib/legal';
+import { DISCLAIMER_VERSION, getTermsSections, getPrivacySections, getDisclaimerSections } from '../lib/legal';
 import Ambient from '../components/Ambient';
 import GlassFill from '../components/GlassFill';
 
@@ -23,6 +23,7 @@ function translateError(msg: string, t: (key: string, params?: Record<string, st
 export default function AuthScreen() {
   const c = useColors();
   const t = useT();
+  const { lang } = useLang();
   const styles = useMemo(() => makeStyles(c), [c]);
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
@@ -197,7 +198,7 @@ export default function AuthScreen() {
             {showLegal === 'terms' ? t('auth.modal.terms') : showLegal === 'privacy' ? t('auth.modal.privacy') : t('auth.modal.disclaimer')}
           </Text>
           <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
-            <LegalText c={c} sections={showLegal === 'terms' ? TERMS_SECTIONS : showLegal === 'privacy' ? PRIVACY_SECTIONS : undefined} />
+            <LegalText c={c} sections={showLegal === 'terms' ? getTermsSections(lang) : showLegal === 'privacy' ? getPrivacySections(lang) : getDisclaimerSections(lang)} />
           </ScrollView>
           <TouchableOpacity style={styles.button} onPress={() => setShowLegal(null)} activeOpacity={0.85}>
             <Text style={styles.buttonText}>{t('auth.button.close')}</Text>

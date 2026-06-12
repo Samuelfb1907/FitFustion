@@ -24,8 +24,8 @@ import { CARD_SHADOW as shadow } from '../lib/ui';
 import { WATER_GOAL } from '../lib/water';
 
 const GOAL_LABELS: Record<string, string> = {
-  lose_weight: 'Abnehmen', build_muscle: 'Muskelaufbau', gain_strength: 'Kraft steigern',
-  endurance: 'Ausdauer', general_fitness: 'Allgemeine Fitness', get_defined: 'Definieren',
+  lose_weight: 'home.goal.lose_weight', build_muscle: 'home.goal.build_muscle', gain_strength: 'home.goal.gain_strength',
+  endurance: 'home.goal.endurance', general_fitness: 'home.goal.general_fitness', get_defined: 'home.goal.get_defined',
 };
 
 type GoalsData = { trainedToday: boolean; trackedToday: boolean; sessionsThisWeek: number; trackedDaysThisWeek: number };
@@ -38,9 +38,9 @@ type Eaten = { kcal: number; p: number; c: number; f: number };
 
 function greeting(): string {
   const h = new Date().getHours();
-  if (h < 11) return 'Guten Morgen';
-  if (h < 18) return 'Guten Tag';
-  return 'Guten Abend';
+  if (h < 11) return 'home.greeting.morning';
+  if (h < 18) return 'home.greeting.day';
+  return 'home.greeting.evening';
 }
 
 export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (tab: string) => void; focusTick?: number }) {
@@ -192,7 +192,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
   let trainVal = t('home.trainStart'), trainSub = t('home.trainFree');
   if (activeSession) { trainVal = t('home.trainRunning'); trainSub = `${activeSets} ${activeSets === 1 ? t('home.setSingular') : t('home.setPlural')}`; }
   else if (goalsData?.trainedToday) { trainVal = t('home.trainDone'); trainSub = t('home.trainDoneToday'); }
-  else if (planToday?.has) { trainVal = planToday.focus ?? t('home.trainRestDay'); trainSub = planToday.focus ? t('home.trainPerPlan') : t('home.trainRecovery'); }
+  else if (planToday?.has) { trainVal = planToday.focus ? t(planToday.focus) : t('home.trainRestDay'); trainSub = planToday.focus ? t('home.trainPerPlan') : t('home.trainRecovery'); }
 
   return (
     <View style={styles.container}>
@@ -210,7 +210,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
             {/* HEADER */}
             <View style={styles.header}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.greet}>{greeting()},</Text>
+                <Text style={styles.greet}>{t(greeting())},</Text>
                 <Text style={styles.name}>{profile?.first_name || t('home.welcome')}</Text>
               </View>
               {stats && (
@@ -227,7 +227,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
             {nutrition && (
               <View style={styles.card}>
                 <GlassFill radius={16} />
-                <Text style={styles.cardLabel}>{t('home.todayLabel')}{goalLabel ? ` · ${goalLabel.toUpperCase()}` : ''}</Text>
+                <Text style={styles.cardLabel}>{t('home.todayLabel')}{goalLabel ? ` · ${t(goalLabel).toUpperCase()}` : ''}</Text>
                 <View style={{ alignItems: 'center', marginTop: 12 }}>
                   <CalorieGauge target={nutrition.targetCalories + Math.max(trainingKcal, activityKcal)} eaten={eaten.kcal} />
                 </View>

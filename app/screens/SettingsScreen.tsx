@@ -9,7 +9,7 @@ import { useTheme, useColors, Colors } from '../contexts/ThemeContext';
 import { useT, useLang } from '../contexts/LanguageContext';
 import ProfileScreen from './ProfileScreen';
 import LegalText from '../components/LegalText';
-import { PRIVACY_SECTIONS, IMPRESSUM_SECTIONS, TERMS_SECTIONS } from '../lib/legal';
+import { getPrivacySections, getImprintSections, getTermsSections, getDisclaimerSections } from '../lib/legal';
 import { exportUserData, deleteAccount } from '../lib/gdpr';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loadReminderPrefs, saveReminderPrefs, applyReminders, ensurePermission, ReminderPrefs } from '../lib/reminders';
@@ -249,7 +249,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
         <Text style={[styles.title, { marginTop: 10 }]}>Rechtliches</Text>
         <View style={[styles.card, { padding: 16 }]}>
           <GlassFill radius={16} />
-          <LegalText c={c} />
+          <LegalText c={c} sections={getDisclaimerSections(lang)} />
         </View>
         <Text style={styles.hint}>Impressum & Datenschutzerklärung findest du separat in den Einstellungen.</Text>
       </ScrollView>
@@ -266,7 +266,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
         <Text style={[styles.title, { marginTop: 10 }]}>Datenschutzerklärung</Text>
         <View style={[styles.card, { padding: 16 }]}>
           <GlassFill radius={16} />
-          <LegalText c={c} sections={PRIVACY_SECTIONS} />
+          <LegalText c={c} sections={getPrivacySections(lang)} />
         </View>
       </ScrollView>
       </SwipeBack>
@@ -282,7 +282,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
         <Text style={[styles.title, { marginTop: 10 }]}>Impressum</Text>
         <View style={[styles.card, { padding: 16 }]}>
           <GlassFill radius={16} />
-          <LegalText c={c} sections={IMPRESSUM_SECTIONS} />
+          <LegalText c={c} sections={getImprintSections(lang)} />
         </View>
       </ScrollView>
       </SwipeBack>
@@ -298,7 +298,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
         <Text style={[styles.title, { marginTop: 10 }]}>Nutzungsbedingungen</Text>
         <View style={[styles.card, { padding: 16 }]}>
           <GlassFill radius={16} />
-          <LegalText c={c} sections={TERMS_SECTIONS} />
+          <LegalText c={c} sections={getTermsSections(lang)} />
         </View>
       </ScrollView>
       </SwipeBack>

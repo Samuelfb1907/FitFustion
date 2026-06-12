@@ -36,7 +36,24 @@ export const de = {
   "plan.errGenerate": "Fehler bei der Plan-Erstellung.",
   "plan.replaceTitle": "Neuen Plan erstellen?",
   "plan.replaceBody": "Dein aktueller Plan und die Wochenzuordnung werden ersetzt. Fortfahren?",
-  "plan.replace": "Ersetzen"
+  "plan.replace": "Ersetzen",
+  "plan.split.fullbody_a": "Ganzkörper A",
+  "plan.split.fullbody_b": "Ganzkörper B",
+  "plan.split.push1": "Push – Brust, Schultern, Trizeps",
+  "plan.split.pull1": "Pull – Rücken & Bizeps",
+  "plan.split.legs_abs": "Beine & Bauch",
+  "plan.split.chest_triceps": "Brust & Trizeps",
+  "plan.split.back_biceps": "Rücken & Bizeps",
+  "plan.split.legs_calves": "Beine & Waden",
+  "plan.split.shoulders_abs": "Schultern & Bauch",
+  "plan.split.legs": "Beine",
+  "plan.split.fullbody_weak": "Ganzkörper / Schwachstellen",
+  "plan.split.push_a": "Push A",
+  "plan.split.pull_a": "Pull A",
+  "plan.split.legs_a": "Beine A",
+  "plan.split.push_b": "Push B",
+  "plan.split.pull_b": "Pull B",
+  "plan.split.legs_b_abs": "Beine B & Bauch"
 };
 
 export const en = {
@@ -77,5 +94,22 @@ export const en = {
   "plan.errGenerate": "Error while creating the plan.",
   "plan.replaceTitle": "Create a new plan?",
   "plan.replaceBody": "Your current plan and weekly assignment will be replaced. Continue?",
-  "plan.replace": "Replace"
+  "plan.replace": "Replace",
+  "plan.split.fullbody_a": "Full body A",
+  "plan.split.fullbody_b": "Full body B",
+  "plan.split.push1": "Push – Chest, Shoulders, Triceps",
+  "plan.split.pull1": "Pull – Back & Biceps",
+  "plan.split.legs_abs": "Legs & Abs",
+  "plan.split.chest_triceps": "Chest & Triceps",
+  "plan.split.back_biceps": "Back & Biceps",
+  "plan.split.legs_calves": "Legs & Calves",
+  "plan.split.shoulders_abs": "Shoulders & Abs",
+  "plan.split.legs": "Legs",
+  "plan.split.fullbody_weak": "Full body / Weak points",
+  "plan.split.push_a": "Push A",
+  "plan.split.pull_a": "Pull A",
+  "plan.split.legs_a": "Legs A",
+  "plan.split.push_b": "Push B",
+  "plan.split.pull_b": "Pull B",
+  "plan.split.legs_b_abs": "Legs B & Abs"
 };

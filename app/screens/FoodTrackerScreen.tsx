@@ -4,12 +4,12 @@ import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Modal, Platfo
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
-import { useT } from '../contexts/LanguageContext';
+import { useT, useLang } from '../contexts/LanguageContext';
 import { computeNutrition, ageFromBirthDate, Gender, ActivityLevel, GoalType } from '../lib/nutrition';
 import BarcodeScanner from '../components/BarcodeScanner';
 import { resolveBarcodeFood } from '../lib/barcodeFood';
 import { TRACKER_MEALS, MealType, mealByHour, normalizeMeal } from '../lib/meals';
-import { NUTRITION_DISCLAIMER, ALLERGY_HINT } from '../lib/legal';
+import { getLegalShort } from '../lib/legal';
 import { useFocusTick } from '../lib/useFocusTick';
 import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
@@ -57,6 +57,8 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   const { openPaywall } = usePaywall();
   const c = useColors();
   const t = useT();
+  const { lang } = useLang();
+  const legalShort = getLegalShort(lang);
   const styles = useMemo(() => makeStyles(c), [c]);
 
   const [loading, setLoading] = useState(true);
@@ -682,7 +684,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
         )}
         {showZutaten ? (
           <>
-            <View style={styles.allergyNote}><Text style={styles.allergyText}>{ALLERGY_HINT}</Text></View>
+            <View style={styles.allergyNote}><Text style={styles.allergyText}>{legalShort.allergyHint}</Text></View>
             <TextInput style={styles.input} value={search} onChangeText={setSearch} placeholder={t('food.searchPlaceholder')} placeholderTextColor={c.textMuted} autoCorrect={false} />
             <TouchableOpacity style={styles.newFoodBtn} onPress={openNewFood} activeOpacity={0.85}>
               <GlassFill radius={16} />
@@ -866,7 +868,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
         {nlErr && <Text style={styles.error}>{nlErr}</Text>}
       </View>
 
-      <Text style={styles.disclaimer}>{NUTRITION_DISCLAIMER}</Text>
+      <Text style={styles.disclaimer}>{legalShort.nutritionDisclaimer}</Text>
 
       {/* Aktionen */}
       <View style={styles.actionRow}>
@@ -893,7 +895,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
         </View>
       )}
 
-      <View style={styles.allergyNote}><Text style={styles.allergyText}>{ALLERGY_HINT}</Text></View>
+      <View style={styles.allergyNote}><Text style={styles.allergyText}>{legalShort.allergyHint}</Text></View>
 
       {/* Schnellzugriff */}
       {quickFoods.length > 0 && (
