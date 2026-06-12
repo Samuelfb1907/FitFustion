@@ -5,8 +5,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Modal, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { useT } from '../contexts/LanguageContext';
-import { useColors, Colors } from '../contexts/ThemeContext';
+import { useT, useLang } from '../contexts/LanguageContext';
+import { useColors, useTheme, Colors } from '../contexts/ThemeContext';
+import { Ionicons } from '@expo/vector-icons';
 import { computeNutrition, ageFromBirthDate, NutritionResult, Gender, ActivityLevel, GoalType } from '../lib/nutrition';
 import { computeXp, levelInfo, computeStreak, ACHIEVEMENTS, GameStats } from '../lib/gamification';
 import CalorieGauge from '../components/CalorieGauge';
@@ -28,6 +29,18 @@ const GOAL_LABELS: Record<string, string> = {
   endurance: 'home.goal.endurance', general_fitness: 'home.goal.general_fitness', get_defined: 'home.goal.get_defined',
 };
 
+// Wochentage/Monate fuer die Datumszeile im Header (bewusst ohne Intl - deterministisch).
+const WEEKDAYS = {
+  de: ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'],
+  en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+};
+const MONTHS = {
+  de: ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'],
+  en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+};
+// Icons je Tagesziel (Schluessel aus lib/goals.ts).
+const GOAL_ICONS: Record<string, string> = { train: 'barbell-outline', track: 'restaurant-outline', kcal: 'flame-outline', protein: 'egg-outline' };
+
 type GoalsData = { trainedToday: boolean; trackedToday: boolean; sessionsThisWeek: number; trackedDaysThisWeek: number };
 async function countRows(table: string, userId: string): Promise<number> {
   const res = await supabase.from(table).select('*', { count: 'exact', head: true }).eq('user_id', userId);
@@ -48,6 +61,8 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
   const { openPaywall } = usePaywall();
   const t = useT();
   const c = useColors();
+  const { theme } = useTheme();
+  const { lang } = useLang();
   const styles = useMemo(() => makeStyles(c), [c]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +77,8 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
   const [activeSets, setActiveSets] = useState(0);
   const [goalsData, setGoalsData] = useState<GoalsData | null>(null);
   const [waterMl, setWaterMl] = useState(0);
+  const [waterBusy, setWaterBusy] = useState(false);
+  const [waterJust, setWaterJust] = useState(false);
   const [planToday, setPlanToday] = useState<{ has: boolean; focus: string | null } | null>(null);
   const [weightKg, setWeightKg] = useState<number | null>(null);
   const [trainingKcal, setTrainingKcal] = useState(0);
@@ -175,6 +192,23 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
     setWaterMl(rows.reduce((s, r) => s + (r.amount_ml ?? 0), 0));
   }
 
+  // Ein-Tipp-Wasser: ein Glas (0,25 L) direkt vom Home-Screen eintragen.
+  async function quickAddWater() {
+    const uid = session?.user?.id;
+    if (!uid || waterBusy) return;
+    setWaterBusy(true);
+    try {
+      const { error: e } = await supabase.from('water_logs').insert({ user_id: uid, amount_ml: 250, log_date: todayStr() });
+      if (!e) {
+        setWaterMl((v) => v + 250);
+        setWaterJust(true);
+        setTimeout(() => setWaterJust(false), 1800);
+      }
+    } finally {
+      setWaterBusy(false);
+    }
+  }
+
   async function endTraining() {
     if (!activeSession) return;
     const { error } = await supabase.from('workout_sessions').update({ ended_at: new Date().toISOString() }).eq('id', activeSession);
@@ -187,6 +221,13 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
   const lv = levelInfo(xp);
   const earnedCount = stats ? ACHIEVEMENTS.filter((a) => a.earned(stats, lv.level)).length : 0;
   const waterPct = Math.min(100, Math.round((waterMl / WATER_GOAL) * 100));
+  const dark = theme === 'dark';
+  const amber = dark ? '#FFB454' : '#B07A10';
+  const now = new Date();
+  const dateLine = lang === 'en'
+    ? `${WEEKDAYS.en[now.getDay()]}, ${MONTHS.en[now.getMonth()]} ${now.getDate()}`
+    : `${WEEKDAYS.de[now.getDay()]}, ${now.getDate()}. ${MONTHS.de[now.getMonth()]}`;
+  const litres = (waterMl / 1000).toFixed(1).replace('.', lang === 'en' ? '.' : ',');
 
   // Training-Status fuer die Uebersichts-Kachel
   let trainVal = t('home.trainStart'), trainSub = t('home.trainFree');
@@ -209,32 +250,56 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
           <View style={styles.stack}>
             {/* HEADER */}
             <View style={styles.header}>
-              <View style={{ flex: 1 }}>
+              <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={styles.greet}>{t(greeting())},</Text>
-                <Text style={styles.name}>{profile?.first_name || t('home.welcome')}</Text>
+                <Text style={styles.name} numberOfLines={1}>{profile?.first_name || t('home.welcome')}</Text>
+                <Text style={styles.date} numberOfLines={1}>{dateLine}</Text>
               </View>
               {stats && (
-                <TouchableOpacity style={styles.levelPill} activeOpacity={isPremium ? 1 : 0.7} disabled={isPremium} onPress={() => openPaywall('level')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button" accessibilityLabel={isPremium ? t('home.levelStreakA11y', { level: lv.level, streak: stats.streak }) : t('home.unlockToLevelA11y')}>
-                  <GlassFill radius={999} />
-                  <Text style={styles.levelText}>🔥 {stats.streak}</Text>
-                  <View style={styles.levelSep} />
-                  <Text style={styles.levelText}>{isPremium ? `Lv ${lv.level}` : t('home.levelLocked')}</Text>
-                </TouchableOpacity>
+                <View style={styles.pillRow}>
+                  <View style={styles.pill} accessible accessibilityLabel={t('home.streakA11y', { streak: stats.streak })}>
+                    <GlassFill radius={999} />
+                    <Ionicons name="flame" size={13} color={amber} />
+                    <Text style={[styles.pillText, { color: amber }]} numberOfLines={1}>{stats.streak}</Text>
+                  </View>
+                  <TouchableOpacity style={styles.pill} activeOpacity={isPremium ? 1 : 0.7} disabled={isPremium} onPress={() => openPaywall('level')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button" accessibilityLabel={isPremium ? t('home.levelStreakA11y', { level: lv.level, streak: stats.streak }) : t('home.unlockToLevelA11y')}>
+                    <GlassFill radius={999} />
+                    <Ionicons name={isPremium ? 'star' : 'lock-closed'} size={13} color={c.primary} />
+                    <Text style={[styles.pillText, { color: c.primary }]} numberOfLines={1}>{isPremium ? `Lv ${lv.level}` : t('home.levelLocked')}</Text>
+                  </TouchableOpacity>
+                </View>
               )}
             </View>
 
             {/* KALORIEN */}
             {nutrition && (
               <View style={styles.card}>
-                <GlassFill radius={16} />
-                <Text style={styles.cardLabel}>{t('home.todayLabel')}{goalLabel ? ` · ${t(goalLabel).toUpperCase()}` : ''}</Text>
-                <View style={{ alignItems: 'center', marginTop: 12 }}>
+                <GlassFill radius={22} />
+                <View style={styles.cardHead}>
+                  <Text style={styles.cardLabel}>{t('home.todayLabel')}</Text>
+                  {!!goalLabel && (
+                    <View style={styles.goalBadge}>
+                      <Text style={styles.goalBadgeText} numberOfLines={1}>{t(goalLabel).toUpperCase()}</Text>
+                    </View>
+                  )}
+                </View>
+                <View style={{ alignItems: 'center', marginTop: 16 }}>
                   <CalorieGauge target={nutrition.targetCalories + Math.max(trainingKcal, activityKcal)} eaten={eaten.kcal} />
                 </View>
-                {trainingKcal > 0 && activityKcal === 0 && <Text style={styles.bonusLine}>{t('home.bonusTraining', { n: trainingKcal })}</Text>}
-                {activityKcal > 0 && <Text style={styles.bonusLine}>🚶 {steps > 0 ? t('home.stepsPrefix', { steps: steps.toLocaleString('de-DE') }) : ''}+{activityKcal} kcal {activityMeasured ? t('home.activeMeasured') : t('home.activeEstimated')}</Text>}
+                {trainingKcal > 0 && activityKcal === 0 && (
+                  <View style={styles.bonusPill}>
+                    <Ionicons name="flame" size={14} color={c.primary} />
+                    <Text style={styles.bonusText} numberOfLines={1}>{t('home.bonusTraining', { n: trainingKcal })}</Text>
+                  </View>
+                )}
+                {activityKcal > 0 && (
+                  <View style={styles.bonusPill}>
+                    <Ionicons name="walk" size={14} color={c.primary} />
+                    <Text style={styles.bonusText} numberOfLines={1}>{steps > 0 ? t('home.stepsPrefix', { steps: steps.toLocaleString(lang === 'en' ? 'en-US' : 'de-DE') }) : ''}+{activityKcal} kcal {activityMeasured ? t('home.activeMeasured') : t('home.activeEstimated')}</Text>
+                  </View>
+                )}
                 <View style={styles.macros}>
-                  <Macro label={t('home.macroProtein')} eaten={eaten.p} target={nutrition.proteinG} color={c.accent} styles={styles} />
+                  <Macro label={t('home.macroProtein')} eaten={eaten.p} target={nutrition.proteinG} color={c.primary} styles={styles} />
                   <Macro label={t('home.macroCarbs')} eaten={eaten.c} target={nutrition.carbsG} color="#E69500" styles={styles} />
                   <Macro label={t('home.macroFat')} eaten={eaten.f} target={nutrition.fatG} color={c.danger} styles={styles} />
                 </View>
@@ -243,9 +308,27 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
 
             {/* 3 UEBERSICHTS-KACHELN */}
             <View style={styles.row}>
-              <Stat label={t('home.tileWater')} value={`${(waterMl / 1000).toFixed(1)} L`} sub={t('home.waterGoal', { n: (WATER_GOAL / 1000).toFixed(1) })} pct={waterPct} onPress={() => onNavigate?.('essen')} styles={styles} />
-              <Stat label={t('home.tileTraining')} value={trainVal} sub={trainSub} onPress={() => onNavigate?.('training')} styles={styles} />
-              <Stat label={t('home.tileWeight')} value={weightKg != null ? `${weightKg}` : '–'} sub={weightKg != null ? t('home.weightSubHistory') : t('home.weightSubAdd')} onPress={() => onNavigate?.('progress')} styles={styles} />
+              <Stat
+                a11y={`${t('home.tileWater')}: ${litres} L, ${t('home.waterGoal', { n: (WATER_GOAL / 1000).toFixed(1) })}`}
+                value={`${litres} L`}
+                sub={waterJust ? t('home.waterAdded') : t('home.waterGoal', { n: (WATER_GOAL / 1000).toFixed(1) })}
+                pct={waterPct} barColor="#3FA9F5"
+                icon="water" tint={{ fg: '#3FA9F5', bg: 'rgba(63,169,245,0.14)' }}
+                onPress={() => onNavigate?.('essen')} styles={styles}
+                quick={{ onPress: quickAddWater, busy: waterBusy, done: waterJust, a11y: t('home.waterQuickA11y') }}
+              />
+              <Stat
+                a11y={`${t('home.tileTraining')}: ${trainVal}, ${trainSub}`}
+                value={trainVal} sub={trainSub}
+                icon="barbell" tint={{ fg: c.primary, bg: dark ? 'rgba(25,201,143,0.14)' : 'rgba(14,159,110,0.12)' }}
+                onPress={() => onNavigate?.('training')} styles={styles}
+              />
+              <Stat
+                a11y={`${t('home.tileWeight')}: ${weightKg != null ? weightKg : '–'}, ${weightKg != null ? t('home.weightSubHistory') : t('home.weightSubAdd')}`}
+                value={weightKg != null ? `${weightKg}` : '–'} sub={weightKg != null ? t('home.weightSubHistory') : t('home.weightSubAdd')}
+                icon="scale" tint={{ fg: dark ? '#C3A8FF' : '#7C5CD6', bg: 'rgba(157,123,244,0.14)' }}
+                onPress={() => onNavigate?.('progress')} styles={styles}
+              />
             </View>
 
             {/* TRAINING LÄUFT */}
@@ -265,17 +348,23 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
             {/* TAGESZIELE */}
             {nutrition && goalsData && (
               <View style={styles.card}>
-                <GlassFill radius={16} />
+                <GlassFill radius={22} />
                 <View style={styles.cardHead}>
                   <Text style={styles.cardLabel}>{t('home.dailyGoals')}</Text>
                   {stats && (
-                    <TouchableOpacity onPress={() => setAchOpen(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('home.viewAchievementsA11y', { n: earnedCount, m: ACHIEVEMENTS.length })}>
-                      <Text style={styles.headRight}>🏆 {earnedCount}/{ACHIEVEMENTS.length} ›</Text>
+                    <TouchableOpacity style={styles.trophyRow} onPress={() => setAchOpen(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('home.viewAchievementsA11y', { n: earnedCount, m: ACHIEVEMENTS.length })}>
+                      <Ionicons name="trophy" size={14} color={amber} />
+                      <Text style={[styles.headRight, { color: amber }]} numberOfLines={1}>{earnedCount}/{ACHIEVEMENTS.length} ›</Text>
                     </TouchableOpacity>
                   )}
                 </View>
+                {stats && (
+                  <View style={styles.achBar}>
+                    <View style={[styles.achBarFill, { width: `${Math.round((earnedCount / ACHIEVEMENTS.length) * 100)}%`, backgroundColor: amber }]} />
+                  </View>
+                )}
                 {dailyGoals({ trainedToday: goalsData.trainedToday, trackedToday: goalsData.trackedToday, eatenKcal: eaten.kcal, targetKcal: nutrition.targetCalories + Math.max(trainingKcal, activityKcal), eatenProtein: eaten.p, targetProtein: nutrition.proteinG }).map((g, i, arr) => (
-                  <GoalRow key={g.key} g={g} last={i === arr.length - 1} c={c} styles={styles} />
+                  <GoalRow key={g.key} g={g} last={i === arr.length - 1} c={c} styles={styles} t={t} />
                 ))}
               </View>
             )}
@@ -317,38 +406,51 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
   );
 }
 
+// Makro-Spalte: Wort OBEN, Zahl darunter (bricht nie um), Fortschrittsbalken.
 function Macro({ label, eaten, target, color, styles }: { label: string; eaten: number; target: number; color: string; styles: any }) {
+  const pct = target > 0 ? Math.min(100, Math.round((eaten / target) * 100)) : 0;
   return (
     <View style={styles.macro}>
-      <View style={[styles.macroDot, { backgroundColor: color }]} />
-      <Text style={styles.macroValue}>{eaten}<Text style={styles.macroMax}> / {target} g</Text></Text>
-      <Text style={styles.macroLabel}>{label}</Text>
+      <Text style={styles.macroLabel} numberOfLines={1}>{label}</Text>
+      <Text style={styles.macroValue} numberOfLines={1}>{eaten}<Text style={styles.macroMax}> / {target} g</Text></Text>
+      <View style={styles.macroTrack}><View style={[styles.macroFill, { width: `${pct}%`, backgroundColor: color }]} /></View>
     </View>
   );
 }
 
-function Stat({ label, value, sub, pct, onPress, styles }: { label: string; value: string; sub: string; pct?: number; onPress: () => void; styles: any }) {
+// Uebersichts-Kachel mit Icon-Chip; optionaler Schnell-Knopf (z. B. +1 Glas Wasser).
+function Stat({ a11y, value, sub, pct, barColor, icon, tint, onPress, styles, quick }: {
+  a11y: string; value: string; sub: string; pct?: number; barColor?: string; icon: string;
+  tint: { fg: string; bg: string }; onPress: () => void; styles: any;
+  quick?: { onPress: () => void; busy: boolean; done: boolean; a11y: string };
+}) {
   return (
-    <TouchableOpacity style={styles.stat} onPress={onPress} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={`${label}: ${value}, ${sub}`}>
-      <GlassFill radius={16} />
-      <Text style={styles.statLabel}>{label}</Text>
+    <TouchableOpacity style={styles.stat} onPress={onPress} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={a11y}>
+      <GlassFill radius={20} />
+      <View style={styles.statTop}>
+        <View style={[styles.statChip, { backgroundColor: tint.bg }]}>
+          <Ionicons name={icon as any} size={19} color={tint.fg} />
+        </View>
+        {quick && (
+          <TouchableOpacity style={[styles.quickBtn, { backgroundColor: tint.fg, opacity: quick.busy ? 0.6 : 1 }]} onPress={quick.onPress} disabled={quick.busy} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={quick.a11y}>
+            <Ionicons name={quick.done ? 'checkmark' : 'add'} size={20} color="#FFFFFF" />
+          </TouchableOpacity>
+        )}
+      </View>
       <Text style={styles.statValue} numberOfLines={1}>{value}</Text>
       <Text style={styles.statSub} numberOfLines={1}>{sub}</Text>
-      {pct != null && <View style={styles.statBar}><View style={[styles.statFill, { width: `${pct}%` }]} /></View>}
+      {pct != null && <View style={styles.statBar}><View style={[styles.statFill, { width: `${pct}%`, backgroundColor: barColor }]} /></View>}
     </TouchableOpacity>
   );
 }
 
-function GoalRow({ g, last, c, styles }: { g: Goal; last: boolean; c: Colors; styles: any }) {
+// Tagesziel-Zeile: Icon + Text + Haken (erledigt hell, offen gedimmt).
+function GoalRow({ g, last, c, styles, t }: { g: Goal; last: boolean; c: Colors; styles: any; t: (k: string, p?: Record<string, string | number>) => string }) {
   return (
     <View style={[styles.goalRow, !last && styles.goalRowBorder]}>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.goalLabel}>{g.label}</Text>
-        <View style={styles.goalTrack}>
-          <View style={[styles.goalFill, { width: `${Math.round(g.progress * 100)}%`, backgroundColor: g.done ? c.success : c.primary }]} />
-        </View>
-      </View>
-      <Text style={[styles.goalCheck, { color: g.done ? c.success : c.textMuted }]}>{g.done ? '✓' : '○'}</Text>
+      <Ionicons name={(GOAL_ICONS[g.key] ?? 'ellipse-outline') as any} size={17} color={g.done ? c.primary : c.textMuted} />
+      <Text style={[styles.goalLabel, { color: g.done ? c.heading : c.textMuted }]} numberOfLines={1}>{t(g.label)}</Text>
+      <Ionicons name={g.done ? 'checkmark-circle' : 'ellipse-outline'} size={22} color={g.done ? c.primary : c.textMuted} style={g.done ? undefined : { opacity: 0.45 }} />
     </View>
   );
 }
@@ -357,23 +459,30 @@ function makeStyles(c: Colors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: 'transparent' },
     scroll: { paddingTop: 60, paddingHorizontal: 18, paddingBottom: 36 },
-    stack: { gap: 16 },
-    row: { flexDirection: 'row', gap: 12 },
+    stack: { gap: 14 },
+    row: { flexDirection: 'row', gap: 11 },
 
     // Header
-    header: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
-    greet: { fontSize: 15, color: c.textMuted, fontWeight: '500' },
-    name: { fontSize: 26, fontWeight: '800', color: c.heading, marginTop: 1 },
-    levelPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 },
-    levelText: { fontSize: 13, fontWeight: '700', color: c.heading },
-    levelSep: { width: StyleSheet.hairlineWidth, height: 14, backgroundColor: c.border, marginHorizontal: 9 },
+    header: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 4 },
+    greet: { fontSize: 14, color: c.textMuted, fontWeight: '500' },
+    name: { fontSize: 28, fontWeight: '800', color: c.primary, marginTop: 2, letterSpacing: -0.5 },
+    date: { fontSize: 12, color: c.textMuted, fontWeight: '500', marginTop: 8 },
+    pillRow: { flexDirection: 'row', gap: 7, marginTop: 2 },
+    pill: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8, overflow: 'hidden' },
+    pillText: { fontSize: 13, fontWeight: '700' },
 
     // Karte
-    card: { ...shadow, backgroundColor: c.card, borderRadius: 16, padding: 18, borderWidth: 1, borderColor: c.cardBorder },
+    card: { ...shadow, backgroundColor: c.card, borderRadius: 22, padding: 20, borderWidth: 1, borderColor: c.cardBorder, overflow: 'hidden' },
     cardHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    cardLabel: { fontSize: 12, fontWeight: '700', letterSpacing: 0.6, color: c.textMuted },
-    bonusLine: { fontSize: 12, fontWeight: '700', color: c.primary, textAlign: 'center', marginTop: 10 },
+    cardLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1.8, color: c.textMuted },
+    goalBadge: { paddingHorizontal: 11, paddingVertical: 5, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(22,180,134,0.30)', backgroundColor: 'rgba(22,180,134,0.10)' },
+    goalBadgeText: { fontSize: 11, fontWeight: '700', letterSpacing: 1, color: c.primary },
+    bonusPill: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'center', marginTop: 14, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(22,180,134,0.25)', backgroundColor: 'rgba(22,180,134,0.10)' },
+    bonusText: { fontSize: 12, fontWeight: '600', color: c.primary },
     headRight: { fontSize: 13, fontWeight: '700', color: c.textMuted },
+    trophyRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+    achBar: { height: 4, borderRadius: 3, backgroundColor: c.track, overflow: 'hidden', marginTop: 12, marginBottom: 4 },
+    achBarFill: { height: 4, borderRadius: 3 },
     achBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
     achSheet: { backgroundColor: c.bg, borderTopLeftRadius: 22, borderTopRightRadius: 22, paddingHorizontal: 16, paddingTop: 18, paddingBottom: 24, maxHeight: '82%' },
     achHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
@@ -388,21 +497,24 @@ function makeStyles(c: Colors) {
     achClose: { marginTop: 10, backgroundColor: c.primary, borderRadius: 14, paddingVertical: 14, alignItems: 'center' },
     achCloseText: { color: c.onPrimary, fontSize: 16, fontWeight: '700' },
 
-    // Makros
-    macros: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 18 },
-    macro: { flex: 1, alignItems: 'center' },
-    macroDot: { width: 8, height: 8, borderRadius: 4, marginBottom: 7 },
-    macroValue: { fontSize: 15, fontWeight: '700', color: c.heading },
-    macroMax: { fontSize: 12, fontWeight: '600', color: c.textMuted },
-    macroLabel: { fontSize: 12, color: c.textMuted, marginTop: 3, textAlign: 'center' },
+    // Makros (Wort oben, Zahl darunter, Balken - bricht nie um)
+    macros: { flexDirection: 'row', gap: 14, marginTop: 18, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.border, paddingTop: 16 },
+    macro: { flex: 1, minWidth: 0 },
+    macroLabel: { fontSize: 11, fontWeight: '600', color: c.textMuted, marginBottom: 8 },
+    macroValue: { fontSize: 16, fontWeight: '800', color: c.heading },
+    macroMax: { fontSize: 11, fontWeight: '500', color: c.textMuted },
+    macroTrack: { height: 6, borderRadius: 4, backgroundColor: c.track, overflow: 'hidden', marginTop: 10 },
+    macroFill: { height: 6, borderRadius: 4 },
 
-    // Uebersichts-Kacheln
-    stat: { ...shadow, flex: 1, backgroundColor: c.card, borderRadius: 16, paddingVertical: 16, paddingHorizontal: 12, borderWidth: 1, borderColor: c.cardBorder },
-    statLabel: { fontSize: 12, fontWeight: '700', letterSpacing: 0.6, color: c.textMuted },
-    statValue: { fontSize: 20, fontWeight: '800', color: c.heading, marginTop: 8 },
-    statSub: { fontSize: 12, color: c.textMuted, marginTop: 2 },
-    statBar: { height: 5, backgroundColor: c.track, borderRadius: 3, overflow: 'hidden', marginTop: 10 },
-    statFill: { height: 5, backgroundColor: c.primary, borderRadius: 3 },
+    // Uebersichts-Kacheln (Icon-Chip + Wert + Unterzeile)
+    stat: { ...shadow, flex: 1, backgroundColor: c.card, borderRadius: 20, paddingVertical: 15, paddingHorizontal: 13, borderWidth: 1, borderColor: c.cardBorder, overflow: 'hidden' },
+    statTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
+    statChip: { width: 38, height: 38, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+    quickBtn: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
+    statValue: { fontSize: 21, fontWeight: '800', color: c.heading, marginTop: 14, letterSpacing: -0.3 },
+    statSub: { fontSize: 11, color: c.textMuted, fontWeight: '500', marginTop: 7 },
+    statBar: { height: 5, backgroundColor: c.track, borderRadius: 3, overflow: 'hidden', marginTop: 11 },
+    statFill: { height: 5, borderRadius: 3 },
 
     // Training laeuft
     activeCard: { ...shadow, flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 16, padding: 16, borderWidth: 1.5, borderColor: c.primary },
@@ -411,13 +523,10 @@ function makeStyles(c: Colors) {
     activeBtn: { backgroundColor: c.primary, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10, marginLeft: 12 },
     activeBtnText: { color: c.onPrimary, fontSize: 14, fontWeight: '700' },
 
-    // Tagesziele
-    goalRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 13 },
+    // Tagesziele (Icon + Text + Haken)
+    goalRow: { flexDirection: 'row', alignItems: 'center', gap: 13, paddingVertical: 12 },
     goalRowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.border },
-    goalLabel: { fontSize: 14, fontWeight: '600', color: c.text },
-    goalTrack: { height: 5, backgroundColor: c.track, borderRadius: 3, marginTop: 8, overflow: 'hidden' },
-    goalFill: { height: 5, borderRadius: 3 },
-    goalCheck: { fontSize: 18, fontWeight: '700', marginLeft: 14 },
+    goalLabel: { flex: 1, fontSize: 14, fontWeight: '600' },
 
     error: { color: c.danger, fontSize: 14, marginTop: 8, textAlign: 'center' },
   });

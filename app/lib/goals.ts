@@ -12,11 +12,12 @@ export function dailyGoals(i: {
   const kcalPct = i.targetKcal ? i.eatenKcal / i.targetKcal : 0;
   const kcalDone = kcalPct >= 0.8 && kcalPct <= 1.1; // im Zielbereich
   const protPct = i.targetProtein ? i.eatenProtein / i.targetProtein : 0;
+  // label ist ein i18n-Schluessel - Anzeige im Screen via t(g.label).
   return [
-    { key: 'train', icon: '🏋️', label: 'Heute trainiert', done: i.trainedToday, progress: i.trainedToday ? 1 : 0, detail: i.trainedToday ? 'Erledigt' : 'Noch kein Training heute' },
-    { key: 'track', icon: '🍽️', label: 'Essen getrackt', done: i.trackedToday, progress: i.trackedToday ? 1 : 0, detail: i.trackedToday ? 'Erledigt' : 'Noch nichts im Tagebuch' },
-    { key: 'kcal', icon: '🔥', label: 'Kalorien im Zielbereich', done: kcalDone, progress: Math.min(1, kcalPct), detail: `${i.eatenKcal} / ${i.targetKcal} kcal` },
-    { key: 'protein', icon: '💪', label: 'Protein-Ziel', done: protPct >= 1, progress: Math.min(1, protPct), detail: `${i.eatenProtein} / ${i.targetProtein} g Protein` },
+    { key: 'train', icon: '🏋️', label: 'home.dgoal.train', done: i.trainedToday, progress: i.trainedToday ? 1 : 0, detail: i.trainedToday ? 'Erledigt' : 'Noch kein Training heute' },
+    { key: 'track', icon: '🍽️', label: 'home.dgoal.track', done: i.trackedToday, progress: i.trackedToday ? 1 : 0, detail: i.trackedToday ? 'Erledigt' : 'Noch nichts im Tagebuch' },
+    { key: 'kcal', icon: '🔥', label: 'home.dgoal.kcal', done: kcalDone, progress: Math.min(1, kcalPct), detail: `${i.eatenKcal} / ${i.targetKcal} kcal` },
+    { key: 'protein', icon: '💪', label: 'home.dgoal.protein', done: protPct >= 1, progress: Math.min(1, protPct), detail: `${i.eatenProtein} / ${i.targetProtein} g Protein` },
   ];
 }
 

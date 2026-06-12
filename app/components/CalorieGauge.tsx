@@ -1,34 +1,49 @@
-// Halbkreis-Diagramm (Gauge) mit Animation, theme-fähig.
+// Voll-Kreis-Kalorienring mit Farbverlauf (Smaragd -> Mint), leuchtendem
+// Endpunkt und Fuell-Animation. Darunter: gegessen | Tagesziel mit Trennlinie.
+// Theme- und sprachfaehig (DE/EN).
 import { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
-import { useColors } from '../contexts/ThemeContext';
+import Svg, { Circle, Path } from 'react-native-svg';
+import { useColors, useTheme } from '../contexts/ThemeContext';
+import { useT, useLang } from '../contexts/LanguageContext';
 
-function arcPath(cx: number, cy: number, r: number, fStart: number, fEnd: number, segments: number): string {
-  let d = '';
-  for (let i = 0; i <= segments; i++) {
-    const f = fStart + (fEnd - fStart) * (i / segments);
-    const theta = Math.PI * (1 - f);
-    const x = cx + r * Math.cos(theta);
-    const y = cy - r * Math.sin(theta);
-    d += (i === 0 ? 'M' : ' L') + ` ${x.toFixed(2)} ${y.toFixed(2)}`;
-  }
-  return d;
+const SIZE = 216;
+const STROKE = 16;
+const R = (SIZE - STROKE) / 2 - 2;
+const CX = SIZE / 2;
+const CY = SIZE / 2;
+const SEGMENTS = 32; // Verlaufs-Aufloesung: Ring wird aus Boegen mit interpolierter Farbe gezeichnet
+
+function hexToRgb(h: string): [number, number, number] {
+  const x = h.replace('#', '');
+  return [parseInt(x.slice(0, 2), 16), parseInt(x.slice(2, 4), 16), parseInt(x.slice(4, 6), 16)];
+}
+function mix(a: string, b: string, f: number): string {
+  const ra = hexToRgb(a), rb = hexToRgb(b);
+  return `rgb(${Math.round(ra[0] + (rb[0] - ra[0]) * f)},${Math.round(ra[1] + (rb[1] - ra[1]) * f)},${Math.round(ra[2] + (rb[2] - ra[2]) * f)})`;
+}
+// Farbe entlang des gezeichneten Bogens (3 Stuetzstellen, f = 0..1)
+function rampColor(f: number, ramp: [string, string, string]): string {
+  return f < 0.55 ? mix(ramp[0], ramp[1], f / 0.55) : mix(ramp[1], ramp[2], (f - 0.55) / 0.45);
+}
+// Punkt auf dem Ring: frac 0..1, Start oben (12 Uhr), im Uhrzeigersinn
+function polar(frac: number): { x: number; y: number } {
+  const a = (frac * 360 - 90) * (Math.PI / 180);
+  return { x: CX + R * Math.cos(a), y: CY + R * Math.sin(a) };
 }
 
 export default function CalorieGauge({ target, eaten }: { target: number; eaten: number }) {
   const c = useColors();
-  const W = 240;
-  const stroke = 20;
-  const r = 100;
-  const cx = W / 2;
-  const cy = r + stroke / 2;
-  const height = cy + stroke / 2 + 2;
+  const { theme } = useTheme();
+  const t = useT();
+  const { lang } = useLang();
+  const loc = lang === 'en' ? 'en-US' : 'de-DE';
+  const dark = theme === 'dark';
+  const ramp: [string, string, string] = dark ? ['#0E7A50', '#19C98F', '#46E3AC'] : ['#0B6B46', '#0E9F6E', '#19C98F'];
+  const dotColor = dark ? '#8FF3CF' : '#0E9F6E';
 
   const fraction = target > 0 ? Math.min(eaten / target, 1) : 0;
   const finalOver = target - eaten < 0;
-  const fgColor = finalOver ? c.danger : c.success;
-  const bgPath = arcPath(cx, cy, r, 0, 1, 60);
 
   const anim = useRef(new Animated.Value(0)).current;
   const [p, setP] = useState(0);
@@ -43,37 +58,59 @@ export default function CalorieGauge({ target, eaten }: { target: number; eaten:
     };
   }, [target, eaten]);
 
-  const fillFraction = fraction * p;
+  const fill = fraction * p;
   const shownRemaining = Math.round(target - eaten * p);
   const curOver = shownRemaining < 0;
-  const fgPath = arcPath(cx, cy, r, 0, fillFraction, Math.max(2, Math.round(60 * fillFraction)));
-  const a11yLabel = 'Kalorien: ' + Math.round(eaten).toLocaleString('de-DE') + ' von ' + target.toLocaleString('de-DE') + ' kcal gegessen, ' + Math.abs(Math.round(target - eaten)).toLocaleString('de-DE') + ' kcal ' + (target - eaten < 0 ? 'über dem Ziel' : 'übrig');
+
+  // Bogen-Segmente mit interpolierter Farbe (ein durchgehender Verlauf)
+  const segs: { d: string; col: string }[] = [];
+  if (fill > 0.004) {
+    const n = Math.max(1, Math.ceil(SEGMENTS * fill));
+    for (let i = 0; i < n; i++) {
+      const a = polar(fill * (i / n));
+      const b = polar(fill * ((i + 1) / n));
+      segs.push({
+        d: `M ${a.x.toFixed(2)} ${a.y.toFixed(2)} A ${R} ${R} 0 0 1 ${b.x.toFixed(2)} ${b.y.toFixed(2)}`,
+        col: finalOver ? c.danger : rampColor((i + 1) / n, ramp),
+      });
+    }
+  }
+  const dot = polar(fill);
+
+  const a11yLabel = t('home.gauge.a11y', {
+    eaten: Math.round(eaten).toLocaleString(loc),
+    target: target.toLocaleString(loc),
+    diff: Math.abs(Math.round(target - eaten)).toLocaleString(loc),
+    state: t(target - eaten < 0 ? 'home.gauge.over' : 'home.gauge.remaining'),
+  });
 
   return (
     <View style={styles.wrap} accessible accessibilityLabel={a11yLabel}>
-      <View style={{ width: W, height }}>
-        <Svg width={W} height={height}>
-          <Path d={bgPath} stroke={c.track} strokeWidth={stroke} strokeLinecap="round" fill="none" />
-          {fillFraction > 0.005 && (
-            <Path d={fgPath} stroke={fgColor} strokeWidth={stroke} strokeLinecap="round" fill="none" />
-          )}
+      <View style={{ width: SIZE, height: SIZE }}>
+        <Svg width={SIZE} height={SIZE}>
+          <Circle cx={CX} cy={CY} r={R} stroke={c.track} strokeWidth={STROKE} fill="none" />
+          {segs.map((s, i) => (
+            <Path key={i} d={s.d} stroke={s.col} strokeWidth={STROKE} strokeLinecap="round" fill="none" />
+          ))}
+          {fill > 0.03 && !finalOver && <Circle cx={dot.x} cy={dot.y} r={6} fill={dotColor} />}
         </Svg>
-        <View style={[styles.center, { width: W, top: cy - 64 }]}>
+        <View style={styles.center} pointerEvents="none">
           <Text style={[styles.big, { color: curOver ? c.danger : c.heading }]}>
-            {Math.abs(shownRemaining).toLocaleString('de-DE')}
+            {Math.abs(shownRemaining).toLocaleString(loc)}
           </Text>
-          <Text style={[styles.label, { color: c.textMuted }]}>{curOver ? 'kcal über Ziel' : 'kcal übrig'}</Text>
+          <Text style={[styles.label, { color: c.textMuted }]}>{t(curOver ? 'home.gauge.over' : 'home.gauge.remaining')}</Text>
         </View>
       </View>
 
       <View style={styles.footRow}>
         <View style={styles.foot}>
-          <Text style={[styles.footValue, { color: c.text }]}>{Math.round(eaten).toLocaleString('de-DE')}</Text>
-          <Text style={[styles.footLabel, { color: c.textMuted }]}>gegessen</Text>
+          <Text style={[styles.footValue, { color: c.heading }]} numberOfLines={1}>{Math.round(eaten).toLocaleString(loc)}</Text>
+          <Text style={[styles.footLabel, { color: c.textMuted }]} numberOfLines={1}>{t('home.gauge.eaten')}</Text>
         </View>
+        <View style={[styles.footSep, { backgroundColor: c.border }]} />
         <View style={styles.foot}>
-          <Text style={[styles.footValue, { color: c.text }]}>{target.toLocaleString('de-DE')}</Text>
-          <Text style={[styles.footLabel, { color: c.textMuted }]}>Ziel (kcal)</Text>
+          <Text style={[styles.footValue, { color: c.heading }]} numberOfLines={1}>{target.toLocaleString(loc)}</Text>
+          <Text style={[styles.footLabel, { color: c.textMuted }]} numberOfLines={1}>{t('home.gauge.target')}</Text>
         </View>
       </View>
     </View>
@@ -81,12 +118,13 @@ export default function CalorieGauge({ target, eaten }: { target: number; eaten:
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignItems: 'center' },
-  center: { position: 'absolute', left: 0, alignItems: 'center' },
-  big: { fontSize: 38, fontWeight: 'bold' },
-  label: { fontSize: 14, marginTop: -2 },
-  footRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 6, gap: 36 },
-  foot: { alignItems: 'center' },
-  footValue: { fontSize: 16, fontWeight: '700' },
-  footLabel: { fontSize: 12, marginTop: 1 },
+  wrap: { alignItems: 'center', alignSelf: 'stretch' },
+  center: { position: 'absolute', left: 0, top: 0, width: SIZE, height: SIZE, alignItems: 'center', justifyContent: 'center' },
+  big: { fontSize: 42, fontWeight: '900', letterSpacing: -1, lineHeight: 46 },
+  label: { fontSize: 13, fontWeight: '500', marginTop: 8 },
+  footRow: { flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch', marginTop: 18 },
+  foot: { flex: 1, alignItems: 'center' },
+  footValue: { fontSize: 21, fontWeight: '800', letterSpacing: -0.3 },
+  footLabel: { fontSize: 12, fontWeight: '500', marginTop: 8 },
+  footSep: { width: 1, height: 40 },
 });

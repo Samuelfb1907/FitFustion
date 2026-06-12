@@ -38,12 +38,15 @@ const LIGHT: Colors = {
   accent: '#0E9F6E', hero: '#0E1217', muscle: '#E2E6EA',
   glass: 'rgba(255,255,255,0.32)', glassStrong: 'rgba(255,255,255,0.6)', hairline: 'rgba(20,24,28,0.10)',
 };
+// Dark = tiefes, neutrales Anthrazit mit EINEM Smaragd-Akzent (kein Gruenstich
+// im Hintergrund). Karten sind nahezu deckend mit feiner heller Kante - das
+// wirkt ruhiger und hochwertiger als durchscheinende gruene Flaechen.
 const DARK: Colors = {
-  bg: '#0F1216', card: 'rgba(34,40,49,0.46)', text: '#E8EBEF', textMuted: '#969EA8', heading: '#F3F5F7',
-  primary: '#16B486', onPrimary: '#04231A', border: 'rgba(255,255,255,0.12)', cardBorder: 'rgba(31,181,135,0.34)', inputBg: 'rgba(255,255,255,0.08)',
-  danger: '#FF6B6B', success: '#1FB587', track: 'rgba(255,255,255,0.08)',
-  accent: '#1FB587', hero: '#11221C', muscle: '#2A2F36',
-  glass: 'rgba(16,20,26,0.28)', glassStrong: 'rgba(16,20,26,0.62)', hairline: 'rgba(255,255,255,0.16)',
+  bg: '#090D11', card: 'rgba(18,24,30,0.92)', text: '#E9EDF1', textMuted: '#8A94A0', heading: '#F3F6F8',
+  primary: '#19C98F', onPrimary: '#062E20', border: 'rgba(255,255,255,0.10)', cardBorder: 'rgba(255,255,255,0.07)', inputBg: 'rgba(255,255,255,0.06)',
+  danger: '#FF6B6B', success: '#2BD79B', track: '#1A232B',
+  accent: '#2BD79B', hero: '#10231C', muscle: '#2A2F36',
+  glass: 'rgba(10,14,18,0.30)', glassStrong: 'rgba(10,14,18,0.62)', hairline: 'rgba(255,255,255,0.12)',
 };
 
 // Nutzer-Praeferenz: dem System folgen (Standard) oder fest hell/dunkel.

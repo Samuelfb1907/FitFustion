@@ -16,10 +16,10 @@ export const de = {
 
   "home.levelStreakA11y": "Level {level}, Streak {streak} Tage",
   "home.unlockToLevelA11y": "Premium freischalten, um zu leveln",
-  "home.levelLocked": "Lv 🔒",
+  "home.levelLocked": "Lv",
 
   "home.todayLabel": "HEUTE",
-  "home.bonusTraining": "🔥 +{n} kcal durch Training heute (geschätzt)",
+  "home.bonusTraining": "+{n} kcal durch Training heute (geschätzt)",
   "home.stepsPrefix": "{steps} Schritte · ",
   "home.activeMeasured": "aktiv (gemessen)",
   "home.activeEstimated": "(geschätzt)",
@@ -59,6 +59,19 @@ export const de = {
   "home.achievementLocked": "noch gesperrt",
   "home.closeAchievementsA11y": "Erfolge schließen",
   "home.close": "Schließen",
+
+  "home.streakA11y": "Streak: {streak} Tage",
+  "home.gauge.remaining": "kcal übrig",
+  "home.gauge.over": "kcal über Ziel",
+  "home.gauge.eaten": "gegessen",
+  "home.gauge.target": "Tagesziel",
+  "home.gauge.a11y": "Kalorien: {eaten} von {target} kcal gegessen, {diff} {state}",
+  "home.waterQuickA11y": "Ein Glas Wasser (0,25 L) eintragen",
+  "home.waterAdded": "+ 0,25 L eingetragen",
+  "home.dgoal.train": "Heute trainiert",
+  "home.dgoal.track": "Essen getrackt",
+  "home.dgoal.kcal": "Kalorien im Zielbereich",
+  "home.dgoal.protein": "Protein-Ziel",
 };
 
 export const en = {
@@ -79,10 +92,10 @@ export const en = {
 
   "home.levelStreakA11y": "Level {level}, streak {streak} days",
   "home.unlockToLevelA11y": "Unlock Premium to level up",
-  "home.levelLocked": "Lv 🔒",
+  "home.levelLocked": "Lv",
 
   "home.todayLabel": "TODAY",
-  "home.bonusTraining": "🔥 +{n} kcal from training today (estimated)",
+  "home.bonusTraining": "+{n} kcal from training today (estimated)",
   "home.stepsPrefix": "{steps} steps · ",
   "home.activeMeasured": "active (measured)",
   "home.activeEstimated": "(estimated)",
@@ -122,4 +135,17 @@ export const en = {
   "home.achievementLocked": "still locked",
   "home.closeAchievementsA11y": "Close achievements",
   "home.close": "Close",
+
+  "home.streakA11y": "Streak: {streak} days",
+  "home.gauge.remaining": "kcal left",
+  "home.gauge.over": "kcal over goal",
+  "home.gauge.eaten": "eaten",
+  "home.gauge.target": "Daily goal",
+  "home.gauge.a11y": "Calories: {eaten} of {target} kcal eaten, {diff} {state}",
+  "home.waterQuickA11y": "Log a glass of water (0.25 L)",
+  "home.waterAdded": "+ 0.25 L logged",
+  "home.dgoal.train": "Trained today",
+  "home.dgoal.track": "Food tracked",
+  "home.dgoal.kcal": "Calories in range",
+  "home.dgoal.protein": "Protein goal",
 };

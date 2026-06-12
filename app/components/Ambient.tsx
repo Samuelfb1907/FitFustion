@@ -15,17 +15,16 @@ export default function Ambient({ c }: { c: Colors }) {
   // Durchgehender Grundverlauf (oben -> unten). Light bewusst durchgehend getoent,
   // damit nichts "nur weiss" wirkt; Dark in der Mitte tief.
   const base = dark
-    ? [{ col: '#123626', op: 0.6 }, { col: c.bg, op: 0 }, { col: '#0B1A2E', op: 0.55 }]
+    ? [{ col: '#0E2A1F', op: 0.5 }, { col: c.bg, op: 0 }, { col: '#0A1612', op: 0.45 }]
     : [{ col: '#D7F0E6', op: 0.9 }, { col: '#E6EDFB', op: 0.55 }, { col: '#ECE6FB', op: 0.85 }];
 
   // Organische Glows als gedrehte Ellipsen. cx/cy/rx/ry als Anteil von W bzw. H.
+  // Dark bewusst REDUZIERT: nur ein Smaragd-Schimmer oben (wie ein Spotlight)
+  // plus ein kaum sichtbarer zweiter unten - kein Farb-Mix mehr (wirkte matschig).
   const blobs = dark
     ? [
-        { col: c.primary, op: 0.36, cx: 0.9, cy: 0.04, rx: 0.95, ry: 0.42, rot: -18 },
-        { col: '#22D3EE', op: 0.24, cx: 0.04, cy: 0.24, rx: 0.85, ry: 0.36, rot: 14 },
-        { col: '#3B82F6', op: 0.18, cx: 0.52, cy: 0.52, rx: 1.0, ry: 0.4, rot: -10 },
-        { col: '#8B5CF6', op: 0.24, cx: 1.02, cy: 0.8, rx: 0.85, ry: 0.36, rot: 18 },
-        { col: c.primary, op: 0.26, cx: 0.16, cy: 1.0, rx: 0.95, ry: 0.42, rot: -14 },
+        { col: c.primary, op: 0.20, cx: 0.5, cy: -0.06, rx: 1.05, ry: 0.42, rot: 0 },
+        { col: '#0E7A50', op: 0.10, cx: 0.1, cy: 1.05, rx: 0.9, ry: 0.4, rot: -12 },
       ]
     : [
         { col: c.primary, op: 0.30, cx: 0.9, cy: 0.04, rx: 0.95, ry: 0.42, rot: -18 },
