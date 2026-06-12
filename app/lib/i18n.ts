@@ -23,6 +23,7 @@ import { de as errorRetryDe, en as errorRetryEn } from './translations/errorRetr
 import { de as offlineDe, en as offlineEn } from './translations/offline';
 import { de as scannerDe, en as scannerEn } from './translations/scanner';
 import { de as settingsDe, en as settingsEn } from './translations/settings';
+import { de as stepsPromptDe, en as stepsPromptEn } from './translations/stepsPrompt';
 
 export type Lang = 'de' | 'en';
 export const LANGS: Lang[] = ['de', 'en'];
@@ -54,13 +55,13 @@ const DICTS: Record<Lang, Dict> = {
     ...de, ...homeDe, ...trainingDe, ...planDe, ...foodDe, ...authDe, ...onboardingDe,
     ...profileDe, ...progressDe, ...waterDe, ...proteinDe, ...leaderboardDe, ...tabsDe,
     ...essenDe, ...paywallDe, ...exerciseDe, ...timerDe, ...errorRetryDe, ...offlineDe, ...scannerDe,
-    ...settingsDe,
+    ...settingsDe, ...stepsPromptDe,
   },
   en: {
     ...en, ...homeEn, ...trainingEn, ...planEn, ...foodEn, ...authEn, ...onboardingEn,
     ...profileEn, ...progressEn, ...waterEn, ...proteinEn, ...leaderboardEn, ...tabsEn,
     ...essenEn, ...paywallEn, ...exerciseEn, ...timerEn, ...errorRetryEn, ...offlineEn, ...scannerEn,
-    ...settingsEn,
+    ...settingsEn, ...stepsPromptEn,
   },
 };
 

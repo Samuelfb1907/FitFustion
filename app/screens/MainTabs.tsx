@@ -12,6 +12,7 @@ import EssenScreen from './EssenScreen';
 import ProgressScreen from './ProgressScreen';
 import SettingsScreen from './SettingsScreen';
 import Ambient from '../components/Ambient';
+import StepsPrompt from '../components/StepsPrompt';
 
 type Tab = 'home' | 'training' | 'essen' | 'progress' | 'settings';
 
@@ -65,6 +66,7 @@ export default function MainTabs() {
         <TabButton label={t('tabs.progress')} icon="stats-chart" active={tab === 'progress'} onPress={() => go('progress')} c={c} />
         <TabButton label={t('tabs.settings')} icon="settings" active={tab === 'settings'} onPress={() => go('settings')} c={c} />
       </BlurView>
+      <StepsPrompt />
     </View>
   );
 }
