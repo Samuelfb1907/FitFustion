@@ -3,12 +3,14 @@
 import { useMemo, useState } from 'react';
 import { FlatList, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useColors, Colors } from '../contexts/ThemeContext';
+import { useT } from '../contexts/LanguageContext';
 import GlassFill from '../components/GlassFill';
 import { CARD_SHADOW as shadow } from '../lib/ui';
 import { PROTEIN_FOODS } from '../lib/proteinFoods';
 
 export default function ProteinScreen({ embedded }: { embedded?: boolean }) {
   const c = useColors();
+  const t = useT();
   const styles = useMemo(() => makeStyles(c), [c]);
   const [search, setSearch] = useState('');
 
@@ -32,21 +34,21 @@ export default function ProteinScreen({ embedded }: { embedded?: boolean }) {
       windowSize={10}
       ListHeaderComponent={
         <View>
-          {!embedded && <Text style={styles.title}>Protein</Text>}
+          {!embedded && <Text style={styles.title}>{t('protein.title')}</Text>}
           <View style={styles.introCard}>
             <GlassFill radius={16} />
-            <Text style={styles.introTitle}>💪 Protein pro 100 g</Text>
-            <Text style={styles.introText}>Sortiert von viel zu wenig. Die Werte sind Richtwerte und können je nach Produkt und Marke abweichen.</Text>
+            <Text style={styles.introTitle}>{t('protein.introTitle')}</Text>
+            <Text style={styles.introText}>{t('protein.introText')}</Text>
           </View>
           <TextInput
             style={styles.input}
             value={search}
             onChangeText={setSearch}
-            placeholder="Suchen (z. B. Quark, Huhn, Tofu)…"
+            placeholder={t('protein.searchPlaceholder')}
             placeholderTextColor={c.textMuted}
             autoCorrect={false}
           />
-          <Text style={styles.countHint}>{list.length} Produkte</Text>
+          <Text style={styles.countHint}>{t('protein.countProducts', { n: list.length })}</Text>
         </View>
       }
       renderItem={({ item, index }) => (
@@ -58,11 +60,11 @@ export default function ProteinScreen({ embedded }: { embedded?: boolean }) {
           </View>
           <View style={styles.proteinWrap}>
             <Text style={styles.protein}>{item.protein}<Text style={styles.proteinUnit}> g</Text></Text>
-            <Text style={styles.proteinLbl}>Protein</Text>
+            <Text style={styles.proteinLbl}>{t('protein.proteinLabel')}</Text>
           </View>
         </View>
       )}
-      ListEmptyComponent={<Text style={styles.empty}>Kein Treffer. Versuch ein anderes Stichwort.</Text>}
+      ListEmptyComponent={<Text style={styles.empty}>{t('protein.empty')}</Text>}
     />
   );
 }

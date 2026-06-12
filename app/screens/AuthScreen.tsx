@@ -4,23 +4,25 @@ import { ActivityIndicator, Image, KeyboardAvoidingView, Modal, Platform, Scroll
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { useColors, Colors } from '../contexts/ThemeContext';
+import { useT } from '../contexts/LanguageContext';
 import LegalText from '../components/LegalText';
 import { DISCLAIMER_VERSION, TERMS_SECTIONS, PRIVACY_SECTIONS } from '../lib/legal';
 import Ambient from '../components/Ambient';
 import GlassFill from '../components/GlassFill';
 
-function translateError(msg: string): string {
+function translateError(msg: string, t: (key: string, params?: Record<string, string | number>) => string): string {
   const m = msg.toLowerCase();
-  if (m.includes('invalid login credentials')) return 'E-Mail oder Passwort ist falsch.';
-  if (m.includes('already registered')) return 'Mit diesen Daten ist keine Registrierung möglich. Falls du bereits ein Konto hast, melde dich bitte an.';
-  if (m.includes('password should be at least')) return 'Das Passwort ist zu kurz (mindestens 8 Zeichen).';
-  if (m.includes('invalid email') || m.includes('unable to validate email')) return 'Bitte eine gültige E-Mail-Adresse eingeben.';
-  if (m.includes('email not confirmed')) return 'Bitte bestätige zuerst deine E-Mail (Postfach prüfen).';
+  if (m.includes('invalid login credentials')) return t('auth.err.invalidCredentials');
+  if (m.includes('already registered')) return t('auth.err.alreadyRegistered');
+  if (m.includes('password should be at least')) return t('auth.err.passwordTooShort');
+  if (m.includes('invalid email') || m.includes('unable to validate email')) return t('auth.err.invalidEmail');
+  if (m.includes('email not confirmed')) return t('auth.err.emailNotConfirmed');
   return msg;
 }
 
 export default function AuthScreen() {
   const c = useColors();
+  const t = useT();
   const styles = useMemo(() => makeStyles(c), [c]);
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
@@ -47,27 +49,27 @@ export default function AuthScreen() {
 
   async function handleSubmit() {
     setInfo(null);
-    if (!email || !password) { show('Bitte E-Mail und Passwort eingeben.', true); return; }
-    if (mode === 'register' && password.length < 8) { show('Bitte ein Passwort mit mindestens 8 Zeichen wählen.', true); return; }
-    if (mode === 'register' && !accepted) { show('Bitte bestätige den Haftungsausschluss & Gesundheitshinweis, um fortzufahren.', true); return; }
+    if (!email || !password) { show(t('auth.err.missingFields'), true); return; }
+    if (mode === 'register' && password.length < 8) { show(t('auth.err.choosePassword'), true); return; }
+    if (mode === 'register' && !accepted) { show(t('auth.err.acceptDisclaimer'), true); return; }
     setLoading(true);
     if (mode === 'login') {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) show(translateError(error.message), true);
+      if (error) show(translateError(error.message, t), true);
     } else {
       const { data, error } = await supabase.auth.signUp({ email, password });
-      if (error) show(translateError(error.message), true);
+      if (error) show(translateError(error.message, t), true);
       else {
         // Zustimmung zum Haftungsausschluss dokumentieren (Zeitpunkt + Version)
         try { await AsyncStorage.setItem('fitavo.disclaimerAccepted', JSON.stringify({ version: DISCLAIMER_VERSION, at: new Date().toISOString(), health: true, terms: true, privacy: true })); } catch {}
-        if (!data.session) { show('Fast geschafft! Bitte bestätige deine E-Mail und logge dich dann ein.', false); setMode('login'); }
+        if (!data.session) { show(t('auth.msg.confirmEmail'), false); setMode('login'); }
       }
     }
     setLoading(false);
   }
 
   function openReset() {
-    if (!email) { show('Bitte zuerst deine E-Mail-Adresse oben eingeben.', true); return; }
+    if (!email) { show(t('auth.err.enterEmailFirst'), true); return; }
     setResetStep('request'); setResetCode(''); setResetNewPw(''); setResetMsg(null); setResetErr(false);
     setShowReset(true);
   }
@@ -75,18 +77,18 @@ export default function AuthScreen() {
     setResetBusy(true); setResetMsg(null);
     const { error } = await supabase.auth.resetPasswordForEmail(email);
     setResetBusy(false);
-    if (error) { setResetMsg(translateError(error.message)); setResetErr(true); return; }
-    setResetStep('code'); setResetMsg('Wir haben dir einen 6-stelligen Code per E-Mail geschickt.'); setResetErr(false);
+    if (error) { setResetMsg(translateError(error.message, t)); setResetErr(true); return; }
+    setResetStep('code'); setResetMsg(t('auth.msg.resetCodeSent')); setResetErr(false);
   }
   async function confirmReset() {
-    if (resetCode.trim().length < 6) { setResetMsg('Bitte den 6-stelligen Code eingeben.'); setResetErr(true); return; }
-    if (resetNewPw.length < 8) { setResetMsg('Neues Passwort: mindestens 8 Zeichen.'); setResetErr(true); return; }
+    if (resetCode.trim().length < 6) { setResetMsg(t('auth.err.enterCode')); setResetErr(true); return; }
+    if (resetNewPw.length < 8) { setResetMsg(t('auth.err.newPasswordTooShort')); setResetErr(true); return; }
     setResetBusy(true); setResetMsg(null);
     const { error: vErr } = await supabase.auth.verifyOtp({ email, token: resetCode.trim(), type: 'recovery' });
-    if (vErr) { setResetBusy(false); setResetMsg('Code ungültig oder abgelaufen.'); setResetErr(true); return; }
+    if (vErr) { setResetBusy(false); setResetMsg(t('auth.err.codeInvalid')); setResetErr(true); return; }
     const { error: uErr } = await supabase.auth.updateUser({ password: resetNewPw });
     setResetBusy(false);
-    if (uErr) { setResetMsg('Konnte Passwort nicht setzen: ' + uErr.message); setResetErr(true); return; }
+    if (uErr) { setResetMsg(t('auth.err.couldNotSetPassword', { msg: uErr.message })); setResetErr(true); return; }
     // verifyOtp hat eine Session gesetzt -> App wechselt automatisch (eingeloggt).
     setShowReset(false);
   }
@@ -101,13 +103,13 @@ export default function AuthScreen() {
           <View style={styles.brand}>
             <Image source={require('../assets/avocado.png')} style={styles.logoImg} resizeMode="contain" />
             <Text style={styles.wordmark}>FitAvo</Text>
-            <Text style={styles.tagline}>Trainiere smarter. Iss bewusster. 🥑</Text>
+            <Text style={styles.tagline}>{t('auth.tagline')}</Text>
           </View>
 
           <View style={styles.form}>
             <GlassFill radius={22} />
-            <Text style={styles.heading}>{mode === 'login' ? 'Willkommen zurück' : 'Werde Teil von FitAvo'}</Text>
-            <Text style={styles.sub}>{mode === 'login' ? 'Schön, dass du wieder da bist 👋' : 'In unter einer Minute startklar 🚀'}</Text>
+            <Text style={styles.heading}>{mode === 'login' ? t('auth.heading.login') : t('auth.heading.register')}</Text>
+            <Text style={styles.sub}>{mode === 'login' ? t('auth.sub.login') : t('auth.sub.register')}</Text>
 
             {info && (
               <View style={[styles.infoBox, { borderLeftColor: isError ? c.danger : c.success }]}>
@@ -116,14 +118,14 @@ export default function AuthScreen() {
             )}
 
             <View style={styles.fieldWrap}>
-              <Text style={styles.fieldLabel}>E-Mail</Text>
+              <Text style={styles.fieldLabel}>{t('auth.label.email')}</Text>
               <TextInput
                 style={[styles.fieldInput, focused === 'email' && styles.fieldInputFocused]}
                 value={email}
                 onChangeText={setEmail}
                 onFocus={() => setFocused('email')}
                 onBlur={() => setFocused(null)}
-                placeholder="du@beispiel.de"
+                placeholder={t('auth.placeholder.email')}
                 placeholderTextColor={c.textMuted}
                 autoCapitalize="none" autoCorrect={false} keyboardType="email-address" inputMode="email"
                 underlineColorAndroid="transparent"
@@ -134,7 +136,7 @@ export default function AuthScreen() {
             </View>
 
             <View style={styles.fieldWrap}>
-              <Text style={styles.fieldLabel}>Passwort</Text>
+              <Text style={styles.fieldLabel}>{t('auth.label.password')}</Text>
               <View>
                 <TextInput
                   ref={pwRef}
@@ -143,14 +145,14 @@ export default function AuthScreen() {
                   onChangeText={setPassword}
                   onFocus={() => setFocused('pw')}
                   onBlur={() => setFocused(null)}
-                  placeholder={mode === 'register' ? 'mindestens 8 Zeichen' : 'Passwort'}
+                  placeholder={mode === 'register' ? t('auth.placeholder.passwordRegister') : t('auth.placeholder.password')}
                   placeholderTextColor={c.textMuted}
                   secureTextEntry={!showPw} autoCapitalize="none"
                   underlineColorAndroid="transparent"
                   returnKeyType={mode === 'login' ? 'go' : 'done'}
                   onSubmitEditing={handleSubmit}
                 />
-                <TouchableOpacity style={styles.pwToggle} onPress={() => setShowPw((s) => !s)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button" accessibilityLabel={showPw ? 'Passwort verbergen' : 'Passwort anzeigen'}>
+                <TouchableOpacity style={styles.pwToggle} onPress={() => setShowPw((s) => !s)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button" accessibilityLabel={showPw ? t('auth.a11y.hidePassword') : t('auth.a11y.showPassword')}>
                   <Text style={styles.pwToggleText}>{showPw ? '🙈' : '👁️'}</Text>
                 </TouchableOpacity>
               </View>
@@ -158,31 +160,31 @@ export default function AuthScreen() {
 
             {mode === 'login' && (
               <TouchableOpacity onPress={openReset} disabled={loading} style={styles.forgotWrap} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
-                <Text style={styles.forgot}>Passwort vergessen?</Text>
+                <Text style={styles.forgot}>{t('auth.forgotPassword')}</Text>
               </TouchableOpacity>
             )}
 
             {mode === 'register' && (
-              <TouchableOpacity style={styles.acceptRow} onPress={() => setAccepted((a) => !a)} activeOpacity={0.7} accessibilityRole="checkbox" accessibilityState={{ checked: accepted }} accessibilityLabel="Rechtliches akzeptieren und in die Verarbeitung von Gesundheitsdaten einwilligen">
+              <TouchableOpacity style={styles.acceptRow} onPress={() => setAccepted((a) => !a)} activeOpacity={0.7} accessibilityRole="checkbox" accessibilityState={{ checked: accepted }} accessibilityLabel={t('auth.a11y.acceptLegal')}>
                 <View style={[styles.checkbox, accepted && styles.checkboxOn]}>{accepted && <Text style={styles.checkmark}>✓</Text>}</View>
                 <Text style={styles.acceptText}>
-                  Ich akzeptiere den{' '}
-                  <Text style={styles.acceptLink} onPress={() => setShowLegal('disclaimer')}>Haftungsausschluss</Text>, die{' '}
-                  <Text style={styles.acceptLink} onPress={() => setShowLegal('terms')}>Nutzungsbedingungen</Text>
-                  {' '}und die{' '}
-                  <Text style={styles.acceptLink} onPress={() => setShowLegal('privacy')}>Datenschutzerklärung</Text>. Ich willige ausdrücklich ein, dass meine Gesundheits- und Fitnessdaten (z. B. Gewicht, Größe, Training, Ernährung) zur Bereitstellung der App verarbeitet werden (Art. 9 DSGVO).
+                  {t('auth.accept.prefix')}
+                  <Text style={styles.acceptLink} onPress={() => setShowLegal('disclaimer')}>{t('auth.accept.disclaimer')}</Text>{t('auth.accept.middle')}
+                  <Text style={styles.acceptLink} onPress={() => setShowLegal('terms')}>{t('auth.accept.terms')}</Text>
+                  {t('auth.accept.and')}
+                  <Text style={styles.acceptLink} onPress={() => setShowLegal('privacy')}>{t('auth.accept.privacy')}</Text>{t('auth.accept.suffix')}
                 </Text>
               </TouchableOpacity>
             )}
 
             <TouchableOpacity style={[styles.button, submitDisabled && styles.buttonDisabled]} onPress={handleSubmit} disabled={submitDisabled} activeOpacity={0.85}>
-              {loading ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.buttonText}>{mode === 'login' ? 'Einloggen' : 'Konto erstellen'}</Text>}
+              {loading ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.buttonText}>{mode === 'login' ? t('auth.button.login') : t('auth.button.register')}</Text>}
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.switchWrap} onPress={() => switchMode(mode === 'login' ? 'register' : 'login')} activeOpacity={0.7}>
               <Text style={styles.switchText}>
-                {mode === 'login' ? 'Noch kein Konto? ' : 'Schon ein Konto? '}
-                <Text style={styles.switchLink}>{mode === 'login' ? 'Jetzt registrieren' : 'Zum Login'}</Text>
+                {mode === 'login' ? t('auth.switch.toRegister') : t('auth.switch.toLogin')}
+                <Text style={styles.switchLink}>{mode === 'login' ? t('auth.switch.linkRegister') : t('auth.switch.linkLogin')}</Text>
               </Text>
             </TouchableOpacity>
           </View>
@@ -192,13 +194,13 @@ export default function AuthScreen() {
       <Modal visible={!!showLegal} animationType="slide" onRequestClose={() => setShowLegal(null)}>
         <View style={styles.modalRoot}>
           <Text style={styles.modalTitle}>
-            {showLegal === 'terms' ? 'Nutzungsbedingungen' : showLegal === 'privacy' ? 'Datenschutzerklärung' : 'Haftungsausschluss & Gesundheitshinweis'}
+            {showLegal === 'terms' ? t('auth.modal.terms') : showLegal === 'privacy' ? t('auth.modal.privacy') : t('auth.modal.disclaimer')}
           </Text>
           <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
             <LegalText c={c} sections={showLegal === 'terms' ? TERMS_SECTIONS : showLegal === 'privacy' ? PRIVACY_SECTIONS : undefined} />
           </ScrollView>
           <TouchableOpacity style={styles.button} onPress={() => setShowLegal(null)} activeOpacity={0.85}>
-            <Text style={styles.buttonText}>Schließen</Text>
+            <Text style={styles.buttonText}>{t('auth.button.close')}</Text>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -207,29 +209,29 @@ export default function AuthScreen() {
         <View style={styles.resetOverlay}>
           <View style={styles.resetCard}>
             <GlassFill radius={18} />
-            <Text style={styles.modalTitle}>Passwort zurücksetzen</Text>
+            <Text style={styles.modalTitle}>{t('auth.reset.title')}</Text>
             {resetStep === 'request' ? (
               <>
-                <Text style={styles.resetText}>Wir senden einen 6-stelligen Code an:</Text>
+                <Text style={styles.resetText}>{t('auth.reset.sendInfo')}</Text>
                 <Text style={styles.resetEmail}>{email || '—'}</Text>
                 <TouchableOpacity style={styles.button} onPress={sendResetCode} disabled={resetBusy} activeOpacity={0.85}>
-                  {resetBusy ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.buttonText}>Code senden</Text>}
+                  {resetBusy ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.buttonText}>{t('auth.button.sendCode')}</Text>}
                 </TouchableOpacity>
               </>
             ) : (
               <>
-                <Text style={styles.fieldLabel}>Code aus der E-Mail</Text>
-                <TextInput style={styles.fieldInput} value={resetCode} onChangeText={setResetCode} keyboardType="number-pad" placeholder="6-stelliger Code" placeholderTextColor={c.textMuted} maxLength={6} autoCapitalize="none" />
-                <Text style={[styles.fieldLabel, { marginTop: 12 }]}>Neues Passwort</Text>
-                <TextInput style={styles.fieldInput} value={resetNewPw} onChangeText={setResetNewPw} secureTextEntry autoCapitalize="none" placeholder="mindestens 8 Zeichen" placeholderTextColor={c.textMuted} />
+                <Text style={styles.fieldLabel}>{t('auth.reset.codeLabel')}</Text>
+                <TextInput style={styles.fieldInput} value={resetCode} onChangeText={setResetCode} keyboardType="number-pad" placeholder={t('auth.reset.codePlaceholder')} placeholderTextColor={c.textMuted} maxLength={6} autoCapitalize="none" />
+                <Text style={[styles.fieldLabel, { marginTop: 12 }]}>{t('auth.reset.newPasswordLabel')}</Text>
+                <TextInput style={styles.fieldInput} value={resetNewPw} onChangeText={setResetNewPw} secureTextEntry autoCapitalize="none" placeholder={t('auth.reset.newPasswordPlaceholder')} placeholderTextColor={c.textMuted} />
                 <TouchableOpacity style={styles.button} onPress={confirmReset} disabled={resetBusy} activeOpacity={0.85}>
-                  {resetBusy ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.buttonText}>Passwort setzen & einloggen</Text>}
+                  {resetBusy ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.buttonText}>{t('auth.button.setPasswordLogin')}</Text>}
                 </TouchableOpacity>
               </>
             )}
             {resetMsg && <Text style={[styles.info, { color: resetErr ? c.danger : c.success, marginTop: 12 }]}>{resetMsg}</Text>}
             <TouchableOpacity onPress={() => setShowReset(false)} style={{ marginTop: 14 }}>
-              <Text style={styles.modalClose}>Abbrechen</Text>
+              <Text style={styles.modalClose}>{t('auth.button.cancel')}</Text>
             </TouchableOpacity>
           </View>
         </View>

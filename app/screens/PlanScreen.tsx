@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Modal, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useT } from '../contexts/LanguageContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { WEEKDAYS, todayWeekday } from '../lib/weekdays';
 import ErrorRetry from '../components/ErrorRetry';
@@ -69,6 +70,7 @@ export type Selected = { exercise: { id: string; name: string; difficulty: strin
 export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { embedded?: boolean; onOpenExercise?: (sel: Selected) => void; refreshTick?: number }) {
   const { session, profile } = useAuth();
   const userId = session?.user?.id;
+  const t = useT();
   const c = useColors();
   const styles = useMemo(() => makeStyles(c), [c]);
 
@@ -186,20 +188,20 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
     await supabase.from('plan_schedule').delete().eq('user_id', userId).eq('weekday', weekday);
     if (dayId) {
       const { error } = await supabase.from('plan_schedule').insert({ user_id: userId, weekday, plan_day_id: dayId });
-      if (error) { Alert.alert('Nicht gespeichert', errorMessage(error)); loadPlan(true); }
+      if (error) { Alert.alert(t('plan.notSavedTitle'), errorMessage(error)); loadPlan(true); }
     }
   }
 
   async function removeExercise(dayId: string, rowId: string) {
     setDays((prev) => prev.map((d) => (d.id === dayId ? { ...d, exercises: d.exercises.filter((e) => e.rowId !== rowId) } : d)));
     const { error } = await supabase.from('workout_plan_exercises').delete().eq('id', rowId);
-    if (error) { Alert.alert('Nicht möglich', errorMessage(error)); loadPlan(true); }
+    if (error) { Alert.alert(t('plan.notPossibleTitle'), errorMessage(error)); loadPlan(true); }
   }
 
   async function updateSetsReps(dayId: string, rowId: string, sets: number, reps: number) {
     setDays((prev) => prev.map((d) => (d.id === dayId ? { ...d, exercises: d.exercises.map((e) => (e.rowId === rowId ? { ...e, sets, reps } : e)) } : d)));
     const { error } = await supabase.from('workout_plan_exercises').update({ target_sets: sets, target_reps: reps }).eq('id', rowId);
-    if (error) { Alert.alert('Nicht gespeichert', errorMessage(error)); loadPlan(true); }
+    if (error) { Alert.alert(t('plan.notSavedTitle'), errorMessage(error)); loadPlan(true); }
   }
 
   async function openAddPicker(dayId: string) {
@@ -223,7 +225,7 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
     const { data: row, error } = await supabase.from('workout_plan_exercises')
       .insert({ user_id: userId, plan_day_id: dayId, exercise_id: exId, target_sets: 3, target_reps: 10, order_index: order })
       .select('id').single();
-    if (error || !row) { setError('Hinzufügen fehlgeschlagen.'); return; }
+    if (error || !row) { setError(t('plan.addFailed')); return; }
     // volle Uebungsdaten fuer die Anzeige holen + optimistisch einfuegen (kein voller Reload)
     const { data: ex } = await supabase.from('exercises').select('id, name, difficulty, equipment, description, instructions, primary_muscle_id').eq('id', exId).maybeSingle();
     let muscleKey: string | null = null, muscleName: string | null = null;
@@ -249,8 +251,8 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
     try {
       // Neuen Plan ERST vollstaendig (INAKTIV) aufbauen - der alte bleibt aktiv/intakt,
       // bis der neue fertig ist. So gibt es bei Abbruch mittendrin keinen Datenverlust.
-      const { data: plan, error: pErr } = await supabase.from('workout_plans').insert({ user_id: userId, name: `Mein ${n}-Tage-Plan`, is_active: false }).select('id').single();
-      if (pErr || !plan) throw pErr ?? new Error('Plan konnte nicht erstellt werden.');
+      const { data: plan, error: pErr } = await supabase.from('workout_plans').insert({ user_id: userId, name: t('plan.planName', { n }), is_active: false }).select('id').single();
+      if (pErr || !plan) throw pErr ?? new Error(t('plan.errPlanCreate'));
       const template = SPLITS[n];
       const allKeys = Array.from(new Set(template.flatMap((d) => d.muscles)));
       const { data: muscleRows } = await supabase.from('muscles').select('id, key').in('key', allKeys);
@@ -263,7 +265,7 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
       (exRows ?? []).forEach((e: any) => { if (!e.primary_muscle_id) return; if (!exByMuscle[e.primary_muscle_id]) exByMuscle[e.primary_muscle_id] = []; exByMuscle[e.primary_muscle_id].push(e); });
       const dayInsert = template.map((d, i) => ({ user_id: userId, plan_id: plan.id, day_index: i + 1, focus: d.focus }));
       const { data: insertedDays, error: dErr } = await supabase.from('workout_plan_days').insert(dayInsert).select('id, day_index');
-      if (dErr || !insertedDays) throw dErr ?? new Error('Tage konnten nicht erstellt werden.');
+      if (dErr || !insertedDays) throw dErr ?? new Error(t('plan.errDaysCreate'));
       const peInsert: any[] = [];
       template.forEach((d, i) => {
         const day = insertedDays.find((x: any) => x.day_index === i + 1);
@@ -295,7 +297,7 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
       setSchedule(newSched);
       await loadPlan();
     } catch (e: any) {
-      setError(e?.message ?? 'Fehler bei der Plan-Erstellung.');
+      setError(e?.message ?? t('plan.errGenerate'));
     } finally {
       setGenerating(false);
     }
@@ -304,9 +306,9 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
   // Vor dem Neu-Erstellen warnen, falls bereits ein Plan + Wochenzuordnung existiert
   function confirmGenerate(n: number) {
     if (!planName) { generatePlan(n); return; }
-    Alert.alert('Neuen Plan erstellen?', 'Dein aktueller Plan und die Wochenzuordnung werden ersetzt. Fortfahren?', [
-      { text: 'Abbrechen', style: 'cancel' },
-      { text: 'Ersetzen', style: 'destructive', onPress: () => generatePlan(n) },
+    Alert.alert(t('plan.replaceTitle'), t('plan.replaceBody'), [
+      { text: t('plan.cancel'), style: 'cancel' },
+      { text: t('plan.replace'), style: 'destructive', onPress: () => generatePlan(n) },
     ]);
   }
 
@@ -322,9 +324,9 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
           <SwipeBack onBack={() => setAddingToDay(null)} c={c}>
           <View style={styles.container}>
             <BackButton onPress={() => setAddingToDay(null)} c={c} />
-            <Text style={styles.title}>Übung hinzufügen</Text>
+            <Text style={styles.title}>{t('plan.addExercise')}</Text>
             <Text style={styles.subtitle}>{day?.focus ?? ''}</Text>
-            <TextInput style={styles.input} value={pickerSearch} onChangeText={setPickerSearch} placeholder="Suchen…" placeholderTextColor={c.textMuted} autoCorrect={false} />
+            <TextInput style={styles.input} value={pickerSearch} onChangeText={setPickerSearch} placeholder={t('plan.searchPlaceholder')} placeholderTextColor={c.textMuted} autoCorrect={false} />
             {pickerLoading ? (
               <ActivityIndicator color={c.primary} style={{ marginTop: 24 }} />
             ) : (
@@ -336,10 +338,10 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
                       <Text style={styles.exName}>{e.name}</Text>
                       <Text style={styles.exMeta}>{DIFF_LABELS[e.difficulty] ?? e.difficulty}{e.muscleName ? ` · ${e.muscleName}` : ''}</Text>
                     </View>
-                    <Text style={styles.pickAdd}>+ Hinzufügen</Text>
+                    <Text style={styles.pickAdd}>{t('plan.addShort')}</Text>
                   </TouchableOpacity>
                 ))}
-                {filtered.length === 0 && <Text style={styles.muted}>Keine weiteren passenden Übungen.</Text>}
+                {filtered.length === 0 && <Text style={styles.muted}>{t('plan.noMoreMatching')}</Text>}
               </ScrollView>
             )}
           </View>
@@ -350,13 +352,13 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
   }
 
   if (loading) {
-    return (<View style={[styles.container, embedded && styles.embedded]}>{!embedded && <Text style={styles.title}>Trainingsplan</Text>}<ActivityIndicator size="large" color={c.primary} style={{ marginTop: 40 }} /></View>);
+    return (<View style={[styles.container, embedded && styles.embedded]}>{!embedded && <Text style={styles.title}>{t('plan.title')}</Text>}<ActivityIndicator size="large" color={c.primary} style={{ marginTop: 40 }} /></View>);
   }
 
   if (loadError) {
     return (
       <View style={[styles.container, embedded && styles.embedded]}>
-        {!embedded && <Text style={styles.title}>Trainingsplan</Text>}
+        {!embedded && <Text style={styles.title}>{t('plan.title')}</Text>}
         <ErrorRetry message={loadError} onRetry={() => loadPlan()} embedded={embedded} />
       </View>
     );
@@ -373,8 +375,8 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
   function renderCreate() {
     return (
       <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }}>
-        {!embedded && <Text style={styles.title}>Trainingsplan erstellen</Text>}
-        <Text style={styles.subtitle}>Wie viele Tage pro Woche möchtest du trainieren?</Text>
+        {!embedded && <Text style={styles.title}>{t('plan.createTitle')}</Text>}
+        <Text style={styles.subtitle}>{t('plan.daysPerWeekQuestion')}</Text>
         <View style={styles.dayPicker}>
           {DAY_OPTIONS.map((n) => {
             const active = selectedDays === n;
@@ -387,11 +389,11 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
           })}
         </View>
         <TouchableOpacity style={[styles.primaryBtn, generating && { opacity: 0.6 }]} onPress={() => confirmGenerate(selectedDays)} disabled={generating}>
-          {generating ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.primaryText}>Plan automatisch erstellen</Text>}
+          {generating ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.primaryText}>{t('plan.generateBtn')}</Text>}
         </TouchableOpacity>
-        {planName && !generating && (<TouchableOpacity onPress={() => setMode('view')}><Text style={styles.link}>Abbrechen</Text></TouchableOpacity>)}
+        {planName && !generating && (<TouchableOpacity onPress={() => setMode('view')}><Text style={styles.link}>{t('plan.cancel')}</Text></TouchableOpacity>)}
         {error && <Text style={styles.error}>{error}</Text>}
-        <Text style={styles.hint}>Der Plan wird automatisch an dein Level und deine Trainingsumgebung angepasst und gespeichert.</Text>
+        <Text style={styles.hint}>{t('plan.createHint')}</Text>
       </ScrollView>
     );
   }
@@ -405,42 +407,42 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
       contentContainerStyle={{ paddingBottom: 40 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
     >
-      {!embedded && <Text style={styles.title}>Dein Trainingsplan</Text>}
+      {!embedded && <Text style={styles.title}>{t('plan.yourPlanTitle')}</Text>}
       <Text style={styles.subtitle}>{planName}</Text>
       <View style={styles.topBtns}>
         <TouchableOpacity style={[styles.secondaryBtn, styles.topBtn]} onPress={() => { setEditMode(false); setMode('create'); }}>
           <GlassFill radius={14} />
-          <Text style={styles.secondaryText}>Neuer Plan</Text>
+          <Text style={styles.secondaryText}>{t('plan.newPlan')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.secondaryBtn, styles.topBtn, editMode && styles.editActive]} onPress={() => { setEditWeekday(null); setEditMode((v) => !v); }}>
           <GlassFill radius={14} />
-          <Text style={[styles.secondaryText, editMode && { color: c.onPrimary }]}>{editMode ? '✓ Fertig' : '✏️ Bearbeiten'}</Text>
+          <Text style={[styles.secondaryText, editMode && { color: c.onPrimary }]}>{editMode ? t('plan.done') : t('plan.edit')}</Text>
         </TouchableOpacity>
       </View>
       {!editMode && (
       <View style={styles.weekCard}>
         <GlassFill radius={16} />
-        <Text style={styles.weekTitle}>📅 Wochenplan</Text>
-        <Text style={styles.weekHint}>Tippe einen Wochentag, um ihm einen Trainingstag (oder Ruhetag) zuzuordnen.</Text>
+        <Text style={styles.weekTitle}>{t('plan.weekTitle')}</Text>
+        <Text style={styles.weekHint}>{t('plan.weekHint')}</Text>
         {WEEKDAYS.map((wd, i) => {
           const dayId = effectiveSchedule[i];
-          const focus = dayId ? (days.find((d) => d.id === dayId)?.focus ?? 'Training') : null;
+          const focus = dayId ? (days.find((d) => d.id === dayId)?.focus ?? t('plan.training')) : null;
           const isToday = i === todayWeekday();
           return (
             <View key={i}>
               <TouchableOpacity style={[styles.weekRow, isToday && styles.weekRowToday]} onPress={() => setEditWeekday(editWeekday === i ? null : i)} activeOpacity={0.7}>
-                <Text style={[styles.weekDay, isToday && { color: c.primary, fontWeight: '700' }]}>{wd}{isToday ? '  · heute' : ''}</Text>
-                <Text style={[styles.weekFocus, !focus && styles.weekRest]} numberOfLines={1}>{focus ?? 'Ruhetag'}</Text>
+                <Text style={[styles.weekDay, isToday && { color: c.primary, fontWeight: '700' }]}>{wd}{isToday ? t('plan.todaySuffix') : ''}</Text>
+                <Text style={[styles.weekFocus, !focus && styles.weekRest]} numberOfLines={1}>{focus ?? t('plan.restDay')}</Text>
               </TouchableOpacity>
               {editWeekday === i && (
                 <View style={styles.weekPicker}>
                   {days.map((d) => (
                     <TouchableOpacity key={d.id} style={[styles.weekOpt, dayId === d.id && styles.weekOptActive]} onPress={() => assignDay(i, d.id)} activeOpacity={0.7}>
-                      <Text style={[styles.weekOptText, dayId === d.id && styles.weekOptTextActive]}>Tag {d.day_index}: {d.focus}</Text>
+                      <Text style={[styles.weekOptText, dayId === d.id && styles.weekOptTextActive]}>{t('plan.dayLabel', { n: d.day_index })}{d.focus}</Text>
                     </TouchableOpacity>
                   ))}
                   <TouchableOpacity style={[styles.weekOpt, !dayId && styles.weekOptActive]} onPress={() => assignDay(i, null)} activeOpacity={0.7}>
-                    <Text style={[styles.weekOptText, !dayId && styles.weekOptTextActive]}>😌 Ruhetag</Text>
+                    <Text style={[styles.weekOptText, !dayId && styles.weekOptTextActive]}>{t('plan.restDayEmoji')}</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -450,14 +452,14 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
       </View>
       )}
 
-      <Text style={styles.tapHint}>{editMode ? 'Sätze/Wdh anpassen, Übungen entfernen 🗑 oder unten hinzufügen.' : 'Tippe eine Übung an für Animation, Anleitung & Mitschreiben.'}</Text>
+      <Text style={styles.tapHint}>{editMode ? t('plan.editHint') : t('plan.viewHint')}</Text>
       {days.map((d) => (
         <View key={d.id} style={styles.dayCard}>
           <GlassFill radius={16} />
-          <Text style={styles.dayTitle}>Tag {d.day_index}</Text>
+          <Text style={styles.dayTitle}>{t('plan.dayTitle', { n: d.day_index })}</Text>
           <Text style={styles.dayFocus}>{d.focus}</Text>
           {d.exercises.length === 0 && !editMode ? (
-            <Text style={styles.muted}>Keine passenden Übungen – ggf. Umgebung/Level im Profil anpassen.</Text>
+            <Text style={styles.muted}>{t('plan.noMatchingExercises')}</Text>
           ) : (
             d.exercises.map((ex) =>
               editMode ? (
@@ -465,8 +467,8 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
                   <View style={{ flex: 1, marginRight: 8 }}>
                     <Text style={styles.exName} numberOfLines={1}>{ex.name}</Text>
                     <View style={styles.editControls}>
-                      <Stepper label="Sätze" value={ex.sets} onDec={() => updateSetsReps(d.id, ex.rowId, Math.max(1, ex.sets - 1), ex.reps)} onInc={() => updateSetsReps(d.id, ex.rowId, Math.min(10, ex.sets + 1), ex.reps)} styles={styles} />
-                      <Stepper label="Wdh" value={ex.reps} onDec={() => updateSetsReps(d.id, ex.rowId, ex.sets, Math.max(1, ex.reps - 1))} onInc={() => updateSetsReps(d.id, ex.rowId, ex.sets, Math.min(50, ex.reps + 1))} styles={styles} />
+                      <Stepper label={t('plan.sets')} value={ex.sets} onDec={() => updateSetsReps(d.id, ex.rowId, Math.max(1, ex.sets - 1), ex.reps)} onInc={() => updateSetsReps(d.id, ex.rowId, Math.min(10, ex.sets + 1), ex.reps)} styles={styles} />
+                      <Stepper label={t('plan.reps')} value={ex.reps} onDec={() => updateSetsReps(d.id, ex.rowId, ex.sets, Math.max(1, ex.reps - 1))} onInc={() => updateSetsReps(d.id, ex.rowId, ex.sets, Math.min(50, ex.reps + 1))} styles={styles} />
                     </View>
                   </View>
                   <TouchableOpacity onPress={() => removeExercise(d.id, ex.rowId)} style={styles.removeBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
@@ -487,7 +489,7 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
           )}
           {editMode && (
             <TouchableOpacity style={styles.addExBtn} onPress={() => openAddPicker(d.id)} activeOpacity={0.85}>
-              <Text style={styles.addExText}>+ Übung hinzufügen</Text>
+              <Text style={styles.addExText}>{t('plan.addExerciseBtn')}</Text>
             </TouchableOpacity>
           )}
         </View>

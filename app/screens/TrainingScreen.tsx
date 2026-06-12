@@ -6,6 +6,7 @@ import { ActivityIndicator, FlatList, RefreshControl, ScrollView, StyleSheet, Te
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
+import { useT } from '../contexts/LanguageContext';
 import ExerciseDetail from '../components/ExerciseDetail';
 import Segmented from '../components/Segmented';
 import PlanScreen, { Selected } from './PlanScreen';
@@ -30,6 +31,7 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
   const { profile, isPremium } = useAuth();
   const { openPaywall } = usePaywall();
   const c = useColors();
+  const t = useT();
   const styles = useMemo(() => makeStyles(c), [c]);
 
   const [seg, setSeg] = useState<'free' | 'plan'>('free');
@@ -124,7 +126,7 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
   // Scroll-Inhalts -> scrollt beim Runterscrollen mit weg; sonst fest oben.
   const segmented = (
     <Segmented
-      options={[{ key: 'free', label: 'Freies Training' }, { key: 'plan', label: 'Trainingsplan' }]}
+      options={[{ key: 'free', label: t('training.segFree') }, { key: 'plan', label: t('training.segPlan') }]}
       value={seg}
       onChange={(k) => { if (k === 'plan' && !isPremium) { openPaywall('plan'); return; } setSeg(k as 'free' | 'plan'); }}
       c={c}
@@ -134,7 +136,7 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
   // --- Ansichten als Variablen (damit beim Zurueckwischen die Vorseite dahinter sichtbar ist) ---
   const hubView = (
     <View style={styles.container}>
-      <Text style={styles.title}>Training</Text>
+      <Text style={styles.title}>{t('training.title')}</Text>
       <View style={{ height: 14 }} />
       {seg === 'plan' ? (
         <>
@@ -169,7 +171,7 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
               gender={profile?.gender === 'female' ? 'female' : 'male'}
             />
           </View>
-          <Text style={styles.sectionLabel}>ODER AUS DER LISTE</Text>
+          <Text style={styles.sectionLabel}>{t('training.orFromList')}</Text>
           <View style={styles.muscleList}>
             <GlassFill radius={14} />
             {orderedMuscles.map((m, idx) => (
@@ -179,7 +181,7 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
                 onPress={() => openMuscle(m)}
                 activeOpacity={0.6}
                 accessibilityRole="button"
-                accessibilityLabel={`Übungen für ${m.name_de} anzeigen`}
+                accessibilityLabel={t('training.a11yShowExercises', { name: m.name_de })}
               >
                 <Text style={styles.muscleRowName}>{m.name_de}</Text>
                 <Text style={styles.muscleRowChev}>›</Text>
@@ -195,7 +197,7 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
     <View style={styles.container}>
       <BackButton onPress={() => setSelectedMuscle(null)} c={c} />
       <Text style={styles.title}>{selectedMuscle.name_de}</Text>
-      <Text style={styles.subtitle}>Passend zu deinem Level & deiner Umgebung</Text>
+      <Text style={styles.subtitle}>{t('training.subtitle')}</Text>
       {loadingExercises ? (
         <ActivityIndicator size="large" color={c.primary} style={{ marginTop: 24 }} />
       ) : exError ? (
@@ -203,7 +205,7 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
       ) : exercises.length === 0 ? (
         <View style={styles.note}>
           <GlassFill radius={16} />
-          <Text style={styles.noteText}>Keine passenden Übungen gefunden. Tipp: Mit mehr Equipment (Profil) schaltest du weitere frei.</Text>
+          <Text style={styles.noteText}>{t('training.noExercises')}</Text>
         </View>
       ) : (
         <FlatList
@@ -215,12 +217,12 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
           maxToRenderPerBatch={12}
           windowSize={7}
           removeClippedSubviews
-          ListHeaderComponent={<Text style={styles.countHint}>{exercises.length} {exercises.length === 1 ? 'Übung' : 'Übungen'}</Text>}
+          ListHeaderComponent={<Text style={styles.countHint}>{exercises.length === 1 ? t('training.exerciseCountOne', { n: exercises.length }) : t('training.exerciseCountMany', { n: exercises.length })}</Text>}
           ListFooterComponent={!isPremium && moreCount > 0 ? (
             <TouchableOpacity style={styles.exRow} onPress={() => openPaywall('exercises')} activeOpacity={0.7}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.exName}>🔒  Noch {moreCount} {moreCount === 1 ? 'Übung' : 'Übungen'}</Text>
-                <Text style={styles.exMeta}>Mit Premium alle Übungen je Muskel freischalten</Text>
+                <Text style={styles.exName}>{moreCount === 1 ? t('training.moreLockedOne', { n: moreCount }) : t('training.moreLockedMany', { n: moreCount })}</Text>
+                <Text style={styles.exMeta}>{t('training.moreLockedHint')}</Text>
               </View>
               <Text style={styles.chev}>›</Text>
             </TouchableOpacity>

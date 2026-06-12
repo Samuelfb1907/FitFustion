@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useColors, Colors } from '../contexts/ThemeContext';
+import { useT } from '../contexts/LanguageContext';
 import Segmented from '../components/Segmented';
 import FoodTrackerScreen from './FoodTrackerScreen';
 import WaterScreen from './WaterScreen';
@@ -13,6 +14,7 @@ type Seg = 'tracker' | 'protein' | 'water';
 
 export default function EssenScreen({ focusTick }: { focusTick?: number }) {
   const c = useColors();
+  const t = useT();
   const styles = useMemo(() => makeStyles(c), [c]);
   const [seg, setSeg] = useState<Seg>('tracker');
 
@@ -21,13 +23,13 @@ export default function EssenScreen({ focusTick }: { focusTick?: number }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Essen</Text>
+      <Text style={styles.title}>{t('essen.title')}</Text>
       <View style={{ height: 14 }} />
       <Segmented
         options={[
-          { key: 'tracker', label: 'Tracker' },
-          { key: 'protein', label: 'Protein' },
-          { key: 'water', label: 'Wasser' },
+          { key: 'tracker', label: t('essen.segTracker') },
+          { key: 'protein', label: t('essen.segProtein') },
+          { key: 'water', label: t('essen.segWater') },
         ]}
         value={seg}
         onChange={(k) => setSeg(k as Seg)}

@@ -2,6 +2,7 @@
 // Wird gezeigt, wenn das Laden der Daten fehlschlaegt – statt eines endlosen Lade-Kreisels.
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useColors, Colors } from '../contexts/ThemeContext';
+import { useT } from '../contexts/LanguageContext';
 
 export default function ErrorRetry({
   message,
@@ -13,20 +14,21 @@ export default function ErrorRetry({
   embedded?: boolean;
 }) {
   const c = useColors();
+  const t = useT();
   const s = makeStyles(c);
   return (
     <View style={[s.wrap, embedded && s.embedded]}>
       <Text style={s.icon}>⚠️</Text>
-      <Text style={s.title}>Etwas ist schiefgelaufen</Text>
-      <Text style={s.msg}>{message ?? 'Die Daten konnten nicht geladen werden.'}</Text>
+      <Text style={s.title}>{t('errorRetry.title')}</Text>
+      <Text style={s.msg}>{message ?? t('errorRetry.defaultMessage')}</Text>
       <TouchableOpacity
         style={s.btn}
         onPress={onRetry}
         activeOpacity={0.85}
         accessibilityRole="button"
-        accessibilityLabel="Erneut versuchen"
+        accessibilityLabel={t('errorRetry.retry')}
       >
-        <Text style={s.btnText}>Erneut versuchen</Text>
+        <Text style={s.btnText}>{t('errorRetry.retry')}</Text>
       </TouchableOpacity>
     </View>
   );

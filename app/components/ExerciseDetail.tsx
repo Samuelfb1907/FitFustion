@@ -4,6 +4,7 @@ import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, Touc
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
+import { useT } from '../contexts/LanguageContext';
 import ExerciseFigure from './ExerciseFigure';
 import BackButton from './BackButton';
 import ExerciseGif, { GIF_AVAILABLE } from './ExerciseGif';
@@ -43,6 +44,7 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
   const { session } = useAuth();
   const userId = session?.user?.id;
   const c = useColors();
+  const t = useT();
   const styles = useMemo(() => makeStyles(c), [c]);
   const steps = parseSteps(exercise.instructions);
   const tips = tipsFor(exercise.equipment, exercise.difficulty);
@@ -101,11 +103,11 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
   async function saveSet() {
     setError(null);
     const r = parseInt(reps, 10);
-    if (!r || r <= 0) { setError('Bitte gültige Wiederholungen eingeben.'); return; }
+    if (!r || r <= 0) { setError(t('exercise.errReps')); return; }
     let w: number | null = null;
     if (weight.trim()) {
       w = Number(weight.replace(',', '.'));
-      if (!isFinite(w) || w < 0 || w > 1000) { setError('Bitte ein gültiges Gewicht eingeben (0–1000 kg).'); return; }
+      if (!isFinite(w) || w < 0 || w > 1000) { setError(t('exercise.errWeight')); return; }
     }
     if (!userId) return;
     if (savingRef.current) return; // synchroner Lock gegen schnellen Doppel-Tipp
@@ -115,7 +117,7 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
       let sid = sessionId;
       if (!sid) {
         const { data: created, error: cErr } = await supabase.from('workout_sessions').insert({ user_id: userId }).select('id').single();
-        if (cErr || !created) { setError(cErr?.message ?? 'Session konnte nicht angelegt werden.'); return; }
+        if (cErr || !created) { setError(cErr?.message ?? t('exercise.errSession')); return; }
         sid = created.id;
         setSessionId(sid);
       }
@@ -132,9 +134,9 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
   }
 
   function deleteSet(id: string) {
-    Alert.alert('Satz löschen?', 'Diesen Satz wirklich entfernen?', [
-      { text: 'Abbrechen', style: 'cancel' },
-      { text: 'Löschen', style: 'destructive', onPress: () => doDeleteSet(id) },
+    Alert.alert(t('exercise.deleteTitle'), t('exercise.deleteMsg'), [
+      { text: t('exercise.cancel'), style: 'cancel' },
+      { text: t('exercise.delete'), style: 'destructive', onPress: () => doDeleteSet(id) },
     ]);
   }
   async function doDeleteSet(id: string) {
@@ -171,13 +173,13 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
         <View style={styles.illusCard}>
           <GlassFill radius={16} />
           <ExerciseGif exerciseId={gifId} c={c} onFail={() => setGifFailed(true)} />
-          <Text style={styles.illusCaption}>So wird's gemacht{muscleName ? ` · Zielmuskel: ${muscleName}` : ''}</Text>
+          <Text style={styles.illusCaption}>{t('exercise.howTo')}{muscleName ? t('exercise.targetMuscleSuffix', { name: muscleName }) : ''}</Text>
         </View>
       ) : muscleKey ? (
         <View style={styles.illusCard}>
           <GlassFill radius={16} />
           <ExerciseFigure muscleKey={muscleKey} c={c} width={150} />
-          <Text style={styles.illusCaption}>Zielmuskel: {muscleName ?? '—'}</Text>
+          <Text style={styles.illusCaption}>{t('exercise.targetMuscle', { name: muscleName ?? '—' })}</Text>
         </View>
       ) : null}
 
@@ -185,7 +187,7 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
 
       {steps.length > 0 ? (
         <>
-          <Text style={styles.h2}>Ausführung</Text>
+          <Text style={styles.h2}>{t('exercise.howToHeading')}</Text>
           {steps.map((s, i) => (
             <View key={i} style={styles.stepRow}>
               <View style={styles.stepNum}><Text style={styles.stepNumText}>{i + 1}</Text></View>
@@ -195,17 +197,17 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
         </>
       ) : null}
 
-      <Text style={[styles.h2, { marginTop: 18 }]}>Tipps</Text>
-      {tips.map((t, i) => (
+      <Text style={[styles.h2, { marginTop: 18 }]}>{t('exercise.tipsHeading')}</Text>
+      {tips.map((tip, i) => (
         <View key={i} style={styles.tipRow}>
           <Text style={styles.tipDot}>•</Text>
-          <Text style={styles.tipText}>{t}</Text>
+          <Text style={styles.tipText}>{tip}</Text>
         </View>
       ))}
 
       <View style={styles.logCard}>
         <GlassFill radius={16} />
-        <Text style={styles.h2}>Training mitschreiben</Text>
+        <Text style={styles.h2}>{t('exercise.logHeading')}</Text>
         {loading ? (
           <ActivityIndicator color={c.primary} style={{ marginVertical: 12 }} />
         ) : (
@@ -214,10 +216,10 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
               <View style={styles.setList}>
                 {sets.map((s) => (
                   <View key={s.id} style={styles.setRow}>
-                    <Text style={styles.setIdx}>Satz {s.set_index}</Text>
+                    <Text style={styles.setIdx}>{t('exercise.setIndex', { n: s.set_index })}</Text>
                     <View style={styles.setRight}>
-                      <Text style={styles.setVal}>{s.reps} Wdh{s.weight_kg ? ` × ${s.weight_kg} kg` : ''}</Text>
-                      <TouchableOpacity onPress={() => deleteSet(s.id)} style={styles.setDel} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`Satz ${s.set_index} löschen`}>
+                      <Text style={styles.setVal}>{t('exercise.reps', { n: s.reps ?? 0 })}{s.weight_kg ? t('exercise.weightSuffix', { kg: s.weight_kg }) : ''}</Text>
+                      <TouchableOpacity onPress={() => deleteSet(s.id)} style={styles.setDel} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('exercise.deleteSetA11y', { n: s.set_index })}>
                         <Text style={styles.setDelText}>✕</Text>
                       </TouchableOpacity>
                     </View>
@@ -225,31 +227,31 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
                 ))}
               </View>
             ) : (
-              <Text style={styles.hint}>Noch keine Sätze heute – trag deinen ersten ein:</Text>
+              <Text style={styles.hint}>{t('exercise.noSets')}</Text>
             )}
             <View style={styles.inputRow}>
               <View style={styles.inputCol}>
-                <Text style={styles.inputLabel}>Wiederholungen</Text>
-                <TextInput style={styles.input} value={reps} onChangeText={setReps} placeholder="z. B. 10" placeholderTextColor={c.textMuted} keyboardType="numeric" />
+                <Text style={styles.inputLabel}>{t('exercise.repsLabel')}</Text>
+                <TextInput style={styles.input} value={reps} onChangeText={setReps} placeholder={t('exercise.repsPlaceholder')} placeholderTextColor={c.textMuted} keyboardType="numeric" />
               </View>
               <View style={styles.inputCol}>
-                <Text style={styles.inputLabel}>Gewicht (kg)</Text>
-                <TextInput style={styles.input} value={weight} onChangeText={setWeight} placeholder="optional" placeholderTextColor={c.textMuted} keyboardType="numeric" />
+                <Text style={styles.inputLabel}>{t('exercise.weightLabel')}</Text>
+                <TextInput style={styles.input} value={weight} onChangeText={setWeight} placeholder={t('exercise.weightPlaceholder')} placeholderTextColor={c.textMuted} keyboardType="numeric" />
               </View>
             </View>
             <TouchableOpacity style={[styles.saveBtn, saving && { opacity: 0.6 }]} onPress={saveSet} disabled={saving}>
-              {saving ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.saveText}>✓ Satz speichern</Text>}
+              {saving ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.saveText}>{t('exercise.saveSet')}</Text>}
             </TouchableOpacity>
-            {sets.length > 0 && <Text style={styles.doneHint}>{sets.length} Satz{sets.length === 1 ? '' : 'e'} heute gespeichert 💪</Text>}
+            {sets.length > 0 && <Text style={styles.doneHint}>{t(sets.length === 1 ? 'exercise.doneHintOne' : 'exercise.doneHintMany', { n: sets.length })}</Text>}
             {error && <Text style={styles.error}>{error}</Text>}
             <RestTimer c={c} autoStartSignal={restSignal} />
             {sessionId && (
               <TouchableOpacity style={styles.endBtn} onPress={endTraining} disabled={ending || saving}>
-                {ending ? <ActivityIndicator color={c.success} /> : <Text style={styles.endText}>✓ Training beenden</Text>}
+                {ending ? <ActivityIndicator color={c.success} /> : <Text style={styles.endText}>{t('exercise.endTraining')}</Text>}
               </TouchableOpacity>
             )}
             {ended && (
-              <Text style={styles.endedHint}>Training beendet 💪 Dein nächster Satz startet automatisch ein neues Training.</Text>
+              <Text style={styles.endedHint}>{t('exercise.endedHint')}</Text>
             )}
           </>
         )}

@@ -4,6 +4,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOp
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
+import { useT } from '../contexts/LanguageContext';
 import { buildBirthDate, splitBirthDate } from '../lib/birthdate';
 import BackButton from '../components/BackButton';
 import GlassFill from '../components/GlassFill';
@@ -45,6 +46,7 @@ const ENVIRONMENTS: Opt[] = [
 export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
   const { session, refreshProfile } = useAuth();
   const c = useColors();
+  const t = useT();
   const styles = useMemo(() => makeStyles(c), [c]);
 
   const [loading, setLoading] = useState(true);
@@ -109,15 +111,15 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
     if (!userId) return;
     // feldspezifische Validierung mit klaren Meldungen
     let err = '';
-    if (!firstName.trim()) err = 'Bitte einen Vornamen eingeben.';
-    else if (!buildBirthDate(birthDay, birthMonth, birthYear)) err = 'Bitte ein gültiges Geburtsdatum eingeben (TT/MM/JJJJ).';
-    else if (!gender) err = 'Bitte wähle dein Geschlecht.';
-    else if (!(num(weight) >= 30 && num(weight) <= 300)) err = 'Gewicht muss zwischen 30 und 300 kg liegen.';
-    else if (!(num(height) >= 100 && num(height) <= 250)) err = 'Größe muss zwischen 100 und 250 cm liegen.';
-    else if (!experience) err = 'Bitte wähle dein Erfahrungslevel.';
-    else if (!environment) err = 'Bitte wähle deine Trainingsumgebung.';
-    else if (!goal) err = 'Bitte wähle ein Ziel.';
-    else if (goal === 'lose_weight' && !(num(targetWeight) >= 30 && num(targetWeight) <= 300)) err = 'Bitte ein gültiges Zielgewicht (30–300 kg) eingeben.';
+    if (!firstName.trim()) err = t('profile.err.firstName');
+    else if (!buildBirthDate(birthDay, birthMonth, birthYear)) err = t('profile.err.birthDate');
+    else if (!gender) err = t('profile.err.gender');
+    else if (!(num(weight) >= 30 && num(weight) <= 300)) err = t('profile.err.weight');
+    else if (!(num(height) >= 100 && num(height) <= 250)) err = t('profile.err.height');
+    else if (!experience) err = t('profile.err.experience');
+    else if (!environment) err = t('profile.err.environment');
+    else if (!goal) err = t('profile.err.goal');
+    else if (goal === 'lose_weight' && !(num(targetWeight) >= 30 && num(targetWeight) <= 300)) err = t('profile.err.targetWeight');
     if (err) { setMsg(err); setIsError(true); return; }
     setSaving(true);
     setMsg(null);
@@ -160,10 +162,10 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
     setSaving(false);
     if (pErr || gErr) {
       console.error('Profil speichern:', pErr?.message || gErr?.message);
-      setMsg('Speichern fehlgeschlagen. Bitte prüfe deine Internetverbindung und versuche es erneut.');
+      setMsg(t('profile.saveFailed'));
       setIsError(true);
     } else {
-      setMsg('Profil gespeichert ✓');
+      setMsg(t('profile.saved'));
       setIsError(false);
       await refreshProfile();
     }
@@ -188,8 +190,8 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
   if (loading) {
     return (
       <View style={styles.container}>
-        {onBack && <BackButton onPress={onBack} c={c} label="Einstellungen" />}
-        <Text style={styles.title}>Profil</Text>
+        {onBack && <BackButton onPress={onBack} c={c} label={t('profile.backToSettings')} />}
+        <Text style={styles.title}>{t('profile.title')}</Text>
         <ActivityIndicator size="large" color={c.primary} style={{ marginTop: 40 }} />
       </View>
     );
@@ -197,50 +199,50 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
-      {onBack && <BackButton onPress={onBack} c={c} label="Einstellungen" />}
-      <Text style={styles.title}>Profil</Text>
-      <Text style={styles.subtitle}>Deine Daten – jederzeit anpassbar</Text>
+      {onBack && <BackButton onPress={onBack} c={c} label={t('profile.backToSettings')} />}
+      <Text style={styles.title}>{t('profile.title')}</Text>
+      <Text style={styles.subtitle}>{t('profile.subtitle')}</Text>
 
-      <Text style={styles.label}>Vorname</Text>
-      <TextInput style={styles.input} value={firstName} onChangeText={setFirstName} placeholder="Vorname" placeholderTextColor={c.textMuted} />
+      <Text style={styles.label}>{t('profile.firstName')}</Text>
+      <TextInput style={styles.input} value={firstName} onChangeText={setFirstName} placeholder={t('profile.firstNamePlaceholder')} placeholderTextColor={c.textMuted} />
 
-      <Text style={styles.label}>Geburtsdatum</Text>
+      <Text style={styles.label}>{t('profile.birthDate')}</Text>
       <View style={styles.dateRow}>
-        <TextInput style={[styles.input, styles.dateField]} value={birthDay} onChangeText={setBirthDay} keyboardType="numeric" inputMode="numeric" maxLength={2} placeholder="TT" placeholderTextColor={c.textMuted} />
-        <TextInput style={[styles.input, styles.dateField]} value={birthMonth} onChangeText={setBirthMonth} keyboardType="numeric" inputMode="numeric" maxLength={2} placeholder="MM" placeholderTextColor={c.textMuted} />
-        <TextInput style={[styles.input, styles.dateFieldYear]} value={birthYear} onChangeText={setBirthYear} keyboardType="numeric" inputMode="numeric" maxLength={4} placeholder="JJJJ" placeholderTextColor={c.textMuted} />
+        <TextInput style={[styles.input, styles.dateField]} value={birthDay} onChangeText={setBirthDay} keyboardType="numeric" inputMode="numeric" maxLength={2} placeholder={t('profile.birthDay')} placeholderTextColor={c.textMuted} />
+        <TextInput style={[styles.input, styles.dateField]} value={birthMonth} onChangeText={setBirthMonth} keyboardType="numeric" inputMode="numeric" maxLength={2} placeholder={t('profile.birthMonth')} placeholderTextColor={c.textMuted} />
+        <TextInput style={[styles.input, styles.dateFieldYear]} value={birthYear} onChangeText={setBirthYear} keyboardType="numeric" inputMode="numeric" maxLength={4} placeholder={t('profile.birthYear')} placeholderTextColor={c.textMuted} />
       </View>
 
-      <Text style={styles.label}>Geschlecht</Text>
+      <Text style={styles.label}>{t('profile.gender')}</Text>
       {renderChoice(GENDERS, gender, setGender)}
 
-      <Text style={styles.label}>Körpergewicht (kg)</Text>
-      <TextInput style={styles.input} value={weight} onChangeText={setWeight} keyboardType="numeric" inputMode="decimal" placeholder="z. B. 78" placeholderTextColor={c.textMuted} />
+      <Text style={styles.label}>{t('profile.weight')}</Text>
+      <TextInput style={styles.input} value={weight} onChangeText={setWeight} keyboardType="numeric" inputMode="decimal" placeholder={t('profile.weightPlaceholder')} placeholderTextColor={c.textMuted} />
 
-      <Text style={styles.label}>Körpergröße (cm)</Text>
-      <TextInput style={styles.input} value={height} onChangeText={setHeight} keyboardType="numeric" inputMode="decimal" placeholder="z. B. 180" placeholderTextColor={c.textMuted} />
+      <Text style={styles.label}>{t('profile.height')}</Text>
+      <TextInput style={styles.input} value={height} onChangeText={setHeight} keyboardType="numeric" inputMode="decimal" placeholder={t('profile.heightPlaceholder')} placeholderTextColor={c.textMuted} />
 
-      <Text style={styles.label}>Aktivitätslevel</Text>
+      <Text style={styles.label}>{t('profile.activity')}</Text>
       {renderChoice(ACTIVITY, activity, setActivity)}
 
-      <Text style={styles.label}>Erfahrungslevel</Text>
+      <Text style={styles.label}>{t('profile.experience')}</Text>
       {renderChoice(LEVELS, experience, setExperience)}
 
-      <Text style={styles.label}>Trainingsumgebung</Text>
+      <Text style={styles.label}>{t('profile.environment')}</Text>
       {renderChoice(ENVIRONMENTS, environment, setEnvironment)}
 
-      <Text style={styles.label}>Ziel</Text>
+      <Text style={styles.label}>{t('profile.goal')}</Text>
       {renderChoice(GOALS, goal, setGoal)}
 
       {goal === 'lose_weight' && (
         <>
-          <Text style={styles.label}>Traumgewicht (kg)</Text>
-          <TextInput style={styles.input} value={targetWeight} onChangeText={setTargetWeight} keyboardType="numeric" inputMode="decimal" placeholder="z. B. 72" placeholderTextColor={c.textMuted} />
+          <Text style={styles.label}>{t('profile.targetWeight')}</Text>
+          <TextInput style={styles.input} value={targetWeight} onChangeText={setTargetWeight} keyboardType="numeric" inputMode="decimal" placeholder={t('profile.targetWeightPlaceholder')} placeholderTextColor={c.textMuted} />
         </>
       )}
 
       <TouchableOpacity style={[styles.saveBtn, saving && { opacity: 0.6 }]} onPress={save} disabled={saving}>
-        {saving ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.saveText}>Speichern</Text>}
+        {saving ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.saveText}>{t('profile.save')}</Text>}
       </TouchableOpacity>
 
       {msg && <Text style={[styles.msg, { color: isError ? c.danger : c.success }]}>{msg}</Text>}

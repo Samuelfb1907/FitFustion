@@ -9,6 +9,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from 'react';
 import { ActivityIndicator, Alert, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useColors, Colors } from '../contexts/ThemeContext';
+import { useT } from '../contexts/LanguageContext';
 import LegalText from './LegalText';
 import { TERMS_SECTIONS, PRIVACY_SECTIONS } from '../lib/legal';
 import { getPremiumPlans, purchasePlan, restorePurchases, PremiumPlan, PremiumPlans } from '../lib/purchases';
@@ -16,23 +17,24 @@ import { getPremiumPlans, purchasePlan, restorePurchases, PremiumPlan, PremiumPl
 // Anzeige-Fallback, falls der echte Store-Preis (noch) nicht geladen werden kann.
 export const PREMIUM_PRICE = '9,99 € / Monat';
 
-const BENEFITS = [
-  ['🍽️', 'KI-Mahlzeitenerkennung', '„Sprich’s einfach" – einfach eintippen, was du gegessen hast.'],
-  ['📷', 'Barcode-Scanner', 'Lebensmittel per Kamera scannen statt suchen.'],
-  ['🏆', 'Bestenliste', 'Tritt gegen andere an und sammle Platzierungen.'],
-  ['💪', 'Alle Übungen', 'Jede Übung je Muskel – statt nur 2 in der Gratis-Version.'],
-  ['⭐', 'Level, XP & Erfolge', 'Sammle Erfahrung, steige im Level auf, schalte Erfolge frei.'],
-  ['🗓️', 'Trainingspläne', 'Erstelle eigene Pläne mit Wochenkalender.'],
+// Icon + Übersetzungs-Keys je Vorteil (Texte werden im Render via t() aufgelöst).
+const BENEFITS: [string, string, string][] = [
+  ['🍽️', 'paywall.benefit.ai.title', 'paywall.benefit.ai.desc'],
+  ['📷', 'paywall.benefit.scan.title', 'paywall.benefit.scan.desc'],
+  ['🏆', 'paywall.benefit.leaderboard.title', 'paywall.benefit.leaderboard.desc'],
+  ['💪', 'paywall.benefit.exercises.title', 'paywall.benefit.exercises.desc'],
+  ['⭐', 'paywall.benefit.level.title', 'paywall.benefit.level.desc'],
+  ['🗓️', 'paywall.benefit.plan.title', 'paywall.benefit.plan.desc'],
 ];
 
-// Feature-spezifischer Hinweis oben in der Paywall (je nachdem, was angetippt wurde).
+// Feature-spezifischer Hinweis oben in der Paywall (Übersetzungs-Keys, im Render via t()).
 const FEATURE_HINT: Record<string, string> = {
-  ki: 'Schalte die KI-Mahlzeitenerkennung frei',
-  scan: 'Schalte den Barcode-Scanner frei',
-  leaderboard: 'Tritt mit Premium der Bestenliste bei',
-  level: 'Sammle XP, Level & Erfolge mit Premium',
-  plan: 'Erstelle eigene Trainingspläne mit Premium',
-  exercises: 'Alle Übungen je Muskel mit Premium',
+  ki: 'paywall.featureHint.ki',
+  scan: 'paywall.featureHint.scan',
+  leaderboard: 'paywall.featureHint.leaderboard',
+  level: 'paywall.featureHint.level',
+  plan: 'paywall.featureHint.plan',
+  exercises: 'paywall.featureHint.exercises',
 };
 
 type Ctx = { openPaywall: (feature?: string) => void };
@@ -55,6 +57,7 @@ type PlanKey = 'monthly' | 'annual';
 
 function PaywallSheet({ visible, feature, onClose }: { visible: boolean; feature?: string; onClose: () => void }) {
   const c = useColors();
+  const t = useT();
   const s = makeStyles(c);
   const [legal, setLegal] = useState<null | 'terms' | 'privacy'>(null);
   const [busy, setBusy] = useState(false);
@@ -90,12 +93,12 @@ function PaywallSheet({ visible, feature, onClose }: { visible: boolean; feature
       : null;
 
   const trialDays = activePlan?.freeTrialDays ?? monthly?.freeTrialDays ?? annual?.freeTrialDays ?? null;
-  const periodWord = selected === 'annual' && annual ? 'Jahr' : 'Monat';
+  const periodWord = selected === 'annual' && annual ? t('paywall.period.year') : t('paywall.period.month');
 
   const handlePurchase = async () => {
     if (busy) return;
     if (!activePlan) {
-      Alert.alert('Noch nicht verfügbar', 'Der Kauf ist gerade nicht möglich. Bitte nutze eine aktuelle App-Version und versuche es später erneut.');
+      Alert.alert(t('paywall.alert.unavailable.title'), t('paywall.alert.unavailableShort.body'));
       return;
     }
     setBusy(true);
@@ -103,14 +106,14 @@ function PaywallSheet({ visible, feature, onClose }: { visible: boolean; feature
     setBusy(false);
     if (outcome === 'success') {
       close();
-      Alert.alert('Premium aktiviert 🎉', 'Viel Spaß mit allen Funktionen!');
+      Alert.alert(t('paywall.alert.activated.title'), t('paywall.alert.activated.body'));
     } else if (outcome === 'unavailable') {
       Alert.alert(
-        'Noch nicht verfügbar',
-        'Der Kauf ist gerade nicht möglich. Bitte stelle sicher, dass du eine aktuelle App-Version nutzt, und versuche es später erneut.',
+        t('paywall.alert.unavailable.title'),
+        t('paywall.alert.unavailable.body'),
       );
     } else if (outcome === 'error') {
-      Alert.alert('Kauf fehlgeschlagen', 'Bitte versuche es später erneut.');
+      Alert.alert(t('paywall.alert.purchaseFailed.title'), t('paywall.alert.tryLater.body'));
     }
     // 'cancelled' -> nichts tun
   };
@@ -122,17 +125,17 @@ function PaywallSheet({ visible, feature, onClose }: { visible: boolean; feature
     setBusy(false);
     if (outcome === 'success') {
       close();
-      Alert.alert('Wiederhergestellt', 'Dein Premium-Zugang ist wieder aktiv.');
+      Alert.alert(t('paywall.alert.restored.title'), t('paywall.alert.restored.body'));
     } else if (outcome === 'unavailable') {
-      Alert.alert('Nicht verfügbar', 'Wiederherstellen geht nur in einem echten App-Build.');
+      Alert.alert(t('paywall.alert.restoreUnavailable.title'), t('paywall.alert.restoreUnavailable.body'));
     } else if (outcome === 'none') {
-      Alert.alert('Nichts gefunden', 'Es wurden keine früheren Käufe gefunden.');
+      Alert.alert(t('paywall.alert.restoreNone.title'), t('paywall.alert.restoreNone.body'));
     } else {
-      Alert.alert('Wiederherstellen fehlgeschlagen', 'Bitte versuche es später erneut.');
+      Alert.alert(t('paywall.alert.restoreFailed.title'), t('paywall.alert.tryLater.body'));
     }
   };
 
-  const ctaLabel = busy ? 'Wird verarbeitet…' : trialDays ? `${trialDays} Tage gratis starten` : 'Premium freischalten';
+  const ctaLabel = busy ? t('paywall.cta.processing') : trialDays ? t('paywall.cta.startTrial', { n: trialDays }) : t('paywall.cta.unlock');
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={close}>
@@ -140,30 +143,30 @@ function PaywallSheet({ visible, feature, onClose }: { visible: boolean; feature
         <View style={s.sheet}>
           {legal ? (
             <>
-              <Text style={s.title}>{legal === 'terms' ? 'Nutzungsbedingungen' : 'Datenschutzerklärung'}</Text>
+              <Text style={s.title}>{legal === 'terms' ? t('paywall.legal.termsTitle') : t('paywall.legal.privacyTitle')}</Text>
               <ScrollView style={{ maxHeight: 440 }} contentContainerStyle={{ paddingVertical: 10 }} showsVerticalScrollIndicator={false}>
                 <LegalText c={c} sections={legal === 'terms' ? TERMS_SECTIONS : PRIVACY_SECTIONS} />
               </ScrollView>
-              <TouchableOpacity style={s.cta} activeOpacity={0.85} onPress={() => setLegal(null)} accessibilityRole="button" accessibilityLabel="Zurück">
-                <Text style={s.ctaText}>Zurück</Text>
+              <TouchableOpacity style={s.cta} activeOpacity={0.85} onPress={() => setLegal(null)} accessibilityRole="button" accessibilityLabel={t('paywall.back')}>
+                <Text style={s.ctaText}>{t('paywall.back')}</Text>
               </TouchableOpacity>
             </>
           ) : (
             <>
               <Text style={s.kicker}>FitAvo</Text>
-              <Text style={s.title}>Premium 🥑</Text>
-              {trialDays ? <Text style={s.trialBanner}>🎁 {trialDays} Tage kostenlos testen</Text> : null}
+              <Text style={s.title}>{t('paywall.title')}</Text>
+              {trialDays ? <Text style={s.trialBanner}>{t('paywall.trialBanner', { n: trialDays })}</Text> : null}
               {feature && FEATURE_HINT[feature] && (
-                <Text style={s.featureHint}>{FEATURE_HINT[feature]}</Text>
+                <Text style={s.featureHint}>{t(FEATURE_HINT[feature])}</Text>
               )}
 
               <ScrollView style={{ maxHeight: 190 }} contentContainerStyle={{ paddingVertical: 6 }} showsVerticalScrollIndicator={false}>
-                {BENEFITS.map(([icon, title, desc]) => (
-                  <View key={title} style={s.row}>
+                {BENEFITS.map(([icon, titleKey, descKey]) => (
+                  <View key={titleKey} style={s.row}>
                     <Text style={s.icon}>{icon}</Text>
                     <View style={{ flex: 1 }}>
-                      <Text style={s.rowTitle}>{title}</Text>
-                      <Text style={s.rowDesc}>{desc}</Text>
+                      <Text style={s.rowTitle}>{t(titleKey)}</Text>
+                      <Text style={s.rowDesc}>{t(descKey)}</Text>
                     </View>
                   </View>
                 ))}
@@ -172,20 +175,20 @@ function PaywallSheet({ visible, feature, onClose }: { visible: boolean; feature
               {loadingPlans ? (
                 <View style={s.plansLoading}>
                   <ActivityIndicator color={c.primary} />
-                  <Text style={s.loadingText}>Preise werden geladen…</Text>
+                  <Text style={s.loadingText}>{t('paywall.loadingPrices')}</Text>
                 </View>
               ) : noPlans ? (
                 <Text style={s.loadingText}>
-                  Käufe sind in dieser Vorschau nicht verfügbar. In der fertigen App kannst du Premium hier abonnieren.
+                  {t('paywall.noPlans')}
                 </Text>
               ) : (
                 <View style={s.planRow}>
                   {monthly ? (
                     <PlanCard
                       s={s}
-                      label="Monatlich"
+                      label={t('paywall.plan.monthly.label')}
                       price={monthly.priceString}
-                      sub="pro Monat"
+                      sub={t('paywall.plan.monthly.sub')}
                       selected={selected === 'monthly'}
                       onPress={() => setSelected('monthly')}
                     />
@@ -193,10 +196,10 @@ function PaywallSheet({ visible, feature, onClose }: { visible: boolean; feature
                   {annual ? (
                     <PlanCard
                       s={s}
-                      label="Jährlich"
+                      label={t('paywall.plan.annual.label')}
                       price={annual.priceString}
-                      sub={annual.pricePerMonthString ? `${annual.pricePerMonthString} / Monat` : 'pro Jahr'}
-                      badge={savingsPct && savingsPct > 0 ? `${savingsPct}% sparen` : undefined}
+                      sub={annual.pricePerMonthString ? t('paywall.plan.annual.subPerMonth', { p: annual.pricePerMonthString }) : t('paywall.plan.annual.sub')}
+                      badge={savingsPct && savingsPct > 0 ? t('paywall.plan.annual.savings', { n: savingsPct }) : undefined}
                       selected={selected === 'annual'}
                       onPress={() => setSelected('annual')}
                     />
@@ -216,20 +219,20 @@ function PaywallSheet({ visible, feature, onClose }: { visible: boolean; feature
               </TouchableOpacity>
 
               <Text style={s.fineprint}>
-                {trialDays ? `${trialDays} Tage kostenlos, danach ` : ''}
-                {activePlan ? `${activePlan.priceString} / ${periodWord}` : PREMIUM_PRICE}. Das Abo verlängert sich automatisch, bis du kündigst. Die Abrechnung läuft über dein Apple-/Google-Konto. Kündigung jederzeit in dessen Abo-Einstellungen.
+                {trialDays ? t('paywall.fineprint.trialPrefix', { n: trialDays }) : ''}
+                {activePlan ? `${activePlan.priceString} / ${periodWord}` : PREMIUM_PRICE}{t('paywall.fineprint.terms')}
               </Text>
               <View style={s.linksRow}>
-                <Text style={s.link} onPress={handleRestore}>Käufe wiederherstellen</Text>
+                <Text style={s.link} onPress={handleRestore}>{t('paywall.restore')}</Text>
               </View>
               <View style={s.linksRow}>
-                <Text style={s.link} onPress={() => setLegal('terms')}>Nutzungsbedingungen</Text>
+                <Text style={s.link} onPress={() => setLegal('terms')}>{t('paywall.legal.terms')}</Text>
                 <Text style={s.linkDot}>·</Text>
-                <Text style={s.link} onPress={() => setLegal('privacy')}>Datenschutz</Text>
+                <Text style={s.link} onPress={() => setLegal('privacy')}>{t('paywall.legal.privacy')}</Text>
               </View>
 
-              <TouchableOpacity onPress={close} style={s.later} accessibilityRole="button" accessibilityLabel="Schließen">
-                <Text style={s.laterText}>Vielleicht später</Text>
+              <TouchableOpacity onPress={close} style={s.later} accessibilityRole="button" accessibilityLabel={t('paywall.close')}>
+                <Text style={s.laterText}>{t('paywall.later')}</Text>
               </TouchableOpacity>
             </>
           )}

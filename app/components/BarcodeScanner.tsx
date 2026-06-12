@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Linking, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Colors } from '../contexts/ThemeContext';
+import { useT } from '../contexts/LanguageContext';
 
 export default function BarcodeScanner({
   visible,
@@ -17,6 +18,7 @@ export default function BarcodeScanner({
   onScanned: (code: string) => void;
 }) {
   const styles = makeStyles(c);
+  const t = useT();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
 
@@ -42,22 +44,22 @@ export default function BarcodeScanner({
       <View style={styles.root}>
         {!permission ? (
           <View style={styles.center}>
-            <Text style={styles.info}>Kamera wird vorbereitet…</Text>
+            <Text style={styles.info}>{t('scanner.preparingCamera')}</Text>
           </View>
         ) : !permission.granted ? (
           <View style={styles.center}>
-            <Text style={styles.info}>FitAvo braucht Zugriff auf die Kamera, um Barcodes zu scannen.</Text>
+            <Text style={styles.info}>{t('scanner.permissionInfo')}</Text>
             {permission.canAskAgain ? (
               <TouchableOpacity style={styles.btn} onPress={requestPermission}>
-                <Text style={styles.btnText}>Kamera erlauben</Text>
+                <Text style={styles.btnText}>{t('scanner.allowCamera')}</Text>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity style={styles.btn} onPress={() => Linking.openSettings()}>
-                <Text style={styles.btnText}>Einstellungen öffnen</Text>
+                <Text style={styles.btnText}>{t('scanner.openSettings')}</Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity style={styles.linkBtn} onPress={onClose}>
-              <Text style={styles.link}>Abbrechen</Text>
+              <Text style={styles.link}>{t('scanner.cancel')}</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -70,10 +72,10 @@ export default function BarcodeScanner({
             />
             <View style={styles.overlay} pointerEvents="none">
               <View style={styles.frame} />
-              <Text style={styles.hint}>Barcode in den Rahmen halten</Text>
+              <Text style={styles.hint}>{t('scanner.hint')}</Text>
             </View>
             <TouchableOpacity style={styles.closeBtn} onPress={onClose} activeOpacity={0.85}>
-              <Text style={styles.closeText}>✕  Schließen</Text>
+              <Text style={styles.closeText}>{t('scanner.close')}</Text>
             </TouchableOpacity>
           </>
         )}

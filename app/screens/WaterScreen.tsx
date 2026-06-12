@@ -4,6 +4,7 @@ import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, Toucha
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
+import { useT } from '../contexts/LanguageContext';
 import { useFocusTick } from '../lib/useFocusTick';
 import ErrorRetry from '../components/ErrorRetry';
 import GlassFill from '../components/GlassFill';
@@ -24,6 +25,7 @@ export default function WaterScreen({ embedded, focusTick }: { embedded?: boolea
   const { session } = useAuth();
   const userId = session?.user?.id;
   const c = useColors();
+  const t = useT();
   const styles = useMemo(() => makeStyles(c), [c]);
 
   const [loading, setLoading] = useState(true);
@@ -101,7 +103,7 @@ export default function WaterScreen({ embedded, focusTick }: { embedded?: boolea
   if (loading) {
     return (
       <View style={[styles.container, embedded && styles.embedded]}>
-        {!embedded && <Text style={styles.title}>Wasser</Text>}
+        {!embedded && <Text style={styles.title}>{t('water.title')}</Text>}
         <ActivityIndicator size="large" color={c.primary} style={{ marginTop: 40 }} />
       </View>
     );
@@ -113,7 +115,7 @@ export default function WaterScreen({ embedded, focusTick }: { embedded?: boolea
       contentContainerStyle={[{ paddingBottom: 40 }, embedded && styles.bleedPad]}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
     >
-      {!embedded && <Text style={styles.title}>Wasser</Text>}
+      {!embedded && <Text style={styles.title}>{t('water.title')}</Text>}
 
       {error ? (
         <ErrorRetry message={error} onRetry={() => load()} embedded={embedded} />
@@ -123,14 +125,14 @@ export default function WaterScreen({ embedded, focusTick }: { embedded?: boolea
           <View style={styles.heroTile}>
             <GlassFill radius={16} />
             <Text style={styles.bigMl}>{total}<Text style={styles.bigUnit}> ml</Text></Text>
-            <Text style={styles.goalLine}>Ziel: {WATER_GOAL} ml{reached ? '  ·  erreicht 🎉' : ''}</Text>
+            <Text style={styles.goalLine}>{t('water.goal', { n: WATER_GOAL })}{reached ? t('water.goalReachedSuffix') : ''}</Text>
             <View style={styles.track}>
               <View style={[styles.fill, { width: `${pct}%` }]} />
             </View>
             <View style={styles.metaRow}>
               <Text style={styles.meta}>{pct}%</Text>
-              <Text style={styles.meta}>{reached ? 'Geschafft!' : `noch ${remaining} ml`}</Text>
-              <Text style={styles.meta}>≈ {glasses} Gläser</Text>
+              <Text style={styles.meta}>{reached ? t('water.done') : t('water.remaining', { n: remaining })}</Text>
+              <Text style={styles.meta}>{t('water.glasses', { n: glasses })}</Text>
             </View>
           </View>
 
@@ -138,33 +140,33 @@ export default function WaterScreen({ embedded, focusTick }: { embedded?: boolea
           <View style={styles.row}>
             <TouchableOpacity style={styles.addTile} onPress={() => add(250)} activeOpacity={0.85}>
               <GlassFill radius={14} />
-              <Text style={styles.addEmoji}>💧</Text><Text style={styles.addText}>+250 ml</Text>
+              <Text style={styles.addEmoji}>💧</Text><Text style={styles.addText}>{t('water.add', { n: 250 })}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.addTile} onPress={() => add(500)} activeOpacity={0.85}>
               <GlassFill radius={14} />
-              <Text style={styles.addEmoji}>💦</Text><Text style={styles.addText}>+500 ml</Text>
+              <Text style={styles.addEmoji}>💦</Text><Text style={styles.addText}>{t('water.add', { n: 500 })}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.addTile} onPress={() => add(750)} activeOpacity={0.85}>
               <GlassFill radius={14} />
-              <Text style={styles.addEmoji}>🚰</Text><Text style={styles.addText}>+750 ml</Text>
+              <Text style={styles.addEmoji}>🚰</Text><Text style={styles.addText}>{t('water.add', { n: 750 })}</Text>
             </TouchableOpacity>
           </View>
           <TouchableOpacity style={styles.undoBtn} onPress={undoLast} activeOpacity={0.85} disabled={!rows.length}>
-            <Text style={[styles.undoText, !rows.length && { opacity: 0.4 }]}>↩  Letzten Eintrag rückgängig</Text>
+            <Text style={[styles.undoText, !rows.length && { opacity: 0.4 }]}>{t('water.undoLast')}</Text>
           </TouchableOpacity>
 
           {/* HEUTE GETRUNKEN */}
           <View style={styles.tile}>
             <GlassFill radius={16} />
-            <Text style={styles.tileLabel}>HEUTE GETRUNKEN</Text>
+            <Text style={styles.tileLabel}>{t('water.todayLabel')}</Text>
             {rows.length === 0 ? (
-              <Text style={styles.empty}>Noch nichts getrunken. Trink ein Glas! 💧</Text>
+              <Text style={styles.empty}>{t('water.empty')}</Text>
             ) : (
               [...rows].reverse().map((r, idx) => (
                 <View key={r.id} style={[styles.entry, idx > 0 && styles.entryDivider]}>
                   <Text style={styles.rowTime}>{hhmm(r.created_at)}</Text>
-                  <Text style={styles.rowMl}>+{r.amount_ml} ml</Text>
-                  <TouchableOpacity onPress={() => removeOne(r.id)} style={styles.del} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`Wasser-Eintrag ${r.amount_ml} ml entfernen`}><Text style={styles.delText}>✕</Text></TouchableOpacity>
+                  <Text style={styles.rowMl}>{t('water.entryAmount', { n: r.amount_ml })}</Text>
+                  <TouchableOpacity onPress={() => removeOne(r.id)} style={styles.del} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('water.removeEntryA11y', { n: r.amount_ml })}><Text style={styles.delText}>✕</Text></TouchableOpacity>
                 </View>
               ))
             )}

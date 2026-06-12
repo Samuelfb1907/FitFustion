@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
+import { useT } from '../contexts/LanguageContext';
 import Segmented from '../components/Segmented';
 import GlassFill from '../components/GlassFill';
 import ErrorRetry from '../components/ErrorRetry';
@@ -19,6 +20,7 @@ export default function LeaderboardScreen({ embedded }: { embedded?: boolean }) 
   const { session } = useAuth();
   const userId = session?.user?.id;
   const c = useColors();
+  const t = useT();
   const styles = useMemo(() => makeStyles(c), [c]);
 
   const [loading, setLoading] = useState(true);
@@ -31,7 +33,7 @@ export default function LeaderboardScreen({ embedded }: { embedded?: boolean }) 
   const [busy, setBusy] = useState(false);
 
   // Datenschutz: standardmaessig anonym - der echte Name wird NICHT vorausgewaehlt.
-  const defaultName = 'Anonym';
+  const defaultName = t('leaderboard.defaultName');
 
   useEffect(() => { init(); }, [userId]);
 
@@ -67,11 +69,11 @@ export default function LeaderboardScreen({ embedded }: { embedded?: boolean }) 
 
   function confirmLeave() {
     Alert.alert(
-      'Nicht mehr teilnehmen?',
-      'Dein Eintrag wird aus der Bestenliste entfernt und du bist wieder privat. Du kannst jederzeit erneut teilnehmen.',
+      t('leaderboard.leave.confirmTitle'),
+      t('leaderboard.leave.confirmBody'),
       [
-        { text: 'Abbrechen', style: 'cancel' },
-        { text: 'Entfernen', style: 'destructive', onPress: doLeave },
+        { text: t('leaderboard.leave.cancel'), style: 'cancel' },
+        { text: t('leaderboard.leave.remove'), style: 'destructive', onPress: doLeave },
       ],
     );
   }
@@ -87,7 +89,7 @@ export default function LeaderboardScreen({ embedded }: { embedded?: boolean }) 
   if (loading) {
     return (
       <View style={[styles.container, embedded && styles.embedded]}>
-        {!embedded && <Text style={styles.title}>Bestenliste</Text>}
+        {!embedded && <Text style={styles.title}>{t('leaderboard.title')}</Text>}
         <ActivityIndicator size="large" color={c.primary} style={{ marginTop: 40 }} />
       </View>
     );
@@ -96,7 +98,7 @@ export default function LeaderboardScreen({ embedded }: { embedded?: boolean }) 
   if (err) {
     return (
       <View style={[styles.container, embedded && styles.embedded]}>
-        {!embedded && <Text style={styles.title}>Bestenliste</Text>}
+        {!embedded && <Text style={styles.title}>{t('leaderboard.title')}</Text>}
         <ErrorRetry message={err} onRetry={() => init()} embedded={embedded} />
       </View>
     );
@@ -106,21 +108,21 @@ export default function LeaderboardScreen({ embedded }: { embedded?: boolean }) 
   if (!optedIn) {
     return (
       <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
-        {!embedded && <Text style={styles.title}>Bestenliste</Text>}
+        {!embedded && <Text style={styles.title}>{t('leaderboard.title')}</Text>}
         <View style={styles.tile}>
           <GlassFill radius={16} />
           <Text style={styles.joinIcon}>🏆</Text>
-          <Text style={styles.joinTitle}>Mach mit beim Wettbewerb!</Text>
+          <Text style={styles.joinTitle}>{t('leaderboard.join.heading')}</Text>
           <Text style={styles.joinText}>
-            Miss dich mit anderen: Wer schafft an den meisten Tagen sein Ziel? Es zählt jeder Tag, an dem du etwas{' '}
-            <Text style={{ fontWeight: '700', color: c.text }}>getrackt oder trainiert</Text> hast – pro Woche und pro Monat.
+            {t('leaderboard.join.intro')}{' '}
+            <Text style={{ fontWeight: '700', color: c.text }}>{t('leaderboard.join.introBold')}</Text> {t('leaderboard.join.introEnd')}
           </Text>
           <View style={styles.privacy}>
             <Text style={styles.privacyText}>
-              🔒 Freiwillig: Dein gewählter Anzeigename und die Anzahl deiner aktiven Tage sind für ALLE Teilnehmer sichtbar. Wähle daher gern einen Spitznamen statt deines echten Namens. Du kannst jederzeit wieder aussteigen.
+              {t('leaderboard.join.privacy')}
             </Text>
           </View>
-          <Text style={styles.label}>Dein Anzeigename</Text>
+          <Text style={styles.label}>{t('leaderboard.join.nameLabel')}</Text>
           <TextInput
             style={styles.input}
             value={nameInput}
@@ -132,7 +134,7 @@ export default function LeaderboardScreen({ embedded }: { embedded?: boolean }) 
             underlineColorAndroid="transparent"
           />
           <TouchableOpacity style={[styles.primaryBtn, busy && { opacity: 0.6 }]} onPress={join} disabled={busy} activeOpacity={0.85}>
-            {busy ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.primaryText}>Am Leaderboard teilnehmen</Text>}
+            {busy ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.primaryText}>{t('leaderboard.join.cta')}</Text>}
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -153,10 +155,10 @@ export default function LeaderboardScreen({ embedded }: { embedded?: boolean }) 
       contentContainerStyle={{ paddingBottom: 40 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
     >
-      {!embedded && <Text style={styles.title}>Bestenliste</Text>}
+      {!embedded && <Text style={styles.title}>{t('leaderboard.title')}</Text>}
 
       <Segmented
-        options={[{ key: 'week', label: 'Diese Woche' }, { key: 'month', label: 'Dieser Monat' }]}
+        options={[{ key: 'week', label: t('leaderboard.period.week') }, { key: 'month', label: t('leaderboard.period.month') }]}
         value={period}
         onChange={(k) => setPeriod(k as 'week' | 'month')}
         c={c}
@@ -166,24 +168,24 @@ export default function LeaderboardScreen({ embedded }: { embedded?: boolean }) 
       <View style={styles.myTile}>
         <View style={styles.myRankCircle}><Text style={styles.myRankText}>{myRank ?? '–'}</Text></View>
         <View style={{ flex: 1 }}>
-          <Text style={styles.myLabel}>DEIN PLATZ</Text>
-          <Text style={styles.myValue}>{myScore} {myScore === 1 ? 'Ziel-Tag' : 'Ziel-Tage'} {period === 'week' ? 'diese Woche' : 'diesen Monat'}</Text>
+          <Text style={styles.myLabel}>{t('leaderboard.myRank.label')}</Text>
+          <Text style={styles.myValue}>{t(period === 'week' ? 'leaderboard.myRank.valueWeek' : 'leaderboard.myRank.valueMonth', { n: myScore, unit: t(myScore === 1 ? 'leaderboard.unit.daySingular' : 'leaderboard.unit.dayPlural') })}</Text>
         </View>
       </View>
 
       {/* Liste */}
       <View style={styles.tile}>
         <GlassFill radius={16} />
-        <Text style={styles.tileLabel}>RANGLISTE</Text>
+        <Text style={styles.tileLabel}>{t('leaderboard.list.label')}</Text>
         {scored.length === 0 ? (
-          <Text style={styles.empty}>Noch niemand dabei – sei die/der Erste! 🚀</Text>
+          <Text style={styles.empty}>{t('leaderboard.list.empty')}</Text>
         ) : (
           scored.map((s, i) => {
             const me = s.row.is_me;
             return (
               <View key={i} style={[styles.rankRow, i > 0 && styles.rankDivider, me && styles.rankRowMe]}>
                 <Text style={[styles.rankPos, i < 3 && styles.rankPosMedal]}>{medal(i + 1)}</Text>
-                <Text style={[styles.rankName, me && styles.rankNameMe]} numberOfLines={1}>{s.row.display_name}{me ? '  (du)' : ''}</Text>
+                <Text style={[styles.rankName, me && styles.rankNameMe]} numberOfLines={1}>{s.row.display_name}{me ? t('leaderboard.list.you') : ''}</Text>
                 <Text style={styles.rankScore}>{s.score}</Text>
               </View>
             );
@@ -194,9 +196,9 @@ export default function LeaderboardScreen({ embedded }: { embedded?: boolean }) 
       {/* Teilnahme-Fußzeile */}
       <View style={styles.tile}>
         <GlassFill radius={16} />
-        <Text style={styles.footerNote}>Du nimmst teil. Es zählen Tage, an denen du etwas getrackt oder trainiert hast.</Text>
+        <Text style={styles.footerNote}>{t('leaderboard.footer.note')}</Text>
         <TouchableOpacity style={styles.leaveBtn} onPress={confirmLeave} disabled={busy} activeOpacity={0.85}>
-          <Text style={styles.leaveText}>Nicht mehr teilnehmen</Text>
+          <Text style={styles.leaveText}>{t('leaderboard.footer.leave')}</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>

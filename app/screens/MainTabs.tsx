@@ -5,6 +5,7 @@ import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors, useTheme, Colors } from '../contexts/ThemeContext';
+import { useT } from '../contexts/LanguageContext';
 import HomeScreen from './HomeScreen';
 import TrainingScreen from './TrainingScreen';
 import EssenScreen from './EssenScreen';
@@ -37,6 +38,7 @@ export default function MainTabs() {
   const c = useColors();
   const { theme } = useTheme();
   const dark = theme === 'dark';
+  const t = useT();
 
   // Reiter aktivieren: erstmalig mounten, focusTick erhoehen (-> Startansicht + leiser Refresh), anzeigen.
   const go = (t: Tab) => {
@@ -57,11 +59,11 @@ export default function MainTabs() {
       </View>
       <BlurView intensity={dark ? 50 : 72} tint={dark ? 'dark' : 'light'} style={styles.tabBar}>
         <View style={[StyleSheet.absoluteFill, { backgroundColor: c.glass, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.hairline }]} pointerEvents="none" />
-        <TabButton label="Start" icon="home" active={tab === 'home'} onPress={() => go('home')} c={c} />
-        <TabButton label="Training" icon="barbell" active={tab === 'training'} onPress={() => go('training')} c={c} />
-        <TabButton label="Essen" icon="restaurant" active={tab === 'essen'} onPress={() => go('essen')} c={c} />
-        <TabButton label="Fortschritt" icon="stats-chart" active={tab === 'progress'} onPress={() => go('progress')} c={c} />
-        <TabButton label="Einstellungen" icon="settings" active={tab === 'settings'} onPress={() => go('settings')} c={c} />
+        <TabButton label={t('tabs.start')} icon="home" active={tab === 'home'} onPress={() => go('home')} c={c} />
+        <TabButton label={t('tabs.training')} icon="barbell" active={tab === 'training'} onPress={() => go('training')} c={c} />
+        <TabButton label={t('tabs.food')} icon="restaurant" active={tab === 'essen'} onPress={() => go('essen')} c={c} />
+        <TabButton label={t('tabs.progress')} icon="stats-chart" active={tab === 'progress'} onPress={() => go('progress')} c={c} />
+        <TabButton label={t('tabs.settings')} icon="settings" active={tab === 'settings'} onPress={() => go('settings')} c={c} />
       </BlurView>
     </View>
   );

@@ -4,12 +4,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, Text, TouchableOpacity, Vibration, View } from 'react-native';
 import { Colors } from '../contexts/ThemeContext';
+import { useT } from '../contexts/LanguageContext';
 import GlassFill from './GlassFill';
 
 const PRESETS = [60, 90, 120, 180];
 const fmtPreset = (s: number) => (s % 60 === 0 ? `${s / 60} min` : `${s} s`);
 
 export default function RestTimer({ c, autoStartSignal, defaultSeconds = 90 }: { c: Colors; autoStartSignal?: number; defaultSeconds?: number }) {
+  const t = useT();
   const styles = makeStyles(c);
   const [duration, setDuration] = useState(defaultSeconds);
   const [remaining, setRemaining] = useState(defaultSeconds);
@@ -68,7 +70,7 @@ export default function RestTimer({ c, autoStartSignal, defaultSeconds = 90 }: {
 
   return (
     <View style={styles.wrap}>
-      <Text style={styles.title}>⏱️ Pausen-Timer</Text>
+      <Text style={styles.title}>{t("timer.title")}</Text>
 
       <View style={styles.presets}>
         {PRESETS.map((p) => (
@@ -79,20 +81,20 @@ export default function RestTimer({ c, autoStartSignal, defaultSeconds = 90 }: {
         ))}
       </View>
 
-      <Text style={[styles.time, done && { color: c.success }]}>{done ? 'Pause vorbei! 💪' : label}</Text>
+      <Text style={[styles.time, done && { color: c.success }]}>{done ? t("timer.done") : label}</Text>
       <View style={styles.track}>
         <View style={[styles.fill, { width: `${Math.round(progress * 100)}%`, backgroundColor: done ? c.success : c.primary }]} />
       </View>
 
       <View style={styles.btns}>
         {running ? (
-          <TouchableOpacity style={styles.btn} onPress={pause} activeOpacity={0.85}><Text style={styles.btnText}>⏸  Pause</Text></TouchableOpacity>
+          <TouchableOpacity style={styles.btn} onPress={pause} activeOpacity={0.85}><Text style={styles.btnText}>{t("timer.pause")}</Text></TouchableOpacity>
         ) : (
           <TouchableOpacity style={styles.btn} onPress={() => (paused ? resume() : start())} activeOpacity={0.85}>
-            <Text style={styles.btnText}>{paused ? '▶  Weiter' : '▶  Start'}</Text>
+            <Text style={styles.btnText}>{paused ? t("timer.resume") : t("timer.start")}</Text>
           </TouchableOpacity>
         )}
-        <TouchableOpacity style={styles.btnGhost} onPress={reset} activeOpacity={0.85}><GlassFill radius={10} /><Text style={styles.btnGhostText}>↺  Reset</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.btnGhost} onPress={reset} activeOpacity={0.85}><GlassFill radius={10} /><Text style={styles.btnGhostText}>{t("timer.reset")}</Text></TouchableOpacity>
       </View>
     </View>
   );

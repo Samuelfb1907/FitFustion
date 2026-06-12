@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { usePaywall } from '../components/Paywall';
 import { useColors, Colors } from '../contexts/ThemeContext';
+import { useT } from '../contexts/LanguageContext';
 import { LineChart, BarChart } from '../components/Charts';
 import SwipeBack from '../components/SwipeBack';
 import GlassFill from '../components/GlassFill';
@@ -45,6 +46,7 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
   const { session, isPremium } = useAuth();
   const { openPaywall } = usePaywall();
   const c = useColors();
+  const t = useT();
   const styles = useMemo(() => makeStyles(c), [c]);
 
   const chartW = Math.min(560, Dimensions.get('window').width) - 72;
@@ -100,7 +102,7 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
       .eq('user_id', userId);
     const sets = (sl ?? []) as any[];
 
-    const exName = (row: any): string => unwrap<{ name: string }>(row.exercises)?.name ?? 'Übung';
+    const exName = (row: any): string => unwrap<{ name: string }>(row.exercises)?.name ?? t('progress.exerciseFallback');
     const exId = (row: any): string => String(row.exercise_id);
     const perfDate = (row: any): string => {
       const s = unwrap<{ performed_at: string }>(row.workout_sessions);
@@ -200,7 +202,7 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
     if (!userId) return;
     const w = parseWeight(weightInput);
     if (w == null) {
-      setMsg(`Bitte ein gültiges Gewicht (${WEIGHT_MIN}–${WEIGHT_MAX} kg) eingeben.`);
+      setMsg(t('progress.weightInvalid', { min: WEIGHT_MIN, max: WEIGHT_MAX }));
       setMsgErr(true);
       return;
     }
@@ -209,10 +211,10 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
     const err = await saveTodayWeight(userId, w);
     setSavingW(false);
     if (err) {
-      setMsg('Speichern fehlgeschlagen: ' + err);
+      setMsg(t('progress.saveFailed', { err }));
       setMsgErr(true);
     } else {
-      setMsg('Gewicht gespeichert ✓');
+      setMsg(t('progress.weightSaved'));
       setMsgErr(false);
       setWeightInput('');
       await load();
@@ -221,13 +223,13 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
 
   async function removeWeight(id: string) {
     const err = await deleteWeight(id);
-    if (err) { Alert.alert('Löschen fehlgeschlagen', err); return; }
+    if (err) { Alert.alert(t('progress.deleteFailedTitle'), err); return; }
     await load();
   }
   function confirmRemoveWeight(id: string) {
-    Alert.alert('Eintrag löschen?', 'Dieser Gewichtseintrag wird dauerhaft entfernt und verändert deine Verlaufskurve.', [
-      { text: 'Abbrechen', style: 'cancel' },
-      { text: 'Löschen', style: 'destructive', onPress: () => removeWeight(id) },
+    Alert.alert(t('progress.deleteConfirmTitle'), t('progress.deleteConfirmBody'), [
+      { text: t('progress.cancel'), style: 'cancel' },
+      { text: t('progress.delete'), style: 'destructive', onPress: () => removeWeight(id) },
     ]);
   }
 
@@ -251,18 +253,18 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
       : null;
 
   const statCards = [
-    { icon: '🏋️', label: 'Trainings', value: String(stats.sessions) },
-    { icon: '📋', label: 'Sätze gesamt', value: String(stats.sets) },
-    { icon: '🏆', label: 'Volumen gesamt', value: `${grp(stats.volume)} kg` },
-    { icon: '🔥', label: 'Diese Woche', value: `${grp(stats.weekVolume)} kg` },
+    { icon: '🏋️', label: t('progress.statSessions'), value: String(stats.sessions) },
+    { icon: '📋', label: t('progress.statSets'), value: String(stats.sets) },
+    { icon: '🏆', label: t('progress.statVolume'), value: `${grp(stats.volume)} kg` },
+    { icon: '🔥', label: t('progress.statWeek'), value: `${grp(stats.weekVolume)} kg` },
   ];
 
   const baseView = (
     <View style={styles.container}>
-      <Text style={styles.title}>Fortschritt</Text>
+      <Text style={styles.title}>{t('progress.title')}</Text>
       <View style={{ height: 14 }} />
       <Segmented
-        options={[{ key: 'me', label: 'Meine Werte' }, { key: 'board', label: '🏆 Bestenliste' }]}
+        options={[{ key: 'me', label: t('progress.tabMyValues') }, { key: 'board', label: t('progress.tabLeaderboard') }]}
         value={seg}
         onChange={(k) => { if (k === 'board' && !isPremium) { openPaywall('leaderboard'); return; } setSeg(k as 'me' | 'board'); }}
         c={c}
@@ -278,7 +280,7 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
         automaticallyAdjustKeyboardInsets
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
       >
-      <Text style={styles.subtitle}>Deine Entwicklung auf einen Blick 📈</Text>
+      <Text style={styles.subtitle}>{t('progress.subtitle')}</Text>
 
       {loading ? (
         <ActivityIndicator size="large" color={c.primary} style={{ marginTop: 60 }} />
@@ -289,25 +291,25 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
           {/* GEWICHT */}
           <View style={styles.card}>
             <GlassFill radius={16} />
-            <Text style={styles.cardTitle}>⚖️  Gewichtsverlauf</Text>
+            <Text style={styles.cardTitle}>{t('progress.weightCardTitle')}</Text>
             <View style={styles.weightRow}>
               <View style={styles.weightCol}>
                 <Text style={styles.bigWeight}>{current != null ? `${current}` : '–'}</Text>
-                <Text style={styles.weightUnit}>kg aktuell</Text>
+                <Text style={styles.weightUnit}>{t('progress.kgCurrent')}</Text>
               </View>
               {targetWeight != null && (
                 <View style={styles.weightCol}>
                   <Text style={styles.bigWeightMuted}>{targetWeight}</Text>
-                  <Text style={styles.weightUnit}>kg Ziel</Text>
+                  <Text style={styles.weightUnit}>{t('progress.kgGoal')}</Text>
                 </View>
               )}
             </View>
 
             {(d7 != null || d30 != null || delta != null) && (
               <View style={styles.deltaGrid}>
-                <DeltaChip label="7 Tage" value={d7} color={deltaCol(d7)} styles={styles} />
-                <DeltaChip label="30 Tage" value={d30} color={deltaCol(d30)} styles={styles} />
-                <DeltaChip label="seit Start" value={delta} color={deltaCol(delta)} styles={styles} />
+                <DeltaChip label={t('progress.delta7')} value={d7} color={deltaCol(d7)} styles={styles} />
+                <DeltaChip label={t('progress.delta30')} value={d30} color={deltaCol(d30)} styles={styles} />
+                <DeltaChip label={t('progress.deltaSinceStart')} value={delta} color={deltaCol(delta)} styles={styles} />
               </View>
             )}
 
@@ -320,14 +322,14 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
                 </View>
               </View>
             ) : (
-              <Text style={styles.hint}>Trag regelmäßig dein Gewicht ein – ab dem 2. Wert siehst du hier deine Kurve.</Text>
+              <Text style={styles.hint}>{t('progress.chartHint')}</Text>
             )}
 
             {goalProgress != null && toGoal != null && (
               <View style={styles.goalWrap}>
                 <View style={styles.goalHead}>
-                  <Text style={styles.goalCaption}>Ziel-Fortschritt</Text>
-                  <Text style={styles.goalCaption}>{toGoal === 0 ? 'erreicht 🎉' : `noch ${toGoal} kg`}</Text>
+                  <Text style={styles.goalCaption}>{t('progress.goalProgress')}</Text>
+                  <Text style={styles.goalCaption}>{toGoal === 0 ? t('progress.goalReached') : t('progress.goalRemaining', { n: toGoal })}</Text>
                 </View>
                 <View style={styles.goalTrack}>
                   <View style={[styles.goalFill, { width: `${Math.round(goalProgress * 100)}%` }]} />
@@ -340,13 +342,13 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
                 style={styles.input}
                 value={weightInput}
                 onChangeText={setWeightInput}
-                placeholder="Heutiges Gewicht (kg)"
+                placeholder={t('progress.weightPlaceholder')}
                 placeholderTextColor={c.textMuted}
                 keyboardType="numeric"
                 inputMode="decimal"
               />
               <TouchableOpacity style={[styles.saveBtn, savingW && { opacity: 0.6 }]} onPress={saveWeight} disabled={savingW}>
-                {savingW ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.saveText}>Eintragen</Text>}
+                {savingW ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.saveText}>{t('progress.submit')}</Text>}
               </TouchableOpacity>
             </View>
             {msg && <Text style={[styles.msg, { color: msgErr ? c.danger : c.success }]}>{msg}</Text>}
@@ -354,14 +356,14 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
             {weights.length > 0 && (
               <>
                 <TouchableOpacity onPress={() => setShowHist((s) => !s)} style={styles.histToggle}>
-                  <Text style={styles.histToggleText}>{showHist ? 'Verlauf ausblenden' : `Verlauf anzeigen (${weights.length})`}</Text>
+                  <Text style={styles.histToggleText}>{showHist ? t('progress.historyHide') : t('progress.historyShow', { n: weights.length })}</Text>
                 </TouchableOpacity>
                 {showHist &&
                   [...weights].reverse().map((w) => (
                     <View key={w.id} style={styles.histRow}>
                       <Text style={styles.histDate}>{ddmm(w.date)}</Text>
                       <Text style={styles.histKg}>{w.kg} kg</Text>
-                      <TouchableOpacity onPress={() => confirmRemoveWeight(w.id)} style={styles.histDel} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`Gewichtseintrag ${w.kg} kg löschen`}>
+                      <TouchableOpacity onPress={() => confirmRemoveWeight(w.id)} style={styles.histDel} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('progress.deleteWeightA11y', { n: w.kg })}>
                         <Text style={styles.histDelText}>✕</Text>
                       </TouchableOpacity>
                     </View>
@@ -387,7 +389,7 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
           {/* VOLUMEN JE WOCHE */}
           <View style={styles.card}>
             <GlassFill radius={16} />
-            <Text style={styles.cardTitle}>📊  Volumen je Woche</Text>
+            <Text style={styles.cardTitle}>{t('progress.weeklyVolumeTitle')}</Text>
             {stats.volume > 0 ? (
               <>
                 <BarChart
@@ -398,26 +400,26 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
                   color={c.success}
                   c={c}
                 />
-                <Text style={styles.caption}>Wiederholungen × Gewicht, summiert pro Kalenderwoche (Mo–So).</Text>
+                <Text style={styles.caption}>{t('progress.weeklyVolumeCaption')}</Text>
               </>
             ) : (
-              <Text style={styles.hint}>Sobald du Sätze mit Gewicht mitschreibst, erscheint hier dein Wochenvolumen.</Text>
+              <Text style={styles.hint}>{t('progress.weeklyVolumeHint')}</Text>
             )}
           </View>
 
           {/* REKORDE */}
           <View style={styles.card}>
             <GlassFill radius={16} />
-            <Text style={styles.cardTitle}>🏆  Persönliche Rekorde</Text>
+            <Text style={styles.cardTitle}>{t('progress.recordsTitle')}</Text>
             {records.length > 0 ? (
               records.map((r, i) => (
                 <TouchableOpacity key={r.id} style={[styles.row, i === records.length - 1 && styles.rowLast]} onPress={() => setSelExercise({ id: r.id, name: r.name })} activeOpacity={0.7}>
                   <Text style={styles.rowName} numberOfLines={1}>{r.name}</Text>
-                  <Text style={styles.rowValue}>{r.weight} kg{r.reps ? ` · ${r.reps} Wdh` : ''}  ›</Text>
+                  <Text style={styles.rowValue}>{r.weight} kg{r.reps ? ` · ${t('progress.reps', { n: r.reps })}` : ''}  ›</Text>
                 </TouchableOpacity>
               ))
             ) : (
-              <Text style={styles.hint}>Noch keine Rekorde – trag im Training Sätze mit Gewicht ein.</Text>
+              <Text style={styles.hint}>{t('progress.recordsHint')}</Text>
             )}
           </View>
 
@@ -425,8 +427,8 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
           {exList.length > 0 && (
             <View style={styles.card}>
               <GlassFill radius={16} />
-              <Text style={styles.cardTitle}>📈  Übungs-Fortschritt</Text>
-              <Text style={[styles.caption, { marginTop: 0, marginBottom: 8 }]}>Tippe eine Übung für Verlauf & Rekord.</Text>
+              <Text style={styles.cardTitle}>{t('progress.exerciseProgressTitle')}</Text>
+              <Text style={[styles.caption, { marginTop: 0, marginBottom: 8 }]}>{t('progress.exerciseProgressCaption')}</Text>
               {exList.slice(0, 12).map((e, i) => (
                 <TouchableOpacity key={e.id} style={[styles.row, i === Math.min(exList.length, 12) - 1 && styles.rowLast]} onPress={() => setSelExercise({ id: e.id, name: e.name })} activeOpacity={0.7}>
                   <Text style={styles.rowName} numberOfLines={1}>{e.name}</Text>
@@ -439,19 +441,19 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
           {/* HISTORIE */}
           <View style={styles.card}>
             <GlassFill radius={16} />
-            <Text style={styles.cardTitle}>🕑  Trainingshistorie</Text>
+            <Text style={styles.cardTitle}>{t('progress.historyTitle')}</Text>
             {history.length > 0 ? (
               history.map((h, i) => (
                 <View key={`${h.date}-${i}`} style={[styles.row, i === history.length - 1 && styles.rowLast]}>
                   <Text style={styles.rowName}>{ddmm(h.date)}</Text>
                   <Text style={styles.rowValue}>
-                    {h.sets} Satz{h.sets === 1 ? '' : 'e'}
+                    {h.sets === 1 ? t('progress.setsOne', { n: h.sets }) : t('progress.setsMany', { n: h.sets })}
                     {h.volume > 0 ? ` · ${grp(h.volume)} kg` : ''}
                   </Text>
                 </View>
               ))
             ) : (
-              <Text style={styles.hint}>Noch keine Einheiten – leg im Training los! 💪</Text>
+              <Text style={styles.hint}>{t('progress.historyHint')}</Text>
             )}
           </View>
         </>

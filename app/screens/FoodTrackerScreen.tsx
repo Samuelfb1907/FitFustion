@@ -4,6 +4,7 @@ import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Modal, Platfo
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
+import { useT } from '../contexts/LanguageContext';
 import { computeNutrition, ageFromBirthDate, Gender, ActivityLevel, GoalType } from '../lib/nutrition';
 import BarcodeScanner from '../components/BarcodeScanner';
 import { resolveBarcodeFood } from '../lib/barcodeFood';
@@ -55,6 +56,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   const userId = session?.user?.id;
   const { openPaywall } = usePaywall();
   const c = useColors();
+  const t = useT();
   const styles = useMemo(() => makeStyles(c), [c]);
 
   const [loading, setLoading] = useState(true);
@@ -143,8 +145,8 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     setScanning(false);
     if (!res.food) {
       setError(res.reason === 'not_found'
-        ? `Barcode ${code} nicht gefunden. Du kannst die Zutat manuell suchen.`
-        : 'Konnte das Produkt nicht abrufen. Bitte nochmal versuchen.');
+        ? t('food.barcodeNotFound', { code })
+        : t('food.barcodeFetchFailed'));
       return;
     }
     const food = res.food;
@@ -267,7 +269,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       const rows = u.items.map((it) => ({ user_id: userId, food_id: it.food.id, amount_g: it.amount, log_date: todayStr(), meal_type: meal }));
       const { error: e } = await supabase.from('food_logs').insert(rows);
       if (e) { setError(errorMessage(e)); return; }
-      setQuickMsg(`✓ Übliches ${TRACKER_MEALS.find((m) => m.key === meal)?.label ?? ''} hinzugefügt`);
+      setQuickMsg(t('food.usualAdded', { meal: TRACKER_MEALS.find((m) => m.key === meal)?.label ?? '' }));
       setTimeout(() => setQuickMsg(null), 2500);
       await init(true);
     } finally { busyRef.current = false; }
@@ -296,7 +298,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     setNlBusy(true); setNlErr(null);
     try {
       const items = await parseMeal(text, mealByHour());
-      if (!items.length) { setNlErr('Nichts erkannt. Formuliere es etwas anders.'); return; }
+      if (!items.length) { setNlErr(t('food.nlNothingRecognized')); return; }
       const m = items[0]?.meal_type ?? mealByHour();
       setNlMeal(m);
       setNlItems(items.map((it) => ({ ...it, meal_type: m })));
@@ -305,7 +307,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       if (code === 'premium_required') { openPaywall('ki'); return; }
       const msg = code === 'rate_limited'
         ? (e as Error).message
-        : 'Erkennung gerade nicht verfügbar. Bitte später erneut versuchen.';
+        : t('food.nlUnavailable');
       setNlErr(msg);
     } finally {
       setNlBusy(false);
@@ -350,7 +352,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       }
       if (rows.length) {
         const { error } = await supabase.from('food_logs').insert(rows);
-        if (error) { setNlErr('Konnte nicht eintragen: ' + (error.message ?? '')); return; }
+        if (error) { setNlErr(t('food.nlInsertFailed', { msg: error.message ?? '' })); return; }
       }
       setNlItems(null); setNlText('');
       await init(true);
@@ -366,7 +368,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     try {
       const { error: e } = await supabase.from('food_logs').insert({ user_id: userId, food_id: qf.food.id, amount_g: qf.amount, log_date: todayStr(), meal_type: mealByHour() });
       if (e) { setError(errorMessage(e)); return; }
-      setQuickMsg(`✓ ${qf.food.name} (${qf.amount} g) hinzugefügt`);
+      setQuickMsg(t('food.foodAdded', { name: qf.food.name, amount: qf.amount }));
       setTimeout(() => setQuickMsg(null), 2500);
       await init(true);
     } finally {
@@ -377,7 +379,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   async function addLog() {
     if (!userId || !selectedFood || busyRef.current) return;
     const a = Number(amount.replace(',', '.'));
-    if (!a || a <= 0) { setError('Bitte gültige Menge in Gramm eingeben.'); return; }
+    if (!a || a <= 0) { setError(t('food.invalidAmount')); return; }
     // Beim Erstellen eines Favoriten: Zutat in den Entwurf legen statt ins Tagebuch.
     if (addingTo === 'favorite') {
       const food = selectedFood;
@@ -395,7 +397,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       const { error: e } = await supabase.from('food_logs').insert({ user_id: userId, food_id: selectedFood.id, amount_g: a, log_date: todayStr(), meal_type: mealType });
       if (e) { setError(errorMessage(e)); return; }
       setSelectedFood(null); setAmount('100'); setSearch(''); setMode('diary');
-      setQuickMsg(`✓ ${addedName} (${a} g) hinzugefügt`);
+      setQuickMsg(t('food.foodAdded', { name: addedName, amount: a }));
       setTimeout(() => setQuickMsg(null), 2500);
       await init(true);
     } finally {
@@ -440,12 +442,12 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   async function saveFavorite() {
     if (!userId || !favDraft) return;
     const name = favDraft.name.trim();
-    if (!name) { setFavErr('Bitte einen Namen eingeben.'); return; }
-    if (favDraft.items.length === 0) { setFavErr('Bitte mindestens eine Zutat hinzufügen.'); return; }
+    if (!name) { setFavErr(t('food.errEnterName')); return; }
+    if (favDraft.items.length === 0) { setFavErr(t('food.errAtLeastOneItem')); return; }
     setSavingFav(true); setFavErr(null);
     const { error } = await supabase.from('meal_favorites').insert({ user_id: userId, name, items: favDraft.items });
     setSavingFav(false);
-    if (error) { setFavErr('Speichern fehlgeschlagen: ' + (error.message ?? '')); return; }
+    if (error) { setFavErr(t('food.errSaveFailed', { msg: error.message ?? '' })); return; }
     setFavDraft(null); setAddingTo('diary'); setPickTab('favoriten'); setMode('pick');
     await init(true);
   }
@@ -456,32 +458,32 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     try {
       const rows = fav.items.map((it) => ({ user_id: userId, food_id: it.food_id, amount_g: it.amount_g, log_date: todayStr(), meal_type: mealType }));
       const { error: e } = await supabase.from('food_logs').insert(rows);
-      if (e) { setError('Konnte Favorit nicht hinzufügen. Vielleicht wurde eine Zutat gelöscht.'); setMode('diary'); return; }
+      if (e) { setError(t('food.errApplyFavorite')); setMode('diary'); return; }
       setMode('diary'); setSearch('');
       await init(true);
     } finally { busyRef.current = false; }
   }
   function confirmDeleteFavorite(fav: Favorite) {
-    Alert.alert('Favorit löschen?', `„${fav.name}" wirklich löschen?`, [
-      { text: 'Abbrechen', style: 'cancel' },
-      { text: 'Löschen', style: 'destructive', onPress: () => doDeleteFavorite(fav.id) },
+    Alert.alert(t('food.deleteFavoriteTitle'), t('food.deleteFavoriteMsg', { name: fav.name }), [
+      { text: t('food.cancel'), style: 'cancel' },
+      { text: t('food.delete'), style: 'destructive', onPress: () => doDeleteFavorite(fav.id) },
     ]);
   }
   async function doDeleteFavorite(id: string) {
     const { error } = await supabase.from('meal_favorites').delete().eq('id', id);
-    if (error) { Alert.alert('Nicht möglich', errorMessage(error)); return; }
+    if (error) { Alert.alert(t('food.notPossible'), errorMessage(error)); return; }
     await init(true);
   }
 
   function deleteLog(id: string) {
-    Alert.alert('Eintrag löschen?', 'Diesen Tagebuch-Eintrag entfernen?', [
-      { text: 'Abbrechen', style: 'cancel' },
-      { text: 'Löschen', style: 'destructive', onPress: () => doDeleteLog(id) },
+    Alert.alert(t('food.deleteEntryTitle'), t('food.deleteEntryMsg'), [
+      { text: t('food.cancel'), style: 'cancel' },
+      { text: t('food.delete'), style: 'destructive', onPress: () => doDeleteLog(id) },
     ]);
   }
   async function doDeleteLog(id: string) {
     const { error } = await supabase.from('food_logs').delete().eq('id', id);
-    if (error) { Alert.alert('Nicht möglich', errorMessage(error)); return; }
+    if (error) { Alert.alert(t('food.notPossible'), errorMessage(error)); return; }
     await init(true);
   }
 
@@ -495,12 +497,12 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     if (!userId) return;
     const name = nf.name.trim();
     const kcal = Number(nf.kcal.replace(',', '.'));
-    if (!name) { setFoodErr('Bitte einen Namen eingeben.'); return; }
-    if (!kcal || kcal <= 0) { setFoodErr('Bitte gültige Kalorien (pro 100 g) eingeben.'); return; }
-    if (kcal > 1000) { setFoodErr('Kalorien pro 100 g wirken zu hoch (max. 1000). Bitte den Wert pro 100 g eingeben.'); return; }
+    if (!name) { setFoodErr(t('food.errEnterName')); return; }
+    if (!kcal || kcal <= 0) { setFoodErr(t('food.errInvalidKcal')); return; }
+    if (kcal > 1000) { setFoodErr(t('food.errKcalTooHigh')); return; }
     const num = (s: string) => Math.max(0, Number(s.replace(',', '.')) || 0);
     const protein = num(nf.protein), carbs = num(nf.carbs), fat = num(nf.fat);
-    if (protein > 100 || carbs > 100 || fat > 100) { setFoodErr('Protein, Kohlenhydrate und Fett sind Angaben pro 100 g (je max. 100 g).'); return; }
+    if (protein > 100 || carbs > 100 || fat > 100) { setFoodErr(t('food.errMacroTooHigh')); return; }
     setSavingFood(true); setFoodErr(null);
     const { data, error } = await supabase
       .from('foods')
@@ -510,8 +512,8 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     setSavingFood(false);
     if (error || !data) {
       setFoodErr((error as any)?.code === '23505'
-        ? 'Es gibt bereits ein Lebensmittel mit diesem Namen.'
-        : 'Speichern fehlgeschlagen: ' + (error?.message ?? ''));
+        ? t('food.errDuplicateFood')
+        : t('food.errSaveFailed', { msg: error?.message ?? '' }));
       return;
     }
     const food = data as Food;
@@ -519,15 +521,15 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   }
 
   function confirmDeleteFood(food: Food) {
-    Alert.alert('Lebensmittel löschen?', `„${food.name}" wirklich löschen?`, [
-      { text: 'Abbrechen', style: 'cancel' },
-      { text: 'Löschen', style: 'destructive', onPress: () => doDeleteFood(food.id) },
+    Alert.alert(t('food.deleteFoodTitle'), t('food.deleteFoodMsg', { name: food.name }), [
+      { text: t('food.cancel'), style: 'cancel' },
+      { text: t('food.delete'), style: 'destructive', onPress: () => doDeleteFood(food.id) },
     ]);
   }
   async function doDeleteFood(id: string) {
     const { error } = await supabase.from('foods').delete().eq('id', id);
     if (error) {
-      Alert.alert('Nicht möglich', 'Dieses Lebensmittel wird noch in Tagebuch-Einträgen oder Rezepten verwendet und kann darum nicht gelöscht werden.');
+      Alert.alert(t('food.notPossible'), t('food.errFoodInUse'));
       return;
     }
     setSearchResults((prev) => prev.filter((f) => f.id !== id));
@@ -550,13 +552,13 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   const remaining = effTarget != null ? effTarget - totalKcal : null;
 
   if (loading) {
-    return (<View style={[styles.container, embedded && styles.embedded]}>{!embedded && <Text style={styles.title}>Tracker</Text>}<ActivityIndicator size="large" color={c.primary} style={{ marginTop: 40 }} /></View>);
+    return (<View style={[styles.container, embedded && styles.embedded]}>{!embedded && <Text style={styles.title}>{t('food.title')}</Text>}<ActivityIndicator size="large" color={c.primary} style={{ marginTop: 40 }} /></View>);
   }
 
   if (loadError) {
     return (
       <View style={[styles.container, embedded && styles.embedded]}>
-        {!embedded && <Text style={styles.title}>Tracker</Text>}
+        {!embedded && <Text style={styles.title}>{t('food.title')}</Text>}
         <ErrorRetry message={loadError} onRetry={() => init()} embedded={embedded} />
       </View>
     );
@@ -566,7 +568,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     return (
       <View style={[styles.container, embedded && styles.embedded]}>
         <ActivityIndicator size="large" color={c.primary} style={{ marginTop: 60 }} />
-        <Text style={[styles.subtitle, { textAlign: 'center', marginTop: 14 }]}>Produkt wird gesucht…</Text>
+        <Text style={[styles.subtitle, { textAlign: 'center', marginTop: 14 }]}>{t('food.searchingProduct')}</Text>
       </View>
     );
   }
@@ -580,13 +582,13 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
         <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
           <BackButton onPress={() => setMode(backTarget)} c={c} />
           <Text style={styles.title}>{selectedFood.name}</Text>
-          <Text style={styles.subtitle}>{selectedFood.kcal} kcal / 100 g</Text>
-          <Text style={styles.inputLabel}>Menge in Gramm</Text>
-          <TextInput style={styles.input} value={amount} onChangeText={setAmount} keyboardType="numeric" inputMode="decimal" placeholder="z. B. 150" placeholderTextColor={c.textMuted} returnKeyType="done" onSubmitEditing={addLog} />
+          <Text style={styles.subtitle}>{t('food.kcalPer100g', { n: selectedFood.kcal })}</Text>
+          <Text style={styles.inputLabel}>{t('food.amountInGrams')}</Text>
+          <TextInput style={styles.input} value={amount} onChangeText={setAmount} keyboardType="numeric" inputMode="decimal" placeholder={t('food.amountPlaceholder')} placeholderTextColor={c.textMuted} returnKeyType="done" onSubmitEditing={addLog} />
           <Text style={styles.preview}>= {previewKcal} kcal</Text>
           {addingTo !== 'favorite' && (
             <>
-              <Text style={styles.inputLabel}>Mahlzeit</Text>
+              <Text style={styles.inputLabel}>{t('food.meal')}</Text>
               <View style={styles.mealChips}>
                 {TRACKER_MEALS.map((m) => (
                   <TouchableOpacity key={m.key} style={[styles.mealChip, mealType === m.key && styles.mealChipActive]} onPress={() => setMealType(m.key)} activeOpacity={0.8}>
@@ -597,7 +599,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
             </>
           )}
           <TouchableOpacity style={[styles.primaryBtn, saving && { opacity: 0.6 }]} onPress={addLog} disabled={saving}>
-            {saving ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.primaryText}>{addingTo === 'favorite' ? 'Zur Favoriten-Liste hinzufügen' : 'Zum Tagebuch hinzufügen'}</Text>}
+            {saving ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.primaryText}>{addingTo === 'favorite' ? t('food.addToFavoriteList') : t('food.addToDiary')}</Text>}
           </TouchableOpacity>
           {error && <Text style={styles.error}>{error}</Text>}
         </ScrollView>
@@ -611,30 +613,30 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       <SwipeBack key="food-newfood" onBack={() => setMode('pick')} c={c} behind={renderPick()}>
       <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
         <BackButton onPress={() => setMode('pick')} c={c} />
-        <Text style={styles.title}>Neues Lebensmittel</Text>
-        <Text style={styles.subtitle}>Nährwerte pro 100 g</Text>
-        <Text style={styles.inputLabel}>Name</Text>
-        <TextInput style={styles.input} value={nf.name} onChangeText={(v) => setNf({ ...nf, name: v })} placeholder="z. B. Mein Proteinriegel" placeholderTextColor={c.textMuted} />
-        <Text style={styles.inputLabel}>Kategorie (optional)</Text>
-        <TextInput style={styles.input} value={nf.cat} onChangeText={(v) => setNf({ ...nf, cat: v })} placeholder="z. B. Snacks & Süßes" placeholderTextColor={c.textMuted} />
-        <Text style={styles.inputLabel}>Kalorien (kcal)</Text>
-        <TextInput style={styles.input} value={nf.kcal} onChangeText={(v) => setNf({ ...nf, kcal: v })} keyboardType="numeric" placeholder="pro 100 g" placeholderTextColor={c.textMuted} />
+        <Text style={styles.title}>{t('food.newFoodTitle')}</Text>
+        <Text style={styles.subtitle}>{t('food.nutritionPer100g')}</Text>
+        <Text style={styles.inputLabel}>{t('food.name')}</Text>
+        <TextInput style={styles.input} value={nf.name} onChangeText={(v) => setNf({ ...nf, name: v })} placeholder={t('food.namePlaceholder')} placeholderTextColor={c.textMuted} />
+        <Text style={styles.inputLabel}>{t('food.categoryOptional')}</Text>
+        <TextInput style={styles.input} value={nf.cat} onChangeText={(v) => setNf({ ...nf, cat: v })} placeholder={t('food.categoryPlaceholder')} placeholderTextColor={c.textMuted} />
+        <Text style={styles.inputLabel}>{t('food.calories')}</Text>
+        <TextInput style={styles.input} value={nf.kcal} onChangeText={(v) => setNf({ ...nf, kcal: v })} keyboardType="numeric" placeholder={t('food.per100g')} placeholderTextColor={c.textMuted} />
         <View style={styles.macroRow}>
           <View style={styles.macroCol}>
-            <Text style={styles.inputLabel}>Eiweiß (g)</Text>
+            <Text style={styles.inputLabel}>{t('food.protein')}</Text>
             <TextInput style={styles.input} value={nf.protein} onChangeText={(v) => setNf({ ...nf, protein: v })} keyboardType="numeric" placeholder="0" placeholderTextColor={c.textMuted} />
           </View>
           <View style={styles.macroCol}>
-            <Text style={styles.inputLabel}>KH (g)</Text>
+            <Text style={styles.inputLabel}>{t('food.carbs')}</Text>
             <TextInput style={styles.input} value={nf.carbs} onChangeText={(v) => setNf({ ...nf, carbs: v })} keyboardType="numeric" placeholder="0" placeholderTextColor={c.textMuted} />
           </View>
           <View style={styles.macroCol}>
-            <Text style={styles.inputLabel}>Fett (g)</Text>
+            <Text style={styles.inputLabel}>{t('food.fat')}</Text>
             <TextInput style={styles.input} value={nf.fat} onChangeText={(v) => setNf({ ...nf, fat: v })} keyboardType="numeric" placeholder="0" placeholderTextColor={c.textMuted} />
           </View>
         </View>
         <TouchableOpacity style={[styles.primaryBtn, savingFood && { opacity: 0.6 }]} onPress={saveFood} disabled={savingFood}>
-          {savingFood ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.primaryText}>Speichern & auswählen</Text>}
+          {savingFood ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.primaryText}>{t('food.saveAndSelect')}</Text>}
         </TouchableOpacity>
         {foodErr && <Text style={styles.error}>{foodErr}</Text>}
       </ScrollView>
@@ -667,11 +669,11 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     const header = (
       <View>
         <BackButton onPress={pickBack} c={c} />
-        <Text style={styles.title}>{forFav ? 'Zutat hinzufügen' : 'Hinzufügen'}</Text>
+        <Text style={styles.title}>{forFav ? t('food.addIngredient') : t('food.add')}</Text>
         {!forFav && (
           <View style={{ marginBottom: 12 }}>
             <Segmented
-              options={[{ key: 'zutaten', label: 'Zutaten' }, { key: 'favoriten', label: 'Favoriten' }]}
+              options={[{ key: 'zutaten', label: t('food.tabIngredients') }, { key: 'favoriten', label: t('food.tabFavorites') }]}
               value={pickTab}
               onChange={(k) => setPickTab(k as 'zutaten' | 'favoriten')}
               c={c}
@@ -681,19 +683,19 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
         {showZutaten ? (
           <>
             <View style={styles.allergyNote}><Text style={styles.allergyText}>{ALLERGY_HINT}</Text></View>
-            <TextInput style={styles.input} value={search} onChangeText={setSearch} placeholder="Suchen (z. B. Banane)…" placeholderTextColor={c.textMuted} autoCorrect={false} />
+            <TextInput style={styles.input} value={search} onChangeText={setSearch} placeholder={t('food.searchPlaceholder')} placeholderTextColor={c.textMuted} autoCorrect={false} />
             <TouchableOpacity style={styles.newFoodBtn} onPress={openNewFood} activeOpacity={0.85}>
               <GlassFill radius={16} />
-              <Text style={styles.newFoodText}>➕  Eigenes Lebensmittel anlegen</Text>
+              <Text style={styles.newFoodText}>{t('food.createOwnFood')}</Text>
             </TouchableOpacity>
-            <Text style={styles.countHint}>{searching ? 'Suche…' : `${searchResults.length} ${searchResults.length === 1 ? 'Eintrag' : 'Einträge'}${searchResults.length >= 2000 ? '+' : ''}`}</Text>
+            <Text style={styles.countHint}>{searching ? t('food.searching') : `${searchResults.length === 1 ? t('food.searchCountOne', { n: searchResults.length }) : t('food.searchCountMany', { n: searchResults.length })}${searchResults.length >= 2000 ? '+' : ''}`}</Text>
           </>
         ) : (
           <>
-            <Text style={styles.subtitle}>Tippe einen Favoriten an – alle Zutaten landen auf einmal in „{TRACKER_MEALS.find((m) => m.key === mealType)?.label ?? 'der Mahlzeit'}".</Text>
+            <Text style={styles.subtitle}>{t('food.favHint', { meal: TRACKER_MEALS.find((m) => m.key === mealType)?.label ?? t('food.theMeal') })}</Text>
             <TouchableOpacity style={styles.newFoodBtn} onPress={startNewFavorite} activeOpacity={0.85}>
               <GlassFill radius={16} />
-              <Text style={styles.newFoodText}>➕  Neuen Favoriten erstellen</Text>
+              <Text style={styles.newFoodText}>{t('food.createNewFavorite')}</Text>
             </TouchableOpacity>
           </>
         )}
@@ -720,18 +722,18 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
               <TouchableOpacity style={styles.foodRow} onPress={() => { setSelectedFood(f); setAmount('100'); setError(null); setBackTarget('pick'); setMode('amount'); }} activeOpacity={0.7}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.foodName}>{f.name}</Text>
-                  <Text style={styles.foodMeta}>{f.category}{own ? '  ·  eigenes' : ''}</Text>
+                  <Text style={styles.foodMeta}>{f.category}{own ? t('food.ownSuffix') : ''}</Text>
                 </View>
                 <Text style={styles.foodKcal}>{f.kcal} kcal</Text>
                 {own && (
-                  <TouchableOpacity onPress={() => confirmDeleteFood(f)} style={styles.foodDel} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`${f.name} löschen`}>
+                  <TouchableOpacity onPress={() => confirmDeleteFood(f)} style={styles.foodDel} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('food.a11yDeleteFood', { name: f.name })}>
                     <Text style={styles.foodDelText}>🗑</Text>
                   </TouchableOpacity>
                 )}
               </TouchableOpacity>
             );
           }}
-          ListEmptyComponent={searching ? null : <Text style={styles.noResult}>Kein Treffer{search.trim() ? ` für „${search.trim()}"` : ''}. Leg es als eigenes Lebensmittel an ☝️</Text>}
+          ListEmptyComponent={searching ? null : <Text style={styles.noResult}>{search.trim() ? t('food.noResultFor', { q: search.trim() }) : t('food.noResult')}</Text>}
         />
       );
     }
@@ -747,14 +749,14 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
           <TouchableOpacity style={styles.foodRow} onPress={() => applyFavorite(fav)} activeOpacity={0.7}>
             <View style={{ flex: 1 }}>
               <Text style={styles.foodName}>⭐  {fav.name}</Text>
-              <Text style={styles.foodMeta}>{fav.items.length} {fav.items.length === 1 ? 'Zutat' : 'Zutaten'}  ·  {favKcal(fav)} kcal</Text>
+              <Text style={styles.foodMeta}>{fav.items.length === 1 ? t('food.itemCountOne', { n: fav.items.length }) : t('food.itemCountMany', { n: fav.items.length })}  ·  {favKcal(fav)} kcal</Text>
             </View>
-            <TouchableOpacity onPress={() => confirmDeleteFavorite(fav)} style={styles.foodDel} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`${fav.name} löschen`}>
+            <TouchableOpacity onPress={() => confirmDeleteFavorite(fav)} style={styles.foodDel} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('food.a11yDeleteFavorite', { name: fav.name })}>
               <Text style={styles.foodDelText}>🗑</Text>
             </TouchableOpacity>
           </TouchableOpacity>
         )}
-        ListEmptyComponent={<Text style={styles.noResult}>Noch keine Favoriten. Erstelle z. B. dein tägliches Frühstück ☝️</Text>}
+        ListEmptyComponent={<Text style={styles.noResult}>{t('food.noFavorites')}</Text>}
       />
     );
   }
@@ -766,13 +768,13 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
           <BackButton onPress={cancelFavNew} c={c} />
-          <Text style={styles.title}>Favorit erstellen</Text>
-          <Text style={styles.subtitle}>Speichere eine Mahlzeit, z. B. dein tägliches Frühstück.</Text>
-          <Text style={styles.inputLabel}>Name</Text>
-          <TextInput style={styles.input} value={draft.name} onChangeText={(v) => setFavDraft({ name: v, items: draft.items })} placeholder="z. B. Mein Frühstück" placeholderTextColor={c.textMuted} />
-          <Text style={styles.inputLabel}>Zutaten ({draft.items.length})</Text>
+          <Text style={styles.title}>{t('food.createFavoriteTitle')}</Text>
+          <Text style={styles.subtitle}>{t('food.createFavoriteSubtitle')}</Text>
+          <Text style={styles.inputLabel}>{t('food.name')}</Text>
+          <TextInput style={styles.input} value={draft.name} onChangeText={(v) => setFavDraft({ name: v, items: draft.items })} placeholder={t('food.favNamePlaceholder')} placeholderTextColor={c.textMuted} />
+          <Text style={styles.inputLabel}>{t('food.ingredientsLabel', { n: draft.items.length })}</Text>
           {draft.items.length === 0 ? (
-            <Text style={styles.mealEmpty}>Noch keine Zutat. Tippe „Zutat hinzufügen".</Text>
+            <Text style={styles.mealEmpty}>{t('food.noIngredientYet')}</Text>
           ) : (
             draft.items.map((it, idx) => (
               <View key={idx} style={[styles.entryRow, idx > 0 && styles.entryDivider]}>
@@ -780,7 +782,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
                   <Text style={styles.entryName} numberOfLines={1}>{it.name}</Text>
                   <Text style={styles.entryMeta}>{it.amount_g} g  ·  {Math.round((it.kcal * it.amount_g) / 100)} kcal</Text>
                 </View>
-                <TouchableOpacity onPress={() => removeDraftItem(idx)} style={styles.del} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`${it.name} entfernen`}>
+                <TouchableOpacity onPress={() => removeDraftItem(idx)} style={styles.del} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('food.a11yRemoveItem', { name: it.name })}>
                   <Text style={styles.delText}>✕</Text>
                 </TouchableOpacity>
               </View>
@@ -788,11 +790,11 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
           )}
           <TouchableOpacity style={styles.newFoodBtn} onPress={addItemToFavorite} activeOpacity={0.85}>
             <GlassFill radius={16} />
-            <Text style={styles.newFoodText}>➕  Zutat hinzufügen</Text>
+            <Text style={styles.newFoodText}>{t('food.addIngredientBtn')}</Text>
           </TouchableOpacity>
-          {draft.items.length > 0 && <Text style={styles.preview}>Gesamt: {totalKcal} kcal</Text>}
+          {draft.items.length > 0 && <Text style={styles.preview}>{t('food.total', { n: totalKcal })}</Text>}
           <TouchableOpacity style={[styles.primaryBtn, savingFav && { opacity: 0.6 }]} onPress={saveFavorite} disabled={savingFav}>
-            {savingFav ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.primaryText}>Favorit speichern</Text>}
+            {savingFav ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.primaryText}>{t('food.saveFavorite')}</Text>}
           </TouchableOpacity>
           {favErr && <Text style={styles.error}>{favErr}</Text>}
         </ScrollView>
@@ -814,18 +816,18 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       contentContainerStyle={[{ paddingBottom: 40 }, embedded && styles.bleedPad]}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
     >
-      {!embedded && <Text style={styles.title}>Tracker</Text>}
-      {!embedded && <Text style={styles.subtitle}>Dein Essens-Tagebuch für heute</Text>}
+      {!embedded && <Text style={styles.title}>{t('food.title')}</Text>}
+      {!embedded && <Text style={styles.subtitle}>{t('food.diarySubtitle')}</Text>}
 
       {/* HEUTE-Übersicht */}
       <View style={styles.todayCard}>
         <GlassFill radius={16} />
         <View style={styles.todayRow}>
-          <View style={styles.todayCol}><Text style={styles.todayVal}>{totalKcal}</Text><Text style={styles.todayLbl}>gegessen</Text></View>
+          <View style={styles.todayCol}><Text style={styles.todayVal}>{totalKcal}</Text><Text style={styles.todayLbl}>{t('food.eaten')}</Text></View>
           <View style={styles.todaySep} />
-          <View style={styles.todayCol}><Text style={styles.todayVal}>{effTarget ?? '–'}</Text><Text style={styles.todayLbl}>Ziel</Text></View>
+          <View style={styles.todayCol}><Text style={styles.todayVal}>{effTarget ?? '–'}</Text><Text style={styles.todayLbl}>{t('food.goal')}</Text></View>
           <View style={styles.todaySep} />
-          <View style={styles.todayCol}><Text style={[styles.todayVal, remaining != null && remaining < 0 && { color: c.danger }]}>{remaining != null ? remaining : '–'}</Text><Text style={styles.todayLbl}>übrig</Text></View>
+          <View style={styles.todayCol}><Text style={[styles.todayVal, remaining != null && remaining < 0 && { color: c.danger }]}>{remaining != null ? remaining : '–'}</Text><Text style={styles.todayLbl}>{t('food.remaining')}</Text></View>
         </View>
         {effTarget != null && (
           <View style={styles.kcalTrack}>
@@ -834,32 +836,32 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
         )}
         {(trainingKcal > 0 || activityKcal > 0) && (
           <Text style={styles.bonusLine} numberOfLines={1}>
-            {trainingKcal > 0 ? '🔥' : ''}{activityKcal > 0 ? '🚶' : ''}  +{Math.max(trainingKcal, activityKcal)} kcal extra{activityKcal > 0 && steps > 0 ? `  ·  ${steps.toLocaleString('de-DE')} Schritte` : ''}
+            {trainingKcal > 0 ? '🔥' : ''}{activityKcal > 0 ? '🚶' : ''}  {t('food.kcalExtra', { n: Math.max(trainingKcal, activityKcal) })}{activityKcal > 0 && steps > 0 ? t('food.stepsSuffix', { steps: steps.toLocaleString('de-DE') }) : ''}
           </Text>
         )}
         <View style={styles.macrosRow}>
-          <View style={styles.macroItem}><View style={[styles.macroDot, { backgroundColor: c.accent }]} /><Text style={styles.macroTxt}>{totalP} g Eiweiß</Text></View>
-          <View style={styles.macroItem}><View style={[styles.macroDot, { backgroundColor: '#E69500' }]} /><Text style={styles.macroTxt}>{totalC} g KH</Text></View>
-          <View style={styles.macroItem}><View style={[styles.macroDot, { backgroundColor: c.danger }]} /><Text style={styles.macroTxt}>{totalF} g Fett</Text></View>
+          <View style={styles.macroItem}><View style={[styles.macroDot, { backgroundColor: c.accent }]} /><Text style={styles.macroTxt}>{t('food.gProtein', { n: totalP })}</Text></View>
+          <View style={styles.macroItem}><View style={[styles.macroDot, { backgroundColor: '#E69500' }]} /><Text style={styles.macroTxt}>{t('food.gCarbs', { n: totalC })}</Text></View>
+          <View style={styles.macroItem}><View style={[styles.macroDot, { backgroundColor: c.danger }]} /><Text style={styles.macroTxt}>{t('food.gFat', { n: totalF })}</Text></View>
         </View>
       </View>
 
       {/* "Sprich's einfach": Mahlzeit in Sprache eingeben -> KI erkennt automatisch */}
       <View style={styles.nlCard}>
         <GlassFill radius={14} />
-        <Text style={styles.nlTitle}>✍️  Schreib, was du gegessen hast</Text>
-        <Text style={styles.nlConsentHint}>ℹ️ Analyse per KI (Anthropic, USA) – freiwillig, in Einstellungen widerrufbar.</Text>
+        <Text style={styles.nlTitle}>{t('food.nlTitle')}</Text>
+        <Text style={styles.nlConsentHint}>{t('food.nlConsentHint')}</Text>
         <TextInput
           style={styles.nlInput}
           value={nlText}
           onChangeText={setNlText}
-          placeholder="z. B. 2 Eier, ein Toast und ein Kaffee"
+          placeholder={t('food.nlPlaceholder')}
           placeholderTextColor={c.textMuted}
           multiline
           editable={!nlBusy}
         />
         <TouchableOpacity style={[styles.nlBtn, isPremium && (nlBusy || !nlText.trim()) && { opacity: 0.5 }]} onPress={recognizeMeal} disabled={isPremium && (nlBusy || !nlText.trim())} activeOpacity={0.85}>
-          {nlBusy && !nlItems ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.nlBtnText}>{isPremium ? '🪄  Automatisch erkennen' : '🔒  Premium: Automatisch erkennen'}</Text>}
+          {nlBusy && !nlItems ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.nlBtnText}>{isPremium ? t('food.nlRecognize') : t('food.nlRecognizePremium')}</Text>}
         </TouchableOpacity>
         {nlErr && <Text style={styles.error}>{nlErr}</Text>}
       </View>
@@ -869,11 +871,11 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       {/* Aktionen */}
       <View style={styles.actionRow}>
         <TouchableOpacity style={styles.addBtnRow} onPress={() => openPick(mealByHour())} activeOpacity={0.85}>
-          <Text style={styles.addText}>➕  Hinzufügen</Text>
+          <Text style={styles.addText}>{t('food.addAction')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.scanBtn} onPress={() => { if (!isPremium) { openPaywall('scan'); return; } setError(null); setScannerOpen(true); }} activeOpacity={0.85}>
           <GlassFill radius={14} />
-          <Text style={styles.scanText}>{isPremium ? '📷  Scannen' : '🔒  Scannen'}</Text>
+          <Text style={styles.scanText}>{isPremium ? t('food.scan') : t('food.scanLocked')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -882,11 +884,11 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
         <View style={styles.usualCard}>
           <GlassFill radius={14} />
           <View style={{ flex: 1 }}>
-            <Text style={styles.usualTitle}>⭐  Dein übliches {TRACKER_MEALS.find((m) => m.key === curMeal)?.label ?? 'Essen'}</Text>
+            <Text style={styles.usualTitle}>{t('food.usualTitle', { meal: TRACKER_MEALS.find((m) => m.key === curMeal)?.label ?? t('food.aMeal') })}</Text>
             <Text style={styles.usualItems} numberOfLines={2}>{usual.items.map((i) => i.food.name).join(' · ')}  ·  {usual.kcal} kcal</Text>
           </View>
-          <TouchableOpacity style={styles.usualBtn} onPress={() => addUsual(curMeal)} disabled={busyRef.current} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={`Übliches ${TRACKER_MEALS.find((m) => m.key === curMeal)?.label ?? 'Essen'} hinzufügen`}>
-            <Text style={styles.usualBtnText}>+ 1 Tipp</Text>
+          <TouchableOpacity style={styles.usualBtn} onPress={() => addUsual(curMeal)} disabled={busyRef.current} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={t('food.a11yAddUsual', { meal: TRACKER_MEALS.find((m) => m.key === curMeal)?.label ?? t('food.aMeal') })}>
+            <Text style={styles.usualBtnText}>{t('food.oneTap')}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -896,7 +898,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       {/* Schnellzugriff */}
       {quickFoods.length > 0 && (
         <View style={styles.quickWrap}>
-          <Text style={styles.sectionHead}>SCHNELLZUGRIFF</Text>
+          <Text style={styles.sectionHead}>{t('food.quickAccess')}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingRight: 4 }} keyboardShouldPersistTaps="handled">
             {quickFoods.map((qf) => (
               <TouchableOpacity key={qf.food.id} style={styles.quickChip} onPress={() => quickAdd(qf)} activeOpacity={0.8}>
@@ -911,7 +913,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       )}
 
       {/* Tagebuch (nach Mahlzeiten gruppiert) */}
-      <Text style={styles.sectionHead}>TAGEBUCH</Text>
+      <Text style={styles.sectionHead}>{t('food.diary')}</Text>
       {TRACKER_MEALS.map((m) => {
         const items = logs.filter((e) => normalizeMeal(e.meal_type) === m.key);
         const mealKcal = items.reduce((s, e) => s + kcalOf(e), 0);
@@ -922,13 +924,13 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
               <Text style={styles.mealTitle}>{m.icon}  {m.label}</Text>
               <View style={styles.mealHeaderRight}>
                 {mealKcal > 0 && <Text style={styles.mealKcal}>{mealKcal} kcal</Text>}
-                <TouchableOpacity style={styles.mealAdd} onPress={() => openPick(m.key)} activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`Zu ${m.label} hinzufügen`}>
+                <TouchableOpacity style={styles.mealAdd} onPress={() => openPick(m.key)} activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('food.a11yAddToMeal', { meal: m.label })}>
                   <Text style={styles.mealAddText}>＋</Text>
                 </TouchableOpacity>
               </View>
             </View>
             {items.length === 0 ? (
-              <Text style={styles.mealEmpty}>Noch nichts – tippe ＋</Text>
+              <Text style={styles.mealEmpty}>{t('food.mealEmpty')}</Text>
             ) : (
               items.map((e, idx) => (
                 <View key={e.id} style={[styles.entryRow, idx > 0 && styles.entryDivider]}>
@@ -937,7 +939,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
                     <Text style={styles.entryMeta}>{e.amount_g} g</Text>
                   </View>
                   <Text style={styles.entryKcal}>{kcalOf(e)} kcal</Text>
-                  <TouchableOpacity onPress={() => deleteLog(e.id)} style={styles.del} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`${e.food?.name ?? 'Eintrag'} aus dem Tagebuch entfernen`}><Text style={styles.delText}>✕</Text></TouchableOpacity>
+                  <TouchableOpacity onPress={() => deleteLog(e.id)} style={styles.del} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('food.a11yRemoveEntry', { name: e.food?.name ?? t('food.entry') })}><Text style={styles.delText}>✕</Text></TouchableOpacity>
                 </View>
               ))
             )}
@@ -951,8 +953,8 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.nlOverlay}>
         <View style={styles.nlSheet}>
-          <Text style={styles.nlSheetTitle}>Erkannt – passt das?</Text>
-          <Text style={styles.nlMealLabel}>Für welche Mahlzeit?</Text>
+          <Text style={styles.nlSheetTitle}>{t('food.nlSheetTitle')}</Text>
+          <Text style={styles.nlMealLabel}>{t('food.nlWhichMeal')}</Text>
           <View style={styles.nlMealRow}>
             {TRACKER_MEALS.map((m) => {
               const active = nlMeal === m.key;
@@ -979,25 +981,25 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
                       maxLength={6}
                       placeholder="0"
                       placeholderTextColor={c.textMuted}
-                      accessibilityLabel={`Menge für ${it.name} in Gramm`}
+                      accessibilityLabel={t('food.a11yAmountFor', { name: it.name })}
                     />
                     <Text style={styles.nlAmtUnit}>g</Text>
                     <Text style={styles.entryMeta} numberOfLines={1}>  ·  {Math.round((it.kcal * it.amount_g) / 100)} kcal</Text>
                   </View>
                 </View>
-                <TouchableOpacity onPress={() => setNlItems((cur) => (cur ?? []).filter((_, i) => i !== idx))} style={styles.del} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`${it.name} entfernen`}>
+                <TouchableOpacity onPress={() => setNlItems((cur) => (cur ?? []).filter((_, i) => i !== idx))} style={styles.del} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('food.a11yRemoveItem', { name: it.name })}>
                   <Text style={styles.delText}>✕</Text>
                 </TouchableOpacity>
               </View>
             ))}
-            {nlItems?.length === 0 && <Text style={styles.mealEmpty}>Nichts mehr übrig – tippe Abbrechen.</Text>}
-            {!!nlItems?.some((it) => it.amount_g < 1) && <Text style={styles.nlHint}>Bitte bei allen eine Menge (g) eintragen.</Text>}
+            {nlItems?.length === 0 && <Text style={styles.mealEmpty}>{t('food.nlNothingLeft')}</Text>}
+            {!!nlItems?.some((it) => it.amount_g < 1) && <Text style={styles.nlHint}>{t('food.nlEnterAmounts')}</Text>}
           </ScrollView>
           <TouchableOpacity style={[styles.primaryBtn, (nlBusy || !nlItems?.length || !!nlItems?.some((it) => it.amount_g < 1)) && { opacity: 0.5 }]} onPress={applyNlItems} disabled={nlBusy || !nlItems?.length || !!nlItems?.some((it) => it.amount_g < 1)} activeOpacity={0.85}>
-            {nlBusy ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.primaryText}>Ins Tagebuch eintragen</Text>}
+            {nlBusy ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.primaryText}>{t('food.nlAddToDiary')}</Text>}
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setNlItems(null)} style={{ marginTop: 12 }}>
-            <Text style={styles.nlClose}>Abbrechen</Text>
+            <Text style={styles.nlClose}>{t('food.cancel')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -1006,13 +1008,13 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     <Modal visible={aiConsentAsk} transparent animationType="fade" onRequestClose={() => setAiConsentAsk(false)}>
       <View style={styles.nlOverlay}>
         <View style={styles.nlSheet}>
-          <Text style={styles.nlSheetTitle}>KI-Mahlzeitenerkennung aktivieren?</Text>
-          <Text style={styles.consentBody}>Für „Sprich's einfach" wird dein eingegebener Text (z. B. „2 Eier und ein Toast") zur Auswertung an unseren Dienstleister Anthropic (USA) übermittelt und in Lebensmittel mit Nährwerten zerlegt. Da das Gesundheitsdaten sein können, brauchen wir dafür deine ausdrückliche Einwilligung (Art. 9 DSGVO).{'\n\n'}Freiwillig, jederzeit in den Einstellungen widerrufbar. Die Eingaben werden nicht zum KI-Training verwendet. Bitte keine sensiblen Daten eingeben, die über die Mahlzeitenbeschreibung hinausgehen.</Text>
+          <Text style={styles.nlSheetTitle}>{t('food.consentTitle')}</Text>
+          <Text style={styles.consentBody}>{t('food.consentBody')}</Text>
           <TouchableOpacity style={styles.primaryBtn} onPress={acceptAiConsent} activeOpacity={0.85}>
-            <Text style={styles.primaryText}>Einverstanden & fortfahren</Text>
+            <Text style={styles.primaryText}>{t('food.consentAccept')}</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setAiConsentAsk(false)} style={{ marginTop: 12 }}>
-            <Text style={styles.nlClose}>Abbrechen</Text>
+            <Text style={styles.nlClose}>{t('food.cancel')}</Text>
           </TouchableOpacity>
         </View>
       </View>

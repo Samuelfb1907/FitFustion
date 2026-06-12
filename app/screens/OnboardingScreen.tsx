@@ -4,6 +4,7 @@ import { ActivityIndicator, KeyboardAvoidingView, PanResponder, Platform, Scroll
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
+import { useT } from '../contexts/LanguageContext';
 import Ambient from '../components/Ambient';
 import GlassFill from '../components/GlassFill';
 import { buildBirthDate, isUnderMinAge, MIN_AGE_YEARS } from '../lib/birthdate';
@@ -52,6 +53,7 @@ function Choice({ options, value, onChange, styles }: { options: Opt[]; value: s
 export default function OnboardingScreen({ onDone }: { onDone: () => Promise<void> | void }) {
   const { session } = useAuth();
   const c = useColors();
+  const t = useT();
   const styles = useMemo(() => makeStyles(c), [c]);
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
@@ -83,20 +85,20 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
   }
   function stepError(): string | null {
     if (step === 1) {
-      if (!firstName.trim()) return 'Bitte einen Vornamen eingeben.';
+      if (!firstName.trim()) return t('onboarding.error.firstNameRequired');
       if (!buildBirthDate(birthDay, birthMonth, birthYear)) {
-        if (isUnderMinAge(birthDay, birthMonth, birthYear)) return `Du musst mindestens ${MIN_AGE_YEARS} Jahre alt sein, um FitAvo zu nutzen.`;
-        return 'Bitte ein gültiges Geburtsdatum eingeben (TT/MM/JJJJ).';
+        if (isUnderMinAge(birthDay, birthMonth, birthYear)) return t('onboarding.error.minAge', { n: MIN_AGE_YEARS });
+        return t('onboarding.error.birthDateInvalid');
       }
-      if (!gender) return 'Bitte wähle dein Geschlecht.';
-      if (!(num(weight) >= 30 && num(weight) <= 300)) return 'Gewicht muss zwischen 30 und 300 kg liegen.';
-      if (!(num(height) >= 100 && num(height) <= 250)) return 'Größe muss zwischen 100 und 250 cm liegen.';
+      if (!gender) return t('onboarding.error.genderRequired');
+      if (!(num(weight) >= 30 && num(weight) <= 300)) return t('onboarding.error.weightRange');
+      if (!(num(height) >= 100 && num(height) <= 250)) return t('onboarding.error.heightRange');
     }
-    if (step === 2 && !experience) return 'Bitte wähle dein Erfahrungslevel.';
-    if (step === 3 && !environment) return 'Bitte wähle deine Trainingsumgebung.';
+    if (step === 2 && !experience) return t('onboarding.error.experienceRequired');
+    if (step === 3 && !environment) return t('onboarding.error.environmentRequired');
     if (step === 4) {
-      if (!goal) return 'Bitte wähle ein Ziel.';
-      if (goal === 'lose_weight' && !(num(targetWeight) >= 30 && num(targetWeight) <= 300)) return 'Bitte ein gültiges Traumgewicht (30–300 kg) eingeben.';
+      if (!goal) return t('onboarding.error.goalRequired');
+      if (goal === 'lose_weight' && !(num(targetWeight) >= 30 && num(targetWeight) <= 300)) return t('onboarding.error.targetWeightInvalid');
     }
     return null;
   }
@@ -118,7 +120,7 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
     setSaving(true); setError(null);
     const userId = session.user.id;
     const birth_date = buildBirthDate(birthDay, birthMonth, birthYear);
-    if (!birth_date) { setSaving(false); setError('Bitte ein gültiges Geburtsdatum eingeben (TT/MM/JJJJ).'); return; }
+    if (!birth_date) { setSaving(false); setError(t('onboarding.error.birthDateInvalid')); return; }
     const { error: pErr } = await supabase.from('profiles').upsert({
       id: userId, first_name: firstName.trim(), birth_date, gender,
       weight_kg: num(weight), height_cm: num(height), activity_level: activity, experience_level: experience, training_environment: environment,
@@ -132,7 +134,7 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
     await supabase.from('goals').update({ is_active: false }).eq('user_id', userId).eq('is_active', true);
     const { error: gErr } = await supabase.from('goals').insert({ user_id: userId, goal_type: goal, target_weight_kg: goal === 'lose_weight' ? num(targetWeight) : null, target_date: targetDate, is_active: true });
     setSaving(false);
-    if (pErr || gErr) { console.error('Onboarding speichern:', pErr?.message || gErr?.message); setError('Speichern fehlgeschlagen. Bitte prüfe deine Internetverbindung und versuche es erneut.'); }
+    if (pErr || gErr) { console.error('Onboarding speichern:', pErr?.message || gErr?.message); setError(t('onboarding.error.saveFailed')); }
     else await onDone();
   }
 
@@ -142,41 +144,41 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
       <View style={styles.progress}>
         {[1, 2, 3, 4].map((s) => (<View key={s} style={[styles.progressBar, s <= step && styles.progressBarActive]} />))}
       </View>
-      <Text style={styles.stepLabel}>Schritt {step} von {totalSteps}</Text>
+      <Text style={styles.stepLabel}>{t('onboarding.stepLabel', { current: step, total: totalSteps })}</Text>
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
         {step === 1 && (
           <View>
-            <Text style={styles.title}>Erzähl uns von dir</Text>
-            <Text style={styles.label}>Vorname</Text>
-            <TextInput style={styles.input} value={firstName} onChangeText={setFirstName} placeholder="z. B. Samuel" placeholderTextColor={c.textMuted} />
-            <Text style={styles.label}>Geburtsdatum</Text>
+            <Text style={styles.title}>{t('onboarding.step1.title')}</Text>
+            <Text style={styles.label}>{t('onboarding.label.firstName')}</Text>
+            <TextInput style={styles.input} value={firstName} onChangeText={setFirstName} placeholder={t('onboarding.placeholder.firstName')} placeholderTextColor={c.textMuted} />
+            <Text style={styles.label}>{t('onboarding.label.birthDate')}</Text>
             <View style={styles.dateRow}>
-              <TextInput style={[styles.input, styles.dateField]} value={birthDay} onChangeText={setBirthDay} placeholder="TT" placeholderTextColor={c.textMuted} keyboardType="numeric" inputMode="numeric" maxLength={2} />
-              <TextInput style={[styles.input, styles.dateField]} value={birthMonth} onChangeText={setBirthMonth} placeholder="MM" placeholderTextColor={c.textMuted} keyboardType="numeric" inputMode="numeric" maxLength={2} />
-              <TextInput style={[styles.input, styles.dateFieldYear]} value={birthYear} onChangeText={setBirthYear} placeholder="JJJJ" placeholderTextColor={c.textMuted} keyboardType="numeric" inputMode="numeric" maxLength={4} />
+              <TextInput style={[styles.input, styles.dateField]} value={birthDay} onChangeText={setBirthDay} placeholder={t('onboarding.placeholder.day')} placeholderTextColor={c.textMuted} keyboardType="numeric" inputMode="numeric" maxLength={2} />
+              <TextInput style={[styles.input, styles.dateField]} value={birthMonth} onChangeText={setBirthMonth} placeholder={t('onboarding.placeholder.month')} placeholderTextColor={c.textMuted} keyboardType="numeric" inputMode="numeric" maxLength={2} />
+              <TextInput style={[styles.input, styles.dateFieldYear]} value={birthYear} onChangeText={setBirthYear} placeholder={t('onboarding.placeholder.year')} placeholderTextColor={c.textMuted} keyboardType="numeric" inputMode="numeric" maxLength={4} />
             </View>
-            <Text style={styles.label}>Geschlecht</Text>
+            <Text style={styles.label}>{t('onboarding.label.gender')}</Text>
             <Choice options={GENDERS} value={gender} onChange={setGender} styles={styles} />
-            <Text style={styles.label}>Körpergewicht (kg)</Text>
-            <TextInput style={styles.input} value={weight} onChangeText={setWeight} placeholder="z. B. 78" placeholderTextColor={c.textMuted} keyboardType="numeric" inputMode="decimal" />
-            <Text style={styles.label}>Körpergröße (cm)</Text>
-            <TextInput style={styles.input} value={height} onChangeText={setHeight} placeholder="z. B. 180" placeholderTextColor={c.textMuted} keyboardType="numeric" inputMode="decimal" />
-            <Text style={styles.label}>Aktivitätslevel</Text>
+            <Text style={styles.label}>{t('onboarding.label.weight')}</Text>
+            <TextInput style={styles.input} value={weight} onChangeText={setWeight} placeholder={t('onboarding.placeholder.weight')} placeholderTextColor={c.textMuted} keyboardType="numeric" inputMode="decimal" />
+            <Text style={styles.label}>{t('onboarding.label.height')}</Text>
+            <TextInput style={styles.input} value={height} onChangeText={setHeight} placeholder={t('onboarding.placeholder.height')} placeholderTextColor={c.textMuted} keyboardType="numeric" inputMode="decimal" />
+            <Text style={styles.label}>{t('onboarding.label.activity')}</Text>
             <Choice options={ACTIVITY} value={activity} onChange={setActivity} styles={styles} />
           </View>
         )}
-        {step === 2 && (<View><Text style={styles.title}>Wie viel Trainingserfahrung hast du?</Text><Choice options={EXPERIENCE} value={experience} onChange={setExperience} styles={styles} /></View>)}
-        {step === 3 && (<View><Text style={styles.title}>Wo trainierst du?</Text><Choice options={ENVIRONMENT} value={environment} onChange={setEnvironment} styles={styles} /></View>)}
+        {step === 2 && (<View><Text style={styles.title}>{t('onboarding.step2.title')}</Text><Choice options={EXPERIENCE} value={experience} onChange={setExperience} styles={styles} /></View>)}
+        {step === 3 && (<View><Text style={styles.title}>{t('onboarding.step3.title')}</Text><Choice options={ENVIRONMENT} value={environment} onChange={setEnvironment} styles={styles} /></View>)}
         {step === 4 && (
           <View>
-            <Text style={styles.title}>Was ist dein Ziel?</Text>
+            <Text style={styles.title}>{t('onboarding.step4.title')}</Text>
             <Choice options={GOALS} value={goal} onChange={setGoal} styles={styles} />
             {goal === 'lose_weight' && (
               <View style={{ marginTop: 8 }}>
-                <Text style={styles.label}>Traumgewicht (kg)</Text>
-                <TextInput style={styles.input} value={targetWeight} onChangeText={setTargetWeight} placeholder="z. B. 72" placeholderTextColor={c.textMuted} keyboardType="numeric" inputMode="decimal" />
-                <Text style={styles.label}>Zielzeitraum</Text>
+                <Text style={styles.label}>{t('onboarding.label.targetWeight')}</Text>
+                <TextInput style={styles.input} value={targetWeight} onChangeText={setTargetWeight} placeholder={t('onboarding.placeholder.targetWeight')} placeholderTextColor={c.textMuted} keyboardType="numeric" inputMode="decimal" />
+                <Text style={styles.label}>{t('onboarding.label.timeframe')}</Text>
                 <Choice options={TIMEFRAMES} value={timeframe} onChange={setTimeframe} styles={styles} />
               </View>
             )}
@@ -187,10 +189,10 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
 
       <View style={styles.nav}>
         {step > 1 ? (
-          <TouchableOpacity style={[styles.navBtn, styles.navBack]} onPress={back} disabled={saving}><GlassFill radius={16} /><Text style={styles.navBackText}>Zurück</Text></TouchableOpacity>
+          <TouchableOpacity style={[styles.navBtn, styles.navBack]} onPress={back} disabled={saving}><GlassFill radius={16} /><Text style={styles.navBackText}>{t('onboarding.nav.back')}</Text></TouchableOpacity>
         ) : (<View style={{ flex: 1 }} />)}
         <TouchableOpacity style={[styles.navBtn, styles.navNext, saving && { opacity: 0.6 }]} onPress={next} disabled={saving}>
-          {saving ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.navNextText}>{step < totalSteps ? 'Weiter' : 'Fertig'}</Text>}
+          {saving ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.navNextText}>{step < totalSteps ? t('onboarding.nav.next') : t('onboarding.nav.finish')}</Text>}
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>

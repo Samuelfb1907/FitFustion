@@ -5,9 +5,11 @@ import { StyleSheet, Text, View } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '../contexts/ThemeContext';
+import { useT } from '../contexts/LanguageContext';
 
 export default function OfflineBanner() {
   const c = useColors();
+  const t = useT();
   const insets = useSafeAreaInsets();
   const [offline, setOffline] = useState(false);
 
@@ -27,7 +29,7 @@ export default function OfflineBanner() {
       pointerEvents="none"
       accessibilityRole="alert"
     >
-      <Text style={styles.txt}>Keine Internetverbindung</Text>
+      <Text style={styles.txt}>{t("offline.noConnection")}</Text>
     </View>
   );
 }

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Modal, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useT } from '../contexts/LanguageContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { computeNutrition, ageFromBirthDate, NutritionResult, Gender, ActivityLevel, GoalType } from '../lib/nutrition';
 import { computeXp, levelInfo, computeStreak, ACHIEVEMENTS, GameStats } from '../lib/gamification';
@@ -45,6 +46,7 @@ function greeting(): string {
 export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (tab: string) => void; focusTick?: number }) {
   const { session, profile, isPremium } = useAuth();
   const { openPaywall } = usePaywall();
+  const t = useT();
   const c = useColors();
   const styles = useMemo(() => makeStyles(c), [c]);
   const [loading, setLoading] = useState(true);
@@ -104,7 +106,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
           setSteps(a.steps); setActivityKcal(a.kcal); setActivityMeasured(a.measured);
         } else { setSteps(0); setActivityKcal(0); setActivityMeasured(false); }
       } else {
-        setError('Profildaten unvollständig.');
+        setError(t('home.profileIncomplete'));
       }
 
       const e: Eaten = { kcal: 0, p: 0, c: 0, f: 0 };
@@ -176,7 +178,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
   async function endTraining() {
     if (!activeSession) return;
     const { error } = await supabase.from('workout_sessions').update({ ended_at: new Date().toISOString() }).eq('id', activeSession);
-    if (error) { Alert.alert('Nicht möglich', errorMessage(error)); return; }
+    if (error) { Alert.alert(t('home.endTrainingFailedTitle'), errorMessage(error)); return; }
     setActiveSession(null);
     setActiveSets(0);
   }
@@ -187,10 +189,10 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
   const waterPct = Math.min(100, Math.round((waterMl / WATER_GOAL) * 100));
 
   // Training-Status fuer die Uebersichts-Kachel
-  let trainVal = 'Start', trainSub = 'Freies Training';
-  if (activeSession) { trainVal = 'Läuft'; trainSub = `${activeSets} ${activeSets === 1 ? 'Satz' : 'Sätze'}`; }
-  else if (goalsData?.trainedToday) { trainVal = 'Erledigt'; trainSub = '✓ heute'; }
-  else if (planToday?.has) { trainVal = planToday.focus ?? 'Ruhetag'; trainSub = planToday.focus ? 'laut Plan' : 'Erholung'; }
+  let trainVal = t('home.trainStart'), trainSub = t('home.trainFree');
+  if (activeSession) { trainVal = t('home.trainRunning'); trainSub = `${activeSets} ${activeSets === 1 ? t('home.setSingular') : t('home.setPlural')}`; }
+  else if (goalsData?.trainedToday) { trainVal = t('home.trainDone'); trainSub = t('home.trainDoneToday'); }
+  else if (planToday?.has) { trainVal = planToday.focus ?? t('home.trainRestDay'); trainSub = planToday.focus ? t('home.trainPerPlan') : t('home.trainRecovery'); }
 
   return (
     <View style={styles.container}>
@@ -209,14 +211,14 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
             <View style={styles.header}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.greet}>{greeting()},</Text>
-                <Text style={styles.name}>{profile?.first_name || 'Willkommen'}</Text>
+                <Text style={styles.name}>{profile?.first_name || t('home.welcome')}</Text>
               </View>
               {stats && (
-                <TouchableOpacity style={styles.levelPill} activeOpacity={isPremium ? 1 : 0.7} disabled={isPremium} onPress={() => openPaywall('level')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button" accessibilityLabel={isPremium ? `Level ${lv.level}, Streak ${stats.streak} Tage` : 'Premium freischalten, um zu leveln'}>
+                <TouchableOpacity style={styles.levelPill} activeOpacity={isPremium ? 1 : 0.7} disabled={isPremium} onPress={() => openPaywall('level')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button" accessibilityLabel={isPremium ? t('home.levelStreakA11y', { level: lv.level, streak: stats.streak }) : t('home.unlockToLevelA11y')}>
                   <GlassFill radius={999} />
                   <Text style={styles.levelText}>🔥 {stats.streak}</Text>
                   <View style={styles.levelSep} />
-                  <Text style={styles.levelText}>{isPremium ? `Lv ${lv.level}` : 'Lv 🔒'}</Text>
+                  <Text style={styles.levelText}>{isPremium ? `Lv ${lv.level}` : t('home.levelLocked')}</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -225,25 +227,25 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
             {nutrition && (
               <View style={styles.card}>
                 <GlassFill radius={16} />
-                <Text style={styles.cardLabel}>HEUTE{goalLabel ? ` · ${goalLabel.toUpperCase()}` : ''}</Text>
+                <Text style={styles.cardLabel}>{t('home.todayLabel')}{goalLabel ? ` · ${goalLabel.toUpperCase()}` : ''}</Text>
                 <View style={{ alignItems: 'center', marginTop: 12 }}>
                   <CalorieGauge target={nutrition.targetCalories + Math.max(trainingKcal, activityKcal)} eaten={eaten.kcal} />
                 </View>
-                {trainingKcal > 0 && activityKcal === 0 && <Text style={styles.bonusLine}>🔥 +{trainingKcal} kcal durch Training heute (geschätzt)</Text>}
-                {activityKcal > 0 && <Text style={styles.bonusLine}>🚶 {steps > 0 ? `${steps.toLocaleString('de-DE')} Schritte · ` : ''}+{activityKcal} kcal {activityMeasured ? 'aktiv (gemessen)' : '(geschätzt)'}</Text>}
+                {trainingKcal > 0 && activityKcal === 0 && <Text style={styles.bonusLine}>{t('home.bonusTraining', { n: trainingKcal })}</Text>}
+                {activityKcal > 0 && <Text style={styles.bonusLine}>🚶 {steps > 0 ? t('home.stepsPrefix', { steps: steps.toLocaleString('de-DE') }) : ''}+{activityKcal} kcal {activityMeasured ? t('home.activeMeasured') : t('home.activeEstimated')}</Text>}
                 <View style={styles.macros}>
-                  <Macro label="Protein" eaten={eaten.p} target={nutrition.proteinG} color={c.accent} styles={styles} />
-                  <Macro label="Kohlenhydrate" eaten={eaten.c} target={nutrition.carbsG} color="#E69500" styles={styles} />
-                  <Macro label="Fett" eaten={eaten.f} target={nutrition.fatG} color={c.danger} styles={styles} />
+                  <Macro label={t('home.macroProtein')} eaten={eaten.p} target={nutrition.proteinG} color={c.accent} styles={styles} />
+                  <Macro label={t('home.macroCarbs')} eaten={eaten.c} target={nutrition.carbsG} color="#E69500" styles={styles} />
+                  <Macro label={t('home.macroFat')} eaten={eaten.f} target={nutrition.fatG} color={c.danger} styles={styles} />
                 </View>
               </View>
             )}
 
             {/* 3 UEBERSICHTS-KACHELN */}
             <View style={styles.row}>
-              <Stat label="WASSER" value={`${(waterMl / 1000).toFixed(1)} L`} sub={`Ziel ${(WATER_GOAL / 1000).toFixed(1)} L`} pct={waterPct} onPress={() => onNavigate?.('essen')} styles={styles} />
-              <Stat label="TRAINING" value={trainVal} sub={trainSub} onPress={() => onNavigate?.('training')} styles={styles} />
-              <Stat label="GEWICHT" value={weightKg != null ? `${weightKg}` : '–'} sub={weightKg != null ? 'kg · Verlauf' : 'eintragen'} onPress={() => onNavigate?.('progress')} styles={styles} />
+              <Stat label={t('home.tileWater')} value={`${(waterMl / 1000).toFixed(1)} L`} sub={t('home.waterGoal', { n: (WATER_GOAL / 1000).toFixed(1) })} pct={waterPct} onPress={() => onNavigate?.('essen')} styles={styles} />
+              <Stat label={t('home.tileTraining')} value={trainVal} sub={trainSub} onPress={() => onNavigate?.('training')} styles={styles} />
+              <Stat label={t('home.tileWeight')} value={weightKg != null ? `${weightKg}` : '–'} sub={weightKg != null ? t('home.weightSubHistory') : t('home.weightSubAdd')} onPress={() => onNavigate?.('progress')} styles={styles} />
             </View>
 
             {/* TRAINING LÄUFT */}
@@ -251,11 +253,11 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
               <View style={styles.activeCard}>
                 <GlassFill radius={16} />
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.activeTitle}>Training läuft</Text>
-                  <Text style={styles.activeSub}>{activeSets} {activeSets === 1 ? 'Satz' : 'Sätze'} heute mitgeschrieben</Text>
+                  <Text style={styles.activeTitle}>{t('home.activeTitle')}</Text>
+                  <Text style={styles.activeSub}>{t('home.activeSub', { n: activeSets, sets: activeSets === 1 ? t('home.setSingular') : t('home.setPlural') })}</Text>
                 </View>
-                <TouchableOpacity style={styles.activeBtn} onPress={endTraining} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel="Training beenden">
-                  <Text style={styles.activeBtnText}>Beenden</Text>
+                <TouchableOpacity style={styles.activeBtn} onPress={endTraining} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={t('home.endTrainingA11y')}>
+                  <Text style={styles.activeBtnText}>{t('home.endTraining')}</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -265,9 +267,9 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
               <View style={styles.card}>
                 <GlassFill radius={16} />
                 <View style={styles.cardHead}>
-                  <Text style={styles.cardLabel}>TAGESZIELE</Text>
+                  <Text style={styles.cardLabel}>{t('home.dailyGoals')}</Text>
                   {stats && (
-                    <TouchableOpacity onPress={() => setAchOpen(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={`Erfolge ansehen, ${earnedCount} von ${ACHIEVEMENTS.length} freigeschaltet`}>
+                    <TouchableOpacity onPress={() => setAchOpen(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('home.viewAchievementsA11y', { n: earnedCount, m: ACHIEVEMENTS.length })}>
                       <Text style={styles.headRight}>🏆 {earnedCount}/{ACHIEVEMENTS.length} ›</Text>
                     </TouchableOpacity>
                   )}
@@ -287,14 +289,14 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
         <View style={styles.achBackdrop}>
           <View style={styles.achSheet}>
             <View style={styles.achHead}>
-              <Text style={styles.achTitle}>Erfolge</Text>
+              <Text style={styles.achTitle}>{t('home.achievementsTitle')}</Text>
               <Text style={styles.achCount}>🏆 {earnedCount}/{ACHIEVEMENTS.length}</Text>
             </View>
             <ScrollView contentContainerStyle={{ paddingBottom: 12 }} showsVerticalScrollIndicator={false}>
               {ACHIEVEMENTS.map((a) => {
                 const earned = !!stats && a.earned(stats, lv.level);
                 return (
-                  <View key={a.key} style={[styles.achRow, !earned && styles.achRowLocked]} accessible accessibilityLabel={`${a.name}, ${a.description} ${earned ? 'freigeschaltet' : 'noch gesperrt'}`}>
+                  <View key={a.key} style={[styles.achRow, !earned && styles.achRowLocked]} accessible accessibilityLabel={`${a.name}, ${a.description} ${earned ? t('home.achievementUnlocked') : t('home.achievementLocked')}`}>
                     <Text style={styles.achIcon}>{earned ? a.icon : '🔒'}</Text>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.achName}>{a.name}</Text>
@@ -305,8 +307,8 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
                 );
               })}
             </ScrollView>
-            <TouchableOpacity style={styles.achClose} onPress={() => setAchOpen(false)} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel="Erfolge schließen">
-              <Text style={styles.achCloseText}>Schließen</Text>
+            <TouchableOpacity style={styles.achClose} onPress={() => setAchOpen(false)} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={t('home.closeAchievementsA11y')}>
+              <Text style={styles.achCloseText}>{t('home.close')}</Text>
             </TouchableOpacity>
           </View>
         </View>
