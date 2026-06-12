@@ -838,7 +838,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
         )}
         {(trainingKcal > 0 || activityKcal > 0) && (
           <Text style={styles.bonusLine} numberOfLines={1}>
-            {trainingKcal > 0 ? '🔥' : ''}{activityKcal > 0 ? '🚶' : ''}  {t('food.kcalExtra', { n: Math.max(trainingKcal, activityKcal) })}{activityKcal > 0 && steps > 0 ? t('food.stepsSuffix', { steps: steps.toLocaleString('de-DE') }) : ''}
+            {trainingKcal > 0 ? '🔥' : ''}{activityKcal > 0 ? '🚶' : ''}  {t('food.kcalExtra', { n: Math.max(trainingKcal, activityKcal) })}{activityKcal > 0 && steps > 0 ? t('food.stepsSuffix', { steps: steps.toLocaleString(lang === 'en' ? 'en-US' : 'de-DE') }) : ''}
           </Text>
         )}
         <View style={styles.macrosRow}>

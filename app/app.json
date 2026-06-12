@@ -39,7 +39,13 @@
           }
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "expo-sensors",
+        {
+          "motionPermission": "FitAvo nutzt deine Schrittdaten, um deine Aktivität aufs Tagesziel anzurechnen."
+        }
+      ]
     ],
     "ios": {
       "supportsTablet": false,

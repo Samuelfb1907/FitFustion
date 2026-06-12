@@ -1,7 +1,8 @@
 // Gesundheits-Anbindung (Schritte) – plattformuebergreifende Schnittstelle.
-// Android: Health Connect (react-native-health-connect).
-// iOS: spaeter via Apple HealthKit (braucht Apple-Developer-Account) -> aktuell "nicht verfuegbar".
-// Funktioniert NUR im echten Build, nicht in Expo Go.
+// Android: Health Connect (react-native-health-connect) – Schritte + gemessene aktive Kalorien.
+// iOS: eingebauter Schrittzaehler via expo-sensors (Core Motion / "Bewegung & Fitness") –
+//   nur Schritte; die Kalorien werden daraus geschaetzt (keine gemessenen aktiven Kalorien).
+// Beides braucht einen echten Build (Health Connect laeuft nicht in Expo Go).
 import { Platform } from 'react-native';
 
 // react-native-health-connect ist Android-only und im echten Build vorhanden.
@@ -21,12 +22,35 @@ function hc(): any {
   return _hc;
 }
 
+// iOS: eingebauter Schrittzaehler (Core Motion / "Bewegung & Fitness") via expo-sensors.
+// LAZY laden, damit nichts abstuerzt, falls das Modul fehlt.
+let _ped: any = null;
+let _pedTried = false;
+function ped(): any {
+  if (Platform.OS !== 'ios') return null;
+  if (!_pedTried) {
+    _pedTried = true;
+    try {
+      _ped = require('expo-sensors').Pedometer;
+    } catch {
+      _ped = null;
+    }
+  }
+  return _ped;
+}
+
 export function healthSupported(): boolean {
+  if (Platform.OS === 'ios') return !!ped();
   return !!hc();
 }
 
 // Ist Health Connect auf dem Geraet verfuegbar (App installiert / im System vorhanden)?
 export async function healthAvailable(): Promise<boolean> {
+  if (Platform.OS === 'ios') {
+    const P = ped();
+    if (!P) return false;
+    try { return await P.isAvailableAsync(); } catch { return false; }
+  }
   const HC = hc();
   if (!HC) return false;
   try {
@@ -39,6 +63,14 @@ export async function healthAvailable(): Promise<boolean> {
 
 // Berechtigung anfragen: Schritte + aktive Kalorien lesen. Gibt true zurueck, wenn erteilt.
 export async function requestHealthPermission(): Promise<boolean> {
+  if (Platform.OS === 'ios') {
+    const P = ped();
+    if (!P) return false;
+    try {
+      const res = await P.requestPermissionsAsync();
+      return !!res?.granted;
+    } catch { return false; }
+  }
   const HC = hc();
   if (!HC) return false;
   try {
@@ -54,6 +86,14 @@ export async function requestHealthPermission(): Promise<boolean> {
 }
 
 export async function hasStepsPermission(): Promise<boolean> {
+  if (Platform.OS === 'ios') {
+    const P = ped();
+    if (!P) return false;
+    try {
+      const res = await P.getPermissionsAsync();
+      return !!res?.granted;
+    } catch { return false; }
+  }
   const HC = hc();
   if (!HC) return false;
   try {
@@ -67,6 +107,16 @@ export async function hasStepsPermission(): Promise<boolean> {
 
 // Heutige Schritte (Summe aller Quellen ab Mitternacht).
 export async function getTodaySteps(): Promise<number> {
+  if (Platform.OS === 'ios') {
+    const P = ped();
+    if (!P) return 0;
+    try {
+      const start = new Date();
+      start.setHours(0, 0, 0, 0);
+      const res = await P.getStepCountAsync(start, new Date());
+      return Math.max(0, Math.round(Number(res?.steps) || 0));
+    } catch { return 0; }
+  }
   const HC = hc();
   if (!HC) return 0;
   try {
@@ -85,6 +135,8 @@ export async function getTodaySteps(): Promise<number> {
 
 // Heute aktiv verbrannte Kalorien (z. B. von der Smartwatch gemessen) in kcal.
 export async function getTodayActiveCalories(): Promise<number> {
+  // iOS-Schrittzaehler liefert keine aktiven Kalorien -> aus Schritten schaetzen (s. getTodayActivity).
+  if (Platform.OS === 'ios') return 0;
   const HC = hc();
   if (!HC) return 0;
   try {
@@ -113,6 +165,15 @@ export async function getTodayActivity(weightKg: number): Promise<{ steps: numbe
 
 // Health-Connect-Einstellungen oeffnen (z. B. zum Installieren/Verwalten).
 export async function openHealthSettings(): Promise<void> {
+  if (Platform.OS === 'ios') {
+    try {
+      const { Linking } = require('react-native');
+      await Linking.openSettings();
+    } catch {
+      /* ignore */
+    }
+    return;
+  }
   const HC = hc();
   if (!HC) return;
   try {

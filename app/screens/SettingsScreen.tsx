@@ -57,7 +57,19 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
   }, []);
 
   function connectHealth() {
-    // Pflicht-Hinweis (Google) VOR der Berechtigungsabfrage: was wird gelesen + wohin.
+    if (Platform.OS === 'ios') {
+      // iOS: eingebauter Schrittzaehler ("Bewegung & Fitness") - direkte Berechtigungsabfrage.
+      Alert.alert(
+        t('settings.health.ios.alert.connectTitle'),
+        t('settings.health.ios.alert.connectBody'),
+        [
+          { text: t('settings.btn.cancel'), style: 'cancel' },
+          { text: t('settings.btn.connect'), onPress: doConnectHealth },
+        ],
+      );
+      return;
+    }
+    // Android: Pflicht-Hinweis (Google) VOR der Berechtigungsabfrage: was wird gelesen + wohin.
     Alert.alert(
       t('settings.health.alert.connectTitle'),
       t('settings.health.alert.connectBody'),
@@ -72,6 +84,10 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
     const available = await healthAvailable();
     if (!available) {
       setBusy(false);
+      if (Platform.OS === 'ios') {
+        showMsg(t('settings.health.ios.unavailable'), true);
+        return;
+      }
       Alert.alert(
         t('settings.health.alert.neededTitle'),
         t('settings.health.alert.neededBody'),
@@ -85,7 +101,11 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
     const ok = await requestHealthPermission();
     setBusy(false);
     setStepsConnected(ok);
-    showMsg(ok ? t('settings.health.connected') : t('settings.health.noPermission'), !ok);
+    if (Platform.OS === 'ios') {
+      showMsg(ok ? t('settings.health.ios.connected') : t('settings.health.ios.denied'), !ok);
+    } else {
+      showMsg(ok ? t('settings.health.connected') : t('settings.health.noPermission'), !ok);
+    }
   }
 
   // Reiter erneut angetippt -> zurueck zum Einstellungs-Menue
@@ -412,9 +432,11 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
           <View style={styles.card}>
             <GlassFill radius={16} />
             <TouchableOpacity style={styles.linkRow} onPress={connectHealth} disabled={busy}>
-              <Text style={styles.link}>🚶  {stepsConnected ? t('settings.health.connectedLink') : t('settings.health.connectLink')}</Text>
+              <Text style={styles.link}>🚶  {stepsConnected
+                ? t(Platform.OS === 'ios' ? 'settings.health.ios.connectedLink' : 'settings.health.connectedLink')
+                : t(Platform.OS === 'ios' ? 'settings.health.ios.connectLink' : 'settings.health.connectLink')}</Text>
             </TouchableOpacity>
-            <Text style={styles.hint}>{t('settings.health.hint')}</Text>
+            <Text style={styles.hint}>{t(Platform.OS === 'ios' ? 'settings.health.ios.hint' : 'settings.health.hint')}</Text>
           </View>
         </>
       )}

@@ -61,6 +61,15 @@ export const de = {
   'settings.health.connectedLink': 'Schritte verbunden ✓ (Health Connect)',
   'settings.health.connectLink': 'Mit Health Connect verbinden',
   'settings.health.hint': 'Liest Schritte und – falls vorhanden – die von deiner Uhr gemessenen aktiven Kalorien und rechnet sie aufs Tagesziel. Nur im echten Build, nicht in Expo Go.',
+  // iOS: eingebauter Schrittzaehler ("Bewegung & Fitness", kein HealthKit)
+  'settings.health.ios.connectLink': 'Schritte aktivieren',
+  'settings.health.ios.connectedLink': 'Schritte aktiv ✓',
+  'settings.health.ios.hint': 'Liest den Schrittzähler deines iPhones (Bewegung & Fitness) und rechnet die Schritte aufs Tagesziel an. Diese Daten bleiben nur auf deinem Gerät.',
+  'settings.health.ios.alert.connectTitle': 'Schritte aktivieren',
+  'settings.health.ios.alert.connectBody': 'FitAvo liest die Schritte deines iPhones (Bewegung & Fitness), um sie aufs Tagesziel anzurechnen. Diese Daten bleiben NUR auf deinem Gerät und werden nicht an unsere Server gesendet. Du kannst die Berechtigung jederzeit in den iPhone-Einstellungen widerrufen.',
+  'settings.health.ios.connected': 'Aktiviert ✓ – deine Schritte zählen jetzt aufs Tagesziel.',
+  'settings.health.ios.denied': 'Keine Berechtigung. Du kannst „Bewegung & Fitness" für FitAvo in den iPhone-Einstellungen aktivieren.',
+  'settings.health.ios.unavailable': 'Schrittzähler auf diesem Gerät nicht verfügbar.',
 
   // Daten
   'settings.data.redoTitle': 'Onboarding erneut durchlaufen?',
@@ -174,6 +183,15 @@ export const en = {
   'settings.health.connectedLink': "Steps connected ✓ (Health Connect)",
   'settings.health.connectLink': "Connect with Health Connect",
   'settings.health.hint': "Reads steps and – if available – the active calories measured by your watch, and counts them toward your daily goal. Only in a real build, not in Expo Go.",
+  // iOS: built-in step counter ("Motion & Fitness", not HealthKit)
+  'settings.health.ios.connectLink': "Enable step counter",
+  'settings.health.ios.connectedLink': "Steps active ✓",
+  'settings.health.ios.hint': "Reads your iPhone's step counter (Motion & Fitness) and counts your steps toward your daily goal. This data stays on your device only.",
+  'settings.health.ios.alert.connectTitle': "Enable step counter",
+  'settings.health.ios.alert.connectBody': "FitAvo reads your iPhone's steps (Motion & Fitness) to count them toward your daily goal. This data stays ONLY on your device and is not sent to our servers. You can revoke the permission anytime in your iPhone settings.",
+  'settings.health.ios.connected': "Activated ✓ – your steps now count toward your daily goal.",
+  'settings.health.ios.denied': "No permission. You can enable \"Motion & Fitness\" for FitAvo in your iPhone settings.",
+  'settings.health.ios.unavailable': "Step counter isn't available on this device.",
 
   // Data
   'settings.data.redoTitle': "Redo onboarding?",
