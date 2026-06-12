@@ -4,6 +4,7 @@ import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'rea
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider, useTheme, Colors } from './contexts/ThemeContext';
+import { LanguageProvider } from './contexts/LanguageContext';
 import { isSupabaseConfigured } from './lib/supabase';
 import AuthScreen from './screens/AuthScreen';
 import OnboardingScreen from './screens/OnboardingScreen';
@@ -90,13 +91,15 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-        <AuthProvider>
-          <ErrorBoundary>
-            <PaywallProvider>
-              <Root />
-            </PaywallProvider>
-          </ErrorBoundary>
-        </AuthProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <ErrorBoundary>
+              <PaywallProvider>
+                <Root />
+              </PaywallProvider>
+            </ErrorBoundary>
+          </AuthProvider>
+        </LanguageProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

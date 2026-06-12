@@ -6,6 +6,7 @@ import * as Sharing from 'expo-sharing';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme, useColors, Colors } from '../contexts/ThemeContext';
+import { useT, useLang } from '../contexts/LanguageContext';
 import ProfileScreen from './ProfileScreen';
 import LegalText from '../components/LegalText';
 import { PRIVACY_SECTIONS, IMPRESSUM_SECTIONS, TERMS_SECTIONS } from '../lib/legal';
@@ -26,6 +27,8 @@ const BOTTOM_PAD = Platform.OS === 'android' ? 120 : 48;
 export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
   const { session, refreshProfile } = useAuth();
   const { mode, setMode } = useTheme();
+  const t = useT();
+  const { lang, setLang } = useLang();
   const c = useColors();
   const styles = useMemo(() => makeStyles(c), [c]);
 
@@ -307,9 +310,9 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
   function renderMenu() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: BOTTOM_PAD }}>
-      <Text style={styles.title}>Einstellungen</Text>
+      <Text style={styles.title}>{t('settings.title')}</Text>
 
-      <Text style={styles.section}>KONTO</Text>
+      <Text style={styles.section}>{t('settings.section.account')}</Text>
       <View style={styles.card}>
         <GlassFill radius={16} />
         <TouchableOpacity style={styles.linkRow} onPress={() => setView('profile')}>
@@ -324,7 +327,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.section}>DARSTELLUNG</Text>
+      <Text style={styles.section}>{t('settings.section.appearance')}</Text>
       <View style={styles.card}>
         <GlassFill radius={16} />
         <View style={{ paddingHorizontal: 16, paddingVertical: 14 }}>
@@ -343,7 +346,21 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
         </View>
       </View>
 
-      <Text style={styles.section}>ERINNERUNGEN</Text>
+      <Text style={styles.section}>{t('settings.section.language')}</Text>
+      <View style={styles.card}>
+        <GlassFill radius={16} />
+        <View style={{ paddingHorizontal: 16, paddingVertical: 14 }}>
+          <Text style={{ fontSize: 16, color: c.text, lineHeight: 22, marginBottom: 12 }}>🌐  {t('settings.language')}</Text>
+          <Segmented
+            options={[{ key: 'de', label: 'Deutsch' }, { key: 'en', label: 'English' }]}
+            value={lang}
+            onChange={(k) => setLang(k as 'de' | 'en')}
+            c={c}
+          />
+        </View>
+      </View>
+
+      <Text style={styles.section}>{t('settings.section.reminders')}</Text>
       <View style={styles.card}>
         <GlassFill radius={16} />
         <View style={styles.row}>
@@ -391,7 +408,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
 
       {healthSupported() && (
         <>
-          <Text style={styles.section}>GESUNDHEIT</Text>
+          <Text style={styles.section}>{t('settings.section.health')}</Text>
           <View style={styles.card}>
             <GlassFill radius={16} />
             <TouchableOpacity style={styles.linkRow} onPress={connectHealth} disabled={busy}>
@@ -402,7 +419,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
         </>
       )}
 
-      <Text style={styles.section}>DATEN</Text>
+      <Text style={styles.section}>{t('settings.section.data')}</Text>
       <View style={styles.card}>
         <GlassFill radius={16} />
         <TouchableOpacity style={styles.linkRow} onPress={confirmRedoOnboarding}>
@@ -410,7 +427,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.section}>DATENSCHUTZ (DSGVO)</Text>
+      <Text style={styles.section}>{t('settings.section.privacy')}</Text>
       <View style={styles.card}>
         <GlassFill radius={16} />
         <TouchableOpacity style={styles.linkRow} onPress={exportData} disabled={busy}>
@@ -427,7 +444,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.section}>RECHTLICHES</Text>
+      <Text style={styles.section}>{t('settings.section.legal')}</Text>
       <View style={styles.card}>
         <GlassFill radius={16} />
         <TouchableOpacity style={styles.linkRow} onPress={() => setView('legal')}>
@@ -441,7 +458,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.section}>ÜBER</Text>
+      <Text style={styles.section}>{t('settings.section.about')}</Text>
       <View style={styles.card}>
         <GlassFill radius={16} />
         <View style={styles.row}><Text style={styles.rowLabel}>App</Text><Text style={styles.rowValue}>FitAvo</Text></View>
@@ -452,7 +469,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
       {msg && <Text style={[styles.msg, { color: msgErr ? c.danger : c.success }]}>{msg}</Text>}
 
       <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
-        <Text style={styles.logoutText}>Abmelden</Text>
+        <Text style={styles.logoutText}>{t('settings.logout')}</Text>
       </TouchableOpacity>
     </ScrollView>
   );
