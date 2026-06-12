@@ -8,6 +8,10 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": false,
+    "locales": {
+      "de": "./locales/de.json",
+      "en": "./locales/en.json"
+    },
     "plugins": [
       "expo-notifications",
       [

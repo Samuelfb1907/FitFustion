@@ -85,6 +85,10 @@ export const PRIVACY_SECTIONS: { h: string; p: string }[] = [
     p: 'Konto: E-Mail-Adresse. Profil: Vorname, Alter/Geburtsjahr, Geschlecht, Größe, Gewicht, Aktivitätslevel, Erfahrungslevel, Trainingsumgebung. Nutzungsdaten: Trainingseinheiten & Sätze, Trainingspläne, Essens-Tagebuch, Wasser- und Gewichtsverlauf, Erfolge. Bei Nutzung der KI-gestützten Mahlzeiten-Erkennung („Sprich’s einfach“) zusätzlich der von dir eingegebene Freitext zur Beschreibung deiner Mahlzeit. Einige davon sind Gesundheitsdaten (besondere Kategorie nach Art. 9 DSGVO).',
   },
   {
+    h: 'Schritte & Bewegungsdaten (nur auf dem Gerät)',
+    p: 'Wenn du es erlaubst, liest FitAvo deine Schrittzahl (auf dem iPhone über die Funktion „Bewegung & Fitness“, auf Android über Health Connect), um daraus verbrannte Kalorien zu schätzen und sie auf dein Tagesziel anzurechnen. Diese Bewegungsdaten werden ausschließlich lokal auf deinem Gerät verarbeitet und NICHT an uns oder Dritte übertragen oder bei uns gespeichert. Du kannst die Berechtigung jederzeit in den Geräte-Einstellungen widerrufen.',
+  },
+  {
     h: 'Zwecke & Rechtsgrundlage',
     p: 'Wir verarbeiten die Daten ausschließlich, um dir die App-Funktionen bereitzustellen (Tracking, Auswertungen) – Rechtsgrundlage Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung). Gesundheitsbezogene Daten verarbeiten wir auf Grundlage deiner ausdrücklichen Einwilligung (Art. 9 Abs. 2 lit. a DSGVO), die du mit der Nutzung/Eingabe erteilst und jederzeit widerrufen kannst.',
   },
@@ -298,6 +302,10 @@ export const PRIVACY_SECTIONS_EN: { h: string; p: string }[] = [
   {
     h: 'What data we process',
     p: 'Account: e-mail address. Profile: first name, age/year of birth, gender, height, weight, activity level, experience level, training environment. Usage data: workouts & sets, training plans, food diary, water and weight history, achievements. When using the AI-assisted meal recognition (“Just say it”), additionally the free text you enter to describe your meal. Some of this constitutes health data (special category under Art. 9 GDPR).',
+  },
+  {
+    h: 'Steps & motion data (on your device only)',
+    p: 'If you allow it, FitAvo reads your step count (on iPhone via “Motion & Fitness”, on Android via Health Connect) to estimate burned calories and count them toward your daily goal. This motion data is processed exclusively locally on your device and is NOT transmitted to us or third parties, nor stored by us. You can revoke the permission at any time in your device settings.',
   },
   {
     h: 'Purposes & legal basis',
