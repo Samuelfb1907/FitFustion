@@ -1,12 +1,13 @@
-// Untere Tab-Leiste: schlicht & TRANSPARENT (kein Panel, kein Blur, keine Pille) - Icon oben,
-// Label darunter, aktiver Reiter in der Akzentfarbe (wie eine klassische iOS-Leiste). Wechsel
-// per TIPPEN ODER WISCHEN. Bewusst OHNE Animation/Vermessung -> kein Lag. Bereiche bleiben
-// gemountet (sofortiger Wechsel); beim Aktivieren springt der Reiter per focusTick zurueck.
-import { useRef, useState, ReactNode } from 'react';
-import { PanResponder, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+// Untere Tab-Leiste im "Liquid Glass"-Stil (wie Apple Music): schwebende, durchscheinende
+// Glas-Leiste, Icon + Label je Reiter, der AKTIVE Reiter ist eine gruene Pille, die beim
+// Antippen smooth zum Reiter GLEITET (nur translateX -> nativ animiert -> KEIN Lag).
+// Die Leiste schwebt ueber dem Inhalt (absolute), der Inhalt scrollt durch das Glas durch.
+import { useEffect, useRef, useState, ReactNode } from 'react';
+import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useColors } from '../contexts/ThemeContext';
+import { useColors, useTheme } from '../contexts/ThemeContext';
 import { useT } from '../contexts/LanguageContext';
 import HomeScreen from './HomeScreen';
 import TrainingScreen from './TrainingScreen';
@@ -19,6 +20,7 @@ import StepsPrompt from '../components/StepsPrompt';
 type Tab = 'home' | 'training' | 'essen' | 'progress' | 'settings';
 const TAB_ORDER: Tab[] = ['home', 'training', 'essen', 'progress', 'settings'];
 const TAB_ICON: Record<Tab, string> = { home: 'home', training: 'barbell', essen: 'restaurant', progress: 'stats-chart', settings: 'settings' };
+const BAR_H = 58;
 
 // Haelt den Bereich gemountet, blendet ihn aber aus, wenn nicht aktiv (Zustand bleibt erhalten).
 function Page({ active, children }: { active: boolean; children: ReactNode }) {
@@ -31,14 +33,15 @@ export default function MainTabs() {
   const [ticks, setTicks] = useState<Record<Tab, number>>({ home: 0, training: 0, essen: 0, progress: 0, settings: 0 });
   const [essenSeg, setEssenSeg] = useState<EssenSeg>('tracker'); // welcher Unter-Reiter im Essen-Hub geoeffnet wird
   const c = useColors();
+  const { theme } = useTheme();
+  const dark = theme === 'dark';
   const t = useT();
   const insets = useSafeAreaInsets();
 
   const TAB_LABEL: Record<Tab, string> = {
     home: t('tabs.start'), training: t('tabs.training'), essen: t('tabs.food'), progress: t('tabs.progress'), settings: t('tabs.settings'),
   };
-  const idxRef = useRef(0);
-  idxRef.current = TAB_ORDER.indexOf(tab);
+  const activeIndex = TAB_ORDER.indexOf(tab);
 
   const go = (target: Tab, seg?: EssenSeg) => {
     setMounted((m) => (m[target] ? m : { ...m, [target]: true }));
@@ -47,21 +50,17 @@ export default function MainTabs() {
     setTab(target);
   };
 
-  // Wischen auf der Leiste: nach links = naechster Reiter, nach rechts = vorheriger.
-  // (Ref, damit der einmalig erstellte PanResponder immer den aktuellen Index nutzt.)
-  const goRelRef = useRef((dir: number) => {
-    const next = Math.min(TAB_ORDER.length - 1, Math.max(0, idxRef.current + dir));
-    if (next !== idxRef.current) go(TAB_ORDER[next]);
-  });
-  const pan = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 12 && Math.abs(g.dx) > Math.abs(g.dy) * 1.4,
-      onPanResponderRelease: (_, g) => {
-        if (g.dx <= -36 || g.vx < -0.3) goRelRef.current(1);       // links wischen -> naechster
-        else if (g.dx >= 36 || g.vx > 0.3) goRelRef.current(-1);   // rechts wischen -> vorheriger
-      },
-    })
-  ).current;
+  // Gleitende Pille: nur translateX (nativ animiert -> butterweich, kein Lag).
+  const [barW, setBarW] = useState(0);
+  const tabW = barW > 0 ? barW / TAB_ORDER.length : 0;
+  const pillX = useRef(new Animated.Value(0)).current;
+  const pillInit = useRef(false);
+  useEffect(() => {
+    if (tabW <= 0) return;
+    const to = activeIndex * tabW;
+    if (!pillInit.current) { pillInit.current = true; pillX.setValue(to); return; } // beim ersten Messen ohne Animation setzen
+    Animated.spring(pillX, { toValue: to, useNativeDriver: true, speed: 18, bounciness: 9 }).start();
+  }, [activeIndex, tabW]);
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
@@ -73,26 +72,36 @@ export default function MainTabs() {
         {mounted.progress && <Page active={tab === 'progress'}><ProgressScreen focusTick={ticks.progress} /></Page>}
         {mounted.settings && <Page active={tab === 'settings'}><SettingsScreen focusTick={ticks.settings} /></Page>}
       </View>
-      {/* Transparente Leiste: Icon oben + Label darunter, aktiv in Akzentfarbe; tippen oder wischen */}
-      <View style={[styles.tabBar, { paddingBottom: Math.max(insets.bottom, 8) }]} {...pan.panHandlers}>
-        {TAB_ORDER.map((k) => {
-          const active = tab === k;
-          const color = active ? c.primary : c.textMuted;
-          return (
-            <TouchableOpacity
-              key={k}
-              style={styles.tab}
-              onPress={() => go(k)}
-              activeOpacity={0.7}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: active }}
-              accessibilityLabel={TAB_LABEL[k]}
-            >
-              <Ionicons name={(active ? TAB_ICON[k] : `${TAB_ICON[k]}-outline`) as any} size={25} color={color} />
-              <Text style={[styles.label, { color, fontWeight: active ? '700' : '600' }]} numberOfLines={1}>{TAB_LABEL[k]}</Text>
-            </TouchableOpacity>
-          );
-        })}
+      {/* Schwebende Glas-Leiste ueber dem Inhalt; box-none -> nur die Reiter fangen Tipps ab */}
+      <View style={[styles.barWrap, { paddingBottom: Math.max(insets.bottom, 10) }]} pointerEvents="box-none">
+        <View style={[styles.bar, { borderColor: c.hairline }]} onLayout={(e) => setBarW(e.nativeEvent.layout.width)}>
+          <BlurView intensity={dark ? 36 : 50} tint={dark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: dark ? 'rgba(18,24,30,0.40)' : 'rgba(255,255,255,0.45)' }]} pointerEvents="none" />
+          {tabW > 0 && (
+            <Animated.View
+              pointerEvents="none"
+              style={[styles.pill, { width: tabW - 12, backgroundColor: dark ? 'rgba(25,201,143,0.20)' : 'rgba(14,159,110,0.15)', transform: [{ translateX: pillX }] }]}
+            />
+          )}
+          {TAB_ORDER.map((k) => {
+            const active = tab === k;
+            const color = active ? c.primary : c.textMuted;
+            return (
+              <TouchableOpacity
+                key={k}
+                style={styles.tab}
+                onPress={() => go(k)}
+                activeOpacity={0.7}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: active }}
+                accessibilityLabel={TAB_LABEL[k]}
+              >
+                <Ionicons name={(active ? TAB_ICON[k] : `${TAB_ICON[k]}-outline`) as any} size={23} color={color} />
+                <Text style={[styles.label, { color, fontWeight: active ? '700' : '600' }]} numberOfLines={1}>{TAB_LABEL[k]}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </View>
       <StepsPrompt />
     </View>
@@ -102,8 +111,10 @@ export default function MainTabs() {
 const styles = StyleSheet.create({
   page: { flex: 1 },
   pageHidden: { flex: 1, display: 'none' },
-  // Transparent: kein Hintergrund, kein Rand, kein Blur.
-  tabBar: { flexDirection: 'row', alignItems: 'flex-start', paddingTop: 9, paddingHorizontal: 6 },
-  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, paddingVertical: 4 },
+  barWrap: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 14 },
+  bar: { flexDirection: 'row', height: BAR_H, borderRadius: 24, borderWidth: 1, overflow: 'hidden' },
+  // Gruene Pille hinter dem aktiven Reiter; marginLeft zentriert sie in der Reiter-Spalte.
+  pill: { position: 'absolute', top: 7, bottom: 7, left: 0, marginLeft: 6, borderRadius: 17 },
+  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3 },
   label: { fontSize: 11, letterSpacing: 0.2 },
 });

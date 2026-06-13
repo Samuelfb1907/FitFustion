@@ -158,7 +158,7 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
         </>
       ) : (
         <ScrollView
-          contentContainerStyle={{ paddingTop: 0, paddingBottom: 40 }}
+          contentContainerStyle={{ paddingTop: 0, paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
         >
@@ -212,7 +212,7 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
         <FlatList
           data={exercises}
           keyExtractor={(ex) => ex.id}
-          contentContainerStyle={{ paddingBottom: 40 }}
+          contentContainerStyle={{ paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
           initialNumToRender={12}
           maxToRenderPerBatch={12}
