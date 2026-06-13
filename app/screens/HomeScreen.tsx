@@ -1,8 +1,8 @@
 // Start-Screen / Dashboard (Clean Light): aufgeraeumter Ueberblick statt Kachel-Wand.
 // Header (Begruessung + Level/Streak) -> Kalorien-Karte -> 3 Uebersichts-Kacheln
 // (Wasser/Training/Gewicht, fuehren in ihren Bereich) -> Training-laeuft -> Tagesziele.
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Modal, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, Animated, Modal, PanResponder, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useT, useLang } from '../contexts/LanguageContext';
@@ -38,6 +38,12 @@ const MONTHS = {
   de: ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'],
   en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
 };
+// Kurze Wochentage fuer die Tages-Navigation der Kalorien-Karte (z. B. "MO, 09.06").
+const WEEKDAYS_SHORT = {
+  de: ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'],
+  en: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+};
+const DAYS_BACK = 6; // wie viele Tage zurueck wischbar (0..6 = 7 Tage inkl. heute)
 // Icons je Tagesziel (Schluessel aus lib/goals.ts).
 const GOAL_ICONS: Record<string, string> = { train: 'barbell-outline', track: 'restaurant-outline', kcal: 'flame-outline', protein: 'egg-outline' };
 
@@ -73,6 +79,8 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
   const [stats, setStats] = useState<GameStats | null>(null);
   const [achOpen, setAchOpen] = useState(false);
   const [eaten, setEaten] = useState<Eaten>({ kcal: 0, p: 0, c: 0, f: 0 });
+  const [days, setDays] = useState<Eaten[]>([]); // gegessen je Tag, Index = Tage zurueck (0 = heute)
+  const [dayOffset, setDayOffset] = useState(0); // welcher Tag auf der Kalorien-Karte gerade gezeigt wird
   const [activeSession, setActiveSession] = useState<string | null>(null);
   const [activeSets, setActiveSets] = useState(0);
   const [goalsData, setGoalsData] = useState<GoalsData | null>(null);
@@ -95,7 +103,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
       const [profRes, goalRes, fdt, actRes, sessions, sets, foodLogs, sdRes, fd, schedRes] = await Promise.all([
         supabase.from('profiles').select('weight_kg, height_cm, birth_date, gender, activity_level').eq('id', userId).maybeSingle(),
         supabase.from('goals').select('goal_type').eq('user_id', userId).eq('is_active', true).order('created_at', { ascending: false }).limit(1).maybeSingle(),
-        supabase.from('food_logs').select('amount_g, foods(kcal, protein, carbs, fat)').eq('user_id', userId).eq('log_date', todayStr()),
+        supabase.from('food_logs').select('amount_g, log_date, foods(kcal, protein, carbs, fat)').eq('user_id', userId).gte('log_date', daysAgoStr(DAYS_BACK)),
         supabase.from('workout_sessions').select('id').eq('user_id', userId).is('ended_at', null).gte('performed_at', startOfTodayISO()).order('performed_at', { ascending: false }).limit(1).maybeSingle(),
         countRows('workout_sessions', userId),
         countRows('set_logs', userId),
@@ -126,17 +134,28 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
         setError(t('home.profileIncomplete'));
       }
 
-      const e: Eaten = { kcal: 0, p: 0, c: 0, f: 0 };
+      // Gegessen je Kalendertag buendeln (7 Tage), damit man auf der Karte zurueckwischen kann.
+      const empty = (): Eaten => ({ kcal: 0, p: 0, c: 0, f: 0 });
+      const buckets: Record<string, Eaten> = {};
       if (!fdt.error && fdt.data) {
         for (const row of fdt.data as any[]) {
           const food = Array.isArray(row.foods) ? row.foods[0] : row.foods;
           if (!food) continue;
+          const key = String(row.log_date).slice(0, 10);
+          const b = (buckets[key] ??= empty());
           const factor = (row.amount_g ?? 0) / 100;
-          e.kcal += (food.kcal ?? 0) * factor; e.p += (food.protein ?? 0) * factor;
-          e.c += (food.carbs ?? 0) * factor; e.f += (food.fat ?? 0) * factor;
+          b.kcal += (food.kcal ?? 0) * factor; b.p += (food.protein ?? 0) * factor;
+          b.c += (food.carbs ?? 0) * factor; b.f += (food.fat ?? 0) * factor;
         }
       }
-      setEaten({ kcal: Math.round(e.kcal), p: Math.round(e.p), c: Math.round(e.c), f: Math.round(e.f) });
+      const round = (b: Eaten): Eaten => ({ kcal: Math.round(b.kcal), p: Math.round(b.p), c: Math.round(b.c), f: Math.round(b.f) });
+      const dayArr: Eaten[] = [];
+      for (let off = 0; off <= DAYS_BACK; off++) {
+        const b = buckets[daysAgoStr(off)];
+        dayArr.push(b ? round(b) : empty());
+      }
+      setDays(dayArr);
+      setEaten(dayArr[0]); // heute – fuer Tagesziele/Bonus unten
 
       await refreshWater();
 
@@ -235,6 +254,32 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
   else if (goalsData?.trainedToday) { trainVal = t('home.trainDone'); trainSub = t('home.trainDoneToday'); }
   else if (planToday?.has) { trainVal = planToday.focus ? t(planToday.focus) : t('home.trainRestDay'); trainSub = planToday.focus ? t('home.trainPerPlan') : t('home.trainRecovery'); }
 
+  // Tage-Navigation der Kalorien-Karte: nach links wischen = ein Tag zurueck (max. 7 Tage).
+  const cur = days[dayOffset] ?? eaten;
+  const goOlder = useCallback(() => setDayOffset((o) => Math.min(DAYS_BACK, o + 1)), []);
+  const goNewer = useCallback(() => setDayOffset((o) => Math.max(0, o - 1)), []);
+  const fade = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    fade.setValue(0.35);
+    Animated.timing(fade, { toValue: 1, duration: 240, useNativeDriver: true }).start();
+  }, [dayOffset]);
+  const pan = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 14 && Math.abs(g.dx) > Math.abs(g.dy) * 1.6,
+      onPanResponderRelease: (_, g) => {
+        if (g.dx <= -45) goOlder();
+        else if (g.dx >= 45) goNewer();
+      },
+    })
+  ).current;
+  const dayLabel = (off: number): string => {
+    if (off === 0) return t('home.day.today');
+    if (off === 1) return t('home.day.yesterday');
+    const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - off);
+    const wd = (lang === 'en' ? WEEKDAYS_SHORT.en : WEEKDAYS_SHORT.de)[d.getDay()];
+    return `${wd}, ${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}`;
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView
@@ -271,37 +316,63 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
               )}
             </View>
 
-            {/* KALORIEN */}
+            {/* KALORIEN – nach links wischen blaettert bis zu 7 Tage zurueck */}
             {nutrition && (
               <View style={styles.card}>
                 <GlassFill radius={22} />
                 <View style={styles.cardHead}>
-                  <Text style={styles.cardLabel}>{t('home.todayLabel')}</Text>
-                  {!!goalLabel && (
-                    <View style={styles.goalBadge}>
-                      <Text style={styles.goalBadgeText} numberOfLines={1}>{t(goalLabel).toUpperCase()}</Text>
-                    </View>
+                  <Text style={styles.cardLabel}>{dayLabel(dayOffset).toLocaleUpperCase(lang === 'en' ? 'en-US' : 'de-DE')}</Text>
+                  {dayOffset === 0 ? (
+                    !!goalLabel && (
+                      <View style={styles.goalBadge}>
+                        <Text style={styles.goalBadgeText} numberOfLines={1}>{t(goalLabel).toUpperCase()}</Text>
+                      </View>
+                    )
+                  ) : (
+                    <TouchableOpacity style={styles.todayPill} onPress={() => setDayOffset(0)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('home.day.todayA11y')}>
+                      <Ionicons name="today-outline" size={13} color={c.primary} />
+                      <Text style={styles.todayPillText} numberOfLines={1}>{t('home.day.today')}</Text>
+                    </TouchableOpacity>
                   )}
                 </View>
-                <View style={{ alignItems: 'center', marginTop: 16 }}>
-                  <CalorieGauge target={nutrition.targetCalories + Math.max(trainingKcal, activityKcal)} eaten={eaten.kcal} />
-                </View>
-                {trainingKcal > 0 && activityKcal === 0 && (
-                  <View style={styles.bonusPill}>
-                    <Ionicons name="flame" size={14} color={c.primary} />
-                    <Text style={styles.bonusText} numberOfLines={1}>{t('home.bonusTraining', { n: trainingKcal })}</Text>
+                <Animated.View style={{ opacity: fade }} {...pan.panHandlers}>
+                  <View style={{ alignItems: 'center', marginTop: 16 }}>
+                    <CalorieGauge target={nutrition.targetCalories + (dayOffset === 0 ? Math.max(trainingKcal, activityKcal) : 0)} eaten={cur.kcal} />
                   </View>
-                )}
-                {activityKcal > 0 && (
-                  <View style={styles.bonusPill}>
-                    <Ionicons name="walk" size={14} color={c.primary} />
-                    <Text style={styles.bonusText} numberOfLines={1}>{steps > 0 ? t('home.stepsPrefix', { steps: steps.toLocaleString(lang === 'en' ? 'en-US' : 'de-DE') }) : ''}+{activityKcal} kcal {activityMeasured ? t('home.activeMeasured') : t('home.activeEstimated')}</Text>
+                  {dayOffset === 0 && trainingKcal > 0 && activityKcal === 0 && (
+                    <View style={styles.bonusPill}>
+                      <Ionicons name="flame" size={14} color={c.primary} />
+                      <Text style={styles.bonusText} numberOfLines={1}>{t('home.bonusTraining', { n: trainingKcal })}</Text>
+                    </View>
+                  )}
+                  {dayOffset === 0 && activityKcal > 0 && (
+                    <View style={styles.bonusPill}>
+                      <Ionicons name="walk" size={14} color={c.primary} />
+                      <Text style={styles.bonusText} numberOfLines={1}>{steps > 0 ? t('home.stepsPrefix', { steps: steps.toLocaleString(lang === 'en' ? 'en-US' : 'de-DE') }) : ''}+{activityKcal} kcal {activityMeasured ? t('home.activeMeasured') : t('home.activeEstimated')}</Text>
+                    </View>
+                  )}
+                  {dayOffset > 0 && cur.kcal === 0 && (
+                    <Text style={styles.untracked}>{t('home.day.untracked')}</Text>
+                  )}
+                  <View style={styles.macros}>
+                    <Macro label={t('home.macroProtein')} eaten={cur.p} target={nutrition.proteinG} color={c.primary} styles={styles} />
+                    <Macro label={t('home.macroCarbs')} eaten={cur.c} target={nutrition.carbsG} color="#E69500" styles={styles} />
+                    <Macro label={t('home.macroFat')} eaten={cur.f} target={nutrition.fatG} color={c.danger} styles={styles} />
                   </View>
-                )}
-                <View style={styles.macros}>
-                  <Macro label={t('home.macroProtein')} eaten={eaten.p} target={nutrition.proteinG} color={c.primary} styles={styles} />
-                  <Macro label={t('home.macroCarbs')} eaten={eaten.c} target={nutrition.carbsG} color="#E69500" styles={styles} />
-                  <Macro label={t('home.macroFat')} eaten={eaten.f} target={nutrition.fatG} color={c.danger} styles={styles} />
+                </Animated.View>
+                {/* Tage-Navigation: links = aelter, rechts = neuer; Punkt rechts = heute */}
+                <View style={styles.dayNav}>
+                  <TouchableOpacity style={styles.dayNavBtn} onPress={goOlder} disabled={dayOffset >= DAYS_BACK} hitSlop={{ top: 10, bottom: 10, left: 12, right: 6 }} accessibilityRole="button" accessibilityLabel={t('home.day.olderA11y')}>
+                    <Ionicons name="chevron-back" size={18} color={c.primary} style={dayOffset >= DAYS_BACK ? { opacity: 0.3 } : undefined} />
+                  </TouchableOpacity>
+                  <View style={styles.dots}>
+                    {[6, 5, 4, 3, 2, 1, 0].map((off) => (
+                      <View key={off} style={[styles.dot, off === dayOffset && styles.dotActive]} />
+                    ))}
+                  </View>
+                  <TouchableOpacity style={styles.dayNavBtn} onPress={goNewer} disabled={dayOffset <= 0} hitSlop={{ top: 10, bottom: 10, left: 6, right: 12 }} accessibilityRole="button" accessibilityLabel={t('home.day.newerA11y')}>
+                    <Ionicons name="chevron-forward" size={18} color={c.primary} style={dayOffset <= 0 ? { opacity: 0.3 } : undefined} />
+                  </TouchableOpacity>
                 </View>
               </View>
             )}
@@ -480,6 +551,14 @@ function makeStyles(c: Colors) {
     cardLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1.8, color: c.textMuted },
     goalBadge: { paddingHorizontal: 11, paddingVertical: 5, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(22,180,134,0.30)', backgroundColor: 'rgba(22,180,134,0.10)' },
     goalBadgeText: { fontSize: 11, fontWeight: '700', letterSpacing: 1, color: c.primary },
+    todayPill: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 11, paddingVertical: 5, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(22,180,134,0.30)', backgroundColor: 'rgba(22,180,134,0.10)' },
+    todayPillText: { fontSize: 11, fontWeight: '700', letterSpacing: 0.5, color: c.primary },
+    untracked: { textAlign: 'center', marginTop: 12, fontSize: 12, fontWeight: '600', color: c.textMuted },
+    dayNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 14, marginTop: 16 },
+    dayNavBtn: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+    dots: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: c.track },
+    dotActive: { width: 18, backgroundColor: c.primary },
     bonusPill: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'center', marginTop: 14, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(22,180,134,0.25)', backgroundColor: 'rgba(22,180,134,0.10)' },
     bonusText: { fontSize: 12, fontWeight: '600', color: c.primary },
     headRight: { fontSize: 13, fontWeight: '700', color: c.textMuted },

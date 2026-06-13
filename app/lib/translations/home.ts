@@ -72,6 +72,13 @@ export const de = {
   "home.dgoal.track": "Essen getrackt",
   "home.dgoal.kcal": "Kalorien im Zielbereich",
   "home.dgoal.protein": "Protein-Ziel",
+
+  "home.day.today": "Heute",
+  "home.day.yesterday": "Gestern",
+  "home.day.untracked": "Nichts getrackt",
+  "home.day.todayA11y": "Zurück zu heute",
+  "home.day.olderA11y": "Vorheriger Tag",
+  "home.day.newerA11y": "Nächster Tag",
 };
 
 export const en = {
@@ -148,4 +155,11 @@ export const en = {
   "home.dgoal.track": "Food tracked",
   "home.dgoal.kcal": "Calories in range",
   "home.dgoal.protein": "Protein goal",
+
+  "home.day.today": "Today",
+  "home.day.yesterday": "Yesterday",
+  "home.day.untracked": "Nothing tracked",
+  "home.day.todayA11y": "Back to today",
+  "home.day.olderA11y": "Previous day",
+  "home.day.newerA11y": "Next day",
 };
