@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme, useColors, Colors } from '../contexts/ThemeContext';
 import { useT, useLang } from '../contexts/LanguageContext';
+import { Ionicons } from '@expo/vector-icons';
 import ProfileScreen from './ProfileScreen';
 import LegalText from '../components/LegalText';
 import { getPrivacySections, getImprintSections, getTermsSections, getDisclaimerSections } from '../lib/legal';
@@ -242,7 +243,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
           <BackButton onPress={() => setView('menu')} c={c} />
           <Text style={[styles.title, { marginTop: 10 }]}>{t('settings.pw.title')}</Text>
           <View style={[styles.card, { padding: 16 }]}>
-            <GlassFill radius={16} />
+            <GlassFill radius={20} />
             <Text style={styles.pwLabel}>{t('settings.pw.current')}</Text>
             <TextInput style={styles.pwInput} value={pwCur} onChangeText={setPwCur} secureTextEntry autoCapitalize="none" placeholder={t('settings.pw.current')} placeholderTextColor={c.textMuted} />
             <Text style={styles.pwLabel}>{t('settings.pw.new')}</Text>
@@ -268,7 +269,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
         <BackButton onPress={() => setView('menu')} c={c} />
         <Text style={[styles.title, { marginTop: 10 }]}>{t('settings.legal.disclaimerTitle')}</Text>
         <View style={[styles.card, { padding: 16 }]}>
-          <GlassFill radius={16} />
+          <GlassFill radius={20} />
           <LegalText c={c} sections={getDisclaimerSections(lang)} />
         </View>
         <Text style={styles.hint}>{t('settings.legal.disclaimerHint')}</Text>
@@ -285,7 +286,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
         <BackButton onPress={() => setView('menu')} c={c} />
         <Text style={[styles.title, { marginTop: 10 }]}>{t('settings.legal.privacyTitle')}</Text>
         <View style={[styles.card, { padding: 16 }]}>
-          <GlassFill radius={16} />
+          <GlassFill radius={20} />
           <LegalText c={c} sections={getPrivacySections(lang)} />
         </View>
       </ScrollView>
@@ -301,7 +302,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
         <BackButton onPress={() => setView('menu')} c={c} />
         <Text style={[styles.title, { marginTop: 10 }]}>{t('settings.legal.imprintTitle')}</Text>
         <View style={[styles.card, { padding: 16 }]}>
-          <GlassFill radius={16} />
+          <GlassFill radius={20} />
           <LegalText c={c} sections={getImprintSections(lang)} />
         </View>
       </ScrollView>
@@ -317,7 +318,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
         <BackButton onPress={() => setView('menu')} c={c} />
         <Text style={[styles.title, { marginTop: 10 }]}>{t('settings.legal.termsTitle')}</Text>
         <View style={[styles.card, { padding: 16 }]}>
-          <GlassFill radius={16} />
+          <GlassFill radius={20} />
           <LegalText c={c} sections={getTermsSections(lang)} />
         </View>
       </ScrollView>
@@ -334,24 +335,29 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
 
       <Text style={styles.section}>{t('settings.section.account')}</Text>
       <View style={styles.card}>
-        <GlassFill radius={16} />
+        <GlassFill radius={20} />
         <TouchableOpacity style={styles.linkRow} onPress={() => setView('profile')}>
-          <Text style={styles.link}>👤  {t('settings.menu.editProfile')}</Text>
+          <Ionicons name="person" size={18} color={c.primary} />
+          <Text style={styles.link}>{t('settings.menu.editProfile')}</Text>
         </TouchableOpacity>
         <View style={styles.row}>
           <Text style={styles.rowLabel}>{t('settings.menu.email')}</Text>
           <Text style={styles.rowValue} numberOfLines={1}>{session?.user?.email}</Text>
         </View>
         <TouchableOpacity style={styles.linkRow} onPress={() => { setPwMsg(null); setView('password'); }}>
-          <Text style={styles.link}>🔑  {t('settings.menu.changePassword')}</Text>
+          <Ionicons name="key" size={18} color={c.primary} />
+          <Text style={styles.link}>{t('settings.menu.changePassword')}</Text>
         </TouchableOpacity>
       </View>
 
       <Text style={styles.section}>{t('settings.section.appearance')}</Text>
       <View style={styles.card}>
-        <GlassFill radius={16} />
+        <GlassFill radius={20} />
         <View style={{ paddingHorizontal: 16, paddingVertical: 14 }}>
-          <Text style={{ fontSize: 16, color: c.text, lineHeight: 22, marginBottom: 12 }}>🌙  {t('settings.appearance.title')}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 11, marginBottom: 12 }}>
+            <Ionicons name="moon" size={18} color={c.textMuted} />
+            <Text style={{ fontSize: 16, color: c.text, lineHeight: 22 }}>{t('settings.appearance.title')}</Text>
+          </View>
           <Segmented
             options={[{ key: 'system', label: t('settings.appearance.system') }, { key: 'light', label: t('settings.appearance.light') }, { key: 'dark', label: t('settings.appearance.dark') }]}
             value={mode}
@@ -368,9 +374,12 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
 
       <Text style={styles.section}>{t('settings.section.language')}</Text>
       <View style={styles.card}>
-        <GlassFill radius={16} />
+        <GlassFill radius={20} />
         <View style={{ paddingHorizontal: 16, paddingVertical: 14 }}>
-          <Text style={{ fontSize: 16, color: c.text, lineHeight: 22, marginBottom: 12 }}>🌐  {t('settings.language')}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 11, marginBottom: 12 }}>
+            <Ionicons name="globe-outline" size={18} color={c.textMuted} />
+            <Text style={{ fontSize: 16, color: c.text, lineHeight: 22 }}>{t('settings.language')}</Text>
+          </View>
           <Segmented
             options={[{ key: 'de', label: 'Deutsch' }, { key: 'en', label: 'English' }]}
             value={lang}
@@ -382,19 +391,28 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
 
       <Text style={styles.section}>{t('settings.section.reminders')}</Text>
       <View style={styles.card}>
-        <GlassFill radius={16} />
+        <GlassFill radius={20} />
         <View style={styles.row}>
-          <Text style={styles.rowLabel}>🔔  {t('settings.rem.active')}</Text>
+          <View style={styles.rowLeft}>
+            <Ionicons name="notifications" size={18} color={c.textMuted} />
+            <Text style={styles.rowLabel}>{t('settings.rem.active')}</Text>
+          </View>
           <Switch value={!!rem?.enabled} onValueChange={(v) => { if (rem) updateRem({ ...rem, enabled: v }); }} accessibilityLabel={t('settings.rem.active')} />
         </View>
         {rem?.enabled && (
           <>
             <View style={styles.row}>
-              <Text style={styles.rowLabel}>💧  {t('settings.rem.water')}</Text>
+              <View style={styles.rowLeft}>
+                <Ionicons name="water" size={18} color={c.textMuted} />
+                <Text style={styles.rowLabel}>{t('settings.rem.water')}</Text>
+              </View>
               <Switch value={rem.water} onValueChange={(v) => updateRem({ ...rem, water: v })} accessibilityLabel={t('settings.rem.waterA11y')} />
             </View>
             <View style={styles.row}>
-              <Text style={styles.rowLabel}>💪  {t('settings.rem.training')}</Text>
+              <View style={styles.rowLeft}>
+                <Ionicons name="barbell" size={18} color={c.textMuted} />
+                <Text style={styles.rowLabel}>{t('settings.rem.training')}</Text>
+              </View>
               <Switch value={rem.training} onValueChange={(v) => updateRem({ ...rem, training: v })} accessibilityLabel={t('settings.rem.trainingA11y')} />
             </View>
             {rem.training && (
@@ -408,7 +426,10 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
               </View>
             )}
             <View style={styles.row}>
-              <Text style={styles.rowLabel}>💬  {t('settings.rem.motivation')}</Text>
+              <View style={styles.rowLeft}>
+                <Ionicons name="chatbubble-ellipses" size={18} color={c.textMuted} />
+                <Text style={styles.rowLabel}>{t('settings.rem.motivation')}</Text>
+              </View>
               <Switch value={!!rem?.motivation} onValueChange={(v) => { if (rem) updateRem({ ...rem, motivation: v }); }} accessibilityLabel={t('settings.rem.motivation')} />
             </View>
             {rem.motivation && (
@@ -430,9 +451,10 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
         <>
           <Text style={styles.section}>{t('settings.section.health')}</Text>
           <View style={styles.card}>
-            <GlassFill radius={16} />
+            <GlassFill radius={20} />
             <TouchableOpacity style={styles.linkRow} onPress={connectHealth} disabled={busy}>
-              <Text style={styles.link}>🚶  {stepsConnected
+              <Ionicons name="walk" size={18} color={c.primary} />
+              <Text style={styles.link}>{stepsConnected
                 ? t(Platform.OS === 'ios' ? 'settings.health.ios.connectedLink' : 'settings.health.connectedLink')
                 : t(Platform.OS === 'ios' ? 'settings.health.ios.connectLink' : 'settings.health.connectLink')}</Text>
             </TouchableOpacity>
@@ -443,7 +465,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
 
       <Text style={styles.section}>{t('settings.section.data')}</Text>
       <View style={styles.card}>
-        <GlassFill radius={16} />
+        <GlassFill radius={20} />
         <TouchableOpacity style={styles.linkRow} onPress={confirmRedoOnboarding}>
           <Text style={styles.link}>{t('settings.data.redoLink')}</Text>
         </TouchableOpacity>
@@ -451,38 +473,45 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
 
       <Text style={styles.section}>{t('settings.section.privacy')}</Text>
       <View style={styles.card}>
-        <GlassFill radius={16} />
+        <GlassFill radius={20} />
         <TouchableOpacity style={styles.linkRow} onPress={exportData} disabled={busy}>
-          <Text style={styles.link}>📤  {t('settings.privacy.exportLink')}</Text>
+          <Ionicons name="share-outline" size={18} color={c.primary} />
+          <Text style={styles.link}>{t('settings.privacy.exportLink')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.linkRow} onPress={() => setView('privacy')}>
-          <Text style={styles.link}>🔒  {t('settings.privacy.policyLink')}</Text>
+          <Ionicons name="lock-closed" size={18} color={c.primary} />
+          <Text style={styles.link}>{t('settings.privacy.policyLink')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.linkRow} onPress={revokeAiConsent}>
-          <Text style={styles.link}>🤖  {t('settings.privacy.revokeAiLink')}</Text>
+          <Ionicons name="sparkles" size={18} color={c.primary} />
+          <Text style={styles.link}>{t('settings.privacy.revokeAiLink')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.linkRow} onPress={confirmDeleteAccount} disabled={busy}>
-          <Text style={[styles.link, { color: c.danger }]}>🗑  {t('settings.privacy.deleteLink')}</Text>
+          <Ionicons name="trash-outline" size={18} color={c.danger} />
+          <Text style={[styles.link, { color: c.danger }]}>{t('settings.privacy.deleteLink')}</Text>
         </TouchableOpacity>
       </View>
 
       <Text style={styles.section}>{t('settings.section.legal')}</Text>
       <View style={styles.card}>
-        <GlassFill radius={16} />
+        <GlassFill radius={20} />
         <TouchableOpacity style={styles.linkRow} onPress={() => setView('legal')}>
-          <Text style={styles.link}>📄  {t('settings.legal.disclaimerLink')}</Text>
+          <Ionicons name="document-text" size={18} color={c.primary} />
+          <Text style={styles.link}>{t('settings.legal.disclaimerLink')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.linkRow} onPress={() => setView('impressum')}>
-          <Text style={styles.link}>🏛  {t('settings.legal.imprintLink')}</Text>
+          <Ionicons name="business" size={18} color={c.primary} />
+          <Text style={styles.link}>{t('settings.legal.imprintLink')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.linkRow} onPress={() => setView('terms')}>
-          <Text style={styles.link}>📃  {t('settings.legal.termsLink')}</Text>
+          <Ionicons name="reader" size={18} color={c.primary} />
+          <Text style={styles.link}>{t('settings.legal.termsLink')}</Text>
         </TouchableOpacity>
       </View>
 
       <Text style={styles.section}>{t('settings.section.about')}</Text>
       <View style={styles.card}>
-        <GlassFill radius={16} />
+        <GlassFill radius={20} />
         <View style={styles.row}><Text style={styles.rowLabel}>{t('settings.about.app')}</Text><Text style={styles.rowValue}>FitAvo</Text></View>
         <View style={styles.row}><Text style={styles.rowLabel}>{t('settings.about.version')}</Text><Text style={styles.rowValue}>1.0.0</Text></View>
       </View>
@@ -491,6 +520,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
       {msg && <Text style={[styles.msg, { color: msgErr ? c.danger : c.success }]}>{msg}</Text>}
 
       <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
+        <Ionicons name="log-out-outline" size={18} color={c.danger} />
         <Text style={styles.logoutText}>{t('settings.logout')}</Text>
       </TouchableOpacity>
     </ScrollView>
@@ -501,14 +531,15 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
 function makeStyles(c: Colors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: 'transparent', paddingTop: 56, paddingHorizontal: 16 },
-    title: { fontSize: 26, fontWeight: '800', color: c.heading, marginBottom: 16 },
-    section: { fontSize: 12, fontWeight: '700', letterSpacing: 0.8, color: c.textMuted, marginTop: 14, marginBottom: 8, marginLeft: 4 },
-    card: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, overflow: 'hidden' },
+    title: { fontSize: 28, fontWeight: '800', letterSpacing: -0.5, color: c.heading, marginBottom: 16 },
+    section: { fontSize: 11, fontWeight: '700', letterSpacing: 1.6, color: c.textMuted, marginTop: 14, marginBottom: 8, marginLeft: 4 },
+    card: { backgroundColor: c.card, borderRadius: 20, borderWidth: 1, borderColor: c.cardBorder, overflow: 'hidden' },
     row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.border },
+    rowLeft: { flexDirection: 'row', alignItems: 'center', gap: 11, flex: 1 },
     rowLabel: { fontSize: 16, color: c.text, flex: 1 },
     rowValue: { fontSize: 15, color: c.textMuted, marginLeft: 12, maxWidth: '60%' },
-    linkRow: { paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.border },
-    link: { fontSize: 16, color: c.primary, fontWeight: '600' },
+    linkRow: { flexDirection: 'row', alignItems: 'center', gap: 11, paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.border },
+    link: { flex: 1, fontSize: 16, color: c.primary, fontWeight: '600' },
     hint: { fontSize: 12, color: c.textMuted, paddingHorizontal: 16, paddingVertical: 10 },
     stepper: { flexDirection: 'row', alignItems: 'center', gap: 12 },
     stepBtn: { width: 32, height: 32, borderRadius: 8, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center' },
@@ -517,9 +548,9 @@ function makeStyles(c: Colors) {
     msg: { color: c.success, textAlign: 'center', marginTop: 14, fontSize: 14 },
     pwLabel: { fontSize: 13, fontWeight: '600', color: c.text, marginTop: 12, marginBottom: 6 },
     pwInput: { borderWidth: 1, borderColor: c.border, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, backgroundColor: c.inputBg, color: c.text },
-    pwBtn: { backgroundColor: c.primary, borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginTop: 18 },
+    pwBtn: { backgroundColor: c.primary, borderRadius: 14, paddingVertical: 14, alignItems: 'center', marginTop: 18 },
     pwBtnText: { color: c.onPrimary, fontSize: 16, fontWeight: '700' },
-    logoutBtn: { marginTop: 24, borderRadius: 14, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: c.danger },
+    logoutBtn: { marginTop: 24, borderRadius: 14, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderWidth: 1, borderColor: c.danger },
     logoutText: { color: c.danger, fontSize: 16, fontWeight: '700' },
   });
 }

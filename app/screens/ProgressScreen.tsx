@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { usePaywall } from '../components/Paywall';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { useT } from '../contexts/LanguageContext';
+import { Ionicons } from '@expo/vector-icons';
 import { LineChart, BarChart } from '../components/Charts';
 import SwipeBack from '../components/SwipeBack';
 import GlassFill from '../components/GlassFill';
@@ -252,11 +253,12 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
       ? Math.max(0, Math.min(1, (Math.abs(start - targetWeight) - Math.abs(current - targetWeight)) / Math.abs(start - targetWeight)))
       : null;
 
+  // Kachel-Daten: Ionicons-Name + Farbton (Icon-Chip) je Statistik.
   const statCards = [
-    { icon: '🏋️', label: t('progress.statSessions'), value: String(stats.sessions) },
-    { icon: '📋', label: t('progress.statSets'), value: String(stats.sets) },
-    { icon: '🏆', label: t('progress.statVolume'), value: `${grp(stats.volume)} kg` },
-    { icon: '🔥', label: t('progress.statWeek'), value: `${grp(stats.weekVolume)} kg` },
+    { icon: 'barbell', fg: c.primary, bg: 'rgba(25,201,143,0.12)', label: t('progress.statSessions'), value: String(stats.sessions) },
+    { icon: 'clipboard', fg: '#3FA9F5', bg: 'rgba(63,169,245,0.12)', label: t('progress.statSets'), value: String(stats.sets) },
+    { icon: 'trophy', fg: '#9D7BF4', bg: 'rgba(157,123,244,0.14)', label: t('progress.statVolume'), value: `${grp(stats.volume)} kg` },
+    { icon: 'flame', fg: '#F0B429', bg: 'rgba(240,180,41,0.12)', label: t('progress.statWeek'), value: `${grp(stats.weekVolume)} kg` },
   ];
 
   const baseView = (
@@ -290,17 +292,20 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
         <>
           {/* GEWICHT */}
           <View style={styles.card}>
-            <GlassFill radius={16} />
-            <Text style={styles.cardTitle}>{t('progress.weightCardTitle')}</Text>
+            <GlassFill radius={20} />
+            <View style={styles.cardHead}>
+              <Ionicons name="scale" size={14} color={c.textMuted} />
+              <Text style={styles.cardLabel} numberOfLines={1}>{t('progress.weightCardTitle')}</Text>
+            </View>
             <View style={styles.weightRow}>
               <View style={styles.weightCol}>
-                <Text style={styles.bigWeight}>{current != null ? `${current}` : '–'}</Text>
-                <Text style={styles.weightUnit}>{t('progress.kgCurrent')}</Text>
+                <Text style={styles.bigWeight} numberOfLines={1}>{current != null ? `${current}` : '–'}</Text>
+                <Text style={styles.weightUnit} numberOfLines={1}>{t('progress.kgCurrent')}</Text>
               </View>
               {targetWeight != null && (
                 <View style={styles.weightCol}>
-                  <Text style={styles.bigWeightMuted}>{targetWeight}</Text>
-                  <Text style={styles.weightUnit}>{t('progress.kgGoal')}</Text>
+                  <Text style={styles.bigWeightMuted} numberOfLines={1}>{targetWeight}</Text>
+                  <Text style={styles.weightUnit} numberOfLines={1}>{t('progress.kgGoal')}</Text>
                 </View>
               )}
             </View>
@@ -364,7 +369,7 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
                       <Text style={styles.histDate}>{ddmm(w.date)}</Text>
                       <Text style={styles.histKg}>{w.kg} kg</Text>
                       <TouchableOpacity onPress={() => confirmRemoveWeight(w.id)} style={styles.histDel} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('progress.deleteWeightA11y', { n: w.kg })}>
-                        <Text style={styles.histDelText}>✕</Text>
+                        <Ionicons name="close" size={16} color={c.textMuted} />
                       </TouchableOpacity>
                     </View>
                   ))}
@@ -372,24 +377,29 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
             )}
           </View>
 
-          {/* STATISTIK-KACHELN */}
+          {/* STATISTIK-KACHELN (Icon-Chip + Wert + Unterzeile, wie Home) */}
           <View style={styles.statGrid}>
             {statCards.map((s) => (
               <View key={s.label} style={styles.statCard}>
-                <GlassFill radius={16} />
-                <Text style={styles.statIcon}>{s.icon}</Text>
+                <GlassFill radius={20} />
+                <View style={[styles.statChip, { backgroundColor: s.bg }]}>
+                  <Ionicons name={s.icon as any} size={19} color={s.fg} />
+                </View>
                 <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
                   {s.value}
                 </Text>
-                <Text style={styles.statLabel}>{s.label}</Text>
+                <Text style={styles.statLabel} numberOfLines={1}>{s.label}</Text>
               </View>
             ))}
           </View>
 
           {/* VOLUMEN JE WOCHE */}
           <View style={styles.card}>
-            <GlassFill radius={16} />
-            <Text style={styles.cardTitle}>{t('progress.weeklyVolumeTitle')}</Text>
+            <GlassFill radius={20} />
+            <View style={styles.cardHead}>
+              <Ionicons name="stats-chart" size={14} color={c.textMuted} />
+              <Text style={styles.cardLabel} numberOfLines={1}>{t('progress.weeklyVolumeTitle')}</Text>
+            </View>
             {stats.volume > 0 ? (
               <>
                 <BarChart
@@ -409,8 +419,11 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
 
           {/* REKORDE */}
           <View style={styles.card}>
-            <GlassFill radius={16} />
-            <Text style={styles.cardTitle}>{t('progress.recordsTitle')}</Text>
+            <GlassFill radius={20} />
+            <View style={styles.cardHead}>
+              <Ionicons name="trophy" size={14} color={c.textMuted} />
+              <Text style={styles.cardLabel} numberOfLines={1}>{t('progress.recordsTitle')}</Text>
+            </View>
             {records.length > 0 ? (
               records.map((r, i) => (
                 <TouchableOpacity key={r.id} style={[styles.row, i === records.length - 1 && styles.rowLast]} onPress={() => setSelExercise({ id: r.id, name: r.name })} activeOpacity={0.7}>
@@ -426,8 +439,11 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
           {/* UEBUNGS-FORTSCHRITT */}
           {exList.length > 0 && (
             <View style={styles.card}>
-              <GlassFill radius={16} />
-              <Text style={styles.cardTitle}>{t('progress.exerciseProgressTitle')}</Text>
+              <GlassFill radius={20} />
+              <View style={styles.cardHead}>
+                <Ionicons name="trending-up" size={14} color={c.textMuted} />
+                <Text style={styles.cardLabel} numberOfLines={1}>{t('progress.exerciseProgressTitle')}</Text>
+              </View>
               <Text style={[styles.caption, { marginTop: 0, marginBottom: 8 }]}>{t('progress.exerciseProgressCaption')}</Text>
               {exList.slice(0, 12).map((e, i) => (
                 <TouchableOpacity key={e.id} style={[styles.row, i === Math.min(exList.length, 12) - 1 && styles.rowLast]} onPress={() => setSelExercise({ id: e.id, name: e.name })} activeOpacity={0.7}>
@@ -440,8 +456,11 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
 
           {/* HISTORIE */}
           <View style={styles.card}>
-            <GlassFill radius={16} />
-            <Text style={styles.cardTitle}>{t('progress.historyTitle')}</Text>
+            <GlassFill radius={20} />
+            <View style={styles.cardHead}>
+              <Ionicons name="time" size={14} color={c.textMuted} />
+              <Text style={styles.cardLabel} numberOfLines={1}>{t('progress.historyTitle')}</Text>
+            </View>
             {history.length > 0 ? (
               history.map((h, i) => (
                 <View key={`${h.date}-${i}`} style={[styles.row, i === history.length - 1 && styles.rowLast]}>
@@ -477,8 +496,8 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
 function DeltaChip({ label, value, color, styles }: { label: string; value: number | null; color: string; styles: any }) {
   return (
     <View style={styles.deltaCell}>
-      <Text style={[styles.deltaCellVal, { color }]}>{value == null ? '–' : `${value > 0 ? '+' : ''}${value}`}</Text>
-      <Text style={styles.deltaCellLabel}>{label}</Text>
+      <Text style={[styles.deltaCellVal, { color }]} numberOfLines={1}>{value == null ? '–' : `${value > 0 ? '+' : ''}${value}`}</Text>
+      <Text style={styles.deltaCellLabel} numberOfLines={1}>{label}</Text>
     </View>
   );
 }
@@ -486,15 +505,17 @@ function DeltaChip({ label, value, color, styles }: { label: string; value: numb
 function makeStyles(c: Colors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: 'transparent', paddingTop: 56, paddingHorizontal: 16 },
-    title: { fontSize: 26, fontWeight: '800', color: c.heading },
+    title: { fontSize: 28, fontWeight: '800', color: c.heading, letterSpacing: -0.5 },
     subtitle: { fontSize: 15, color: c.textMuted, marginTop: 2, marginBottom: 16 },
 
-    card: { ...shadow, backgroundColor: c.card, borderRadius: 16, padding: 18, marginBottom: 14, borderWidth: 1, borderColor: c.cardBorder },
-    cardTitle: { fontSize: 16, fontWeight: '700', color: c.heading, marginBottom: 12 },
+    card: { ...shadow, backgroundColor: c.card, borderRadius: 20, padding: 18, marginBottom: 14, borderWidth: 1, borderColor: c.cardBorder, overflow: 'hidden' },
+    // Karten-Kopf: kleines Icon + ALL-CAPS-Eyebrow (wie Home)
+    cardHead: { flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 12 },
+    cardLabel: { flexShrink: 1, fontSize: 11, fontWeight: '700', letterSpacing: 1.6, color: c.textMuted, textTransform: 'uppercase' },
 
     weightRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
-    weightCol: { alignItems: 'center' },
-    bigWeight: { fontSize: 34, fontWeight: 'bold', color: c.heading },
+    weightCol: { alignItems: 'center', minWidth: 0 },
+    bigWeight: { fontSize: 34, fontWeight: '800', color: c.heading, letterSpacing: -0.5 },
     bigWeightMuted: { fontSize: 28, fontWeight: '700', color: c.textMuted },
     weightUnit: { fontSize: 12, color: c.textMuted, marginTop: 2 },
 
@@ -510,12 +531,11 @@ function makeStyles(c: Colors) {
     goalFill: { height: 8, backgroundColor: c.success, borderRadius: 4 },
 
     histToggle: { marginTop: 14, alignItems: 'center' },
-    histToggleText: { color: c.primary, fontSize: 14, fontWeight: '600' },
+    histToggleText: { color: c.primary, fontSize: 14, fontWeight: '700' },
     histRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 9, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.border },
     histDate: { fontSize: 14, color: c.textMuted, width: 64 },
     histKg: { fontSize: 15, color: c.heading, fontWeight: '700', flex: 1 },
     histDel: { padding: 6 },
-    histDelText: { fontSize: 14, color: c.textMuted },
 
     chartWrap: { marginTop: 10, alignItems: 'center' },
     chartAxis: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 2 },
@@ -527,11 +547,12 @@ function makeStyles(c: Colors) {
     saveText: { color: c.onPrimary, fontSize: 15, fontWeight: '700' },
     msg: { fontSize: 13, textAlign: 'center', marginTop: 10 },
 
+    // Statistik-Kacheln: 36px-Icon-Chip oben, Wert + Unterzeile darunter (wie Home)
     statGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 0 },
-    statCard: { ...shadow, width: '48%', backgroundColor: c.card, borderRadius: 16, paddingVertical: 18, paddingHorizontal: 12, alignItems: 'center', marginBottom: 14, borderWidth: 1, borderColor: c.cardBorder },
-    statIcon: { fontSize: 22 },
-    statValue: { fontSize: 22, fontWeight: 'bold', color: c.heading, marginTop: 6 },
-    statLabel: { fontSize: 12, color: c.textMuted, marginTop: 2, textAlign: 'center' },
+    statCard: { ...shadow, width: '48%', backgroundColor: c.card, borderRadius: 20, paddingVertical: 15, paddingHorizontal: 13, marginBottom: 14, borderWidth: 1, borderColor: c.cardBorder, overflow: 'hidden' },
+    statChip: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+    statValue: { fontSize: 21, fontWeight: '800', color: c.heading, marginTop: 12, letterSpacing: -0.3 },
+    statLabel: { fontSize: 11, color: c.textMuted, fontWeight: '500', marginTop: 7 },
 
     caption: { fontSize: 12, color: c.textMuted, marginTop: 8 },
     hint: { fontSize: 14, color: c.textMuted, lineHeight: 20, paddingVertical: 6 },

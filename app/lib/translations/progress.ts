@@ -2,15 +2,15 @@
 // Jeder Key steht in de UND en mit identischen {Platzhaltern}.
 export const de = {
   'progress.title': 'Fortschritt',
-  'progress.subtitle': 'Deine Entwicklung auf einen Blick 📈',
+  'progress.subtitle': 'Deine Entwicklung auf einen Blick',
   'progress.tabMyValues': 'Meine Werte',
-  'progress.tabLeaderboard': '🏆 Bestenliste',
+  'progress.tabLeaderboard': 'Bestenliste',
 
   'progress.exerciseFallback': 'Übung',
 
   'progress.weightInvalid': 'Bitte ein gültiges Gewicht ({min}–{max} kg) eingeben.',
   'progress.saveFailed': 'Speichern fehlgeschlagen: {err}',
-  'progress.weightSaved': 'Gewicht gespeichert ✓',
+  'progress.weightSaved': 'Gewicht gespeichert',
 
   'progress.deleteFailedTitle': 'Löschen fehlgeschlagen',
   'progress.deleteConfirmTitle': 'Eintrag löschen?',
@@ -23,7 +23,7 @@ export const de = {
   'progress.statVolume': 'Volumen gesamt',
   'progress.statWeek': 'Diese Woche',
 
-  'progress.weightCardTitle': '⚖️  Gewichtsverlauf',
+  'progress.weightCardTitle': 'Gewichtsverlauf',
   'progress.kgCurrent': 'kg aktuell',
   'progress.kgGoal': 'kg Ziel',
   'progress.delta7': '7 Tage',
@@ -31,7 +31,7 @@ export const de = {
   'progress.deltaSinceStart': 'seit Start',
   'progress.chartHint': 'Trag regelmäßig dein Gewicht ein – ab dem 2. Wert siehst du hier deine Kurve.',
   'progress.goalProgress': 'Ziel-Fortschritt',
-  'progress.goalReached': 'erreicht 🎉',
+  'progress.goalReached': 'erreicht',
   'progress.goalRemaining': 'noch {n} kg',
   'progress.weightPlaceholder': 'Heutiges Gewicht (kg)',
   'progress.submit': 'Eintragen',
@@ -39,18 +39,18 @@ export const de = {
   'progress.historyShow': 'Verlauf anzeigen ({n})',
   'progress.deleteWeightA11y': 'Gewichtseintrag {n} kg löschen',
 
-  'progress.weeklyVolumeTitle': '📊  Volumen je Woche',
+  'progress.weeklyVolumeTitle': 'Volumen je Woche',
   'progress.weeklyVolumeCaption': 'Wiederholungen × Gewicht, summiert pro Kalenderwoche (Mo–So).',
   'progress.weeklyVolumeHint': 'Sobald du Sätze mit Gewicht mitschreibst, erscheint hier dein Wochenvolumen.',
 
-  'progress.recordsTitle': '🏆  Persönliche Rekorde',
+  'progress.recordsTitle': 'Persönliche Rekorde',
   'progress.reps': '{n} Wdh',
   'progress.recordsHint': 'Noch keine Rekorde – trag im Training Sätze mit Gewicht ein.',
 
-  'progress.exerciseProgressTitle': '📈  Übungs-Fortschritt',
+  'progress.exerciseProgressTitle': 'Übungs-Fortschritt',
   'progress.exerciseProgressCaption': 'Tippe eine Übung für Verlauf & Rekord.',
 
-  'progress.historyTitle': '🕑  Trainingshistorie',
+  'progress.historyTitle': 'Trainingshistorie',
   'progress.setsOne': '{n} Satz',
   'progress.setsMany': '{n} Sätze',
   'progress.historyHint': 'Noch keine Einheiten – leg im Training los! 💪',
@@ -58,9 +58,9 @@ export const de = {
 
 export const en = {
   'progress.title': 'Progress',
-  'progress.subtitle': 'Your progress at a glance 📈',
+  'progress.subtitle': 'Your progress at a glance',
   'progress.tabMyValues': 'My stats',
-  'progress.tabLeaderboard': '🏆 Leaderboard',
+  'progress.tabLeaderboard': 'Leaderboard',
 
   'progress.exerciseFallback': 'Exercise',
 
@@ -79,7 +79,7 @@ export const en = {
   'progress.statVolume': 'Total volume',
   'progress.statWeek': 'This week',
 
-  'progress.weightCardTitle': '⚖️  Weight trend',
+  'progress.weightCardTitle': 'Weight trend',
   'progress.kgCurrent': 'kg current',
   'progress.kgGoal': 'kg goal',
   'progress.delta7': '7 days',
@@ -95,18 +95,18 @@ export const en = {
   'progress.historyShow': 'Show history ({n})',
   'progress.deleteWeightA11y': 'Delete weight entry {n} kg',
 
-  'progress.weeklyVolumeTitle': '📊  Volume per week',
+  'progress.weeklyVolumeTitle': 'Volume per week',
   'progress.weeklyVolumeCaption': 'Reps × weight, summed per calendar week (Mon–Sun).',
   'progress.weeklyVolumeHint': 'As soon as you log sets with weight, your weekly volume shows up here.',
 
-  'progress.recordsTitle': '🏆  Personal records',
+  'progress.recordsTitle': 'Personal records',
   'progress.reps': '{n} reps',
   'progress.recordsHint': 'No records yet – log sets with weight during your workout.',
 
-  'progress.exerciseProgressTitle': '📈  Exercise progress',
+  'progress.exerciseProgressTitle': 'Exercise progress',
   'progress.exerciseProgressCaption': 'Tap an exercise for its trend & record.',
 
-  'progress.historyTitle': '🕑  Workout history',
+  'progress.historyTitle': 'Workout history',
   'progress.setsOne': '{n} set',
   'progress.setsMany': '{n} sets',
   'progress.historyHint': 'No sessions yet – get started in your workout! 💪',

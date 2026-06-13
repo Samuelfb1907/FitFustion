@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { useT } from '../contexts/LanguageContext';
+import { Ionicons } from '@expo/vector-icons';
 import ExerciseDetail from '../components/ExerciseDetail';
 import Segmented from '../components/Segmented';
 import PlanScreen, { Selected } from './PlanScreen';
@@ -164,7 +165,7 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
           {segmented}
           <View style={{ height: 18 }} />
           <View style={styles.bodyCard}>
-            <GlassFill radius={16} />
+            <GlassFill radius={20} />
             <BodyMuscleMap
               onSelect={openMuscleByKey}
               c={c}
@@ -173,7 +174,7 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
           </View>
           <Text style={styles.sectionLabel}>{t('training.orFromList')}</Text>
           <View style={styles.muscleList}>
-            <GlassFill radius={14} />
+            <GlassFill radius={20} />
             {orderedMuscles.map((m, idx) => (
               <TouchableOpacity
                 key={m.id}
@@ -204,7 +205,7 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
         <ErrorRetry message={exError} onRetry={() => openMuscle(selectedMuscle)} />
       ) : exercises.length === 0 ? (
         <View style={styles.note}>
-          <GlassFill radius={16} />
+          <GlassFill radius={20} />
           <Text style={styles.noteText}>{t('training.noExercises')}</Text>
         </View>
       ) : (
@@ -220,6 +221,9 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
           ListHeaderComponent={<Text style={styles.countHint}>{exercises.length === 1 ? t('training.exerciseCountOne', { n: exercises.length }) : t('training.exerciseCountMany', { n: exercises.length })}</Text>}
           ListFooterComponent={!isPremium && moreCount > 0 ? (
             <TouchableOpacity style={styles.exRow} onPress={() => openPaywall('exercises')} activeOpacity={0.7}>
+              <View style={styles.lockChip}>
+                <Ionicons name="lock-closed" size={17} color={c.primary} />
+              </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.exName}>{moreCount === 1 ? t('training.moreLockedOne', { n: moreCount }) : t('training.moreLockedMany', { n: moreCount })}</Text>
                 <Text style={styles.exMeta}>{t('training.moreLockedHint')}</Text>
@@ -290,25 +294,27 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
 function makeStyles(c: Colors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: 'transparent', paddingTop: 56, paddingHorizontal: 16 },
-    title: { fontSize: 26, fontWeight: '800', color: c.heading },
+    title: { fontSize: 28, fontWeight: '800', color: c.heading, letterSpacing: -0.5 },
     subtitle: { fontSize: 15, color: c.textMuted, marginTop: 2, marginBottom: 16 },
     back: { color: c.primary, fontSize: 15, fontWeight: '600', marginBottom: 10 },
 
-    sectionLabel: { fontSize: 12, fontWeight: '800', letterSpacing: 0.8, color: c.textMuted, marginTop: 4, marginBottom: 12 },
-    bodyCard: { ...shadow, backgroundColor: c.card, borderRadius: 16, paddingVertical: 18, paddingHorizontal: 14, marginBottom: 8, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center' },
+    sectionLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1.6, color: c.textMuted, marginTop: 4, marginBottom: 12 },
+    bodyCard: { ...shadow, backgroundColor: c.card, borderRadius: 20, paddingVertical: 18, paddingHorizontal: 14, marginBottom: 8, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center', overflow: 'hidden' },
 
-    muscleList: { ...shadow, backgroundColor: c.card, borderRadius: 14, borderWidth: 1, borderColor: c.cardBorder },
+    muscleList: { ...shadow, backgroundColor: c.card, borderRadius: 20, borderWidth: 1, borderColor: c.cardBorder, overflow: 'hidden' },
     muscleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 13, paddingHorizontal: 16 },
     muscleRowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.border },
     muscleRowName: { fontSize: 15, fontWeight: '600', color: c.text },
     muscleRowChev: { fontSize: 20, color: c.textMuted, marginLeft: 8 },
 
-    countHint: { fontSize: 13, color: c.textMuted, marginBottom: 10 },
+    countHint: { fontSize: 11, fontWeight: '700', letterSpacing: 1.6, color: c.textMuted, textTransform: 'uppercase', marginBottom: 12 },
     exRow: { ...shadow, flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 14, paddingVertical: 16, paddingHorizontal: 16, marginBottom: 10, borderWidth: 1, borderColor: c.cardBorder },
     exName: { fontSize: 17, fontWeight: '600', color: c.text },
     exMeta: { fontSize: 13, color: c.textMuted, marginTop: 2 },
     chev: { fontSize: 24, color: c.textMuted, marginLeft: 8 },
-    note: { backgroundColor: c.card, borderColor: c.cardBorder, borderWidth: 1, borderRadius: 16, padding: 16, marginTop: 16 },
+    // Icon-Chip fuer die Premium-Sperre (ersetzt das frühere Schloss-Emoji im Text).
+    lockChip: { width: 36, height: 36, borderRadius: 12, backgroundColor: 'rgba(25,201,143,0.12)', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+    note: { backgroundColor: c.card, borderColor: c.cardBorder, borderWidth: 1, borderRadius: 20, padding: 16, marginTop: 16, overflow: 'hidden' },
     noteText: { fontSize: 14, color: c.textMuted, lineHeight: 20 },
   });
 }

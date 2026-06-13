@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useT } from '../contexts/LanguageContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
+import { Ionicons } from '@expo/vector-icons';
 import { WEEKDAYS, todayWeekday } from '../lib/weekdays';
 import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
@@ -473,17 +474,20 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
                     </View>
                   </View>
                   <TouchableOpacity onPress={() => removeExercise(d.id, ex.rowId)} style={styles.removeBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                    <Text style={styles.removeText}>🗑</Text>
+                    <Ionicons name="trash-outline" size={18} color={c.danger} />
                   </TouchableOpacity>
                 </View>
               ) : (
                 <TouchableOpacity key={ex.rowId} style={styles.exItem} activeOpacity={0.7}
                   onPress={() => { const now = Date.now(); if (now - lastExerciseOpen < 600) return; lastExerciseOpen = now; onOpenExercise?.({ exercise: { id: ex.exId, name: ex.name, difficulty: ex.difficulty, equipment: ex.equipment, description: ex.description, instructions: ex.instructions }, muscleKey: ex.muscleKey, muscleName: ex.muscleName }); }}>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.exName, doneToday.has(ex.exId) && { color: c.success, fontWeight: '700' }]}>{doneToday.has(ex.exId) ? '✓ ' : ''}{ex.name}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      {doneToday.has(ex.exId) && <Ionicons name="checkmark-circle" size={15} color={c.success} />}
+                      <Text style={[styles.exName, doneToday.has(ex.exId) && { color: c.success, fontWeight: '700' }]} numberOfLines={1}>{ex.name}</Text>
+                    </View>
                     <Text style={styles.exMeta}>{ex.sets} × {ex.reps} · {DIFF_LABELS[ex.difficulty] ?? ex.difficulty}{ex.muscleName ? ` · ${ex.muscleName}` : ''}</Text>
                   </View>
-                  <Text style={styles.chev}>›</Text>
+                  <Ionicons name="chevron-forward" size={18} color={c.textMuted} style={{ marginLeft: 8 }} />
                 </TouchableOpacity>
               )
             )

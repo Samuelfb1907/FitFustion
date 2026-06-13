@@ -9,6 +9,7 @@ import LegalText from '../components/LegalText';
 import { DISCLAIMER_VERSION, getTermsSections, getPrivacySections, getDisclaimerSections } from '../lib/legal';
 import Ambient from '../components/Ambient';
 import GlassFill from '../components/GlassFill';
+import { Ionicons } from '@expo/vector-icons';
 import * as AppleAuthentication from 'expo-apple-authentication';
 
 function translateError(msg: string, t: (key: string, params?: Record<string, string | number>) => string): string {
@@ -185,7 +186,7 @@ export default function AuthScreen() {
                   onSubmitEditing={handleSubmit}
                 />
                 <TouchableOpacity style={styles.pwToggle} onPress={() => setShowPw((s) => !s)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button" accessibilityLabel={showPw ? t('auth.a11y.hidePassword') : t('auth.a11y.showPassword')}>
-                  <Text style={styles.pwToggleText}>{showPw ? '🙈' : '👁️'}</Text>
+                  <Ionicons name={showPw ? 'eye-off-outline' : 'eye-outline'} size={20} color={c.textMuted} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -198,7 +199,7 @@ export default function AuthScreen() {
 
             {mode === 'register' && (
               <TouchableOpacity style={styles.acceptRow} onPress={() => setAccepted((a) => !a)} activeOpacity={0.7} accessibilityRole="checkbox" accessibilityState={{ checked: accepted }} accessibilityLabel={t('auth.a11y.acceptLegal')}>
-                <View style={[styles.checkbox, accepted && styles.checkboxOn]}>{accepted && <Text style={styles.checkmark}>✓</Text>}</View>
+                <View style={[styles.checkbox, accepted && styles.checkboxOn]}>{accepted && <Ionicons name="checkmark" size={15} color={c.onPrimary} />}</View>
                 <Text style={styles.acceptText}>
                   {t('auth.accept.prefix')}
                   <Text style={styles.acceptLink} onPress={() => setShowLegal('disclaimer')}>{t('auth.accept.disclaimer')}</Text>{t('auth.accept.middle')}

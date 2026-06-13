@@ -10,8 +10,8 @@ export const de = {
   'training.noExercises': 'Keine passenden Übungen gefunden. Tipp: Mit mehr Equipment (Profil) schaltest du weitere frei.',
   'training.exerciseCountOne': '{n} Übung',
   'training.exerciseCountMany': '{n} Übungen',
-  'training.moreLockedOne': '🔒  Noch {n} Übung',
-  'training.moreLockedMany': '🔒  Noch {n} Übungen',
+  'training.moreLockedOne': 'Noch {n} Übung',
+  'training.moreLockedMany': 'Noch {n} Übungen',
   'training.moreLockedHint': 'Mit Premium alle Übungen je Muskel freischalten',
 };
 
@@ -25,7 +25,7 @@ export const en = {
   'training.noExercises': 'No matching exercises found. Tip: add more equipment (profile) to unlock more.',
   'training.exerciseCountOne': '{n} exercise',
   'training.exerciseCountMany': '{n} exercises',
-  'training.moreLockedOne': '🔒  {n} more exercise',
-  'training.moreLockedMany': '🔒  {n} more exercises',
+  'training.moreLockedOne': '{n} more exercise',
+  'training.moreLockedMany': '{n} more exercises',
   'training.moreLockedHint': 'Unlock all exercises per muscle with Premium',
 };

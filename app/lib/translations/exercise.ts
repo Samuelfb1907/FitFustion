@@ -21,10 +21,10 @@ export const de = {
   "exercise.repsPlaceholder": "z. B. 10",
   "exercise.weightLabel": "Gewicht (kg)",
   "exercise.weightPlaceholder": "optional",
-  "exercise.saveSet": "✓ Satz speichern",
+  "exercise.saveSet": "Satz speichern",
   "exercise.doneHintOne": "{n} Satz heute gespeichert 💪",
   "exercise.doneHintMany": "{n} Sätze heute gespeichert 💪",
-  "exercise.endTraining": "✓ Training beenden",
+  "exercise.endTraining": "Training beenden",
   "exercise.endedHint": "Training beendet 💪 Dein nächster Satz startet automatisch ein neues Training.",
 };
 
@@ -51,9 +51,9 @@ export const en = {
   "exercise.repsPlaceholder": "e.g. 10",
   "exercise.weightLabel": "Weight (kg)",
   "exercise.weightPlaceholder": "optional",
-  "exercise.saveSet": "✓ Save set",
+  "exercise.saveSet": "Save set",
   "exercise.doneHintOne": "{n} set saved today 💪",
   "exercise.doneHintMany": "{n} sets saved today 💪",
-  "exercise.endTraining": "✓ End workout",
+  "exercise.endTraining": "End workout",
   "exercise.endedHint": "Workout ended 💪 Your next set automatically starts a new workout.",
 };

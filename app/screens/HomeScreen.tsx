@@ -379,19 +379,22 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
           <View style={styles.achSheet}>
             <View style={styles.achHead}>
               <Text style={styles.achTitle}>{t('home.achievementsTitle')}</Text>
-              <Text style={styles.achCount}>🏆 {earnedCount}/{ACHIEVEMENTS.length}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Ionicons name="trophy" size={15} color={c.primary} />
+                <Text style={styles.achCount}>{earnedCount}/{ACHIEVEMENTS.length}</Text>
+              </View>
             </View>
             <ScrollView contentContainerStyle={{ paddingBottom: 12 }} showsVerticalScrollIndicator={false}>
               {ACHIEVEMENTS.map((a) => {
                 const earned = !!stats && a.earned(stats, lv.level);
                 return (
                   <View key={a.key} style={[styles.achRow, !earned && styles.achRowLocked]} accessible accessibilityLabel={`${a.name}, ${a.description} ${earned ? t('home.achievementUnlocked') : t('home.achievementLocked')}`}>
-                    <Text style={styles.achIcon}>{earned ? a.icon : '🔒'}</Text>
+                    {earned ? <Text style={styles.achIcon}>{a.icon}</Text> : <View style={styles.achIconLock}><Ionicons name="lock-closed" size={22} color={c.textMuted} /></View>}
                     <View style={{ flex: 1 }}>
                       <Text style={styles.achName}>{a.name}</Text>
                       <Text style={styles.achDesc}>{a.description}</Text>
                     </View>
-                    {earned && <Text style={styles.achTick}>✓</Text>}
+                    {earned && <Ionicons name="checkmark-circle" size={20} color={c.primary} style={{ marginLeft: 10 }} />}
                   </View>
                 );
               })}
@@ -491,6 +494,7 @@ function makeStyles(c: Colors) {
     achRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 14, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: c.cardBorder },
     achRowLocked: { opacity: 0.55 },
     achIcon: { fontSize: 26, marginRight: 14 },
+    achIconLock: { width: 26, marginRight: 14, alignItems: 'center' },
     achName: { fontSize: 15, fontWeight: '700', color: c.heading },
     achDesc: { fontSize: 13, color: c.textMuted, marginTop: 2 },
     achTick: { fontSize: 18, fontWeight: '800', color: c.success, marginLeft: 10 },

@@ -17,7 +17,7 @@ export default function Segmented({
   c: Colors;
 }) {
   return (
-    <Glass radius={14} style={styles.wrap}>
+    <Glass radius={16} style={styles.wrap}>
       <View style={styles.row}>
         {options.map((o) => {
           const active = o.key === value;
@@ -31,7 +31,7 @@ export default function Segmented({
               accessibilityLabel={o.label}
               style={[styles.seg, active && { backgroundColor: c.primary }]}
             >
-              <Text numberOfLines={1} style={[styles.label, { color: active ? c.onPrimary : c.textMuted }]}>
+              <Text numberOfLines={1} style={[styles.label, { color: active ? c.onPrimary : c.textMuted, fontWeight: active ? '800' : '600' }]}>
                 {o.label}
               </Text>
             </TouchableOpacity>
@@ -43,8 +43,8 @@ export default function Segmented({
 }
 
 const styles = StyleSheet.create({
-  wrap: { padding: 4 },
+  wrap: { padding: 5 },
   row: { flexDirection: 'row', gap: 4 },
-  seg: { flex: 1, minHeight: 42, paddingVertical: 9, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  label: { fontSize: 14, fontWeight: '700' },
+  seg: { flex: 1, minHeight: 40, paddingVertical: 9, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  label: { fontSize: 13, fontWeight: '700' },
 });

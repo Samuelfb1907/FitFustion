@@ -47,7 +47,7 @@ export default function EssenScreen({ focusTick }: { focusTick?: number }) {
 function makeStyles(c: Colors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: 'transparent', paddingTop: 60, paddingHorizontal: 20 },
-    title: { fontSize: 26, fontWeight: 'bold', color: c.heading },
+    title: { fontSize: 28, fontWeight: '800', color: c.heading, letterSpacing: -0.5 },
     page: { flex: 1 },
     hidden: { display: 'none' },
   });

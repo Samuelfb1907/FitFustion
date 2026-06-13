@@ -49,7 +49,7 @@ export const de = {
   'settings.rem.motivationTime': 'Motivations-Uhrzeit',
   'settings.rem.motivationTimeEarlier': 'Motivations-Uhrzeit eine Stunde früher',
   'settings.rem.motivationTimeLater': 'Motivations-Uhrzeit eine Stunde später',
-  'settings.rem.hint': '💬 Über 100 Motivationssprüche, 1× täglich zur gewählten Zeit. Wasser: 10/13/16/19 Uhr · Training zur gewählten Zeit. Echte Benachrichtigungen erscheinen erst nach einem Development-Build (in Expo Go nicht).',
+  'settings.rem.hint': 'Über 100 Motivationssprüche, 1× täglich zur gewählten Zeit. Wasser: 10/13/16/19 Uhr · Training zur gewählten Zeit. Echte Benachrichtigungen erscheinen erst nach einem Development-Build (in Expo Go nicht).',
 
   // Gesundheit (Android / Health Connect)
   'settings.health.alert.connectTitle': 'Mit Health Connect verbinden',
@@ -171,7 +171,7 @@ export const en = {
   'settings.rem.motivationTime': "Motivation time",
   'settings.rem.motivationTimeEarlier': "Motivation time one hour earlier",
   'settings.rem.motivationTimeLater': "Motivation time one hour later",
-  'settings.rem.hint': "💬 Over 100 motivational quotes, once a day at your chosen time. Water: 10/13/16/19h · workout at your chosen time. Real notifications only appear after a development build (not in Expo Go).",
+  'settings.rem.hint': "Over 100 motivational quotes, once a day at your chosen time. Water: 10/13/16/19h · workout at your chosen time. Real notifications only appear after a development build (not in Expo Go).",
 
   // Health (Android / Health Connect)
   'settings.health.alert.connectTitle': "Connect with Health Connect",

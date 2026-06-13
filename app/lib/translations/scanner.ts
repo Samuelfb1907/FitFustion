@@ -5,7 +5,7 @@ export const de = {
   "scanner.openSettings": "Einstellungen öffnen",
   "scanner.cancel": "Abbrechen",
   "scanner.hint": "Barcode in den Rahmen halten",
-  "scanner.close": "✕  Schließen",
+  "scanner.close": "Schließen",
 };
 
 export const en = {
@@ -15,5 +15,5 @@ export const en = {
   "scanner.openSettings": "Open settings",
   "scanner.cancel": "Cancel",
   "scanner.hint": "Hold the barcode inside the frame",
-  "scanner.close": "✕  Close",
+  "scanner.close": "Close",
 };

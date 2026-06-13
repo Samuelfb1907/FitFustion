@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { useT, useLang } from '../contexts/LanguageContext';
+import { Ionicons } from '@expo/vector-icons';
 import { computeNutrition, ageFromBirthDate, Gender, ActivityLevel, GoalType } from '../lib/nutrition';
 import BarcodeScanner from '../components/BarcodeScanner';
 import { resolveBarcodeFood } from '../lib/barcodeFood';
@@ -49,6 +50,14 @@ function typicalAmount(amounts: number[]): number {
   return best;
 }
 
+// Icon + Farbton je Mahlzeit (statt Emoji), Ionicons-Namen.
+const MEAL_ION: Record<MealType, { icon: string; fg: string; bg: string }> = {
+  breakfast: { icon: 'sunny', fg: '#F0B429', bg: 'rgba(240,180,41,0.12)' },
+  lunch: { icon: 'restaurant', fg: '#4FB8FF', bg: 'rgba(63,169,245,0.12)' },
+  dinner: { icon: 'moon', fg: '#C3A8FF', bg: 'rgba(157,123,244,0.14)' },
+  snack: { icon: 'nutrition', fg: '#2BD79B', bg: 'rgba(25,201,143,0.12)' },
+};
+
 // todayStr -> lib/date.ts
 
 export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: boolean; focusTick?: number }) {
@@ -67,6 +76,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   const [searching, setSearching] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [targetKcal, setTargetKcal] = useState<number | null>(null);
+  const [macroTargets, setMacroTargets] = useState<{ p: number; c: number; f: number } | null>(null);
   const [trainingKcal, setTrainingKcal] = useState(0);
   const [steps, setSteps] = useState(0);
   const [activityKcal, setActivityKcal] = useState(0);
@@ -172,6 +182,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
         gender: (prof.gender ?? 'prefer_not') as Gender, activity: (prof.activity_level ?? 'moderate') as ActivityLevel, goal: (goal?.goal_type ?? 'general_fitness') as GoalType,
       });
       setTargetKcal(t.targetCalories);
+      setMacroTargets({ p: t.proteinG, c: t.carbsG, f: t.fatG });
       setTrainingKcal(await todayTrainingKcal(userId, Number(prof.weight_kg)));
       if (await hasStepsPermission()) {
         const a = await getTodayActivity(Number(prof.weight_kg));
@@ -552,6 +563,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   }
 
   const kcalOf = (e: LogEntry) => (e.food ? Math.round((e.food.kcal * e.amount_g) / 100) : 0);
+  const macroPct = (v: number, target?: number) => (target && target > 0 ? Math.min(100, Math.round((v / target) * 100)) : 0);
   // Summen in EINEM Durchlauf (memoisiert) statt 4x ueber die Liste zu iterieren
   const { totalKcal, totalP, totalC, totalF } = useMemo(() => {
     let kcal = 0, p = 0, cc = 0, f = 0;
@@ -608,7 +620,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
               <View style={styles.mealChips}>
                 {TRACKER_MEALS.map((m) => (
                   <TouchableOpacity key={m.key} style={[styles.mealChip, mealType === m.key && styles.mealChipActive]} onPress={() => setMealType(m.key)} activeOpacity={0.8}>
-                    <Text style={[styles.mealChipText, mealType === m.key && styles.mealChipTextActive]}>{m.icon} {mealLabel(m.key)}</Text>
+                    <Text style={[styles.mealChipText, mealType === m.key && styles.mealChipTextActive]}>{mealLabel(m.key)}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -698,7 +710,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
         )}
         {showZutaten ? (
           <>
-            <View style={styles.allergyNote}><Text style={styles.allergyText}>{legalShort.allergyHint}</Text></View>
+            <View style={styles.allergyNote}><Ionicons name="warning" size={15} color="#F0B429" style={{ marginTop: 1 }} /><Text style={styles.allergyText}>{legalShort.allergyHint}</Text></View>
             <TextInput style={styles.input} value={search} onChangeText={setSearch} placeholder={t('food.searchPlaceholder')} placeholderTextColor={c.textMuted} autoCorrect={false} />
             <TouchableOpacity style={styles.newFoodBtn} onPress={openNewFood} activeOpacity={0.85}>
               <GlassFill radius={16} />
@@ -743,7 +755,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
                 <Text style={styles.foodKcal}>{f.kcal} kcal</Text>
                 {own && (
                   <TouchableOpacity onPress={() => confirmDeleteFood(f)} style={styles.foodDel} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('food.a11yDeleteFood', { name: f.name })}>
-                    <Text style={styles.foodDelText}>🗑</Text>
+                    <Ionicons name="trash-outline" size={16} color={c.textMuted} />
                   </TouchableOpacity>
                 )}
               </TouchableOpacity>
@@ -763,12 +775,15 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
         ListHeaderComponent={header}
         renderItem={({ item: fav }) => (
           <TouchableOpacity style={styles.foodRow} onPress={() => applyFavorite(fav)} activeOpacity={0.7}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.foodName}>⭐  {fav.name}</Text>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Ionicons name="star" size={14} color="#F0B429" />
+                <Text style={styles.foodName} numberOfLines={1}>{fav.name}</Text>
+              </View>
               <Text style={styles.foodMeta}>{fav.items.length === 1 ? t('food.itemCountOne', { n: fav.items.length }) : t('food.itemCountMany', { n: fav.items.length })}  ·  {favKcal(fav)} kcal</Text>
             </View>
             <TouchableOpacity onPress={() => confirmDeleteFavorite(fav)} style={styles.foodDel} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('food.a11yDeleteFavorite', { name: fav.name })}>
-              <Text style={styles.foodDelText}>🗑</Text>
+              <Ionicons name="trash-outline" size={16} color={c.textMuted} />
             </TouchableOpacity>
           </TouchableOpacity>
         )}
@@ -799,7 +814,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
                   <Text style={styles.entryMeta}>{it.amount_g} g  ·  {Math.round((it.kcal * it.amount_g) / 100)} kcal</Text>
                 </View>
                 <TouchableOpacity onPress={() => removeDraftItem(idx)} style={styles.del} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('food.a11yRemoveItem', { name: it.name })}>
-                  <Text style={styles.delText}>✕</Text>
+                  <Ionicons name="close" size={15} color={c.textMuted} />
                 </TouchableOpacity>
               </View>
             ))
@@ -835,15 +850,15 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       {!embedded && <Text style={styles.title}>{t('food.title')}</Text>}
       {!embedded && <Text style={styles.subtitle}>{t('food.diarySubtitle')}</Text>}
 
-      {/* HEUTE-Übersicht */}
+      {/* HEUTE-Übersicht: gegessen | übrig | Ziel + Balken + Schritte-Pille + Makros */}
       <View style={styles.todayCard}>
-        <GlassFill radius={16} />
+        <GlassFill radius={22} />
         <View style={styles.todayRow}>
-          <View style={styles.todayCol}><Text style={styles.todayVal}>{totalKcal}</Text><Text style={styles.todayLbl}>{t('food.eaten')}</Text></View>
+          <View style={styles.todayCol}><Text style={styles.todayVal} numberOfLines={1}>{totalKcal}</Text><Text style={styles.todayLbl} numberOfLines={1}>{t('food.eaten')}</Text></View>
           <View style={styles.todaySep} />
-          <View style={styles.todayCol}><Text style={styles.todayVal}>{effTarget ?? '–'}</Text><Text style={styles.todayLbl}>{t('food.goal')}</Text></View>
+          <View style={styles.todayCol}><Text style={[styles.todayVal, { color: remaining != null && remaining < 0 ? c.danger : c.primary }]} numberOfLines={1}>{remaining != null ? remaining : '–'}</Text><Text style={styles.todayLbl} numberOfLines={1}>{t('food.remaining')}</Text></View>
           <View style={styles.todaySep} />
-          <View style={styles.todayCol}><Text style={[styles.todayVal, remaining != null && remaining < 0 && { color: c.danger }]}>{remaining != null ? remaining : '–'}</Text><Text style={styles.todayLbl}>{t('food.remaining')}</Text></View>
+          <View style={styles.todayCol}><Text style={styles.todayVal} numberOfLines={1}>{effTarget ?? '–'}</Text><Text style={styles.todayLbl} numberOfLines={1}>{t('food.goal')}</Text></View>
         </View>
         {effTarget != null && (
           <View style={styles.kcalTrack}>
@@ -851,22 +866,40 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
           </View>
         )}
         {(trainingKcal > 0 || activityKcal > 0) && (
-          <Text style={styles.bonusLine} numberOfLines={1}>
-            {trainingKcal > 0 ? '🔥' : ''}{activityKcal > 0 ? '🚶' : ''}  {t('food.kcalExtra', { n: Math.max(trainingKcal, activityKcal) })}{activityKcal > 0 && steps > 0 ? t('food.stepsSuffix', { steps: steps.toLocaleString(lang === 'en' ? 'en-US' : 'de-DE') }) : ''}
-          </Text>
+          <View style={styles.bonusPill}>
+            <Ionicons name={activityKcal > 0 ? 'walk' : 'flame'} size={14} color={c.primary} />
+            <Text style={styles.bonusText} numberOfLines={1}>{t('food.kcalExtra', { n: Math.max(trainingKcal, activityKcal) })}{activityKcal > 0 && steps > 0 ? t('food.stepsSuffix', { steps: steps.toLocaleString(lang === 'en' ? 'en-US' : 'de-DE') }) : ''}</Text>
+          </View>
         )}
         <View style={styles.macrosRow}>
-          <View style={styles.macroItem}><View style={[styles.macroDot, { backgroundColor: c.accent }]} /><Text style={styles.macroTxt}>{t('food.gProtein', { n: totalP })}</Text></View>
-          <View style={styles.macroItem}><View style={[styles.macroDot, { backgroundColor: '#E69500' }]} /><Text style={styles.macroTxt}>{t('food.gCarbs', { n: totalC })}</Text></View>
-          <View style={styles.macroItem}><View style={[styles.macroDot, { backgroundColor: c.danger }]} /><Text style={styles.macroTxt}>{t('food.gFat', { n: totalF })}</Text></View>
+          <View style={styles.macroCol2}>
+            <Text style={styles.macroLbl} numberOfLines={1}>{t('food.mProtein')}</Text>
+            <Text style={styles.macroVal} numberOfLines={1}>{totalP} <Text style={styles.macroUnit}>g</Text></Text>
+            <View style={styles.macroTrack}><View style={[styles.macroFill, { width: `${macroPct(totalP, macroTargets?.p)}%`, backgroundColor: c.primary }]} /></View>
+          </View>
+          <View style={styles.macroCol2}>
+            <Text style={styles.macroLbl} numberOfLines={1}>{t('food.mCarbs')}</Text>
+            <Text style={styles.macroVal} numberOfLines={1}>{totalC} <Text style={styles.macroUnit}>g</Text></Text>
+            <View style={styles.macroTrack}><View style={[styles.macroFill, { width: `${macroPct(totalC, macroTargets?.c)}%`, backgroundColor: '#E69500' }]} /></View>
+          </View>
+          <View style={styles.macroCol2}>
+            <Text style={styles.macroLbl} numberOfLines={1}>{t('food.mFat')}</Text>
+            <Text style={styles.macroVal} numberOfLines={1}>{totalF} <Text style={styles.macroUnit}>g</Text></Text>
+            <View style={styles.macroTrack}><View style={[styles.macroFill, { width: `${macroPct(totalF, macroTargets?.f)}%`, backgroundColor: c.danger }]} /></View>
+          </View>
         </View>
       </View>
 
       {/* "Sprich's einfach": Mahlzeit in Sprache eingeben -> KI erkennt automatisch */}
       <View style={styles.nlCard}>
-        <GlassFill radius={14} />
-        <Text style={styles.nlTitle}>{t('food.nlTitle')}</Text>
-        <Text style={styles.nlConsentHint}>{t('food.nlConsentHint')}</Text>
+        <GlassFill radius={22} />
+        <View style={styles.nlHead}>
+          <View style={styles.nlChipIcon}><Ionicons name="color-wand" size={18} color={c.primary} /></View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={styles.nlTitle} numberOfLines={1}>{t('food.nlTitle')}</Text>
+            <Text style={styles.nlConsentHint}>{t('food.nlConsentHint')}</Text>
+          </View>
+        </View>
         <TextInput
           style={styles.nlInput}
           value={nlText}
@@ -877,7 +910,12 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
           editable={!nlBusy}
         />
         <TouchableOpacity style={[styles.nlBtn, isPremium && (nlBusy || !nlText.trim()) && { opacity: 0.5 }]} onPress={recognizeMeal} disabled={isPremium && (nlBusy || !nlText.trim())} activeOpacity={0.85}>
-          {nlBusy && !nlItems ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.nlBtnText}>{isPremium ? t('food.nlRecognize') : t('food.nlRecognizePremium')}</Text>}
+          {nlBusy && !nlItems ? <ActivityIndicator color={c.onPrimary} /> : (
+            <View style={styles.btnRow}>
+              <Ionicons name={isPremium ? 'sparkles' : 'lock-closed'} size={16} color={c.onPrimary} />
+              <Text style={styles.nlBtnText} numberOfLines={1}>{isPremium ? t('food.nlRecognize') : t('food.nlRecognizePremium')}</Text>
+            </View>
+          )}
         </TouchableOpacity>
         {nlErr && <Text style={styles.error}>{nlErr}</Text>}
       </View>
@@ -887,11 +925,13 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       {/* Aktionen */}
       <View style={styles.actionRow}>
         <TouchableOpacity style={styles.addBtnRow} onPress={() => openPick(mealByHour())} activeOpacity={0.85}>
-          <Text style={styles.addText}>{t('food.addAction')}</Text>
+          <Ionicons name="add" size={18} color={c.onPrimary} />
+          <Text style={styles.addText} numberOfLines={1}>{t('food.addAction')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.scanBtn} onPress={() => { if (!isPremium) { openPaywall('scan'); return; } setError(null); setScannerOpen(true); }} activeOpacity={0.85}>
-          <GlassFill radius={14} />
-          <Text style={styles.scanText}>{isPremium ? t('food.scan') : t('food.scanLocked')}</Text>
+          <GlassFill radius={15} />
+          <Ionicons name={isPremium ? 'camera' : 'lock-closed'} size={17} color={c.primary} />
+          <Text style={styles.scanText} numberOfLines={1}>{isPremium ? t('food.scan') : t('food.scanLocked')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -899,8 +939,11 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       {showUsual && usual && (
         <View style={styles.usualCard}>
           <GlassFill radius={14} />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.usualTitle}>{t('food.usualTitle', { meal: mealLabel(curMeal) })}</Text>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Ionicons name="star" size={13} color="#F0B429" />
+              <Text style={styles.usualTitle} numberOfLines={1}>{t('food.usualTitle', { meal: mealLabel(curMeal) })}</Text>
+            </View>
             <Text style={styles.usualItems} numberOfLines={2}>{usual.items.map((i) => i.food.name).join(' · ')}  ·  {usual.kcal} kcal</Text>
           </View>
           <TouchableOpacity style={styles.usualBtn} onPress={() => addUsual(curMeal)} disabled={busyRef.current} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={t('food.a11yAddUsual', { meal: mealLabel(curMeal) })}>
@@ -909,7 +952,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
         </View>
       )}
 
-      <View style={styles.allergyNote}><Text style={styles.allergyText}>{legalShort.allergyHint}</Text></View>
+      <View style={styles.allergyNote}><Ionicons name="warning" size={15} color="#F0B429" style={{ marginTop: 1 }} /><Text style={styles.allergyText}>{legalShort.allergyHint}</Text></View>
 
       {/* Schnellzugriff */}
       {quickFoods.length > 0 && (
@@ -937,16 +980,19 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
           <View key={m.key} style={styles.mealCard}>
             <GlassFill radius={14} />
             <View style={styles.mealHeader}>
-              <Text style={styles.mealTitle}>{m.icon}  {mealLabel(m.key)}</Text>
+              <View style={[styles.mealChipIcon, { backgroundColor: MEAL_ION[m.key].bg }]}>
+                <Ionicons name={MEAL_ION[m.key].icon as any} size={17} color={MEAL_ION[m.key].fg} />
+              </View>
+              <Text style={styles.mealTitle} numberOfLines={1}>{mealLabel(m.key)}</Text>
               <View style={styles.mealHeaderRight}>
-                {mealKcal > 0 && <Text style={styles.mealKcal}>{mealKcal} kcal</Text>}
+                {mealKcal > 0 && <Text style={styles.mealKcal} numberOfLines={1}>{mealKcal} kcal</Text>}
                 {items.length > 0 && (
-                  <TouchableOpacity style={styles.mealAdd} onPress={() => saveMealAsFavorite(m.key, items)} activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('food.a11ySaveMealAsFavorite', { meal: mealLabel(m.key) })}>
-                    <Text style={styles.mealAddText}>⭐</Text>
+                  <TouchableOpacity style={styles.mealRound} onPress={() => saveMealAsFavorite(m.key, items)} activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('food.a11ySaveMealAsFavorite', { meal: mealLabel(m.key) })}>
+                    <Ionicons name="star" size={15} color="#F0B429" />
                   </TouchableOpacity>
                 )}
-                <TouchableOpacity style={styles.mealAdd} onPress={() => openPick(m.key)} activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('food.a11yAddToMeal', { meal: mealLabel(m.key) })}>
-                  <Text style={styles.mealAddText}>＋</Text>
+                <TouchableOpacity style={styles.mealRoundPlus} onPress={() => openPick(m.key)} activeOpacity={0.8} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('food.a11yAddToMeal', { meal: mealLabel(m.key) })}>
+                  <Ionicons name="add" size={17} color={c.primary} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -960,7 +1006,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
                     <Text style={styles.entryMeta}>{e.amount_g} g</Text>
                   </View>
                   <Text style={styles.entryKcal}>{kcalOf(e)} kcal</Text>
-                  <TouchableOpacity onPress={() => deleteLog(e.id)} style={styles.del} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('food.a11yRemoveEntry', { name: e.food?.name ?? t('food.entry') })}><Text style={styles.delText}>✕</Text></TouchableOpacity>
+                  <TouchableOpacity onPress={() => deleteLog(e.id)} style={styles.del} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('food.a11yRemoveEntry', { name: e.food?.name ?? t('food.entry') })}><Ionicons name="close" size={15} color={c.textMuted} /></TouchableOpacity>
                 </View>
               ))
             )}
@@ -982,7 +1028,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
               return (
                 <TouchableOpacity key={m.key} onPress={() => setNlMealAll(m.key)} style={[styles.nlChip, active && styles.nlChipActive]} activeOpacity={0.8} accessibilityRole="button" accessibilityState={{ selected: active }}>
                   <GlassFill radius={999} />
-                  <Text style={[styles.nlChipText, active && styles.nlChipTextActive]}>{m.icon} {mealLabel(m.key)}</Text>
+                  <Text style={[styles.nlChipText, active && styles.nlChipTextActive]}>{mealLabel(m.key)}</Text>
                 </TouchableOpacity>
               );
             })}
@@ -1009,7 +1055,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
                   </View>
                 </View>
                 <TouchableOpacity onPress={() => setNlItems((cur) => (cur ?? []).filter((_, i) => i !== idx))} style={styles.del} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('food.a11yRemoveItem', { name: it.name })}>
-                  <Text style={styles.delText}>✕</Text>
+                  <Ionicons name="close" size={15} color={c.textMuted} />
                 </TouchableOpacity>
               </View>
             ))}
@@ -1057,41 +1103,45 @@ function makeStyles(c: Colors) {
     title: { fontSize: 26, fontWeight: '800', color: c.heading },
     subtitle: { fontSize: 15, color: c.textMuted, marginTop: 2, marginBottom: 16 },
     disclaimer: { fontSize: 12, color: c.textMuted, lineHeight: 16, marginTop: 2, marginBottom: 10 },
-    allergyNote: { backgroundColor: c.inputBg, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9, borderWidth: 1, borderColor: c.cardBorder, marginBottom: 10 },
-    allergyText: { fontSize: 12, color: c.text, lineHeight: 16, fontWeight: '600' },
+    allergyNote: { flexDirection: 'row', alignItems: 'flex-start', gap: 9, backgroundColor: 'rgba(240,180,41,0.08)', borderRadius: 14, paddingHorizontal: 13, paddingVertical: 11, borderWidth: 1, borderColor: 'rgba(240,180,41,0.20)', marginBottom: 10 },
+    allergyText: { flex: 1, fontSize: 12, color: c.text, lineHeight: 16, fontWeight: '500' },
     back: { color: c.primary, fontSize: 15, fontWeight: '600', marginBottom: 10 },
-    addText: { color: c.onPrimary, fontSize: 16, fontWeight: '700' },
-    actionRow: { flexDirection: 'row', gap: 10, marginBottom: 12 },
-    addBtnRow: { flex: 1, backgroundColor: c.primary, borderRadius: 14, paddingVertical: 13, alignItems: 'center' },
-    scanBtn: { flex: 1, backgroundColor: c.card, borderWidth: 1, borderColor: c.primary, borderRadius: 14, paddingVertical: 13, alignItems: 'center' },
-    scanText: { color: c.primary, fontSize: 16, fontWeight: '700' },
+    addText: { color: c.onPrimary, fontSize: 15, fontWeight: '700' },
+    actionRow: { flexDirection: 'row', gap: 11, marginBottom: 12 },
+    addBtnRow: { flex: 1, flexDirection: 'row', gap: 7, backgroundColor: c.primary, borderRadius: 15, paddingVertical: 13, alignItems: 'center', justifyContent: 'center' },
+    scanBtn: { flex: 1, flexDirection: 'row', gap: 7, backgroundColor: c.card, borderWidth: 1, borderColor: 'rgba(25,201,143,0.45)', borderRadius: 15, paddingVertical: 13, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+    scanText: { color: c.primary, fontSize: 15, fontWeight: '700' },
     quickWrap: { marginBottom: 12 },
-    quickChip: { ...shadow, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9, maxWidth: 200 },
-    quickName: { fontSize: 14, fontWeight: '700', color: c.heading },
-    quickMeta: { fontSize: 12, color: c.textMuted, marginTop: 2 },
+    quickChip: { ...shadow, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 14, paddingHorizontal: 13, paddingVertical: 10, maxWidth: 200 },
+    quickName: { fontSize: 13, fontWeight: '700', color: c.heading },
+    quickMeta: { fontSize: 11, color: c.textMuted, marginTop: 4 },
     quickMsg: { fontSize: 13, color: c.success, marginTop: 10, fontWeight: '600' },
-    sectionHead: { fontSize: 12, fontWeight: '700', letterSpacing: 0.8, color: c.textMuted, marginBottom: 6, marginLeft: 2 },
+    sectionHead: { fontSize: 11, fontWeight: '700', letterSpacing: 1.6, color: c.textMuted, marginBottom: 8, marginLeft: 4 },
 
-    todayCard: { ...shadow, backgroundColor: c.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: c.cardBorder },
+    todayCard: { ...shadow, backgroundColor: c.card, borderRadius: 22, padding: 18, marginBottom: 12, borderWidth: 1, borderColor: c.cardBorder, overflow: 'hidden' },
     todayRow: { flexDirection: 'row', alignItems: 'center' },
     todayCol: { flex: 1, alignItems: 'center' },
-    todayVal: { fontSize: 22, fontWeight: 'bold', color: c.heading },
-    todayLbl: { fontSize: 12, color: c.textMuted, marginTop: 2 },
-    todaySep: { width: StyleSheet.hairlineWidth, height: 30, backgroundColor: c.border },
-    kcalTrack: { height: 7, backgroundColor: c.track, borderRadius: 4, overflow: 'hidden', marginTop: 12 },
-    kcalFill: { height: 7, borderRadius: 4 },
-    macrosRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
-    macroItem: { flexDirection: 'row', alignItems: 'center' },
-    macroDot: { width: 9, height: 9, borderRadius: 5, marginRight: 6 },
-    macroTxt: { fontSize: 12, color: c.text, fontWeight: '600' },
-    bonusLine: { fontSize: 12, fontWeight: '700', color: c.primary, textAlign: 'center', marginTop: 8 },
+    todayVal: { fontSize: 20, fontWeight: '800', color: c.heading, letterSpacing: -0.3 },
+    todayLbl: { fontSize: 11, color: c.textMuted, fontWeight: '500', marginTop: 8 },
+    todaySep: { width: 1, height: 36, backgroundColor: c.border },
+    kcalTrack: { height: 6, backgroundColor: c.track, borderRadius: 4, overflow: 'hidden', marginTop: 14 },
+    kcalFill: { height: 6, borderRadius: 4 },
+    bonusPill: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'center', marginTop: 13, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(22,180,134,0.25)', backgroundColor: 'rgba(22,180,134,0.10)' },
+    bonusText: { fontSize: 12, fontWeight: '600', color: c.primary },
+    macrosRow: { flexDirection: 'row', gap: 12, marginTop: 15, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.border, paddingTop: 15 },
+    macroCol2: { flex: 1, minWidth: 0 },
+    macroLbl: { fontSize: 11, fontWeight: '600', color: c.textMuted, marginBottom: 8 },
+    macroVal: { fontSize: 15, fontWeight: '800', color: c.heading },
+    macroUnit: { fontSize: 11, fontWeight: '500', color: c.textMuted },
+    macroTrack: { height: 5, borderRadius: 3, backgroundColor: c.track, overflow: 'hidden', marginTop: 9 },
+    macroFill: { height: 5, borderRadius: 3 },
 
-    mealCard: { ...shadow, backgroundColor: c.card, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 10, borderWidth: 1, borderColor: c.cardBorder },
+    mealCard: { ...shadow, backgroundColor: c.card, borderRadius: 20, paddingHorizontal: 15, paddingVertical: 13, marginBottom: 10, borderWidth: 1, borderColor: c.cardBorder, overflow: 'hidden' },
     entryRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },
     entryDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.border },
     entryName: { fontSize: 15, color: c.text, fontWeight: '600' },
     entryMeta: { fontSize: 12, color: c.textMuted, marginTop: 1 },
-    entryKcal: { fontSize: 14, color: c.heading, fontWeight: '700', marginRight: 10 },
+    entryKcal: { fontSize: 13, color: c.primary, fontWeight: '700', marginRight: 10 },
     del: { padding: 4 },
     delText: { fontSize: 16, color: c.textMuted },
     mealChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
@@ -1099,25 +1149,29 @@ function makeStyles(c: Colors) {
     mealChipActive: { backgroundColor: c.primary, borderColor: c.primary },
     mealChipText: { fontSize: 14, fontWeight: '600', color: c.text },
     mealChipTextActive: { color: c.onPrimary },
-    mealHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
-    mealTitle: { fontSize: 16, fontWeight: '700', color: c.heading },
-    mealHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-    mealKcal: { fontSize: 13, fontWeight: '700', color: c.textMuted },
-    mealAdd: { width: 30, height: 30, borderRadius: 15, backgroundColor: c.inputBg, borderWidth: 1, borderColor: c.primary, alignItems: 'center', justifyContent: 'center' },
-    mealAddText: { fontSize: 16, color: c.primary, fontWeight: '700', lineHeight: 18 },
+    mealHeader: { flexDirection: 'row', alignItems: 'center', gap: 11, marginBottom: 6 },
+    mealTitle: { flex: 1, fontSize: 15, fontWeight: '800', color: c.heading },
+    mealHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    mealKcal: { fontSize: 12, fontWeight: '700', color: c.textMuted },
+    mealChipIcon: { width: 34, height: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+    mealRound: { width: 32, height: 32, borderRadius: 16, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center' },
+    mealRoundPlus: { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(25,201,143,0.14)', alignItems: 'center', justifyContent: 'center' },
     mealEmpty: { fontSize: 12, color: c.textMuted, fontStyle: 'italic', paddingVertical: 3, paddingLeft: 2 },
-    usualCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 12, borderWidth: 1, borderColor: c.primary },
+    usualCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 20, paddingHorizontal: 15, paddingVertical: 13, marginBottom: 12, borderWidth: 1, borderColor: 'rgba(25,201,143,0.30)', overflow: 'hidden' },
     usualTitle: { fontSize: 14, fontWeight: '800', color: c.heading },
     usualItems: { fontSize: 12, color: c.textMuted, marginTop: 2 },
     usualBtn: { backgroundColor: c.primary, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, marginLeft: 10 },
     usualBtnText: { color: c.onPrimary, fontWeight: '800', fontSize: 14 },
-    nlCard: { backgroundColor: c.card, borderRadius: 14, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: c.primary },
-    nlTitle: { fontSize: 14, fontWeight: '800', color: c.heading, marginBottom: 4 },
-    nlConsentHint: { fontSize: 12, color: c.textMuted, lineHeight: 16, marginBottom: 8 },
+    nlCard: { backgroundColor: c.card, borderRadius: 22, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: 'rgba(25,201,143,0.25)', overflow: 'hidden' },
+    nlHead: { flexDirection: 'row', alignItems: 'center', gap: 11, marginBottom: 10 },
+    nlChipIcon: { width: 36, height: 36, borderRadius: 12, backgroundColor: 'rgba(25,201,143,0.12)', alignItems: 'center', justifyContent: 'center' },
+    nlTitle: { fontSize: 14, fontWeight: '800', color: c.heading },
+    nlConsentHint: { fontSize: 11, color: c.textMuted, lineHeight: 15, marginTop: 3 },
     consentBody: { fontSize: 14, color: c.text, lineHeight: 20, marginBottom: 18 },
     nlInput: { borderWidth: 1, borderColor: c.border, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 15, backgroundColor: c.inputBg, color: c.text, minHeight: 44 },
-    nlBtn: { backgroundColor: c.primary, borderRadius: 12, paddingVertical: 12, alignItems: 'center', marginTop: 10 },
+    nlBtn: { backgroundColor: c.primary, borderRadius: 14, paddingVertical: 13, alignItems: 'center', marginTop: 11 },
     nlBtnText: { color: c.onPrimary, fontSize: 15, fontWeight: '800' },
+    btnRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
     nlOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'flex-end' },
     nlSheet: { backgroundColor: c.bg, borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 22, paddingBottom: 32 },
     nlSheetTitle: { fontSize: 18, fontWeight: '800', color: c.heading, marginBottom: 10 },
@@ -1138,13 +1192,13 @@ function makeStyles(c: Colors) {
     primaryBtn: { backgroundColor: c.primary, borderRadius: 16, paddingVertical: 16, alignItems: 'center', marginTop: 20 },
     primaryText: { color: c.onPrimary, fontSize: 16, fontWeight: '700' },
     countHint: { fontSize: 12, color: c.textMuted, marginTop: 8, marginBottom: 4 },
-    foodRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 16, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: c.cardBorder },
+    foodRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 18, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: c.cardBorder, overflow: 'hidden' },
     foodName: { fontSize: 16, color: c.text, fontWeight: '600' },
     foodMeta: { fontSize: 12, color: c.textMuted, marginTop: 2 },
     foodKcal: { fontSize: 14, color: c.primary, fontWeight: '700', marginLeft: 8 },
     foodDel: { paddingHorizontal: 6, paddingVertical: 4, marginLeft: 6 },
     foodDelText: { fontSize: 16 },
-    newFoodBtn: { borderWidth: 1, borderColor: c.primary, borderRadius: 16, paddingVertical: 13, alignItems: 'center', marginTop: 10, backgroundColor: c.card },
+    newFoodBtn: { flexDirection: 'row', gap: 7, justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(25,201,143,0.45)', borderRadius: 16, paddingVertical: 13, alignItems: 'center', marginTop: 10, backgroundColor: c.card, overflow: 'hidden' },
     newFoodText: { color: c.primary, fontSize: 15, fontWeight: '700' },
     noResult: { fontSize: 14, color: c.textMuted, textAlign: 'center', marginTop: 18, lineHeight: 20 },
     macroRow: { flexDirection: 'row', gap: 10 },
