@@ -2,7 +2,7 @@
 // Header (Begruessung + Level/Streak) -> Kalorien-Karte -> 3 Uebersichts-Kacheln
 // (Wasser/Training/Gewicht, fuehren in ihren Bereich) -> Training-laeuft -> Tagesziele.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Animated, Modal, PanResponder, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Animated, Dimensions, Modal, PanResponder, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useT, useLang } from '../contexts/LanguageContext';
@@ -44,6 +44,8 @@ const WEEKDAYS_SHORT = {
   en: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
 };
 const DAYS_BACK = 6; // wie viele Tage zurueck wischbar (0..6 = 7 Tage inkl. heute)
+const SCREEN_W = Dimensions.get('window').width;
+const DAY_SLIDE = SCREEN_W - 72; // ~Karten-Innenbreite = Gleit-Distanz beim Tageswechsel
 // Icons je Tagesziel (Schluessel aus lib/goals.ts).
 const GOAL_ICONS: Record<string, string> = { train: 'barbell-outline', track: 'restaurant-outline', kcal: 'flame-outline', protein: 'egg-outline' };
 
@@ -265,15 +267,23 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
   const curSteps = dayOffset === 0 ? steps : (daySteps[dayOffset] ?? 0);
   const curActivityKcal = dayOffset === 0 ? activityKcal : stepsKcal(daySteps[dayOffset] ?? 0, weightKg ?? 0);
   const curActivityMeasured = dayOffset === 0 ? activityMeasured : false;
-  const goOlder = useCallback(() => setDayOffset((o) => Math.min(DAYS_BACK, o + 1)), []);
-  const goNewer = useCallback(() => setDayOffset((o) => Math.max(0, o - 1)), []);
-  const fade = useRef(new Animated.Value(1)).current;
   const dragX = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    fade.setValue(0.5);
-    Animated.timing(fade, { toValue: 1, duration: 200, useNativeDriver: true }).start();
-  }, [dayOffset]);
-  const snapBack = () => Animated.spring(dragX, { toValue: 0, useNativeDriver: true, speed: 16, bounciness: 6 }).start();
+  const dayOffsetRef = useRef(0);
+  dayOffsetRef.current = dayOffset;
+  const snapBack = () => Animated.spring(dragX, { toValue: 0, useNativeDriver: true, speed: 18, bounciness: 0 }).start();
+  // Tageswechsel als echtes Rein-/Raus-Gleiten: der aktuelle Tag gleitet zur Seite RAUS,
+  // der neue gleitet von der GEGEN-Seite REIN (dir +1 = aelterer Tag, -1 = neuerer Tag).
+  const slideRef = useRef((dir: number) => {
+    const o = dayOffsetRef.current;
+    const target = dir > 0 ? Math.min(DAYS_BACK, o + 1) : Math.max(0, o - 1);
+    if (target === o) { snapBack(); return; } // schon am Rand -> nur sanft zurueck
+    const exitTo = dir > 0 ? DAY_SLIDE : -DAY_SLIDE;
+    Animated.timing(dragX, { toValue: exitTo, duration: 130, useNativeDriver: true }).start(() => {
+      setDayOffset(target);
+      dragX.setValue(-exitTo); // neuen Tag auf der Gegenseite ansetzen ...
+      Animated.timing(dragX, { toValue: 0, duration: 210, useNativeDriver: true }).start(); // ... und reingleiten
+    });
+  });
   const pan = useRef(
     PanResponder.create({
       // Nur bei KLAR waagerechter Bewegung uebernehmen (dx deutlich groesser als dy),
@@ -286,9 +296,9 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
       onPanResponderGrant: () => setScrollEnabled(false),
       onPanResponderMove: (_, g) => dragX.setValue(Math.max(-70, Math.min(70, g.dx * 0.6))),
       onPanResponderRelease: (_, g) => {
-        if (g.dx > 35 || g.vx > 0.2) goOlder();        // links -> rechts: ein Tag zurueck
-        else if (g.dx < -35 || g.vx < -0.2) goNewer(); // rechts -> links: ein Tag vor
-        snapBack();
+        if (g.dx > 35 || g.vx > 0.2) slideRef.current(1);        // links -> rechts: Vortag reinwischen
+        else if (g.dx < -35 || g.vx < -0.2) slideRef.current(-1); // rechts -> links: naechsten Tag reinwischen
+        else snapBack();
         setScrollEnabled(true);
       },
       onPanResponderTerminate: () => { snapBack(); setScrollEnabled(true); },
@@ -343,7 +353,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
             {nutrition && (
               <View style={styles.card} {...pan.panHandlers}>
                 <GlassFill radius={22} />
-                <Animated.View style={{ opacity: fade, transform: [{ translateX: dragX }] }}>
+                <Animated.View style={{ transform: [{ translateX: dragX }] }}>
                   <View style={styles.cardHead}>
                     <Text style={styles.cardLabel}>{dayLabel(dayOffset).toLocaleUpperCase(lang === 'en' ? 'en-US' : 'de-DE')}</Text>
                     {dayOffset === 0 ? (
@@ -385,7 +395,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
                 </Animated.View>
                 {/* Tage-Navigation: links = aelter, rechts = neuer; Punkt rechts = heute */}
                 <View style={styles.dayNav}>
-                  <TouchableOpacity style={styles.dayNavBtn} onPress={goOlder} disabled={dayOffset >= DAYS_BACK} hitSlop={{ top: 10, bottom: 10, left: 12, right: 6 }} accessibilityRole="button" accessibilityLabel={t('home.day.olderA11y')}>
+                  <TouchableOpacity style={styles.dayNavBtn} onPress={() => slideRef.current(1)} disabled={dayOffset >= DAYS_BACK} hitSlop={{ top: 10, bottom: 10, left: 12, right: 6 }} accessibilityRole="button" accessibilityLabel={t('home.day.olderA11y')}>
                     <Ionicons name="chevron-back" size={18} color={c.primary} style={dayOffset >= DAYS_BACK ? { opacity: 0.3 } : undefined} />
                   </TouchableOpacity>
                   <View style={styles.dots}>
@@ -393,7 +403,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
                       <View key={off} style={[styles.dot, off === dayOffset && styles.dotActive]} />
                     ))}
                   </View>
-                  <TouchableOpacity style={styles.dayNavBtn} onPress={goNewer} disabled={dayOffset <= 0} hitSlop={{ top: 10, bottom: 10, left: 6, right: 12 }} accessibilityRole="button" accessibilityLabel={t('home.day.newerA11y')}>
+                  <TouchableOpacity style={styles.dayNavBtn} onPress={() => slideRef.current(-1)} disabled={dayOffset <= 0} hitSlop={{ top: 10, bottom: 10, left: 6, right: 12 }} accessibilityRole="button" accessibilityLabel={t('home.day.newerA11y')}>
                     <Ionicons name="chevron-forward" size={18} color={c.primary} style={dayOffset <= 0 ? { opacity: 0.3 } : undefined} />
                   </TouchableOpacity>
                 </View>
