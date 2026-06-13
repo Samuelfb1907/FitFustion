@@ -163,6 +163,41 @@ export async function getTodayActivity(weightKg: number): Promise<{ steps: numbe
   return { steps, kcal: stepsKcal(steps, weightKg), measured: false };
 }
 
+// Schritte fuer EINEN bestimmten Tag (daysAgo: 0 = heute, 1 = gestern, ...).
+// iOS Core Motion / Health Connect halten typischerweise ~7 Tage Verlauf vor;
+// fuer aeltere/ohne Daten kommt 0 zurueck.
+export async function getStepsForDay(daysAgo: number): Promise<number> {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  start.setDate(start.getDate() - daysAgo);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+  const until = daysAgo === 0 ? new Date() : end; // heute nur bis jetzt zaehlen
+  if (Platform.OS === 'ios') {
+    const P = ped();
+    if (!P) return 0;
+    try {
+      const res = await P.getStepCountAsync(start, until);
+      return Math.max(0, Math.round(Number(res?.steps) || 0));
+    } catch { return 0; }
+  }
+  const HC = hc();
+  if (!HC) return 0;
+  try {
+    await HC.initialize();
+    const res = await HC.readRecords('Steps', {
+      timeRangeFilter: { operator: 'between', startTime: start.toISOString(), endTime: until.toISOString() },
+    });
+    const recs = res?.records ?? res?.result ?? (Array.isArray(res) ? res : []);
+    return (recs as any[]).reduce((sum: number, r: any) => sum + (Number(r.count) || 0), 0);
+  } catch { return 0; }
+}
+
+// Schritte der letzten `days` Tage (Index = Tage zurueck: [0]=heute ... [days-1]).
+export async function getStepsLastDays(days: number): Promise<number[]> {
+  return Promise.all(Array.from({ length: days }, (_, i) => getStepsForDay(i)));
+}
+
 // Health-Connect-Einstellungen oeffnen (z. B. zum Installieren/Verwalten).
 export async function openHealthSettings(): Promise<void> {
   if (Platform.OS === 'ios') {

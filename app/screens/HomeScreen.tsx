@@ -14,7 +14,7 @@ import CalorieGauge from '../components/CalorieGauge';
 import GlassFill from '../components/GlassFill';
 import { usePaywall } from '../components/Paywall';
 import { todayTrainingKcal } from '../lib/trainingBonus';
-import { hasStepsPermission, getTodayActivity } from '../lib/health';
+import { hasStepsPermission, getTodayActivity, getStepsLastDays, stepsKcal } from '../lib/health';
 import { dailyGoals, Goal } from '../lib/goals';
 import { todayWeekday } from '../lib/weekdays';
 import { localDateStr, todayStr, startOfTodayISO, daysAgoStr, daysAgoISO, mondayStr } from '../lib/date';
@@ -93,6 +93,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
   const [steps, setSteps] = useState(0);
   const [activityKcal, setActivityKcal] = useState(0);
   const [activityMeasured, setActivityMeasured] = useState(false);
+  const [daySteps, setDaySteps] = useState<number[]>([]); // Schritte je Tag, Index = Tage zurueck (0 = heute)
 
   const load = useCallback(async (silent = false) => {
       const userId = session?.user?.id;
@@ -129,7 +130,8 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
         if (await hasStepsPermission()) {
           const a = await getTodayActivity(Number(prof.weight_kg));
           setSteps(a.steps); setActivityKcal(a.kcal); setActivityMeasured(a.measured);
-        } else { setSteps(0); setActivityKcal(0); setActivityMeasured(false); }
+          setDaySteps(await getStepsLastDays(DAYS_BACK + 1)); // Schritt-Verlauf fuers Zurueckwischen
+        } else { setSteps(0); setActivityKcal(0); setActivityMeasured(false); setDaySteps([]); }
       } else {
         setError(t('home.profileIncomplete'));
       }
@@ -258,6 +260,10 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
   // zurueck, nach LINKS = wieder vor. Die GANZE Karte ist wischbar; dragX laesst den Inhalt
   // dem Finger leicht folgen (weiches Feedback), niedrige Schwelle = leicht auszuloesen.
   const cur = days[dayOffset] ?? eaten;
+  // Schritte/Aktivitaet des gewaehlten Tages: heute gemessen/geschaetzt, Vortage aus dem Verlauf geschaetzt.
+  const curSteps = dayOffset === 0 ? steps : (daySteps[dayOffset] ?? 0);
+  const curActivityKcal = dayOffset === 0 ? activityKcal : stepsKcal(daySteps[dayOffset] ?? 0, weightKg ?? 0);
+  const curActivityMeasured = dayOffset === 0 ? activityMeasured : false;
   const goOlder = useCallback(() => setDayOffset((o) => Math.min(DAYS_BACK, o + 1)), []);
   const goNewer = useCallback(() => setDayOffset((o) => Math.max(0, o - 1)), []);
   const fade = useRef(new Animated.Value(1)).current;
@@ -347,7 +353,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
                     )}
                   </View>
                   <View style={{ alignItems: 'center', marginTop: 16 }}>
-                    <CalorieGauge target={nutrition.targetCalories + (dayOffset === 0 ? Math.max(trainingKcal, activityKcal) : 0)} eaten={cur.kcal} />
+                    <CalorieGauge target={nutrition.targetCalories + (dayOffset === 0 ? Math.max(trainingKcal, activityKcal) : curActivityKcal)} eaten={cur.kcal} />
                   </View>
                   {dayOffset === 0 && trainingKcal > 0 && activityKcal === 0 && (
                     <View style={styles.bonusPill}>
@@ -355,13 +361,13 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
                       <Text style={styles.bonusText} numberOfLines={1}>{t('home.bonusTraining', { n: trainingKcal })}</Text>
                     </View>
                   )}
-                  {dayOffset === 0 && activityKcal > 0 && (
+                  {curActivityKcal > 0 && (
                     <View style={styles.bonusPill}>
                       <Ionicons name="walk" size={14} color={c.primary} />
-                      <Text style={styles.bonusText} numberOfLines={1}>{steps > 0 ? t('home.stepsPrefix', { steps: steps.toLocaleString(lang === 'en' ? 'en-US' : 'de-DE') }) : ''}+{activityKcal} kcal {activityMeasured ? t('home.activeMeasured') : t('home.activeEstimated')}</Text>
+                      <Text style={styles.bonusText} numberOfLines={1}>{curSteps > 0 ? t('home.stepsPrefix', { steps: curSteps.toLocaleString(lang === 'en' ? 'en-US' : 'de-DE') }) : ''}+{curActivityKcal} kcal {curActivityMeasured ? t('home.activeMeasured') : t('home.activeEstimated')}</Text>
                     </View>
                   )}
-                  {dayOffset > 0 && cur.kcal === 0 && (
+                  {dayOffset > 0 && cur.kcal === 0 && curActivityKcal === 0 && (
                     <Text style={styles.untracked}>{t('home.day.untracked')}</Text>
                   )}
                   <View style={styles.macros}>
