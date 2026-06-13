@@ -75,8 +75,8 @@ export default function MainTabs() {
       {/* Schwebende Glas-Leiste ueber dem Inhalt; box-none -> nur die Reiter fangen Tipps ab */}
       <View style={[styles.barWrap, { paddingBottom: Math.max(insets.bottom, 10) }]} pointerEvents="box-none">
         <View style={[styles.bar, { borderColor: c.hairline }]} onLayout={(e) => setBarW(e.nativeEvent.layout.width)}>
-          <BlurView intensity={dark ? 36 : 50} tint={dark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: dark ? 'rgba(18,24,30,0.40)' : 'rgba(255,255,255,0.45)' }]} pointerEvents="none" />
+          {/* Nur Milchglas (durchscheinend) - KEINE dunkle Fuellung mehr -> der Inhalt schimmert durch. */}
+          <BlurView intensity={dark ? 34 : 48} tint={dark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
           {tabW > 0 && (
             <Animated.View
               pointerEvents="none"
