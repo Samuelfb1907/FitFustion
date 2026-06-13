@@ -10,23 +10,27 @@ export const de = {
   "food.barcodeFetchFailed": "Konnte das Produkt nicht abrufen. Bitte nochmal versuchen.",
 
   // Mengen-Screen
-  "food.kcalPer100g": "{n} kcal / 100 g",
-  "food.amountInGrams": "Menge in Gramm",
+  "food.kcalPer100g": "{n} kcal / 100 {unit}",
+  "food.amountInGrams": "Menge ({unit})",
   "food.amountPlaceholder": "z. B. 150",
   "food.meal": "Mahlzeit",
   "food.addToFavoriteList": "Zur Favoriten-Liste hinzufügen",
   "food.addToDiary": "Zum Tagebuch hinzufügen",
-  "food.invalidAmount": "Bitte gültige Menge in Gramm eingeben.",
+  "food.invalidAmount": "Bitte gültige Menge eingeben.",
 
   // Neues Lebensmittel
   "food.newFoodTitle": "Neues Lebensmittel",
-  "food.nutritionPer100g": "Nährwerte pro 100 g",
+  "food.nutritionPer100g": "Nährwerte pro 100 {unit}",
   "food.name": "Name",
   "food.namePlaceholder": "z. B. Mein Proteinriegel",
   "food.categoryOptional": "Kategorie (optional)",
   "food.categoryPlaceholder": "z. B. Snacks & Süßes",
+  "food.unitLabel": "Einheit",
+  "food.unitG": "Gramm (g)",
+  "food.unitMl": "Milliliter (ml)",
+  "food.unitHintMl": "Wird als Getränk gespeichert – Mengen erscheinen in ml.",
   "food.calories": "Kalorien (kcal)",
-  "food.per100g": "pro 100 g",
+  "food.per100g": "pro 100 {unit}",
   "food.protein": "Eiweiß (g)",
   "food.carbs": "KH (g)",
   "food.fat": "Fett (g)",
@@ -109,13 +113,13 @@ export const de = {
   "food.diary": "TAGEBUCH",
   "food.mealEmpty": "Noch nichts – tippe ＋",
   "food.entry": "Eintrag",
-  "food.foodAdded": "✓ {name} ({amount} g) hinzugefügt",
+  "food.foodAdded": "✓ {name} ({amount} {unit}) hinzugefügt",
 
   // Bestätigungs-Dialog (KI erkannt)
   "food.nlSheetTitle": "Erkannt – passt das?",
   "food.nlWhichMeal": "Für welche Mahlzeit?",
   "food.nlNothingLeft": "Nichts mehr übrig – tippe Abbrechen.",
-  "food.nlEnterAmounts": "Bitte bei allen eine Menge (g) eintragen.",
+  "food.nlEnterAmounts": "Bitte bei allen eine Menge eintragen.",
   "food.nlAddToDiary": "Ins Tagebuch eintragen",
 
   // KI-Einwilligung
@@ -142,7 +146,7 @@ export const de = {
   "food.a11yRemoveEntry": "{name} aus dem Tagebuch entfernen",
   "food.a11yAddToMeal": "Zu {meal} hinzufügen",
   "food.a11yAddUsual": "Übliches {meal} hinzufügen",
-  "food.a11yAmountFor": "Menge für {name} in Gramm",
+  "food.a11yAmountFor": "Menge für {name} in {unit}",
   "food.a11ySaveMealAsFavorite": "{meal} als Favorit speichern",
 
   // Mahlzeit-Namen (Tagebuch-Abschnitte)
@@ -162,23 +166,27 @@ export const en = {
   "food.barcodeFetchFailed": "Couldn't fetch the product. Please try again.",
 
   // Amount screen
-  "food.kcalPer100g": "{n} kcal / 100 g",
-  "food.amountInGrams": "Amount in grams",
+  "food.kcalPer100g": "{n} kcal / 100 {unit}",
+  "food.amountInGrams": "Amount ({unit})",
   "food.amountPlaceholder": "e.g. 150",
   "food.meal": "Meal",
   "food.addToFavoriteList": "Add to favorites list",
   "food.addToDiary": "Add to diary",
-  "food.invalidAmount": "Please enter a valid amount in grams.",
+  "food.invalidAmount": "Please enter a valid amount.",
 
   // New food
   "food.newFoodTitle": "New food",
-  "food.nutritionPer100g": "Nutrition per 100 g",
+  "food.nutritionPer100g": "Nutrition per 100 {unit}",
   "food.name": "Name",
   "food.namePlaceholder": "e.g. My protein bar",
   "food.categoryOptional": "Category (optional)",
   "food.categoryPlaceholder": "e.g. Snacks & sweets",
+  "food.unitLabel": "Unit",
+  "food.unitG": "Grams (g)",
+  "food.unitMl": "Milliliters (ml)",
+  "food.unitHintMl": "Saved as a beverage – amounts show in ml.",
   "food.calories": "Calories (kcal)",
-  "food.per100g": "per 100 g",
+  "food.per100g": "per 100 {unit}",
   "food.protein": "Protein (g)",
   "food.carbs": "Carbs (g)",
   "food.fat": "Fat (g)",
@@ -261,13 +269,13 @@ export const en = {
   "food.diary": "DIARY",
   "food.mealEmpty": "Nothing yet – tap ＋",
   "food.entry": "entry",
-  "food.foodAdded": "✓ {name} ({amount} g) added",
+  "food.foodAdded": "✓ {name} ({amount} {unit}) added",
 
   // Confirmation dialog (AI recognized)
   "food.nlSheetTitle": "Recognized – does this look right?",
   "food.nlWhichMeal": "Which meal?",
   "food.nlNothingLeft": "Nothing left – tap Cancel.",
-  "food.nlEnterAmounts": "Please enter an amount (g) for each.",
+  "food.nlEnterAmounts": "Please enter an amount for each.",
   "food.nlAddToDiary": "Add to diary",
 
   // AI consent
@@ -294,7 +302,7 @@ export const en = {
   "food.a11yRemoveEntry": "Remove {name} from the diary",
   "food.a11yAddToMeal": "Add to {meal}",
   "food.a11yAddUsual": "Add usual {meal}",
-  "food.a11yAmountFor": "Amount for {name} in grams",
+  "food.a11yAmountFor": "Amount for {name} in {unit}",
   "food.a11ySaveMealAsFavorite": "Save {meal} as favorite",
 
   // Meal names (diary sections)

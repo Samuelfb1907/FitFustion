@@ -23,6 +23,7 @@ import Segmented from '../components/Segmented';
 import GlassFill from '../components/GlassFill';
 import { usePaywall } from '../components/Paywall';
 import { parseMeal, ParsedItem } from '../lib/parseMeal';
+import { foodUnit } from '../lib/foodUnit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CARD_SHADOW as shadow } from '../lib/ui';
 
@@ -30,7 +31,7 @@ type Food = { id: string; name: string; category: string | null; kcal: number; p
 type LogEntry = { id: string; amount_g: number; meal_type: string | null; food: Food | null };
 type QuickFood = { food: Food; amount: number; count: number };
 // Favorit = gespeicherte Mahlzeit (z. B. dein taegliches Fruehstueck) mit mehreren Zutaten.
-type FavItem = { food_id: string; name: string; amount_g: number; kcal: number; protein: number; carbs: number; fat: number };
+type FavItem = { food_id: string; name: string; amount_g: number; kcal: number; protein: number; carbs: number; fat: number; unit?: 'g' | 'ml' };
 type Favorite = { id: string; name: string; items: FavItem[] };
 // "Mein ueblicher Tag": pro Mahlzeit die haeufig zusammen geloggten Lebensmittel.
 type UsualItem = { food: Food; amount: number; days: number };
@@ -93,7 +94,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   const [quickFoods, setQuickFoods] = useState<QuickFood[]>([]);
   const [quickMsg, setQuickMsg] = useState<string | null>(null);
   // Formular "Eigenes Lebensmittel anlegen"
-  const [nf, setNf] = useState({ name: '', cat: '', kcal: '', protein: '', carbs: '', fat: '' });
+  const [nf, setNf] = useState<{ name: string; cat: string; kcal: string; protein: string; carbs: string; fat: string; unit: 'g' | 'ml' }>({ name: '', cat: '', kcal: '', protein: '', carbs: '', fat: '', unit: 'g' });
   const [savingFood, setSavingFood] = useState(false);
   const [foodErr, setFoodErr] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -354,7 +355,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
         }
         if (!foodId) {
           const { data: created, error: cErr } = await supabase.from('foods')
-            .insert({ name: it.name, category: 'KI-erkannt', kcal: it.kcal, protein: it.protein, carbs: it.carbs, fat: it.fat, user_id: userId })
+            .insert({ name: it.name, category: foodUnit({ name: it.name }) === 'ml' ? 'Getränke' : 'KI-erkannt', kcal: it.kcal, protein: it.protein, carbs: it.carbs, fat: it.fat, user_id: userId })
             .select('id').single();
           if (!cErr && created) foodId = created.id;
           else {
@@ -382,7 +383,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     try {
       const { error: e } = await supabase.from('food_logs').insert({ user_id: userId, food_id: qf.food.id, amount_g: qf.amount, log_date: todayStr(), meal_type: mealByHour() });
       if (e) { setError(errorMessage(e)); return; }
-      setQuickMsg(t('food.foodAdded', { name: qf.food.name, amount: qf.amount }));
+      setQuickMsg(t('food.foodAdded', { name: qf.food.name, amount: qf.amount, unit: foodUnit(qf.food) }));
       setTimeout(() => setQuickMsg(null), 2500);
       await init(true);
     } finally {
@@ -399,7 +400,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       const food = selectedFood;
       setFavDraft((d) => {
         const base = d ?? { name: '', items: [] };
-        return { name: base.name, items: [...base.items, { food_id: food.id, name: food.name, amount_g: a, kcal: food.kcal, protein: food.protein, carbs: food.carbs, fat: food.fat }] };
+        return { name: base.name, items: [...base.items, { food_id: food.id, name: food.name, amount_g: a, kcal: food.kcal, protein: food.protein, carbs: food.carbs, fat: food.fat, unit: foodUnit(food) }] };
       });
       setSelectedFood(null); setAmount('100'); setError(null); setSearch(''); setMode('favnew');
       return;
@@ -407,11 +408,12 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     busyRef.current = true;
     setSaving(true); setError(null);
     const addedName = selectedFood.name;
+    const addedUnit = foodUnit(selectedFood);
     try {
       const { error: e } = await supabase.from('food_logs').insert({ user_id: userId, food_id: selectedFood.id, amount_g: a, log_date: todayStr(), meal_type: mealType });
       if (e) { setError(errorMessage(e)); return; }
       setSelectedFood(null); setAmount('100'); setSearch(''); setMode('diary');
-      setQuickMsg(t('food.foodAdded', { name: addedName, amount: a }));
+      setQuickMsg(t('food.foodAdded', { name: addedName, amount: a, unit: addedUnit }));
       setTimeout(() => setQuickMsg(null), 2500);
       await init(true);
     } finally {
@@ -449,7 +451,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     const favItems: FavItem[] = [];
     for (const e of entries) {
       if (!e.food) continue;
-      favItems.push({ food_id: e.food.id, name: e.food.name, amount_g: e.amount_g, kcal: e.food.kcal, protein: e.food.protein, carbs: e.food.carbs, fat: e.food.fat });
+      favItems.push({ food_id: e.food.id, name: e.food.name, amount_g: e.amount_g, kcal: e.food.kcal, protein: e.food.protein, carbs: e.food.carbs, fat: e.food.fat, unit: foodUnit(e.food) });
     }
     if (!favItems.length) return;
     setFavErr(null);
@@ -515,7 +517,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   }
 
   function openNewFood() {
-    setNf({ name: search.trim(), cat: '', kcal: '', protein: '', carbs: '', fat: '' });
+    setNf({ name: search.trim(), cat: '', kcal: '', protein: '', carbs: '', fat: '', unit: 'g' });
     setFoodErr(null);
     setMode('newfood');
   }
@@ -533,7 +535,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     setSavingFood(true); setFoodErr(null);
     const { data, error } = await supabase
       .from('foods')
-      .insert({ name, category: nf.cat.trim() || 'Eigene', kcal, protein, carbs, fat, user_id: userId })
+      .insert({ name, category: nf.unit === 'ml' ? 'Getränke' : (nf.cat.trim() || 'Eigene'), kcal, protein, carbs, fat, user_id: userId })
       .select('id, name, category, kcal, protein, carbs, fat, user_id')
       .single();
     setSavingFood(false);
@@ -604,14 +606,15 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   if (mode === 'amount' && selectedFood) {
     const a = Number(amount.replace(',', '.')) || 0;
     const previewKcal = Math.round((selectedFood.kcal * a) / 100);
+    const unit = foodUnit(selectedFood);
     return (
       <SwipeBack key="food-amount" onBack={() => setMode(backTarget)} c={c} behind={backTarget === 'pick' ? renderPick() : renderDiary()}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
           <BackButton onPress={() => setMode(backTarget)} c={c} />
           <Text style={styles.title}>{selectedFood.name}</Text>
-          <Text style={styles.subtitle}>{t('food.kcalPer100g', { n: selectedFood.kcal })}</Text>
-          <Text style={styles.inputLabel}>{t('food.amountInGrams')}</Text>
+          <Text style={styles.subtitle}>{t('food.kcalPer100g', { n: selectedFood.kcal, unit })}</Text>
+          <Text style={styles.inputLabel}>{t('food.amountInGrams', { unit })}</Text>
           <TextInput style={styles.input} value={amount} onChangeText={setAmount} keyboardType="numeric" inputMode="decimal" placeholder={t('food.amountPlaceholder')} placeholderTextColor={c.textMuted} returnKeyType="done" onSubmitEditing={addLog} />
           <Text style={styles.preview}>= {previewKcal} kcal</Text>
           {addingTo !== 'favorite' && (
@@ -642,13 +645,27 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
         <BackButton onPress={() => setMode('pick')} c={c} />
         <Text style={styles.title}>{t('food.newFoodTitle')}</Text>
-        <Text style={styles.subtitle}>{t('food.nutritionPer100g')}</Text>
+        <Text style={styles.subtitle}>{t('food.nutritionPer100g', { unit: nf.unit })}</Text>
         <Text style={styles.inputLabel}>{t('food.name')}</Text>
         <TextInput style={styles.input} value={nf.name} onChangeText={(v) => setNf({ ...nf, name: v })} placeholder={t('food.namePlaceholder')} placeholderTextColor={c.textMuted} />
-        <Text style={styles.inputLabel}>{t('food.categoryOptional')}</Text>
-        <TextInput style={styles.input} value={nf.cat} onChangeText={(v) => setNf({ ...nf, cat: v })} placeholder={t('food.categoryPlaceholder')} placeholderTextColor={c.textMuted} />
+        <Text style={styles.inputLabel}>{t('food.unitLabel')}</Text>
+        <View style={styles.mealChips}>
+          {(['g', 'ml'] as const).map((u) => (
+            <TouchableOpacity key={u} style={[styles.mealChip, nf.unit === u && styles.mealChipActive]} onPress={() => setNf({ ...nf, unit: u })} activeOpacity={0.8} accessibilityRole="button" accessibilityState={{ selected: nf.unit === u }}>
+              <Text style={[styles.mealChipText, nf.unit === u && styles.mealChipTextActive]}>{u === 'g' ? t('food.unitG') : t('food.unitMl')}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        {nf.unit === 'ml' ? (
+          <Text style={styles.unitHint}>{t('food.unitHintMl')}</Text>
+        ) : (
+          <>
+            <Text style={styles.inputLabel}>{t('food.categoryOptional')}</Text>
+            <TextInput style={styles.input} value={nf.cat} onChangeText={(v) => setNf({ ...nf, cat: v })} placeholder={t('food.categoryPlaceholder')} placeholderTextColor={c.textMuted} />
+          </>
+        )}
         <Text style={styles.inputLabel}>{t('food.calories')}</Text>
-        <TextInput style={styles.input} value={nf.kcal} onChangeText={(v) => setNf({ ...nf, kcal: v })} keyboardType="numeric" placeholder={t('food.per100g')} placeholderTextColor={c.textMuted} />
+        <TextInput style={styles.input} value={nf.kcal} onChangeText={(v) => setNf({ ...nf, kcal: v })} keyboardType="numeric" placeholder={t('food.per100g', { unit: nf.unit })} placeholderTextColor={c.textMuted} />
         <View style={styles.macroRow}>
           <View style={styles.macroCol}>
             <Text style={styles.inputLabel}>{t('food.protein')}</Text>
@@ -811,7 +828,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
               <View key={idx} style={[styles.entryRow, idx > 0 && styles.entryDivider]}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.entryName} numberOfLines={1}>{it.name}</Text>
-                  <Text style={styles.entryMeta}>{it.amount_g} g  ·  {Math.round((it.kcal * it.amount_g) / 100)} kcal</Text>
+                  <Text style={styles.entryMeta}>{it.amount_g} {it.unit ?? 'g'}  ·  {Math.round((it.kcal * it.amount_g) / 100)} kcal</Text>
                 </View>
                 <TouchableOpacity onPress={() => removeDraftItem(idx)} style={styles.del} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('food.a11yRemoveItem', { name: it.name })}>
                   <Ionicons name="close" size={15} color={c.textMuted} />
@@ -963,7 +980,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
               <TouchableOpacity key={qf.food.id} style={styles.quickChip} onPress={() => quickAdd(qf)} activeOpacity={0.8}>
                 <GlassFill radius={12} />
                 <Text style={styles.quickName} numberOfLines={1}>{qf.food.name}</Text>
-                <Text style={styles.quickMeta}>+{qf.amount} g · {Math.round((qf.food.kcal * qf.amount) / 100)} kcal</Text>
+                <Text style={styles.quickMeta}>+{qf.amount} {foodUnit(qf.food)} · {Math.round((qf.food.kcal * qf.amount) / 100)} kcal</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -1003,7 +1020,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
                 <View key={e.id} style={[styles.entryRow, idx > 0 && styles.entryDivider]}>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.entryName} numberOfLines={1}>{e.food?.name ?? '—'}</Text>
-                    <Text style={styles.entryMeta}>{e.amount_g} g</Text>
+                    <Text style={styles.entryMeta}>{e.amount_g} {foodUnit(e.food)}</Text>
                   </View>
                   <Text style={styles.entryKcal}>{kcalOf(e)} kcal</Text>
                   <TouchableOpacity onPress={() => deleteLog(e.id)} style={styles.del} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('food.a11yRemoveEntry', { name: e.food?.name ?? t('food.entry') })}><Ionicons name="close" size={15} color={c.textMuted} /></TouchableOpacity>
@@ -1034,7 +1051,9 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
             })}
           </View>
           <ScrollView style={{ maxHeight: 320 }} keyboardShouldPersistTaps="handled">
-            {(nlItems ?? []).map((it, idx) => (
+            {(nlItems ?? []).map((it, idx) => {
+              const u = foodUnit({ name: it.name });
+              return (
               <View key={idx} style={[styles.entryRow, idx > 0 && styles.entryDivider]}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.entryName} numberOfLines={1}>{it.name}</Text>
@@ -1042,15 +1061,15 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
                     <TextInput
                       style={[styles.nlAmtInput, it.amount_g < 1 && { borderColor: c.danger }]}
                       value={it.amount_g ? String(it.amount_g) : ''}
-                      onChangeText={(t) => setNlAmount(idx, t)}
+                      onChangeText={(txt) => setNlAmount(idx, txt)}
                       keyboardType="number-pad"
                       selectTextOnFocus
                       maxLength={6}
                       placeholder="0"
                       placeholderTextColor={c.textMuted}
-                      accessibilityLabel={t('food.a11yAmountFor', { name: it.name })}
+                      accessibilityLabel={t('food.a11yAmountFor', { name: it.name, unit: u })}
                     />
-                    <Text style={styles.nlAmtUnit}>g</Text>
+                    <Text style={styles.nlAmtUnit}>{u}</Text>
                     <Text style={styles.entryMeta} numberOfLines={1}>  ·  {Math.round((it.kcal * it.amount_g) / 100)} kcal</Text>
                   </View>
                 </View>
@@ -1058,7 +1077,8 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
                   <Ionicons name="close" size={15} color={c.textMuted} />
                 </TouchableOpacity>
               </View>
-            ))}
+              );
+            })}
             {nlItems?.length === 0 && <Text style={styles.mealEmpty}>{t('food.nlNothingLeft')}</Text>}
             {!!nlItems?.some((it) => it.amount_g < 1) && <Text style={styles.nlHint}>{t('food.nlEnterAmounts')}</Text>}
           </ScrollView>
@@ -1192,6 +1212,7 @@ function makeStyles(c: Colors) {
     primaryBtn: { backgroundColor: c.primary, borderRadius: 16, paddingVertical: 16, alignItems: 'center', marginTop: 20 },
     primaryText: { color: c.onPrimary, fontSize: 16, fontWeight: '700' },
     countHint: { fontSize: 12, color: c.textMuted, marginTop: 8, marginBottom: 4 },
+    unitHint: { fontSize: 12, color: c.textMuted, marginTop: 6, lineHeight: 16 },
     foodRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: c.card, borderRadius: 18, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: c.cardBorder, overflow: 'hidden' },
     foodName: { fontSize: 16, color: c.text, fontWeight: '600' },
     foodMeta: { fontSize: 12, color: c.textMuted, marginTop: 2 },
