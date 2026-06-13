@@ -21,9 +21,10 @@ import SwipeBack from '../components/SwipeBack';
 import GlassFill from '../components/GlassFill';
 import Segmented from '../components/Segmented';
 
-// Unterer Abstand fuer Scroll-Inhalte: auf Android (Edge-to-Edge) deutlich groesser,
-// damit der letzte Text auf keinem Geraet hinter der System-/Navigationsleiste landet.
-const BOTTOM_PAD = Platform.OS === 'android' ? 120 : 48;
+// Unterer Abstand fuer Scroll-Inhalte: genug, damit der letzte Eintrag (z. B. der
+// Abmelden-Button) klar ueber der schwebenden Tab-Leiste bleibt – auf Android (Edge-to-Edge)
+// und auf iPhones mit Home-Indikator etwas mehr.
+const BOTTOM_PAD = Platform.OS === 'android' ? 130 : 100;
 
 export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
   const { session, refreshProfile } = useAuth();
