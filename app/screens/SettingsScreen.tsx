@@ -420,9 +420,9 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
               <View style={styles.row}>
                 <Text style={styles.rowLabel}>{t('settings.rem.trainingTime')}</Text>
                 <View style={styles.stepper}>
-                  <TouchableOpacity style={styles.stepBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('settings.rem.trainingTimeEarlier')} onPress={() => updateRem({ ...rem, trainingHour: Math.max(5, rem.trainingHour - 1) })}><Text style={styles.stepBtnText}>−</Text></TouchableOpacity>
+                  <TouchableOpacity style={styles.stepBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('settings.rem.trainingTimeEarlier')} onPress={() => updateRem({ ...rem, trainingHour: Math.max(0, rem.trainingHour - 1) })}><Text style={styles.stepBtnText}>−</Text></TouchableOpacity>
                   <Text style={styles.stepVal}>{String(rem.trainingHour).padStart(2, '0')}:00</Text>
-                  <TouchableOpacity style={styles.stepBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('settings.rem.trainingTimeLater')} onPress={() => updateRem({ ...rem, trainingHour: Math.min(22, rem.trainingHour + 1) })}><Text style={styles.stepBtnText}>+</Text></TouchableOpacity>
+                  <TouchableOpacity style={styles.stepBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('settings.rem.trainingTimeLater')} onPress={() => updateRem({ ...rem, trainingHour: Math.min(23, rem.trainingHour + 1) })}><Text style={styles.stepBtnText}>+</Text></TouchableOpacity>
                 </View>
               </View>
             )}
@@ -437,9 +437,9 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
               <View style={styles.row}>
                 <Text style={styles.rowLabel}>{t('settings.rem.motivationTime')}</Text>
                 <View style={styles.stepper}>
-                  <TouchableOpacity style={styles.stepBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('settings.rem.motivationTimeEarlier')} onPress={() => updateRem({ ...rem, motivationHour: Math.max(5, rem.motivationHour - 1) })}><Text style={styles.stepBtnText}>−</Text></TouchableOpacity>
+                  <TouchableOpacity style={styles.stepBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('settings.rem.motivationTimeEarlier')} onPress={() => updateRem({ ...rem, motivationHour: Math.max(0, rem.motivationHour - 1) })}><Text style={styles.stepBtnText}>−</Text></TouchableOpacity>
                   <Text style={styles.stepVal}>{String(rem.motivationHour).padStart(2, '0')}:00</Text>
-                  <TouchableOpacity style={styles.stepBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('settings.rem.motivationTimeLater')} onPress={() => updateRem({ ...rem, motivationHour: Math.min(22, rem.motivationHour + 1) })}><Text style={styles.stepBtnText}>+</Text></TouchableOpacity>
+                  <TouchableOpacity style={styles.stepBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('settings.rem.motivationTimeLater')} onPress={() => updateRem({ ...rem, motivationHour: Math.min(23, rem.motivationHour + 1) })}><Text style={styles.stepBtnText}>+</Text></TouchableOpacity>
                 </View>
               </View>
             )}
