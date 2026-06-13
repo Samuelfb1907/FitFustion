@@ -81,6 +81,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
   const [eaten, setEaten] = useState<Eaten>({ kcal: 0, p: 0, c: 0, f: 0 });
   const [days, setDays] = useState<Eaten[]>([]); // gegessen je Tag, Index = Tage zurueck (0 = heute)
   const [dayOffset, setDayOffset] = useState(0); // welcher Tag auf der Kalorien-Karte gerade gezeigt wird
+  const [scrollEnabled, setScrollEnabled] = useState(true); // beim horizontalen Karten-Wischen vertikales Scrollen kurz sperren
   const [activeSession, setActiveSession] = useState<string | null>(null);
   const [activeSets, setActiveSets] = useState(0);
   const [goalsData, setGoalsData] = useState<GoalsData | null>(null);
@@ -275,17 +276,22 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
   const snapBack = () => Animated.spring(dragX, { toValue: 0, useNativeDriver: true, speed: 16, bounciness: 6 }).start();
   const pan = useRef(
     PanResponder.create({
-      // Sobald die Bewegung eher waagerecht als senkrecht ist, uebernehmen wir die Geste
-      // (sonst bleibt das vertikale Scrollen beim ScrollView).
-      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 6 && Math.abs(g.dx) > Math.abs(g.dy),
+      // Nur bei KLAR waagerechter Bewegung uebernehmen (dx deutlich groesser als dy),
+      // damit vertikales Scrollen ungestoert bleibt. Capture + Move, damit die Liste die
+      // Geste nicht vorher an sich zieht.
+      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 8 && Math.abs(g.dx) > Math.abs(g.dy) * 1.2,
+      onMoveShouldSetPanResponderCapture: (_, g) => Math.abs(g.dx) > 8 && Math.abs(g.dx) > Math.abs(g.dy) * 1.2,
       onPanResponderTerminationRequest: () => false,
+      // Waehrend des horizontalen Wischens das vertikale Scrollen sperren -> kein Mitrutschen.
+      onPanResponderGrant: () => setScrollEnabled(false),
       onPanResponderMove: (_, g) => dragX.setValue(Math.max(-70, Math.min(70, g.dx * 0.6))),
       onPanResponderRelease: (_, g) => {
         if (g.dx > 35 || g.vx > 0.2) goOlder();        // links -> rechts: ein Tag zurueck
         else if (g.dx < -35 || g.vx < -0.2) goNewer(); // rechts -> links: ein Tag vor
         snapBack();
+        setScrollEnabled(true);
       },
-      onPanResponderTerminate: snapBack,
+      onPanResponderTerminate: () => { snapBack(); setScrollEnabled(true); },
     })
   ).current;
   const dayLabel = (off: number): string => {
@@ -301,6 +307,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
+        scrollEnabled={scrollEnabled}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
       >
         {loading ? (
