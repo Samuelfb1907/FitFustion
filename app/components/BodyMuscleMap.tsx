@@ -11,7 +11,7 @@ import Segmented from './Segmented';
 // Slug der Bibliothek -> unser Muskel-Key (Datenbank)
 const SLUG_TO_KEY: Partial<Record<Slug, string>> = {
   chest: 'chest', biceps: 'biceps', triceps: 'triceps', deltoids: 'shoulders',
-  abs: 'abs', obliques: 'abs', trapezius: 'back', 'upper-back': 'back', 'lower-back': 'back',
+  abs: 'abs', obliques: 'abs', trapezius: 'neck', 'upper-back': 'back', 'lower-back': 'back',
   quadriceps: 'legs', hamstring: 'legs', adductors: 'legs', calves: 'calves', gluteal: 'glutes',
 };
 // Auf der VORDERSEITE zaehlt der dort nur schmal sichtbare Trizeps zum Bizeps,

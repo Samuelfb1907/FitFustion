@@ -263,11 +263,12 @@ end$$;
 --  BEISPIEL-DATEN (Seed)
 -- ============================================================================
 
--- 9 Muskelgruppen
+-- 10 Muskelgruppen
 insert into public.muscles (key, name_de, name_en, body_region) values
   ('chest',    'Brust',     'Chest',     'upper'),
   ('back',     'Rücken',    'Back',      'upper'),
   ('shoulders','Schultern', 'Shoulders', 'upper'),
+  ('neck',     'Nacken',    'Neck',      'upper'),
   ('biceps',   'Bizeps',    'Biceps',    'upper'),
   ('triceps',  'Trizeps',   'Triceps',   'upper'),
   ('abs',      'Bauch',     'Abs',       'core'),

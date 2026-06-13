@@ -26,7 +26,7 @@ type Muscle = { id: string; key: string; name_de: string; body_region: string | 
 type Exercise = { id: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null };
 
 // Reihenfolge je Muskel-Key (clientseitig, damit die Anordnung stabil bleibt).
-const MUSCLE_ORDER = ['chest', 'back', 'shoulders', 'biceps', 'triceps', 'abs', 'legs', 'glutes', 'calves'];
+const MUSCLE_ORDER = ['chest', 'back', 'shoulders', 'neck', 'biceps', 'triceps', 'abs', 'legs', 'glutes', 'calves'];
 
 export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
   const { profile, isPremium } = useAuth();
