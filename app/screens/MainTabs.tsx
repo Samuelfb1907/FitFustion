@@ -1,11 +1,13 @@
-// Untere Tab-Leiste (Liquid Glass) - 5 Reiter. Bereiche bleiben gemountet (sofortiger Wechsel);
-// beim Antippen springt der Reiter per focusTick auf seine Startansicht zurueck und laedt leise neu.
-import { useState, ReactNode } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+// Untere Tab-Leiste (Liquid Glass) - 5 Reiter. Wechsel per TIPPEN ODER WISCHEN auf der Leiste;
+// die Smaragd-"Glas"-Pille gleitet animiert zum aktiven Reiter (Apple-Stil). Bereiche bleiben
+// gemountet (sofortiger Wechsel); beim Aktivieren springt der Reiter per focusTick auf seine
+// Startansicht zurueck und laedt leise neu.
+import { useEffect, useRef, useState, ReactNode } from 'react';
+import { Animated, LayoutAnimation, PanResponder, Platform, StyleSheet, Text, TouchableOpacity, UIManager, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useColors, useTheme, Colors } from '../contexts/ThemeContext';
+import { useColors, useTheme } from '../contexts/ThemeContext';
 import { useT } from '../contexts/LanguageContext';
 import HomeScreen from './HomeScreen';
 import TrainingScreen from './TrainingScreen';
@@ -15,24 +17,14 @@ import SettingsScreen from './SettingsScreen';
 import Ambient from '../components/Ambient';
 import StepsPrompt from '../components/StepsPrompt';
 
-type Tab = 'home' | 'training' | 'essen' | 'progress' | 'settings';
-
-// Aktiver Reiter = Smaragd-Pille mit Icon + Label, inaktive = ruhige Icons.
-function TabButton({ label, icon, active, onPress, c }: { label: string; icon: string; active: boolean; onPress: () => void; c: Colors }) {
-  if (active) {
-    return (
-      <TouchableOpacity style={[styles.tabActive, { backgroundColor: c.primary }]} onPress={onPress} activeOpacity={0.85} accessibilityRole="tab" accessibilityState={{ selected: true }} accessibilityLabel={label}>
-        <Ionicons name={icon as any} size={20} color={c.onPrimary} />
-        <Text style={[styles.tabActiveLabel, { color: c.onPrimary }]} numberOfLines={1}>{label}</Text>
-      </TouchableOpacity>
-    );
-  }
-  return (
-    <TouchableOpacity style={styles.tabBtn} onPress={onPress} activeOpacity={0.7} accessibilityRole="tab" accessibilityState={{ selected: false }} accessibilityLabel={label}>
-      <Ionicons name={`${icon}-outline` as any} size={22} color={c.textMuted} />
-    </TouchableOpacity>
-  );
+// Layout-Animationen (Pillen-/Label-Uebergang) auch auf Android aktivieren.
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
 }
+
+type Tab = 'home' | 'training' | 'essen' | 'progress' | 'settings';
+const TAB_ORDER: Tab[] = ['home', 'training', 'essen', 'progress', 'settings'];
+const TAB_ICON: Record<Tab, string> = { home: 'home', training: 'barbell', essen: 'restaurant', progress: 'stats-chart', settings: 'settings' };
 
 // Haelt den Bereich gemountet, blendet ihn aber aus, wenn nicht aktiv (Zustand bleibt erhalten).
 function Page({ active, children }: { active: boolean; children: ReactNode }) {
@@ -50,33 +42,102 @@ export default function MainTabs() {
   const t = useT();
   const insets = useSafeAreaInsets();
 
-  // Reiter aktivieren: erstmalig mounten, focusTick erhoehen (-> Startansicht + leiser Refresh), anzeigen.
-  const go = (t: Tab, seg?: EssenSeg) => {
-    setMounted((m) => (m[t] ? m : { ...m, [t]: true }));
-    if (t === 'essen') setEssenSeg(seg ?? 'tracker');
-    setTicks((k) => ({ ...k, [t]: k[t] + 1 }));
-    setTab(t);
+  const TAB_LABEL: Record<Tab, string> = {
+    home: t('tabs.start'), training: t('tabs.training'), essen: t('tabs.food'), progress: t('tabs.progress'), settings: t('tabs.settings'),
+  };
+  const activeIndex = TAB_ORDER.indexOf(tab);
+  const idxRef = useRef(activeIndex);
+  idxRef.current = activeIndex;
+
+  // Reiter aktivieren: erstmalig mounten, focusTick erhoehen (-> Startansicht + leiser Refresh),
+  // anzeigen. Die Layout-Animation laesst Pille + Label weich uebergehen.
+  const go = (target: Tab, seg?: EssenSeg) => {
+    LayoutAnimation.configureNext({
+      duration: 260,
+      update: { type: LayoutAnimation.Types.spring, springDamping: 0.78 },
+      create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+      delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+    });
+    setMounted((m) => (m[target] ? m : { ...m, [target]: true }));
+    if (target === 'essen') setEssenSeg(seg ?? 'tracker');
+    setTicks((k) => ({ ...k, [target]: k[target] + 1 }));
+    setTab(target);
+  };
+
+  // Wischen auf der Leiste: nach links = naechster Reiter, nach rechts = vorheriger.
+  // (Ref, damit der einmalig erstellte PanResponder immer den aktuellen Index nutzt.)
+  const goRelRef = useRef((dir: number) => {
+    const next = Math.min(TAB_ORDER.length - 1, Math.max(0, idxRef.current + dir));
+    if (next !== idxRef.current) go(TAB_ORDER[next]);
+  });
+  const pan = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 10 && Math.abs(g.dx) > Math.abs(g.dy) * 1.3,
+      onPanResponderRelease: (_, g) => {
+        if (g.dx <= -36 || g.vx < -0.25) goRelRef.current(1);       // links wischen -> naechster
+        else if (g.dx >= 36 || g.vx > 0.25) goRelRef.current(-1);   // rechts wischen -> vorheriger
+      },
+    })
+  ).current;
+
+  // Gleitende "Glas"-Pille hinter dem aktiven Reiter: an gemessene Positionen springen.
+  const [layouts, setLayouts] = useState<Array<{ x: number; w: number }>>([]);
+  const pillX = useRef(new Animated.Value(0)).current;
+  const pillW = useRef(new Animated.Value(0)).current;
+  const pillInit = useRef(false);
+  useEffect(() => {
+    const L = layouts[activeIndex];
+    if (!L) return;
+    if (!pillInit.current) { pillInit.current = true; pillX.setValue(L.x); pillW.setValue(L.w); return; }
+    Animated.parallel([
+      Animated.spring(pillX, { toValue: L.x, useNativeDriver: false, speed: 16, bounciness: 9 }),
+      Animated.spring(pillW, { toValue: L.w, useNativeDriver: false, speed: 16, bounciness: 9 }),
+    ]).start();
+  }, [activeIndex, layouts]);
+  const onTabLayout = (i: number, x: number, w: number) => {
+    setLayouts((prev) => {
+      if (prev[i] && Math.abs(prev[i].x - x) < 0.5 && Math.abs(prev[i].w - w) < 0.5) return prev;
+      const next = prev.slice(); next[i] = { x, w }; return next;
+    });
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <Ambient c={c} />
       <View style={{ flex: 1 }}>
-        {mounted.home && <Page active={tab === 'home'}><HomeScreen onNavigate={(t, seg) => go(t as Tab, seg as EssenSeg | undefined)} focusTick={ticks.home} /></Page>}
+        {mounted.home && <Page active={tab === 'home'}><HomeScreen onNavigate={(tb, seg) => go(tb as Tab, seg as EssenSeg | undefined)} focusTick={ticks.home} /></Page>}
         {mounted.training && <Page active={tab === 'training'}><TrainingScreen focusTick={ticks.training} /></Page>}
         {mounted.essen && <Page active={tab === 'essen'}><EssenScreen focusTick={ticks.essen} initialSeg={essenSeg} /></Page>}
         {mounted.progress && <Page active={tab === 'progress'}><ProgressScreen focusTick={ticks.progress} /></Page>}
         {mounted.settings && <Page active={tab === 'settings'}><SettingsScreen focusTick={ticks.settings} /></Page>}
       </View>
-      {/* Schwebende Tab-Leiste (abgerundet, mit Rand) statt durchgehender Bodenleiste */}
-      <View style={[styles.tabWrap, { borderColor: c.hairline, marginBottom: Math.max(insets.bottom - 4, 12) }]}>
+      {/* Schwebende Glas-Leiste: tippen oder wischen; die Pille gleitet zum aktiven Reiter */}
+      <View style={[styles.tabWrap, { borderColor: c.hairline, marginBottom: Math.max(insets.bottom - 4, 12) }]} {...pan.panHandlers}>
         <BlurView intensity={dark ? 40 : 60} tint={dark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
         <View style={[StyleSheet.absoluteFill, { backgroundColor: dark ? 'rgba(15,20,25,0.86)' : 'rgba(255,255,255,0.72)' }]} pointerEvents="none" />
-        <TabButton label={t('tabs.start')} icon="home" active={tab === 'home'} onPress={() => go('home')} c={c} />
-        <TabButton label={t('tabs.training')} icon="barbell" active={tab === 'training'} onPress={() => go('training')} c={c} />
-        <TabButton label={t('tabs.food')} icon="restaurant" active={tab === 'essen'} onPress={() => go('essen')} c={c} />
-        <TabButton label={t('tabs.progress')} icon="stats-chart" active={tab === 'progress'} onPress={() => go('progress')} c={c} />
-        <TabButton label={t('tabs.settings')} icon="settings" active={tab === 'settings'} onPress={() => go('settings')} c={c} />
+        <View style={styles.tabRow}>
+          {!!layouts[activeIndex] && (
+            <Animated.View pointerEvents="none" style={[styles.pill, { backgroundColor: c.primary, transform: [{ translateX: pillX }], width: pillW }]} />
+          )}
+          {TAB_ORDER.map((k, i) => {
+            const active = tab === k;
+            return (
+              <TouchableOpacity
+                key={k}
+                onLayout={(e) => onTabLayout(i, e.nativeEvent.layout.x, e.nativeEvent.layout.width)}
+                style={[styles.tabBtn, active && styles.tabBtnActive]}
+                onPress={() => go(k)}
+                activeOpacity={0.8}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: active }}
+                accessibilityLabel={TAB_LABEL[k]}
+              >
+                <Ionicons name={(active ? TAB_ICON[k] : `${TAB_ICON[k]}-outline`) as any} size={active ? 20 : 22} color={active ? c.onPrimary : c.textMuted} />
+                {active && <Text style={[styles.tabActiveLabel, { color: c.onPrimary }]} numberOfLines={1}>{TAB_LABEL[k]}</Text>}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </View>
       <StepsPrompt />
     </View>
@@ -86,8 +147,10 @@ export default function MainTabs() {
 const styles = StyleSheet.create({
   page: { flex: 1 },
   pageHidden: { flex: 1, display: 'none' },
-  tabWrap: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 14, marginTop: 6, padding: 8, borderRadius: 26, borderWidth: 1, overflow: 'hidden' },
-  tabActive: { flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 11, paddingHorizontal: 16, borderRadius: 18 },
+  tabWrap: { marginHorizontal: 14, marginTop: 6, padding: 8, borderRadius: 26, borderWidth: 1, overflow: 'hidden' },
+  tabRow: { flexDirection: 'row', alignItems: 'center' },
+  pill: { position: 'absolute', top: 0, bottom: 0, left: 0, borderRadius: 18 },
+  tabBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 11, borderRadius: 18 },
+  tabBtnActive: { flex: 0, gap: 7, paddingHorizontal: 16 },
   tabActiveLabel: { fontSize: 12, fontWeight: '800' },
-  tabBtn: { flex: 1, alignItems: 'center', paddingVertical: 12 },
 });
