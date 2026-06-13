@@ -1,9 +1,9 @@
-// Untere Tab-Leiste (transparent, schwebend) - 5 Reiter. Wechsel per TIPPEN ODER WISCHEN auf der Leiste;
-// die Smaragd-"Glas"-Pille gleitet animiert zum aktiven Reiter (Apple-Stil). Bereiche bleiben
-// gemountet (sofortiger Wechsel); beim Aktivieren springt der Reiter per focusTick auf seine
-// Startansicht zurueck und laedt leise neu.
-import { useEffect, useRef, useState, ReactNode } from 'react';
-import { Animated, LayoutAnimation, PanResponder, Platform, StyleSheet, Text, TouchableOpacity, UIManager, View } from 'react-native';
+// Untere Tab-Leiste: schlicht & TRANSPARENT (kein Panel, kein Blur, keine Pille) - Icon oben,
+// Label darunter, aktiver Reiter in der Akzentfarbe (wie eine klassische iOS-Leiste). Wechsel
+// per TIPPEN ODER WISCHEN. Bewusst OHNE Animation/Vermessung -> kein Lag. Bereiche bleiben
+// gemountet (sofortiger Wechsel); beim Aktivieren springt der Reiter per focusTick zurueck.
+import { useRef, useState, ReactNode } from 'react';
+import { PanResponder, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '../contexts/ThemeContext';
@@ -15,11 +15,6 @@ import ProgressScreen from './ProgressScreen';
 import SettingsScreen from './SettingsScreen';
 import Ambient from '../components/Ambient';
 import StepsPrompt from '../components/StepsPrompt';
-
-// Layout-Animationen (Pillen-/Label-Uebergang) auch auf Android aktivieren.
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 
 type Tab = 'home' | 'training' | 'essen' | 'progress' | 'settings';
 const TAB_ORDER: Tab[] = ['home', 'training', 'essen', 'progress', 'settings'];
@@ -42,19 +37,10 @@ export default function MainTabs() {
   const TAB_LABEL: Record<Tab, string> = {
     home: t('tabs.start'), training: t('tabs.training'), essen: t('tabs.food'), progress: t('tabs.progress'), settings: t('tabs.settings'),
   };
-  const activeIndex = TAB_ORDER.indexOf(tab);
-  const idxRef = useRef(activeIndex);
-  idxRef.current = activeIndex;
+  const idxRef = useRef(0);
+  idxRef.current = TAB_ORDER.indexOf(tab);
 
-  // Reiter aktivieren: erstmalig mounten, focusTick erhoehen (-> Startansicht + leiser Refresh),
-  // anzeigen. Die Layout-Animation laesst Pille + Label weich uebergehen.
   const go = (target: Tab, seg?: EssenSeg) => {
-    LayoutAnimation.configureNext({
-      duration: 260,
-      update: { type: LayoutAnimation.Types.spring, springDamping: 0.78 },
-      create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
-      delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
-    });
     setMounted((m) => (m[target] ? m : { ...m, [target]: true }));
     if (target === 'essen') setEssenSeg(seg ?? 'tracker');
     setTicks((k) => ({ ...k, [target]: k[target] + 1 }));
@@ -69,34 +55,13 @@ export default function MainTabs() {
   });
   const pan = useRef(
     PanResponder.create({
-      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 10 && Math.abs(g.dx) > Math.abs(g.dy) * 1.3,
+      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 12 && Math.abs(g.dx) > Math.abs(g.dy) * 1.4,
       onPanResponderRelease: (_, g) => {
-        if (g.dx <= -36 || g.vx < -0.25) goRelRef.current(1);       // links wischen -> naechster
-        else if (g.dx >= 36 || g.vx > 0.25) goRelRef.current(-1);   // rechts wischen -> vorheriger
+        if (g.dx <= -36 || g.vx < -0.3) goRelRef.current(1);       // links wischen -> naechster
+        else if (g.dx >= 36 || g.vx > 0.3) goRelRef.current(-1);   // rechts wischen -> vorheriger
       },
     })
   ).current;
-
-  // Gleitende "Glas"-Pille hinter dem aktiven Reiter: an gemessene Positionen springen.
-  const [layouts, setLayouts] = useState<Array<{ x: number; w: number }>>([]);
-  const pillX = useRef(new Animated.Value(0)).current;
-  const pillW = useRef(new Animated.Value(0)).current;
-  const pillInit = useRef(false);
-  useEffect(() => {
-    const L = layouts[activeIndex];
-    if (!L) return;
-    if (!pillInit.current) { pillInit.current = true; pillX.setValue(L.x); pillW.setValue(L.w); return; }
-    Animated.parallel([
-      Animated.spring(pillX, { toValue: L.x, useNativeDriver: false, speed: 16, bounciness: 9 }),
-      Animated.spring(pillW, { toValue: L.w, useNativeDriver: false, speed: 16, bounciness: 9 }),
-    ]).start();
-  }, [activeIndex, layouts]);
-  const onTabLayout = (i: number, x: number, w: number) => {
-    setLayouts((prev) => {
-      if (prev[i] && Math.abs(prev[i].x - x) < 0.5 && Math.abs(prev[i].w - w) < 0.5) return prev;
-      const next = prev.slice(); next[i] = { x, w }; return next;
-    });
-  };
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
@@ -108,32 +73,26 @@ export default function MainTabs() {
         {mounted.progress && <Page active={tab === 'progress'}><ProgressScreen focusTick={ticks.progress} /></Page>}
         {mounted.settings && <Page active={tab === 'settings'}><SettingsScreen focusTick={ticks.settings} /></Page>}
       </View>
-      {/* Schwebende Tab-Leiste OHNE eigenen Hintergrund (nur Icons + gleitende Pille):
-          tippen oder wischen; die Pille gleitet zum aktiven Reiter */}
-      <View style={[styles.tabWrap, { marginBottom: Math.max(insets.bottom - 4, 12) }]} {...pan.panHandlers}>
-        <View style={styles.tabRow}>
-          {!!layouts[activeIndex] && (
-            <Animated.View pointerEvents="none" style={[styles.pill, { backgroundColor: c.primary, transform: [{ translateX: pillX }], width: pillW }]} />
-          )}
-          {TAB_ORDER.map((k, i) => {
-            const active = tab === k;
-            return (
-              <TouchableOpacity
-                key={k}
-                onLayout={(e) => onTabLayout(i, e.nativeEvent.layout.x, e.nativeEvent.layout.width)}
-                style={[styles.tabBtn, active && styles.tabBtnActive]}
-                onPress={() => go(k)}
-                activeOpacity={0.8}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: active }}
-                accessibilityLabel={TAB_LABEL[k]}
-              >
-                <Ionicons name={(active ? TAB_ICON[k] : `${TAB_ICON[k]}-outline`) as any} size={active ? 20 : 22} color={active ? c.onPrimary : c.textMuted} />
-                {active && <Text style={[styles.tabActiveLabel, { color: c.onPrimary }]} numberOfLines={1}>{TAB_LABEL[k]}</Text>}
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+      {/* Transparente Leiste: Icon oben + Label darunter, aktiv in Akzentfarbe; tippen oder wischen */}
+      <View style={[styles.tabBar, { paddingBottom: Math.max(insets.bottom, 8) }]} {...pan.panHandlers}>
+        {TAB_ORDER.map((k) => {
+          const active = tab === k;
+          const color = active ? c.primary : c.textMuted;
+          return (
+            <TouchableOpacity
+              key={k}
+              style={styles.tab}
+              onPress={() => go(k)}
+              activeOpacity={0.7}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: active }}
+              accessibilityLabel={TAB_LABEL[k]}
+            >
+              <Ionicons name={(active ? TAB_ICON[k] : `${TAB_ICON[k]}-outline`) as any} size={25} color={color} />
+              <Text style={[styles.label, { color, fontWeight: active ? '700' : '600' }]} numberOfLines={1}>{TAB_LABEL[k]}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
       <StepsPrompt />
     </View>
@@ -143,10 +102,8 @@ export default function MainTabs() {
 const styles = StyleSheet.create({
   page: { flex: 1 },
   pageHidden: { flex: 1, display: 'none' },
-  tabWrap: { marginHorizontal: 14, marginTop: 6, padding: 8 },
-  tabRow: { flexDirection: 'row', alignItems: 'center' },
-  pill: { position: 'absolute', top: 0, bottom: 0, left: 0, borderRadius: 18 },
-  tabBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 11, borderRadius: 18 },
-  tabBtnActive: { flex: 0, gap: 7, paddingHorizontal: 16 },
-  tabActiveLabel: { fontSize: 12, fontWeight: '800' },
+  // Transparent: kein Hintergrund, kein Rand, kein Blur.
+  tabBar: { flexDirection: 'row', alignItems: 'flex-start', paddingTop: 9, paddingHorizontal: 6 },
+  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, paddingVertical: 4 },
+  label: { fontSize: 11, letterSpacing: 0.2 },
 });
