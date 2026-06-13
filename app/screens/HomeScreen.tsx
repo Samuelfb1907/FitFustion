@@ -62,7 +62,7 @@ function greeting(): string {
   return 'home.greeting.evening';
 }
 
-export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (tab: string) => void; focusTick?: number }) {
+export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (tab: string, seg?: string) => void; focusTick?: number }) {
   const { session, profile, isPremium } = useAuth();
   const { openPaywall } = usePaywall();
   const t = useT();
@@ -395,7 +395,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
                 sub={waterJust ? t('home.waterAdded') : t('home.waterGoal', { n: (WATER_GOAL / 1000).toFixed(1) })}
                 pct={waterPct} barColor="#3FA9F5"
                 icon="water" tint={{ fg: '#3FA9F5', bg: 'rgba(63,169,245,0.14)' }}
-                onPress={() => onNavigate?.('essen')} styles={styles}
+                onPress={() => onNavigate?.('essen', 'water')} styles={styles}
                 quick={{ onPress: quickAddWater, busy: waterBusy, done: waterJust, a11y: t('home.waterQuickA11y') }}
               />
               <Stat

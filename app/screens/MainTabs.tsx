@@ -9,7 +9,7 @@ import { useColors, useTheme, Colors } from '../contexts/ThemeContext';
 import { useT } from '../contexts/LanguageContext';
 import HomeScreen from './HomeScreen';
 import TrainingScreen from './TrainingScreen';
-import EssenScreen from './EssenScreen';
+import EssenScreen, { Seg as EssenSeg } from './EssenScreen';
 import ProgressScreen from './ProgressScreen';
 import SettingsScreen from './SettingsScreen';
 import Ambient from '../components/Ambient';
@@ -43,6 +43,7 @@ export default function MainTabs() {
   const [tab, setTab] = useState<Tab>('home');
   const [mounted, setMounted] = useState<Record<Tab, boolean>>({ home: true, training: false, essen: false, progress: false, settings: false });
   const [ticks, setTicks] = useState<Record<Tab, number>>({ home: 0, training: 0, essen: 0, progress: 0, settings: 0 });
+  const [essenSeg, setEssenSeg] = useState<EssenSeg>('tracker'); // welcher Unter-Reiter im Essen-Hub geoeffnet wird
   const c = useColors();
   const { theme } = useTheme();
   const dark = theme === 'dark';
@@ -50,8 +51,9 @@ export default function MainTabs() {
   const insets = useSafeAreaInsets();
 
   // Reiter aktivieren: erstmalig mounten, focusTick erhoehen (-> Startansicht + leiser Refresh), anzeigen.
-  const go = (t: Tab) => {
+  const go = (t: Tab, seg?: EssenSeg) => {
     setMounted((m) => (m[t] ? m : { ...m, [t]: true }));
+    if (t === 'essen') setEssenSeg(seg ?? 'tracker');
     setTicks((k) => ({ ...k, [t]: k[t] + 1 }));
     setTab(t);
   };
@@ -60,9 +62,9 @@ export default function MainTabs() {
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <Ambient c={c} />
       <View style={{ flex: 1 }}>
-        {mounted.home && <Page active={tab === 'home'}><HomeScreen onNavigate={(t) => go(t as Tab)} focusTick={ticks.home} /></Page>}
+        {mounted.home && <Page active={tab === 'home'}><HomeScreen onNavigate={(t, seg) => go(t as Tab, seg as EssenSeg | undefined)} focusTick={ticks.home} /></Page>}
         {mounted.training && <Page active={tab === 'training'}><TrainingScreen focusTick={ticks.training} /></Page>}
-        {mounted.essen && <Page active={tab === 'essen'}><EssenScreen focusTick={ticks.essen} /></Page>}
+        {mounted.essen && <Page active={tab === 'essen'}><EssenScreen focusTick={ticks.essen} initialSeg={essenSeg} /></Page>}
         {mounted.progress && <Page active={tab === 'progress'}><ProgressScreen focusTick={ticks.progress} /></Page>}
         {mounted.settings && <Page active={tab === 'settings'}><SettingsScreen focusTick={ticks.settings} /></Page>}
       </View>

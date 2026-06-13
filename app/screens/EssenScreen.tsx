@@ -1,6 +1,6 @@
 // Essen-Hub: oben umschalten zwischen Tracker (Tagebuch) und Wasser.
 // Beide Unter-Screens bleiben gemountet (sofortiges Umschalten, Zustand bleibt erhalten).
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { useT } from '../contexts/LanguageContext';
@@ -10,16 +10,19 @@ import WaterScreen from './WaterScreen';
 import ProteinScreen from './ProteinScreen';
 import { useFocusTick } from '../lib/useFocusTick';
 
-type Seg = 'tracker' | 'protein' | 'water';
+export type Seg = 'tracker' | 'protein' | 'water';
 
-export default function EssenScreen({ focusTick }: { focusTick?: number }) {
+export default function EssenScreen({ focusTick, initialSeg }: { focusTick?: number; initialSeg?: Seg }) {
   const c = useColors();
   const t = useT();
   const styles = useMemo(() => makeStyles(c), [c]);
-  const [seg, setSeg] = useState<Seg>('tracker');
+  const [seg, setSeg] = useState<Seg>(initialSeg ?? 'tracker');
+  // Vom Start-Screen kann ein bestimmter Reiter angefordert werden (z. B. direkt "Wasser").
+  const segRef = useRef<Seg>(initialSeg ?? 'tracker');
+  segRef.current = initialSeg ?? 'tracker';
 
-  // Reiter erneut angetippt -> zurueck zum Tracker
-  useFocusTick(focusTick, () => setSeg('tracker'));
+  // Reiter (erneut) fokussiert -> auf den angeforderten Reiter springen (sonst Tracker)
+  useFocusTick(focusTick, () => setSeg(segRef.current));
 
   return (
     <View style={styles.container}>
