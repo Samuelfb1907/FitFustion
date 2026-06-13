@@ -58,6 +58,11 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
     if (healthSupported()) hasStepsPermission().then(setStepsConnected).catch(() => {});
   }, []);
 
+  // Sprachwechsel: eine evtl. noch sichtbare Status-Meldung war in der ALTEN Sprache
+  // formuliert (sie wird als fertiger Text gespeichert) -> verwerfen, damit unten nichts
+  // in der falschen Sprache stehenbleibt.
+  useEffect(() => { setMsg(null); setPwMsg(null); }, [lang]);
+
   function connectHealth() {
     if (Platform.OS === 'ios') {
       // iOS: eingebauter Schrittzaehler ("Bewegung & Fitness") - direkte Berechtigungsabfrage.
@@ -111,7 +116,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
   }
 
   // Reiter erneut angetippt -> zurueck zum Einstellungs-Menue
-  useFocusTick(focusTick, () => setView('menu'));
+  useFocusTick(focusTick, () => { setView('menu'); setMsg(null); });
   async function updateRem(next: ReminderPrefs) {
     if (next.enabled && !rem?.enabled) {
       const ok = await ensurePermission();
