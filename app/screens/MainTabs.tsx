@@ -1,13 +1,12 @@
-// Untere Tab-Leiste (Liquid Glass) - 5 Reiter. Wechsel per TIPPEN ODER WISCHEN auf der Leiste;
+// Untere Tab-Leiste (transparent, schwebend) - 5 Reiter. Wechsel per TIPPEN ODER WISCHEN auf der Leiste;
 // die Smaragd-"Glas"-Pille gleitet animiert zum aktiven Reiter (Apple-Stil). Bereiche bleiben
 // gemountet (sofortiger Wechsel); beim Aktivieren springt der Reiter per focusTick auf seine
 // Startansicht zurueck und laedt leise neu.
 import { useEffect, useRef, useState, ReactNode } from 'react';
 import { Animated, LayoutAnimation, PanResponder, Platform, StyleSheet, Text, TouchableOpacity, UIManager, View } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useColors, useTheme } from '../contexts/ThemeContext';
+import { useColors } from '../contexts/ThemeContext';
 import { useT } from '../contexts/LanguageContext';
 import HomeScreen from './HomeScreen';
 import TrainingScreen from './TrainingScreen';
@@ -37,8 +36,6 @@ export default function MainTabs() {
   const [ticks, setTicks] = useState<Record<Tab, number>>({ home: 0, training: 0, essen: 0, progress: 0, settings: 0 });
   const [essenSeg, setEssenSeg] = useState<EssenSeg>('tracker'); // welcher Unter-Reiter im Essen-Hub geoeffnet wird
   const c = useColors();
-  const { theme } = useTheme();
-  const dark = theme === 'dark';
   const t = useT();
   const insets = useSafeAreaInsets();
 
@@ -111,10 +108,9 @@ export default function MainTabs() {
         {mounted.progress && <Page active={tab === 'progress'}><ProgressScreen focusTick={ticks.progress} /></Page>}
         {mounted.settings && <Page active={tab === 'settings'}><SettingsScreen focusTick={ticks.settings} /></Page>}
       </View>
-      {/* Schwebende Glas-Leiste: tippen oder wischen; die Pille gleitet zum aktiven Reiter */}
-      <View style={[styles.tabWrap, { borderColor: c.hairline, marginBottom: Math.max(insets.bottom - 4, 12) }]} {...pan.panHandlers}>
-        <BlurView intensity={dark ? 40 : 60} tint={dark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: dark ? 'rgba(15,20,25,0.86)' : 'rgba(255,255,255,0.72)' }]} pointerEvents="none" />
+      {/* Schwebende Tab-Leiste OHNE eigenen Hintergrund (nur Icons + gleitende Pille):
+          tippen oder wischen; die Pille gleitet zum aktiven Reiter */}
+      <View style={[styles.tabWrap, { marginBottom: Math.max(insets.bottom - 4, 12) }]} {...pan.panHandlers}>
         <View style={styles.tabRow}>
           {!!layouts[activeIndex] && (
             <Animated.View pointerEvents="none" style={[styles.pill, { backgroundColor: c.primary, transform: [{ translateX: pillX }], width: pillW }]} />
@@ -147,7 +143,7 @@ export default function MainTabs() {
 const styles = StyleSheet.create({
   page: { flex: 1 },
   pageHidden: { flex: 1, display: 'none' },
-  tabWrap: { marginHorizontal: 14, marginTop: 6, padding: 8, borderRadius: 26, borderWidth: 1, overflow: 'hidden' },
+  tabWrap: { marginHorizontal: 14, marginTop: 6, padding: 8 },
   tabRow: { flexDirection: 'row', alignItems: 'center' },
   pill: { position: 'absolute', top: 0, bottom: 0, left: 0, borderRadius: 18 },
   tabBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 11, borderRadius: 18 },
