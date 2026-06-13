@@ -74,7 +74,7 @@ export const DISCLAIMER_SECTIONS: { h: string; p: string }[] = [
   },
 ];
 
-// Datenschutzerklaerung (Vorlage – Platzhalter [...] ausfuellen, vor Release anwaltlich pruefen).
+// Datenschutzerklaerung – vor Release idealerweise anwaltlich pruefen lassen.
 export const PRIVACY_SECTIONS: { h: string; p: string }[] = [
   {
     h: 'Verantwortlicher',
@@ -82,7 +82,11 @@ export const PRIVACY_SECTIONS: { h: string; p: string }[] = [
   },
   {
     h: 'Welche Daten wir verarbeiten',
-    p: 'Konto: E-Mail-Adresse. Profil: Vorname, Alter/Geburtsjahr, Geschlecht, Größe, Gewicht, Aktivitätslevel, Erfahrungslevel, Trainingsumgebung. Nutzungsdaten: Trainingseinheiten & Sätze, Trainingspläne, Essens-Tagebuch, Wasser- und Gewichtsverlauf, Erfolge. Bei Nutzung der KI-gestützten Mahlzeiten-Erkennung („Sprich’s einfach“) zusätzlich der von dir eingegebene Freitext zur Beschreibung deiner Mahlzeit. Einige davon sind Gesundheitsdaten (besondere Kategorie nach Art. 9 DSGVO).',
+    p: 'Konto: E-Mail-Adresse (bei „Mit Apple anmelden" ggf. eine anonyme Weiterleitungs-Adresse). Profil: Vorname, Alter/Geburtsjahr, Geschlecht, Größe, Gewicht, Aktivitätslevel, Erfahrungslevel, Trainingsumgebung. Nutzungsdaten: Trainingseinheiten & Sätze, Trainingspläne, Essens-Tagebuch, Wasser- und Gewichtsverlauf, Erfolge. Bei Nutzung der KI-gestützten Mahlzeiten-Erkennung („Sprich’s einfach“) zusätzlich der von dir eingegebene Freitext zur Beschreibung deiner Mahlzeit. Einige davon sind Gesundheitsdaten (besondere Kategorie nach Art. 9 DSGVO).',
+  },
+  {
+    h: 'Anmeldung mit Apple',
+    p: 'Du kannst dich wahlweise mit E-Mail und Passwort oder über „Mit Apple anmelden" (Sign in with Apple) registrieren und einloggen. Nutzt du den Apple-Login, wickelt Apple die Authentifizierung ab und übermittelt uns eine Nutzerkennung sowie – je nach deiner Auswahl bei Apple – deine E-Mail-Adresse oder eine anonyme Weiterleitungs-Adresse (@privaterelay.appleid.com). Weitere Apple-Daten erhalten wir nicht. Für die Verarbeitung durch Apple selbst gilt die Datenschutzerklärung von Apple. Rechtsgrundlage ist die Durchführung des Nutzungsverhältnisses (Art. 6 Abs. 1 lit. b DSGVO).',
   },
   {
     h: 'Schritte & Bewegungsdaten (nur auf dem Gerät)',
@@ -126,11 +130,11 @@ export const PRIVACY_SECTIONS: { h: string; p: string }[] = [
   },
   {
     h: 'Stand & Änderungen',
-    p: 'Stand dieser Datenschutzerklärung: 12. Juni 2026. Wir können diese Erklärung anpassen, z. B. bei neuen Funktionen oder geänderter Rechtslage; es gilt die jeweils aktuelle, in der App abrufbare Fassung.',
+    p: 'Stand dieser Datenschutzerklärung: 13. Juni 2026. Wir können diese Erklärung anpassen, z. B. bei neuen Funktionen oder geänderter Rechtslage; es gilt die jeweils aktuelle, in der App abrufbare Fassung.',
   },
 ];
 
-// Impressum (Vorlage nach § 5 DDG – Platzhalter [...] ausfuellen, vor Release pruefen lassen).
+// Impressum (nach § 5 DDG) – vor Release pruefen lassen.
 export const IMPRESSUM_SECTIONS: { h: string; p: string }[] = [
   {
     h: 'Angaben gemäß § 5 DDG',
@@ -301,7 +305,11 @@ export const PRIVACY_SECTIONS_EN: { h: string; p: string }[] = [
   },
   {
     h: 'What data we process',
-    p: 'Account: e-mail address. Profile: first name, age/year of birth, gender, height, weight, activity level, experience level, training environment. Usage data: workouts & sets, training plans, food diary, water and weight history, achievements. When using the AI-assisted meal recognition (“Just say it”), additionally the free text you enter to describe your meal. Some of this constitutes health data (special category under Art. 9 GDPR).',
+    p: 'Account: e-mail address (with “Sign in with Apple”, possibly an anonymous relay address). Profile: first name, age/year of birth, gender, height, weight, activity level, experience level, training environment. Usage data: workouts & sets, training plans, food diary, water and weight history, achievements. When using the AI-assisted meal recognition (“Just say it”), additionally the free text you enter to describe your meal. Some of this constitutes health data (special category under Art. 9 GDPR).',
+  },
+  {
+    h: 'Sign in with Apple',
+    p: 'You can register and log in either with e-mail and password or via “Sign in with Apple”. If you use Apple sign-in, Apple handles the authentication and provides us with a user identifier and – depending on your choice in Apple – your e-mail address or an anonymous relay address (@privaterelay.appleid.com). We do not receive any further Apple data. Apple’s own processing is governed by Apple’s privacy policy. The legal basis is the performance of the usage relationship (Art. 6(1)(b) GDPR).',
   },
   {
     h: 'Steps & motion data (on your device only)',
