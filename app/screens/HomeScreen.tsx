@@ -254,22 +254,32 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
   else if (goalsData?.trainedToday) { trainVal = t('home.trainDone'); trainSub = t('home.trainDoneToday'); }
   else if (planToday?.has) { trainVal = planToday.focus ? t(planToday.focus) : t('home.trainRestDay'); trainSub = planToday.focus ? t('home.trainPerPlan') : t('home.trainRecovery'); }
 
-  // Tage-Navigation der Kalorien-Karte: nach links wischen = ein Tag zurueck (max. 7 Tage).
+  // Tage-Navigation der Kalorien-Karte: nach RECHTS wischen (links -> rechts) = ein Tag
+  // zurueck, nach LINKS = wieder vor. Die GANZE Karte ist wischbar; dragX laesst den Inhalt
+  // dem Finger leicht folgen (weiches Feedback), niedrige Schwelle = leicht auszuloesen.
   const cur = days[dayOffset] ?? eaten;
   const goOlder = useCallback(() => setDayOffset((o) => Math.min(DAYS_BACK, o + 1)), []);
   const goNewer = useCallback(() => setDayOffset((o) => Math.max(0, o - 1)), []);
   const fade = useRef(new Animated.Value(1)).current;
+  const dragX = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    fade.setValue(0.35);
-    Animated.timing(fade, { toValue: 1, duration: 240, useNativeDriver: true }).start();
+    fade.setValue(0.5);
+    Animated.timing(fade, { toValue: 1, duration: 200, useNativeDriver: true }).start();
   }, [dayOffset]);
+  const snapBack = () => Animated.spring(dragX, { toValue: 0, useNativeDriver: true, speed: 16, bounciness: 6 }).start();
   const pan = useRef(
     PanResponder.create({
-      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 14 && Math.abs(g.dx) > Math.abs(g.dy) * 1.6,
+      // Sobald die Bewegung eher waagerecht als senkrecht ist, uebernehmen wir die Geste
+      // (sonst bleibt das vertikale Scrollen beim ScrollView).
+      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 6 && Math.abs(g.dx) > Math.abs(g.dy),
+      onPanResponderTerminationRequest: () => false,
+      onPanResponderMove: (_, g) => dragX.setValue(Math.max(-70, Math.min(70, g.dx * 0.6))),
       onPanResponderRelease: (_, g) => {
-        if (g.dx <= -45) goOlder();
-        else if (g.dx >= 45) goNewer();
+        if (g.dx > 35 || g.vx > 0.2) goOlder();        // links -> rechts: ein Tag zurueck
+        else if (g.dx < -35 || g.vx < -0.2) goNewer(); // rechts -> links: ein Tag vor
+        snapBack();
       },
+      onPanResponderTerminate: snapBack,
     })
   ).current;
   const dayLabel = (off: number): string => {
@@ -316,26 +326,26 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
               )}
             </View>
 
-            {/* KALORIEN – nach links wischen blaettert bis zu 7 Tage zurueck */}
+            {/* KALORIEN – ganze Karte wischbar; nach rechts wischen blaettert bis zu 7 Tage zurueck */}
             {nutrition && (
-              <View style={styles.card}>
+              <View style={styles.card} {...pan.panHandlers}>
                 <GlassFill radius={22} />
-                <View style={styles.cardHead}>
-                  <Text style={styles.cardLabel}>{dayLabel(dayOffset).toLocaleUpperCase(lang === 'en' ? 'en-US' : 'de-DE')}</Text>
-                  {dayOffset === 0 ? (
-                    !!goalLabel && (
-                      <View style={styles.goalBadge}>
-                        <Text style={styles.goalBadgeText} numberOfLines={1}>{t(goalLabel).toUpperCase()}</Text>
-                      </View>
-                    )
-                  ) : (
-                    <TouchableOpacity style={styles.todayPill} onPress={() => setDayOffset(0)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('home.day.todayA11y')}>
-                      <Ionicons name="today-outline" size={13} color={c.primary} />
-                      <Text style={styles.todayPillText} numberOfLines={1}>{t('home.day.today')}</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-                <Animated.View style={{ opacity: fade }} {...pan.panHandlers}>
+                <Animated.View style={{ opacity: fade, transform: [{ translateX: dragX }] }}>
+                  <View style={styles.cardHead}>
+                    <Text style={styles.cardLabel}>{dayLabel(dayOffset).toLocaleUpperCase(lang === 'en' ? 'en-US' : 'de-DE')}</Text>
+                    {dayOffset === 0 ? (
+                      !!goalLabel && (
+                        <View style={styles.goalBadge}>
+                          <Text style={styles.goalBadgeText} numberOfLines={1}>{t(goalLabel).toUpperCase()}</Text>
+                        </View>
+                      )
+                    ) : (
+                      <TouchableOpacity style={styles.todayPill} onPress={() => setDayOffset(0)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('home.day.todayA11y')}>
+                        <Ionicons name="today-outline" size={13} color={c.primary} />
+                        <Text style={styles.todayPillText} numberOfLines={1}>{t('home.day.today')}</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
                   <View style={{ alignItems: 'center', marginTop: 16 }}>
                     <CalorieGauge target={nutrition.targetCalories + (dayOffset === 0 ? Math.max(trainingKcal, activityKcal) : 0)} eaten={cur.kcal} />
                   </View>
