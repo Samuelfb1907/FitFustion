@@ -1,14 +1,13 @@
-// Untere Tab-Leiste: schwebend-gerundete GLAS-Leiste (BlurView, durchscheinend, KEINE dunkle
-// Fuellung). Sie ist IN-FLOW (reserviert ihren Platz) -> verdeckt NIE den Seiteninhalt.
-// Icon oben + Label darunter (Label schrumpft autom. rein -> kein Ueberstehen). Aktiver Reiter:
-// gruener Text auf einer NEUTRALEN, gleitenden Pille (gruen-auf-gruen waere unlesbar). Die Pille
-// gleitet beim Tippen smooth (nur translateX, nativ -> kein Lag). Bereiche bleiben gemountet.
-import { useEffect, useRef, useState, ReactNode } from 'react';
-import { Animated, PanResponder, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { BlurView } from 'expo-blur';
+// Untere Tab-Leiste: KOMPLETT TRANSPARENT (kein Hintergrund, kein Glas, KEINE Pille/Kasten) und
+// IN-FLOW (reserviert ihren Platz -> verdeckt NIE den Inhalt; man scrollt bis ganz unten, der
+// Abmelden-Button ist sichtbar). Icon oben + Label darunter; aktiver Reiter einfach GRUEN, Rest
+// grau (gruener Text auf dem Seiten-Hintergrund -> immer lesbar). Label schrumpft autom. hinein
+// (kein Ueberstehen). Wechsel per TIPPEN oder seitlichem WISCHEN. Bereiche bleiben gemountet.
+import { useRef, useState, ReactNode } from 'react';
+import { PanResponder, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useColors, useTheme } from '../contexts/ThemeContext';
+import { useColors } from '../contexts/ThemeContext';
 import { useT } from '../contexts/LanguageContext';
 import HomeScreen from './HomeScreen';
 import TrainingScreen from './TrainingScreen';
@@ -32,8 +31,6 @@ export default function MainTabs() {
   const [ticks, setTicks] = useState<Record<Tab, number>>({ home: 0, training: 0, essen: 0, progress: 0, settings: 0 });
   const [essenSeg, setEssenSeg] = useState<EssenSeg>('tracker'); // welcher Unter-Reiter im Essen-Hub geoeffnet wird
   const c = useColors();
-  const { theme } = useTheme();
-  const dark = theme === 'dark';
   const t = useT();
   const insets = useSafeAreaInsets();
 
@@ -49,10 +46,9 @@ export default function MainTabs() {
     setTab(target);
   };
 
-  // Zwischen den Kategorien WISCHEN. Bewusst NICHT im Capture-Modus -> Kind-Gesten
-  // (Kalorien-Karte/Tageswischen, Zurueck-Wischen, horizontale Listen) greifen ZUERST;
-  // nur klar waagerechte Wische im freien Bereich wechseln den Reiter. Ref, damit der
-  // einmalig erstellte Responder immer den aktuellen Index nutzt.
+  // Seitliches Wischen wechselt den Reiter. Bewusst NICHT im Capture-Modus -> Kind-Gesten
+  // (Kalorien-Karte, Zurueck-Wischen, horizontale Listen) greifen zuerst; nur klar waagerechte
+  // Wische im freien Bereich wechseln die Kategorie.
   const idxRef = useRef(activeIndex);
   idxRef.current = activeIndex;
   const goRelRef = useRef((dir: number) => {
@@ -63,23 +59,11 @@ export default function MainTabs() {
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 24 && Math.abs(g.dx) > Math.abs(g.dy) * 1.8,
       onPanResponderRelease: (_, g) => {
-        if (g.dx <= -55 || g.vx < -0.35) goRelRef.current(1);       // nach links wischen -> naechste Kategorie
-        else if (g.dx >= 55 || g.vx > 0.35) goRelRef.current(-1);   // nach rechts -> vorherige Kategorie
+        if (g.dx <= -55 || g.vx < -0.35) goRelRef.current(1);       // nach links -> naechste Kategorie
+        else if (g.dx >= 55 || g.vx > 0.35) goRelRef.current(-1);   // nach rechts -> vorherige
       },
     })
   ).current;
-
-  // Gleitende Pille: nur translateX (nativ -> butterweich). Pille ist NEUTRAL, nicht gruen.
-  const [barW, setBarW] = useState(0);
-  const tabW = barW > 0 ? barW / TAB_ORDER.length : 0;
-  const pillX = useRef(new Animated.Value(0)).current;
-  const pillInit = useRef(false);
-  useEffect(() => {
-    if (tabW <= 0) return;
-    const to = activeIndex * tabW;
-    if (!pillInit.current) { pillInit.current = true; pillX.setValue(to); return; }
-    Animated.spring(pillX, { toValue: to, useNativeDriver: true, speed: 16, bounciness: 8 }).start();
-  }, [activeIndex, tabW]);
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
@@ -91,35 +75,26 @@ export default function MainTabs() {
         {mounted.progress && <Page active={tab === 'progress'}><ProgressScreen focusTick={ticks.progress} /></Page>}
         {mounted.settings && <Page active={tab === 'settings'}><SettingsScreen focusTick={ticks.settings} /></Page>}
       </View>
-      {/* IN-FLOW (reserviert Platz -> verdeckt nichts) + schwebend-gerundetes Glas */}
-      <View style={[styles.barWrap, { paddingBottom: Math.max(insets.bottom - 4, 6) }]}>
-        <View style={[styles.bar, { borderColor: c.hairline }]} onLayout={(e) => setBarW(e.nativeEvent.layout.width)}>
-          <BlurView intensity={dark ? 34 : 48} tint={dark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-          {tabW > 0 && (
-            <Animated.View
-              pointerEvents="none"
-              style={[styles.pill, { width: tabW - 10, backgroundColor: dark ? 'rgba(255,255,255,0.12)' : 'rgba(20,24,28,0.07)', transform: [{ translateX: pillX }] }]}
-            />
-          )}
-          {TAB_ORDER.map((k) => {
-            const active = tab === k;
-            const color = active ? c.primary : c.textMuted;
-            return (
-              <TouchableOpacity
-                key={k}
-                style={styles.tab}
-                onPress={() => go(k)}
-                activeOpacity={0.7}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: active }}
-                accessibilityLabel={TAB_LABEL[k]}
-              >
-                <Ionicons name={(active ? TAB_ICON[k] : `${TAB_ICON[k]}-outline`) as any} size={22} color={color} />
-                <Text style={[styles.label, { color, fontWeight: active ? '700' : '600' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{TAB_LABEL[k]}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+      {/* IN-FLOW + TRANSPARENT: reserviert Platz (verdeckt nichts), kein Hintergrund, keine Pille */}
+      <View style={[styles.tabBar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
+        {TAB_ORDER.map((k) => {
+          const active = tab === k;
+          const color = active ? c.primary : c.textMuted;
+          return (
+            <TouchableOpacity
+              key={k}
+              style={styles.tab}
+              onPress={() => go(k)}
+              activeOpacity={0.7}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: active }}
+              accessibilityLabel={TAB_LABEL[k]}
+            >
+              <Ionicons name={(active ? TAB_ICON[k] : `${TAB_ICON[k]}-outline`) as any} size={23} color={color} />
+              <Text style={[styles.label, { color, fontWeight: active ? '700' : '600' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{TAB_LABEL[k]}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
       <StepsPrompt />
     </View>
@@ -129,10 +104,8 @@ export default function MainTabs() {
 const styles = StyleSheet.create({
   page: { flex: 1 },
   pageHidden: { flex: 1, display: 'none' },
-  barWrap: { paddingHorizontal: 12, paddingTop: 4 },
-  bar: { flexDirection: 'row', height: 56, borderRadius: 22, borderWidth: 1, overflow: 'hidden' },
-  // Neutrale Pille (kein Gruen) -> gruener Text bleibt lesbar. marginLeft zentriert in der Spalte.
-  pill: { position: 'absolute', top: 6, bottom: 6, left: 0, marginLeft: 5, borderRadius: 16 },
-  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, paddingHorizontal: 3 },
+  // transparent (kein Hintergrund/Rand/Glas), in-flow
+  tabBar: { flexDirection: 'row', alignItems: 'flex-start', paddingTop: 8, paddingHorizontal: 6 },
+  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, paddingHorizontal: 2 },
   label: { fontSize: 11, letterSpacing: 0.1 },
 });
