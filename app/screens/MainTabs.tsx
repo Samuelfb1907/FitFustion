@@ -1,7 +1,8 @@
-// Untere Tab-Leiste im "Liquid Glass"-Stil (wie Apple Music): schwebende, durchscheinende
-// Glas-Leiste, Icon + Label je Reiter, der AKTIVE Reiter ist eine gruene Pille, die beim
-// Antippen smooth zum Reiter GLEITET (nur translateX -> nativ animiert -> KEIN Lag).
-// Die Leiste schwebt ueber dem Inhalt (absolute), der Inhalt scrollt durch das Glas durch.
+// Untere Tab-Leiste: schwebend-gerundete GLAS-Leiste (BlurView, durchscheinend, KEINE dunkle
+// Fuellung). Sie ist IN-FLOW (reserviert ihren Platz) -> verdeckt NIE den Seiteninhalt.
+// Icon oben + Label darunter (Label schrumpft autom. rein -> kein Ueberstehen). Aktiver Reiter:
+// gruener Text auf einer NEUTRALEN, gleitenden Pille (gruen-auf-gruen waere unlesbar). Die Pille
+// gleitet beim Tippen smooth (nur translateX, nativ -> kein Lag). Bereiche bleiben gemountet.
 import { useEffect, useRef, useState, ReactNode } from 'react';
 import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { BlurView } from 'expo-blur';
@@ -20,9 +21,7 @@ import StepsPrompt from '../components/StepsPrompt';
 type Tab = 'home' | 'training' | 'essen' | 'progress' | 'settings';
 const TAB_ORDER: Tab[] = ['home', 'training', 'essen', 'progress', 'settings'];
 const TAB_ICON: Record<Tab, string> = { home: 'home', training: 'barbell', essen: 'restaurant', progress: 'stats-chart', settings: 'settings' };
-const BAR_H = 58;
 
-// Haelt den Bereich gemountet, blendet ihn aber aus, wenn nicht aktiv (Zustand bleibt erhalten).
 function Page({ active, children }: { active: boolean; children: ReactNode }) {
   return <View style={active ? styles.page : styles.pageHidden}>{children}</View>;
 }
@@ -50,7 +49,7 @@ export default function MainTabs() {
     setTab(target);
   };
 
-  // Gleitende Pille: nur translateX (nativ animiert -> butterweich, kein Lag).
+  // Gleitende Pille: nur translateX (nativ -> butterweich). Pille ist NEUTRAL, nicht gruen.
   const [barW, setBarW] = useState(0);
   const tabW = barW > 0 ? barW / TAB_ORDER.length : 0;
   const pillX = useRef(new Animated.Value(0)).current;
@@ -58,8 +57,8 @@ export default function MainTabs() {
   useEffect(() => {
     if (tabW <= 0) return;
     const to = activeIndex * tabW;
-    if (!pillInit.current) { pillInit.current = true; pillX.setValue(to); return; } // beim ersten Messen ohne Animation setzen
-    Animated.spring(pillX, { toValue: to, useNativeDriver: true, speed: 18, bounciness: 9 }).start();
+    if (!pillInit.current) { pillInit.current = true; pillX.setValue(to); return; }
+    Animated.spring(pillX, { toValue: to, useNativeDriver: true, speed: 16, bounciness: 8 }).start();
   }, [activeIndex, tabW]);
 
   return (
@@ -72,15 +71,14 @@ export default function MainTabs() {
         {mounted.progress && <Page active={tab === 'progress'}><ProgressScreen focusTick={ticks.progress} /></Page>}
         {mounted.settings && <Page active={tab === 'settings'}><SettingsScreen focusTick={ticks.settings} /></Page>}
       </View>
-      {/* Schwebende Glas-Leiste ueber dem Inhalt; box-none -> nur die Reiter fangen Tipps ab */}
-      <View style={[styles.barWrap, { paddingBottom: Math.max(insets.bottom, 10) }]} pointerEvents="box-none">
+      {/* IN-FLOW (reserviert Platz -> verdeckt nichts) + schwebend-gerundetes Glas */}
+      <View style={[styles.barWrap, { paddingBottom: Math.max(insets.bottom - 4, 6) }]}>
         <View style={[styles.bar, { borderColor: c.hairline }]} onLayout={(e) => setBarW(e.nativeEvent.layout.width)}>
-          {/* Nur Milchglas (durchscheinend) - KEINE dunkle Fuellung mehr -> der Inhalt schimmert durch. */}
           <BlurView intensity={dark ? 34 : 48} tint={dark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
           {tabW > 0 && (
             <Animated.View
               pointerEvents="none"
-              style={[styles.pill, { width: tabW - 12, backgroundColor: dark ? 'rgba(25,201,143,0.20)' : 'rgba(14,159,110,0.15)', transform: [{ translateX: pillX }] }]}
+              style={[styles.pill, { width: tabW - 10, backgroundColor: dark ? 'rgba(255,255,255,0.12)' : 'rgba(20,24,28,0.07)', transform: [{ translateX: pillX }] }]}
             />
           )}
           {TAB_ORDER.map((k) => {
@@ -96,8 +94,8 @@ export default function MainTabs() {
                 accessibilityState={{ selected: active }}
                 accessibilityLabel={TAB_LABEL[k]}
               >
-                <Ionicons name={(active ? TAB_ICON[k] : `${TAB_ICON[k]}-outline`) as any} size={23} color={color} />
-                <Text style={[styles.label, { color, fontWeight: active ? '700' : '600' }]} numberOfLines={1}>{TAB_LABEL[k]}</Text>
+                <Ionicons name={(active ? TAB_ICON[k] : `${TAB_ICON[k]}-outline`) as any} size={22} color={color} />
+                <Text style={[styles.label, { color, fontWeight: active ? '700' : '600' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{TAB_LABEL[k]}</Text>
               </TouchableOpacity>
             );
           })}
@@ -111,10 +109,10 @@ export default function MainTabs() {
 const styles = StyleSheet.create({
   page: { flex: 1 },
   pageHidden: { flex: 1, display: 'none' },
-  barWrap: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 14 },
-  bar: { flexDirection: 'row', height: BAR_H, borderRadius: 24, borderWidth: 1, overflow: 'hidden' },
-  // Gruene Pille hinter dem aktiven Reiter; marginLeft zentriert sie in der Reiter-Spalte.
-  pill: { position: 'absolute', top: 7, bottom: 7, left: 0, marginLeft: 6, borderRadius: 17 },
-  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3 },
-  label: { fontSize: 11, letterSpacing: 0.2 },
+  barWrap: { paddingHorizontal: 12, paddingTop: 4 },
+  bar: { flexDirection: 'row', height: 56, borderRadius: 22, borderWidth: 1, overflow: 'hidden' },
+  // Neutrale Pille (kein Gruen) -> gruener Text bleibt lesbar. marginLeft zentriert in der Spalte.
+  pill: { position: 'absolute', top: 6, bottom: 6, left: 0, marginLeft: 5, borderRadius: 16 },
+  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, paddingHorizontal: 3 },
+  label: { fontSize: 11, letterSpacing: 0.1 },
 });

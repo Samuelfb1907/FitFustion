@@ -331,7 +331,7 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
             {pickerLoading ? (
               <ActivityIndicator color={c.primary} style={{ marginTop: 24 }} />
             ) : (
-              <ScrollView contentContainerStyle={{ paddingBottom: 100, paddingTop: 10 }} keyboardShouldPersistTaps="handled">
+              <ScrollView contentContainerStyle={{ paddingBottom: 24, paddingTop: 10 }} keyboardShouldPersistTaps="handled">
                 {filtered.map((e) => (
                   <TouchableOpacity key={e.id} style={styles.pickRow} onPress={() => addExercise(e.id)} activeOpacity={0.7}>
                     <GlassFill radius={16} />
@@ -375,7 +375,7 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
 
   function renderCreate() {
     return (
-      <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 100 }}>
+      <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 24 }}>
         {!embedded && <Text style={styles.title}>{t('plan.createTitle')}</Text>}
         <Text style={styles.subtitle}>{t('plan.daysPerWeekQuestion')}</Text>
         <View style={styles.dayPicker}>
@@ -405,7 +405,7 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
   return (
     <ScrollView
       style={[styles.container, embedded && styles.embedded]}
-      contentContainerStyle={{ paddingBottom: 100 }}
+      contentContainerStyle={{ paddingBottom: 24 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
     >
       {!embedded && <Text style={styles.title}>{t('plan.yourPlanTitle')}</Text>}

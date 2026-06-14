@@ -117,7 +117,7 @@ export default function WaterScreen({ embedded, focusTick }: { embedded?: boolea
   return (
     <ScrollView
       style={[styles.container, embedded && styles.embedded, embedded && styles.bleed]}
-      contentContainerStyle={[{ paddingBottom: 100 }, embedded && styles.bleedPad]}
+      contentContainerStyle={[{ paddingBottom: 24 }, embedded && styles.bleedPad]}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
     >
       {!embedded && <Text style={styles.title}>{t('water.title')}</Text>}

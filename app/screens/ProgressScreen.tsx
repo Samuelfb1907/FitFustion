@@ -276,7 +276,7 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
       ) : (
       <ScrollView
         style={{ flex: 1, marginTop: 8 }}
-        contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={{ paddingBottom: 24 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets

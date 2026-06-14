@@ -106,7 +106,7 @@ export default function LeaderboardScreen({ embedded }: { embedded?: boolean }) 
   // Opt-in-Ansicht
   if (!optedIn) {
     return (
-      <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 100 }} keyboardShouldPersistTaps="handled">
+      <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
         {!embedded && <Text style={styles.title}>{t('leaderboard.title')}</Text>}
         <View style={styles.tile}>
           <GlassFill radius={20} />
@@ -151,7 +151,7 @@ export default function LeaderboardScreen({ embedded }: { embedded?: boolean }) 
   return (
     <ScrollView
       style={[styles.container, embedded && styles.embedded]}
-      contentContainerStyle={{ paddingBottom: 100 }}
+      contentContainerStyle={{ paddingBottom: 24 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
     >
       {!embedded && <Text style={styles.title}>{t('leaderboard.title')}</Text>}

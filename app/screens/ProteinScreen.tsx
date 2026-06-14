@@ -25,7 +25,7 @@ export default function ProteinScreen({ embedded }: { embedded?: boolean }) {
   return (
     <FlatList
       style={[styles.container, embedded && styles.embedded, embedded && styles.bleed]}
-      contentContainerStyle={[{ paddingBottom: 100 }, embedded && styles.bleedPad]}
+      contentContainerStyle={[{ paddingBottom: 24 }, embedded && styles.bleedPad]}
       data={list}
       keyExtractor={(item) => item.name}
       keyboardShouldPersistTaps="handled"
