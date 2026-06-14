@@ -14,6 +14,7 @@ import SwipeBack from '../components/SwipeBack';
 import GlassFill from '../components/GlassFill';
 import ExerciseProgress from '../components/ExerciseProgress';
 import ErrorRetry from '../components/ErrorRetry';
+import { TAB_BAR_SPACE } from '../lib/layout';
 import Segmented from '../components/Segmented';
 import LeaderboardScreen from './LeaderboardScreen';
 import { useFocusTick } from '../lib/useFocusTick';
@@ -276,7 +277,7 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
       ) : (
       <ScrollView
         style={{ flex: 1, marginTop: 8 }}
-        contentContainerStyle={{ paddingBottom: 24 }}
+        contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets

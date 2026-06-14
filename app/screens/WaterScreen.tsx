@@ -12,6 +12,7 @@ import GlassFill from '../components/GlassFill';
 import { errorMessage } from '../lib/errors';
 import { todayStr } from '../lib/date';
 import { CARD_SHADOW as shadow } from '../lib/ui';
+import { TAB_BAR_SPACE } from '../lib/layout';
 import { WATER_GOAL, GLASS } from '../lib/water';
 
 type WaterRow = { id: string; amount_ml: number; created_at: string };
@@ -117,7 +118,7 @@ export default function WaterScreen({ embedded, focusTick }: { embedded?: boolea
   return (
     <ScrollView
       style={[styles.container, embedded && styles.embedded, embedded && styles.bleed]}
-      contentContainerStyle={[{ paddingBottom: 24 }, embedded && styles.bleedPad]}
+      contentContainerStyle={[{ paddingBottom: embedded ? TAB_BAR_SPACE : 24 }, embedded && styles.bleedPad]}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
     >
       {!embedded && <Text style={styles.title}>{t('water.title')}</Text>}

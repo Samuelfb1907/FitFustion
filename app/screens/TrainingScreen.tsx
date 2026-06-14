@@ -12,6 +12,7 @@ import ExerciseDetail from '../components/ExerciseDetail';
 import Segmented from '../components/Segmented';
 import PlanScreen, { Selected } from './PlanScreen';
 import { useFocusTick } from '../lib/useFocusTick';
+import { TAB_BAR_SPACE } from '../lib/layout';
 import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
 import { DIFF_LABELS, EQUIP_LABELS, ALLOWED_DIFF, ALLOWED_EQUIP } from '../lib/training';
@@ -158,7 +159,7 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
         </>
       ) : (
         <ScrollView
-          contentContainerStyle={{ paddingTop: 0, paddingBottom: 24 }}
+          contentContainerStyle={{ paddingTop: 0, paddingBottom: TAB_BAR_SPACE }}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
         >
@@ -212,7 +213,7 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
         <FlatList
           data={exercises}
           keyExtractor={(ex) => ex.id}
-          contentContainerStyle={{ paddingBottom: 24 }}
+          contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE }}
           showsVerticalScrollIndicator={false}
           initialNumToRender={12}
           maxToRenderPerBatch={12}

@@ -7,6 +7,7 @@ import { useT } from '../contexts/LanguageContext';
 import GlassFill from '../components/GlassFill';
 import { CARD_SHADOW as shadow } from '../lib/ui';
 import { PROTEIN_FOODS } from '../lib/proteinFoods';
+import { TAB_BAR_SPACE } from '../lib/layout';
 
 export default function ProteinScreen({ embedded }: { embedded?: boolean }) {
   const c = useColors();
@@ -25,7 +26,7 @@ export default function ProteinScreen({ embedded }: { embedded?: boolean }) {
   return (
     <FlatList
       style={[styles.container, embedded && styles.embedded, embedded && styles.bleed]}
-      contentContainerStyle={[{ paddingBottom: 24 }, embedded && styles.bleedPad]}
+      contentContainerStyle={[{ paddingBottom: embedded ? TAB_BAR_SPACE : 24 }, embedded && styles.bleedPad]}
       data={list}
       keyExtractor={(item) => item.name}
       keyboardShouldPersistTaps="handled"

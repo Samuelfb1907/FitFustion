@@ -24,6 +24,7 @@ import GlassFill from '../components/GlassFill';
 import { usePaywall } from '../components/Paywall';
 import { parseMeal, ParsedItem } from '../lib/parseMeal';
 import { foodUnit } from '../lib/foodUnit';
+import { TAB_BAR_SPACE } from '../lib/layout';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CARD_SHADOW as shadow } from '../lib/ui';
 
@@ -610,7 +611,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     return (
       <SwipeBack key="food-amount" onBack={() => setMode(backTarget)} c={c} behind={backTarget === 'pick' ? renderPick() : renderDiary()}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
+        <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: embedded ? TAB_BAR_SPACE : 24 }} keyboardShouldPersistTaps="handled">
           <BackButton onPress={() => setMode(backTarget)} c={c} />
           <Text style={styles.title}>{selectedFood.name}</Text>
           <Text style={styles.subtitle}>{t('food.kcalPer100g', { n: selectedFood.kcal, unit })}</Text>
@@ -642,7 +643,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   if (mode === 'newfood') {
     return (
       <SwipeBack key="food-newfood" onBack={() => setMode('pick')} c={c} behind={renderPick()}>
-      <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
+      <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: embedded ? TAB_BAR_SPACE : 24 }} keyboardShouldPersistTaps="handled">
         <BackButton onPress={() => setMode('pick')} c={c} />
         <Text style={styles.title}>{t('food.newFoodTitle')}</Text>
         <Text style={styles.subtitle}>{t('food.nutritionPer100g', { unit: nf.unit })}</Text>
@@ -752,7 +753,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       return (
         <FlatList
           style={[styles.container, embedded && styles.embedded]}
-          contentContainerStyle={{ paddingBottom: 24 }}
+          contentContainerStyle={{ paddingBottom: embedded ? TAB_BAR_SPACE : 24 }}
           data={searchResults}
           keyExtractor={(f) => f.id}
           keyboardShouldPersistTaps="handled"
@@ -785,7 +786,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     return (
       <FlatList
         style={[styles.container, embedded && styles.embedded]}
-        contentContainerStyle={{ paddingBottom: 24 }}
+        contentContainerStyle={{ paddingBottom: embedded ? TAB_BAR_SPACE : 24 }}
         data={favorites}
         keyExtractor={(f) => f.id}
         keyboardShouldPersistTaps="handled"
@@ -814,7 +815,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     const totalKcal = draft.items.reduce((s, it) => s + Math.round((it.kcal * it.amount_g) / 100), 0);
     return (
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
+        <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: embedded ? TAB_BAR_SPACE : 24 }} keyboardShouldPersistTaps="handled">
           <BackButton onPress={cancelFavNew} c={c} />
           <Text style={styles.title}>{t('food.createFavoriteTitle')}</Text>
           <Text style={styles.subtitle}>{t('food.createFavoriteSubtitle')}</Text>
@@ -861,7 +862,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     <>
     <ScrollView
       style={[styles.container, embedded && styles.embedded, embedded && styles.bleed]}
-      contentContainerStyle={[{ paddingBottom: 24 }, embedded && styles.bleedPad]}
+      contentContainerStyle={[{ paddingBottom: embedded ? TAB_BAR_SPACE : 24 }, embedded && styles.bleedPad]}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
     >
       {!embedded && <Text style={styles.title}>{t('food.title')}</Text>}

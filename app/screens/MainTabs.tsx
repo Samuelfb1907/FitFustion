@@ -1,8 +1,8 @@
-// Untere Tab-Leiste: schwebende GLAS-PILLE (abgerundet, durchscheinend per BlurView, dezente
-// Lichtkante, Seitenabstand -> wirkt schwebend, KEIN Vollbreit-Balken, KEINE deckende Fuellung).
-// IN-FLOW: reserviert ihren Platz -> verdeckt NIE den Inhalt; man scrollt bis ganz unten, der
-// Abmelden-Button ist frei sichtbar. Aktiver Reiter GRUEN (Icon+Text), Rest grau (immer lesbar).
-// Label schrumpft autom. hinein. Wechsel per TIPPEN oder seitlichem WISCHEN.
+// Untere Tab-Leiste: SCHWEBENDE Glas-Pille. Sie ist ABSOLUT positioniert und liegt FREI ueber
+// dem Inhalt (kein eigener Hintergrund-Streifen, keine reservierte Flaeche) - der Inhalt laeuft
+// bis ganz unten durch und scrollt hinter der Pille durch. Damit nichts verdeckt wird, lassen die
+// Seiten unten TAB_BAR_SPACE Platz (siehe lib/layout). Pille = abgerundet + durchscheinend
+// (BlurView) + zarte Lichtkante. Aktiver Reiter GRUEN, Rest grau. Tippen oder seitlich WISCHEN.
 import { useRef, useState, ReactNode } from 'react';
 import { PanResponder, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { BlurView } from 'expo-blur';
@@ -66,8 +66,7 @@ export default function MainTabs() {
     })
   ).current;
 
-  // Glas-Toenung: in Dunkel ein zarter heller Schimmer (Glas faengt Licht -> wirkt wie Glas,
-  // nicht wie ein dunkles Loch); in Hell eine helle, frostige Toenung. Plus Blur = durchscheinend.
+  // Glas-Toenung: in Dunkel ein zarter heller Schimmer (Glas faengt Licht); in Hell frostig hell.
   const glassTint = dark ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.45)';
 
   return (
@@ -80,30 +79,28 @@ export default function MainTabs() {
         {mounted.progress && <Page active={tab === 'progress'}><ProgressScreen focusTick={ticks.progress} /></Page>}
         {mounted.settings && <Page active={tab === 'settings'}><SettingsScreen focusTick={ticks.settings} /></Page>}
       </View>
-      {/* Schwebende Glas-Pille (in-flow -> reserviert Platz, verdeckt nichts) */}
-      <View style={[styles.barWrap, { paddingBottom: Math.max(insets.bottom, 10) }]}>
-        <View style={[styles.bar, { borderColor: c.hairline }]}>
-          <BlurView intensity={dark ? 32 : 52} tint={dark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: glassTint }]} />
-          {TAB_ORDER.map((k) => {
-            const active = tab === k;
-            const color = active ? c.primary : c.textMuted;
-            return (
-              <TouchableOpacity
-                key={k}
-                style={styles.tab}
-                onPress={() => go(k)}
-                activeOpacity={0.7}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: active }}
-                accessibilityLabel={TAB_LABEL[k]}
-              >
-                <Ionicons name={(active ? TAB_ICON[k] : `${TAB_ICON[k]}-outline`) as any} size={23} color={color} />
-                <Text style={[styles.label, { color, fontWeight: active ? '700' : '600' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{TAB_LABEL[k]}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+      {/* SCHWEBENDE Glas-Pille: absolut, liegt frei ueber dem Inhalt (kein Streifen drumherum) */}
+      <View style={[styles.bar, { bottom: Math.max(insets.bottom, 12), borderColor: c.hairline }]}>
+        <BlurView intensity={dark ? 32 : 52} tint={dark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: glassTint }]} />
+        {TAB_ORDER.map((k) => {
+          const active = tab === k;
+          const color = active ? c.primary : c.textMuted;
+          return (
+            <TouchableOpacity
+              key={k}
+              style={styles.tab}
+              onPress={() => go(k)}
+              activeOpacity={0.7}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: active }}
+              accessibilityLabel={TAB_LABEL[k]}
+            >
+              <Ionicons name={(active ? TAB_ICON[k] : `${TAB_ICON[k]}-outline`) as any} size={23} color={color} />
+              <Text style={[styles.label, { color, fontWeight: active ? '700' : '600' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{TAB_LABEL[k]}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
       <StepsPrompt />
     </View>
@@ -113,8 +110,8 @@ export default function MainTabs() {
 const styles = StyleSheet.create({
   page: { flex: 1 },
   pageHidden: { flex: 1, display: 'none' },
-  barWrap: { paddingHorizontal: 16, paddingTop: 6 },                                    // Seitenabstand -> schwebende Pille
-  bar: { flexDirection: 'row', height: 60, borderRadius: 30, borderWidth: 1, overflow: 'hidden' }, // 30 = halbe Hoehe -> Pillenform
+  // absolut + Seitenabstand -> schwebt frei; borderRadius 30 auf Hoehe 60 = Pillenform
+  bar: { position: 'absolute', left: 16, right: 16, flexDirection: 'row', height: 60, borderRadius: 30, borderWidth: 1, overflow: 'hidden' },
   tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, paddingHorizontal: 4 },
   label: { fontSize: 11, letterSpacing: 0.1 },
 });

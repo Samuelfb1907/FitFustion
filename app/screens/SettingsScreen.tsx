@@ -20,10 +20,11 @@ import BackButton from '../components/BackButton';
 import SwipeBack from '../components/SwipeBack';
 import GlassFill from '../components/GlassFill';
 import Segmented from '../components/Segmented';
+import { TAB_BAR_SPACE } from '../lib/layout';
 
-// Unterer Abstand fuer Scroll-Inhalte: grosszuegig, damit der letzte Eintrag (Abmelden-Button)
-// klar sichtbar ueber der (in-flow) Tab-Leiste endet und man bequem dorthin scrollen kann.
-const BOTTOM_PAD = 40;
+// Unterer Abstand fuer Scroll-Inhalte: genug, damit der letzte Eintrag (Abmelden-Button) frei
+// ueber der SCHWEBENDEN Glas-Pille endet (die Pille liegt absolut darueber, verdeckt nichts).
+const BOTTOM_PAD = TAB_BAR_SPACE;
 
 export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
   const { session, refreshProfile } = useAuth();

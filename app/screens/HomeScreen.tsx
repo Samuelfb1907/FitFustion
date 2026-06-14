@@ -19,6 +19,7 @@ import { dailyGoals, Goal } from '../lib/goals';
 import { todayWeekday } from '../lib/weekdays';
 import { localDateStr, todayStr, startOfTodayISO, daysAgoStr, daysAgoISO, mondayStr } from '../lib/date';
 import { useFocusTick } from '../lib/useFocusTick';
+import { TAB_BAR_SPACE } from '../lib/layout';
 import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
 import { CARD_SHADOW as shadow } from '../lib/ui';
@@ -565,7 +566,7 @@ function GoalRow({ g, last, c, styles, t }: { g: Goal; last: boolean; c: Colors;
 function makeStyles(c: Colors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: 'transparent' },
-    scroll: { paddingTop: 60, paddingHorizontal: 18, paddingBottom: 24 },
+    scroll: { paddingTop: 60, paddingHorizontal: 18, paddingBottom: TAB_BAR_SPACE },
     stack: { gap: 14 },
     row: { flexDirection: 'row', gap: 11 },
 
