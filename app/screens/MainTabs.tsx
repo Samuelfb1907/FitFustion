@@ -4,7 +4,7 @@
 // gruener Text auf einer NEUTRALEN, gleitenden Pille (gruen-auf-gruen waere unlesbar). Die Pille
 // gleitet beim Tippen smooth (nur translateX, nativ -> kein Lag). Bereiche bleiben gemountet.
 import { useEffect, useRef, useState, ReactNode } from 'react';
-import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, PanResponder, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -49,6 +49,26 @@ export default function MainTabs() {
     setTab(target);
   };
 
+  // Zwischen den Kategorien WISCHEN. Bewusst NICHT im Capture-Modus -> Kind-Gesten
+  // (Kalorien-Karte/Tageswischen, Zurueck-Wischen, horizontale Listen) greifen ZUERST;
+  // nur klar waagerechte Wische im freien Bereich wechseln den Reiter. Ref, damit der
+  // einmalig erstellte Responder immer den aktuellen Index nutzt.
+  const idxRef = useRef(activeIndex);
+  idxRef.current = activeIndex;
+  const goRelRef = useRef((dir: number) => {
+    const next = Math.min(TAB_ORDER.length - 1, Math.max(0, idxRef.current + dir));
+    if (next !== idxRef.current) go(TAB_ORDER[next]);
+  });
+  const pageSwipe = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 24 && Math.abs(g.dx) > Math.abs(g.dy) * 1.8,
+      onPanResponderRelease: (_, g) => {
+        if (g.dx <= -55 || g.vx < -0.35) goRelRef.current(1);       // nach links wischen -> naechste Kategorie
+        else if (g.dx >= 55 || g.vx > 0.35) goRelRef.current(-1);   // nach rechts -> vorherige Kategorie
+      },
+    })
+  ).current;
+
   // Gleitende Pille: nur translateX (nativ -> butterweich). Pille ist NEUTRAL, nicht gruen.
   const [barW, setBarW] = useState(0);
   const tabW = barW > 0 ? barW / TAB_ORDER.length : 0;
@@ -64,7 +84,7 @@ export default function MainTabs() {
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <Ambient c={c} />
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1 }} {...pageSwipe.panHandlers}>
         {mounted.home && <Page active={tab === 'home'}><HomeScreen onNavigate={(tb, seg) => go(tb as Tab, seg as EssenSeg | undefined)} focusTick={ticks.home} /></Page>}
         {mounted.training && <Page active={tab === 'training'}><TrainingScreen focusTick={ticks.training} /></Page>}
         {mounted.essen && <Page active={tab === 'essen'}><EssenScreen focusTick={ticks.essen} initialSeg={essenSeg} /></Page>}
