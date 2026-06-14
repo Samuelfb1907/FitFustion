@@ -1,4 +1,5 @@
 {
   "NSMotionUsageDescription": "FitAvo nutzt deine Schrittdaten, um deine Aktivität aufs Tagesziel anzurechnen.",
-  "NSCameraUsageDescription": "FitAvo nutzt die Kamera, um Barcodes von Lebensmitteln zu scannen."
+  "NSCameraUsageDescription": "FitAvo nutzt die Kamera, um Barcodes zu scannen und Mahlzeiten zu fotografieren.",
+  "NSPhotoLibraryUsageDescription": "FitAvo nutzt deine Fotos, um eine Mahlzeit auf einem Bild per KI zu erkennen."
 }

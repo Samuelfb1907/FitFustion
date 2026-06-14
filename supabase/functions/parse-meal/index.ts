@@ -81,12 +81,20 @@ Deno.serve(async (req: Request) => {
       console.error('parse-meal premium check failed (fail-open):', e);
     }
 
-    // 2) Eingabe pruefen (bevor wir das Limit verbrauchen).
+    // 2) Eingabe pruefen (bevor wir das Limit verbrauchen). Zwei Modi: Text ODER Foto.
     const payload = await req.json().catch(() => ({} as any));
     const text: string = typeof payload.text === 'string' ? payload.text : '';
-    if (!text.trim() || text.length > 500) return json({ error: 'invalid text' }, 400);
+    const image: string = typeof payload.image === 'string' ? payload.image : '';
+    const ALLOWED_IMG = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    const imageType: string = ALLOWED_IMG.includes(payload.imageType) ? payload.imageType : 'image/jpeg';
     const meal = MEALS.includes(payload.defaultMeal) ? payload.defaultMeal : 'snack';
     const lang = payload.lang === 'en' ? 'en' : 'de';
+    if (image) {
+      // Base64-Groesse begrenzen (~5,5 MB) -> schuetzt vor Kosten/Timeout. Der Client verkleinert vorab.
+      if (image.length > 7_500_000) return json({ error: 'image_too_large' }, 413);
+    } else if (!text.trim() || text.length > 500) {
+      return json({ error: 'invalid text' }, 400);
+    }
 
     // 3) Tageslimit pruefen+hochzaehlen (atomar in der DB). Fehlt die DB-Funktion noch
     //    (Migration nicht eingespielt), laufen wir bewusst fail-open weiter.
@@ -127,7 +135,33 @@ Deno.serve(async (req: Request) => {
       '- meal_type: breakfast | lunch | dinner | snack. If the text indicates it ("for breakfast"), use that, otherwise "' + meal + '".\n' +
       '- kcal, protein, carbs, fat: realistic average nutrition values PER 100 g (protein/carbs/fat in grams).\n' +
       'Only foods actually mentioned - no inventions. Respond exclusively in the given JSON format.';
-    const system = lang === 'en' ? systemEn : systemDe;
+    // Vision-Prompts fuer den Foto-Modus (gleiche JSON-Ausgabe wie beim Text).
+    const visionDe =
+      'Du bist ein praeziser Ernaehrungs-Parser fuer eine deutsche Tracking-App. Auf dem FOTO ist eine Mahlzeit. ' +
+      'Erkenne JEDES klar sichtbare Lebensmittel/Getraenk auf dem Teller/Bild. Fuer JEDES gib an:\n' +
+      '- name: kurzer deutscher Name (z. B. "Spaghetti", "Tomatensauce", "Parmesan").\n' +
+      '- amount_g: geschaetzte GEGESSENE Menge in Gramm anhand der sichtbaren Portion und Tellergroesse (Getraenke in ml ~= g). Anhalt: Beilage ~150 g, Fleisch/Fisch ~120 g, Gemuese ~100 g, Sauce ~80 g, Glas ~200 g.\n' +
+      '- meal_type: breakfast | lunch | dinner | snack. Wenn unklar "' + meal + '".\n' +
+      '- kcal, protein, carbs, fat: realistische Durchschnitts-Naehrwerte PRO 100 g (protein/carbs/fat in Gramm).\n' +
+      'Schaetze Mengen so gut es geht; bei Unsicherheit die wahrscheinlichste Annahme. Erfinde nichts, was nicht sichtbar ist. ' +
+      'Zeigt das Bild keine Lebensmittel, gib eine leere Liste. Antworte ausschliesslich im vorgegebenen JSON-Format.';
+    const visionEn =
+      'You are a precise nutrition parser for a fitness tracking app. The PHOTO shows a meal. ' +
+      'Identify EVERY clearly visible food/drink on the plate/image. For EACH, provide:\n' +
+      '- name: short English name (e.g. "Spaghetti", "Tomato sauce", "Parmesan").\n' +
+      '- amount_g: estimated EATEN amount in grams based on the visible portion and plate size (drinks in ml ~= g). Guide: side ~150 g, meat/fish ~120 g, vegetables ~100 g, sauce ~80 g, glass ~200 g.\n' +
+      '- meal_type: breakfast | lunch | dinner | snack. If unclear "' + meal + '".\n' +
+      '- kcal, protein, carbs, fat: realistic average nutrition values PER 100 g (protein/carbs/fat in grams).\n' +
+      'Estimate amounts as best you can; if unsure use the most likely assumption. Do not invent anything not visible. ' +
+      'If the image shows no food, return an empty list. Respond exclusively in the given JSON format.';
+    const system = image ? (lang === 'en' ? visionEn : visionDe) : (lang === 'en' ? systemEn : systemDe);
+    // Beim Foto: Bild-Block + kurze Anweisung; beim Text: der Satz als String.
+    const userContent: unknown = image
+      ? [
+          { type: 'image', source: { type: 'base64', media_type: imageType, data: image } },
+          { type: 'text', text: lang === 'en' ? 'Analyze this photo of my meal.' : 'Analysiere dieses Foto meiner Mahlzeit.' },
+        ]
+      : text;
 
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -136,7 +170,7 @@ Deno.serve(async (req: Request) => {
         model: 'claude-haiku-4-5',
         max_tokens: 1024,
         system,
-        messages: [{ role: 'user', content: text }],
+        messages: [{ role: 'user', content: userContent }],
         output_config: { format: { type: 'json_schema', schema: SCHEMA } },
       }),
     });

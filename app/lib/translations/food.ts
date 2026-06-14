@@ -93,6 +93,14 @@ export const de = {
   "food.nlPlaceholder": "z. B. 2 Eier, ein Toast und ein Kaffee",
   "food.nlRecognize": "Automatisch erkennen",
   "food.nlRecognizePremium": "Premium: Automatisch erkennen",
+  "food.photoBtn": "Mahlzeit fotografieren",
+  "food.photoChooseTitle": "Foto deiner Mahlzeit",
+  "food.photoCamera": "Kamera",
+  "food.photoGallery": "Aus Galerie",
+  "food.photoCancel": "Abbrechen",
+  "food.photoNothing": "Auf dem Foto nichts erkannt. Versuch ein klareres Bild von oben.",
+  "food.photoFailed": "Foto konnte nicht verarbeitet werden. Bitte erneut versuchen.",
+  "food.photoNoCamera": "Kein Kamerazugriff. Bitte in den iPhone-Einstellungen erlauben.",
   "food.nlNothingRecognized": "Nichts erkannt. Formuliere es etwas anders.",
   "food.nlUnavailable": "Erkennung gerade nicht verfügbar. Bitte später erneut versuchen.",
   "food.nlInsertFailed": "Konnte nicht eintragen: {msg}",
@@ -124,7 +132,7 @@ export const de = {
 
   // KI-Einwilligung
   "food.consentTitle": "KI-Mahlzeitenerkennung aktivieren?",
-  "food.consentBody": "Für „Sprich's einfach\" wird dein eingegebener Text (z. B. „2 Eier und ein Toast\") zur Auswertung an unseren Dienstleister Anthropic (USA) übermittelt und in Lebensmittel mit Nährwerten zerlegt. Da das Gesundheitsdaten sein können, brauchen wir dafür deine ausdrückliche Einwilligung (Art. 9 DSGVO).\n\nFreiwillig, jederzeit in den Einstellungen widerrufbar. Die Eingaben werden nicht zum KI-Training verwendet. Bitte keine sensiblen Daten eingeben, die über die Mahlzeitenbeschreibung hinausgehen.",
+  "food.consentBody": "Für „Sprich's einfach\" wird dein eingegebener Text (z. B. „2 Eier und ein Toast\") oder dein Foto der Mahlzeit zur Auswertung an unseren Dienstleister Anthropic (USA) übermittelt und in Lebensmittel mit Nährwerten zerlegt. Da das Gesundheitsdaten sein können, brauchen wir dafür deine ausdrückliche Einwilligung (Art. 9 DSGVO).\n\nFreiwillig, jederzeit in den Einstellungen widerrufbar. Die Eingaben werden nicht zum KI-Training verwendet. Bitte keine sensiblen Daten eingeben, die über die Mahlzeitenbeschreibung hinausgehen.",
   "food.consentAccept": "Einverstanden & fortfahren",
 
   // Dialoge / gemeinsame Aktionen
@@ -249,6 +257,14 @@ export const en = {
   "food.nlPlaceholder": "e.g. 2 eggs, a slice of toast and a coffee",
   "food.nlRecognize": "Recognize automatically",
   "food.nlRecognizePremium": "Premium: Recognize automatically",
+  "food.photoBtn": "Photograph meal",
+  "food.photoChooseTitle": "Photo of your meal",
+  "food.photoCamera": "Camera",
+  "food.photoGallery": "From gallery",
+  "food.photoCancel": "Cancel",
+  "food.photoNothing": "Nothing recognized in the photo. Try a clearer shot from above.",
+  "food.photoFailed": "Couldn't process the photo. Please try again.",
+  "food.photoNoCamera": "No camera access. Please allow it in iPhone settings.",
   "food.nlNothingRecognized": "Nothing recognized. Try rephrasing it.",
   "food.nlUnavailable": "Recognition is currently unavailable. Please try again later.",
   "food.nlInsertFailed": "Couldn't add: {msg}",
@@ -280,7 +296,7 @@ export const en = {
 
   // AI consent
   "food.consentTitle": "Enable AI meal recognition?",
-  "food.consentBody": "For “Just say it”, the text you enter (e.g. “2 eggs and a slice of toast”) is sent to our service provider Anthropic (USA) for analysis and broken down into foods with nutritional values. As this may be health data, we need your explicit consent (Art. 9 GDPR).\n\nOptional, revocable in settings at any time. Your inputs are not used for AI training. Please don't enter sensitive data beyond the meal description.",
+  "food.consentBody": "For “Just say it”, the text you enter (e.g. “2 eggs and a slice of toast”) or your meal photo is sent to our service provider Anthropic (USA) for analysis and broken down into foods with nutritional values. As this may be health data, we need your explicit consent (Art. 9 GDPR).\n\nOptional, revocable in settings at any time. Your inputs are not used for AI training. Please don't enter sensitive data beyond the meal description.",
   "food.consentAccept": "Agree & continue",
 
   // Dialogs / shared actions

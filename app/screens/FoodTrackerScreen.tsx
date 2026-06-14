@@ -22,7 +22,9 @@ import SwipeBack from '../components/SwipeBack';
 import Segmented from '../components/Segmented';
 import GlassFill from '../components/GlassFill';
 import { usePaywall } from '../components/Paywall';
-import { parseMeal, ParsedItem } from '../lib/parseMeal';
+import { parseMeal, parseMealPhoto, ParsedItem } from '../lib/parseMeal';
+import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { foodUnit } from '../lib/foodUnit';
 import { TAB_BAR_SPACE } from '../lib/layout';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -116,6 +118,7 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   const [nlErr, setNlErr] = useState<string | null>(null);
   const [nlItems, setNlItems] = useState<ParsedItem[] | null>(null);
   const [nlMeal, setNlMeal] = useState<MealType>(mealByHour());
+  const pendingPhotoRef = useRef<string | null>(null); // Foto, das nach erteilter KI-Einwilligung analysiert werden soll
   const [aiConsent, setAiConsent] = useState(false);
   const [aiConsentAsk, setAiConsentAsk] = useState(false);
   useEffect(() => { AsyncStorage.getItem('fitavo.aiConsentAt').then((v) => { if (v) setAiConsent(true); }).catch(() => {}); }, []);
@@ -306,7 +309,10 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
     setAiConsentAsk(false);
     try { await AsyncStorage.setItem('fitavo.aiConsentAt', now); } catch {}
     if (userId) supabase.from('profiles').update({ ai_consent_at: now }).eq('id', userId).then(() => {}, () => {});
-    runRecognize();
+    // Nach der Einwilligung die wartende Aktion ausfuehren: Foto (falls gemerkt) sonst Text.
+    const pendingPhoto = pendingPhotoRef.current;
+    if (pendingPhoto) { pendingPhotoRef.current = null; runRecognizePhoto(pendingPhoto); }
+    else runRecognize();
   }
   async function runRecognize() {
     const text = nlText.trim();
@@ -324,6 +330,58 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
       const msg = code === 'rate_limited'
         ? (e as Error).message
         : t('food.nlUnavailable');
+      setNlErr(msg);
+    } finally {
+      setNlBusy(false);
+    }
+  }
+  // ---- Foto -> KI-Erkennung (nutzt dieselbe Bestaetigungs-Liste wie der Text-Modus) ----
+  async function recognizeMealPhoto() {
+    if (!isPremium) { openPaywall('ki'); return; }
+    if (nlBusy) return;
+    Alert.alert(t('food.photoChooseTitle'), undefined, [
+      { text: t('food.photoCamera'), onPress: () => pickMealImage('camera') },
+      { text: t('food.photoGallery'), onPress: () => pickMealImage('library') },
+      { text: t('food.photoCancel'), style: 'cancel' },
+    ]);
+  }
+  async function pickMealImage(source: 'camera' | 'library') {
+    try {
+      if (source === 'camera') {
+        const perm = await ImagePicker.requestCameraPermissionsAsync();
+        if (!perm.granted) { setNlErr(t('food.photoNoCamera')); return; }
+      }
+      const res = source === 'camera'
+        ? await ImagePicker.launchCameraAsync({ quality: 0.7 })
+        : await ImagePicker.launchImageLibraryAsync({ quality: 0.7 });
+      if (res.canceled || !res.assets?.length) return;
+      // Verkleinern + komprimieren -> kleines Base64 (schnell + guenstig); Qualitaet fuer die Erkennung reicht.
+      const manip = await ImageManipulator.manipulateAsync(
+        res.assets[0].uri,
+        [{ resize: { width: 1024 } }],
+        { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG, base64: true },
+      );
+      const base64 = manip.base64;
+      if (!base64) { setNlErr(t('food.photoFailed')); return; }
+      if (!aiConsent) { pendingPhotoRef.current = base64; setAiConsentAsk(true); return; }
+      await runRecognizePhoto(base64);
+    } catch {
+      setNlErr(t('food.photoFailed'));
+    }
+  }
+  async function runRecognizePhoto(base64: string) {
+    if (nlBusy) return;
+    setNlBusy(true); setNlErr(null);
+    try {
+      const items = await parseMealPhoto(base64, 'image/jpeg', mealByHour(), lang);
+      if (!items.length) { setNlErr(t('food.photoNothing')); return; }
+      const m = items[0]?.meal_type ?? mealByHour();
+      setNlMeal(m);
+      setNlItems(items.map((it) => ({ ...it, meal_type: m })));
+    } catch (e) {
+      const code = (e as any)?.code;
+      if (code === 'premium_required') { openPaywall('ki'); return; }
+      const msg = code === 'rate_limited' ? (e as Error).message : t('food.nlUnavailable');
       setNlErr(msg);
     } finally {
       setNlBusy(false);
@@ -935,6 +993,12 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
             </View>
           )}
         </TouchableOpacity>
+        <TouchableOpacity style={styles.nlPhotoBtn} onPress={recognizeMealPhoto} disabled={nlBusy} activeOpacity={0.85}>
+          <View style={styles.btnRow}>
+            <Ionicons name={isPremium ? 'camera-outline' : 'lock-closed'} size={16} color={c.primary} />
+            <Text style={styles.nlPhotoBtnText} numberOfLines={1}>{t('food.photoBtn')}</Text>
+          </View>
+        </TouchableOpacity>
         {nlErr && <Text style={styles.error}>{nlErr}</Text>}
       </View>
 
@@ -1192,6 +1256,8 @@ function makeStyles(c: Colors) {
     nlInput: { borderWidth: 1, borderColor: c.border, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 15, backgroundColor: c.inputBg, color: c.text, minHeight: 44 },
     nlBtn: { backgroundColor: c.primary, borderRadius: 14, paddingVertical: 13, alignItems: 'center', marginTop: 11 },
     nlBtnText: { color: c.onPrimary, fontSize: 15, fontWeight: '800' },
+    nlPhotoBtn: { borderRadius: 14, paddingVertical: 12, alignItems: 'center', marginTop: 9, borderWidth: 1, borderColor: c.primary, backgroundColor: 'transparent' },
+    nlPhotoBtnText: { color: c.primary, fontSize: 15, fontWeight: '700' },
     btnRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
     nlOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'flex-end' },
     nlSheet: { backgroundColor: c.bg, borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 22, paddingBottom: 32 },

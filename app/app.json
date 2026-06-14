@@ -17,7 +17,13 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "FitAvo nutzt die Kamera, um Barcodes von Lebensmitteln zu scannen."
+          "cameraPermission": "FitAvo nutzt die Kamera, um Barcodes zu scannen und Mahlzeiten zu fotografieren."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "FitAvo nutzt deine Fotos, um eine Mahlzeit auf einem Bild zu erkennen."
         }
       ],
       "react-native-health-connect",
