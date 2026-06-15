@@ -379,10 +379,13 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
                       <Text style={styles.bonusText} numberOfLines={1}>{t('home.bonusTraining', { n: trainingKcal })}</Text>
                     </View>
                   )}
-                  {curActivityKcal > 0 && (
+                  {(curSteps > 0 || curActivityKcal > 0) && (
                     <View style={styles.bonusPill}>
                       <Ionicons name="walk" size={14} color={c.primary} />
-                      <Text style={styles.bonusText} numberOfLines={1}>{curSteps > 0 ? t('home.stepsPrefix', { steps: curSteps.toLocaleString(lang === 'en' ? 'en-US' : 'de-DE') }) : ''}+{curActivityKcal} kcal {curActivityMeasured ? t('home.activeMeasured') : t('home.activeEstimated')}</Text>
+                      <Text style={styles.bonusText} numberOfLines={1}>{[
+                        curSteps > 0 ? t('home.stepsPrefix', { steps: curSteps.toLocaleString(lang === 'en' ? 'en-US' : 'de-DE') }) : null,
+                        curActivityKcal > 0 ? `+${curActivityKcal} kcal ${curActivityMeasured ? t('home.activeMeasured') : t('home.activeEstimated')}` : null,
+                      ].filter(Boolean).join(' · ')}</Text>
                     </View>
                   )}
                   {dayOffset > 0 && cur.kcal === 0 && curActivityKcal === 0 && (

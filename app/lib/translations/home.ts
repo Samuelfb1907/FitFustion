@@ -20,7 +20,7 @@ export const de = {
 
   "home.todayLabel": "HEUTE",
   "home.bonusTraining": "+{n} kcal durch Training heute (geschätzt)",
-  "home.stepsPrefix": "{steps} Schritte · ",
+  "home.stepsPrefix": "{steps} Schritte",
   "home.activeMeasured": "aktiv (gemessen)",
   "home.activeEstimated": "(geschätzt)",
 
@@ -103,7 +103,7 @@ export const en = {
 
   "home.todayLabel": "TODAY",
   "home.bonusTraining": "+{n} kcal from training today (estimated)",
-  "home.stepsPrefix": "{steps} steps · ",
+  "home.stepsPrefix": "{steps} steps",
   "home.activeMeasured": "active (measured)",
   "home.activeEstimated": "(estimated)",
 
