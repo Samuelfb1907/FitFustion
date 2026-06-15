@@ -73,6 +73,26 @@ export default function MainTabs() {
   const isAndroid = Platform.OS === 'android';
   const androidBarBg = dark ? 'rgba(18,24,30,0.96)' : 'rgba(255,255,255,0.96)';
 
+  // Tab-Buttons - in beiden Varianten (iOS-Pille / Android-Leiste) identisch.
+  const tabs = TAB_ORDER.map((k) => {
+    const active = tab === k;
+    const color = active ? c.primary : c.textMuted;
+    return (
+      <TouchableOpacity
+        key={k}
+        style={styles.tab}
+        onPress={() => go(k)}
+        activeOpacity={0.7}
+        accessibilityRole="tab"
+        accessibilityState={{ selected: active }}
+        accessibilityLabel={TAB_LABEL[k]}
+      >
+        <Ionicons name={(active ? TAB_ICON[k] : `${TAB_ICON[k]}-outline`) as any} size={23} color={color} />
+        <Text style={[styles.label, { color, fontWeight: active ? '700' : '600' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{TAB_LABEL[k]}</Text>
+      </TouchableOpacity>
+    );
+  });
+
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <Ambient c={c} />
@@ -83,29 +103,19 @@ export default function MainTabs() {
         {mounted.progress && <Page active={tab === 'progress'}><ProgressScreen focusTick={ticks.progress} /></Page>}
         {mounted.settings && <Page active={tab === 'settings'}><SettingsScreen focusTick={ticks.settings} /></Page>}
       </View>
-      {/* SCHWEBENDE Glas-Pille: absolut, liegt frei ueber dem Inhalt (kein Streifen drumherum) */}
-      <View style={[styles.bar, { bottom: Math.max(insets.bottom, 12), borderColor: c.hairline }, isAndroid && { backgroundColor: androidBarBg, elevation: 4 }]}>
-        {!isAndroid && <BlurView intensity={dark ? 32 : 52} tint={dark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />}
-        {!isAndroid && <View style={[StyleSheet.absoluteFill, { backgroundColor: glassTint }]} />}
-        {TAB_ORDER.map((k) => {
-          const active = tab === k;
-          const color = active ? c.primary : c.textMuted;
-          return (
-            <TouchableOpacity
-              key={k}
-              style={styles.tab}
-              onPress={() => go(k)}
-              activeOpacity={0.7}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: active }}
-              accessibilityLabel={TAB_LABEL[k]}
-            >
-              <Ionicons name={(active ? TAB_ICON[k] : `${TAB_ICON[k]}-outline`) as any} size={23} color={color} />
-              <Text style={[styles.label, { color, fontWeight: active ? '700' : '600' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{TAB_LABEL[k]}</Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+      {/* Tab-Leiste: iOS = schwebende Glas-Pille; Android = durchgehende, DECKENDE Leiste am
+          unteren Rand (deckt den Inhalt ab -> kein Durchscheinen wie beim Blur auf Android). */}
+      {isAndroid ? (
+        <View style={[styles.barAndroid, { paddingBottom: Math.max(insets.bottom, 8), backgroundColor: androidBarBg, borderTopColor: c.hairline }]}>
+          {tabs}
+        </View>
+      ) : (
+        <View style={[styles.bar, { bottom: Math.max(insets.bottom, 12), borderColor: c.hairline }]}>
+          <BlurView intensity={dark ? 32 : 52} tint={dark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: glassTint }]} />
+          {tabs}
+        </View>
+      )}
       <StepsPrompt />
     </View>
   );
@@ -116,6 +126,8 @@ const styles = StyleSheet.create({
   pageHidden: { flex: 1, display: 'none' },
   // absolut + Seitenabstand -> schwebt frei; borderRadius 30 auf Hoehe 60 = Pillenform
   bar: { position: 'absolute', left: 16, right: 16, flexDirection: 'row', height: 60, borderRadius: 30, borderWidth: 1, overflow: 'hidden' },
+  // Android: durchgehende, deckende Leiste am unteren Rand (full-width), abgerundete Oberkante, flach.
+  barAndroid: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', paddingTop: 8, borderTopLeftRadius: 22, borderTopRightRadius: 22, borderTopWidth: StyleSheet.hairlineWidth },
   tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, paddingHorizontal: 4 },
   label: { fontSize: 11, letterSpacing: 0.1 },
 });
