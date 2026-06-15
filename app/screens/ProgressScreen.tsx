@@ -2,7 +2,7 @@
 // persoenliche Rekorde und Trainingshistorie. Liest aus set_logs / workout_sessions
 // / progress_entries. Keine DB-Aenderung noetig.
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Dimensions, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Dimensions, Platform, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { usePaywall } from '../components/Paywall';
@@ -523,7 +523,7 @@ function makeStyles(c: Colors) {
 
     weightRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
     weightCol: { alignItems: 'center', minWidth: 0 },
-    bigWeight: { fontSize: 34, fontWeight: '800', color: c.heading, letterSpacing: -0.5 },
+    bigWeight: { fontSize: 34, fontWeight: Platform.OS === 'android' ? '500' : '800', color: c.heading, letterSpacing: -0.5 },
     bigWeightMuted: { fontSize: 28, fontWeight: '700', color: c.textMuted },
     weightUnit: { fontSize: 12, color: c.textMuted, marginTop: 2 },
 

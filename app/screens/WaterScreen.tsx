@@ -1,6 +1,6 @@
 // Eigener Wasser-Tracker (Reiter unter "Essen"), Bento-Stil. Liest/schreibt water_logs.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Platform, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
@@ -223,7 +223,7 @@ function makeStyles(c: Colors) {
     heroEyebrow: { flex: 1, fontSize: 11, fontWeight: '700', letterSpacing: 1.6, color: c.textMuted },
     pctPill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 11, paddingVertical: 5, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(63,169,245,0.30)', backgroundColor: WATER_TINT },
     pctPillText: { fontSize: 11, fontWeight: '700', color: WATER },
-    bigMl: { fontSize: 38, fontWeight: '800', color: c.heading, letterSpacing: -0.3, marginTop: 16 },
+    bigMl: { fontSize: 38, fontWeight: Platform.OS === 'android' ? '500' : '800', color: c.heading, letterSpacing: -0.3, marginTop: 16 },
     bigUnit: { fontSize: 20, fontWeight: '700', color: c.textMuted, letterSpacing: 0 },
     goalLine: { fontSize: 13, color: c.textMuted, fontWeight: '500', marginTop: 7, marginBottom: 14 },
     track: { width: '100%', height: 10, backgroundColor: c.track, borderRadius: 999, overflow: 'hidden' },

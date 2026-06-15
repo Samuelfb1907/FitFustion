@@ -120,12 +120,13 @@ export default function CalorieGauge({ target, eaten }: { target: number; eaten:
 const styles = StyleSheet.create({
   wrap: { alignItems: 'center', alignSelf: 'stretch' },
   center: { position: 'absolute', left: 0, top: 0, width: SIZE, height: SIZE, alignItems: 'center', justifyContent: 'center' },
-  // Android: weniger fett -> die hellen Ziffern "bluehen" sonst auf dem dunklen Grund (wirkt wie Glow).
-  big: { fontSize: 42, fontWeight: Platform.OS === 'android' ? '700' : '900', letterSpacing: -1, lineHeight: 46 },
+  // Android: NUR Medium (500) statt fett -> sehr helle, fette, grosse Ziffern "bluehen"
+  // sonst auf dem fast-schwarzen Grund des AMOLED (sichtbarer weisser Halo/Glow).
+  big: { fontSize: 42, fontWeight: Platform.OS === 'android' ? '500' : '900', letterSpacing: -1, lineHeight: 46 },
   label: { fontSize: 13, fontWeight: '500', marginTop: 8 },
   footRow: { flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch', marginTop: 18 },
   foot: { flex: 1, alignItems: 'center' },
-  footValue: { fontSize: 21, fontWeight: Platform.OS === 'android' ? '700' : '800', letterSpacing: -0.3 },
+  footValue: { fontSize: 21, fontWeight: Platform.OS === 'android' ? '500' : '800', letterSpacing: -0.3 },
   footLabel: { fontSize: 12, fontWeight: '500', marginTop: 8 },
   footSep: { width: 1, height: 40 },
 });

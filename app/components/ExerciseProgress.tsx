@@ -1,7 +1,7 @@
 // Fortschritt einer einzelnen Uebung: Gewichts-/Wdh-Verlauf, Rekord (+ geschaetztes 1RM)
 // und die letzten Einheiten. Liest aus set_logs (+ workout_sessions fuer das Datum).
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Dimensions, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Colors } from '../contexts/ThemeContext';
@@ -195,7 +195,7 @@ function makeStyles(c: Colors) {
     cardTitle: { fontSize: 16, fontWeight: '700', color: c.heading, marginBottom: 12 },
     recRow: { flexDirection: 'row', justifyContent: 'space-around' },
     recCol: { alignItems: 'center' },
-    recBig: { fontSize: 30, fontWeight: '800', color: c.heading },
+    recBig: { fontSize: 30, fontWeight: Platform.OS === 'android' ? '500' : '800', color: c.heading },
     recBigMuted: { fontSize: 30, fontWeight: '800', color: c.textMuted },
     recUnit: { fontSize: 12, color: c.textMuted, marginTop: 2 },
     chartWrap: { alignItems: 'center' },
