@@ -36,6 +36,7 @@
         }
       ],
       "./plugins/withHealthConnect",
+      "./plugins/withAndroidLintFix",
       "expo-secure-store",
       [
         "expo-splash-screen",
