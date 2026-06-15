@@ -2,9 +2,9 @@
 // dem Inhalt (kein eigener Hintergrund-Streifen, keine reservierte Flaeche) - der Inhalt laeuft
 // bis ganz unten durch und scrollt hinter der Pille durch. Damit nichts verdeckt wird, lassen die
 // Seiten unten TAB_BAR_SPACE Platz (siehe lib/layout). Pille = abgerundet + durchscheinend
-// (BlurView) + zarte Lichtkante. Aktiver Reiter GRUEN, Rest grau. Tippen oder seitlich WISCHEN.
-import { useRef, useState, ReactNode } from 'react';
-import { PanResponder, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+// (BlurView) + zarte Lichtkante. Aktiver Reiter GRUEN, Rest grau. Wechsel NUR per Tippen.
+import { useState, ReactNode } from 'react';
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -48,24 +48,6 @@ export default function MainTabs() {
     setTab(target);
   };
 
-  // Seitliches Wischen wechselt den Reiter. Bewusst NICHT im Capture-Modus -> Kind-Gesten
-  // (Kalorien-Karte, Zurueck-Wischen, horizontale Listen) greifen zuerst.
-  const idxRef = useRef(TAB_ORDER.indexOf(tab));
-  idxRef.current = TAB_ORDER.indexOf(tab);
-  const goRelRef = useRef((dir: number) => {
-    const next = Math.min(TAB_ORDER.length - 1, Math.max(0, idxRef.current + dir));
-    if (next !== idxRef.current) go(TAB_ORDER[next]);
-  });
-  const pageSwipe = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 24 && Math.abs(g.dx) > Math.abs(g.dy) * 1.8,
-      onPanResponderRelease: (_, g) => {
-        if (g.dx <= -55 || g.vx < -0.35) goRelRef.current(1);       // nach links -> naechste Kategorie
-        else if (g.dx >= 55 || g.vx > 0.35) goRelRef.current(-1);   // nach rechts -> vorherige
-      },
-    })
-  ).current;
-
   // Glas-Toenung: in Dunkel ein zarter heller Schimmer (Glas faengt Licht); in Hell frostig hell.
   const glassTint = dark ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.45)';
   // Android: expo-blur rendert die Pille oft komplett durchsichtig. Daher dort KEIN BlurView,
@@ -96,7 +78,7 @@ export default function MainTabs() {
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <Ambient c={c} />
-      <View style={{ flex: 1 }} {...pageSwipe.panHandlers}>
+      <View style={{ flex: 1 }}>
         {mounted.home && <Page active={tab === 'home'}><HomeScreen onNavigate={(tb, seg) => go(tb as Tab, seg as EssenSeg | undefined)} focusTick={ticks.home} /></Page>}
         {mounted.training && <Page active={tab === 'training'}><TrainingScreen focusTick={ticks.training} /></Page>}
         {mounted.essen && <Page active={tab === 'essen'}><EssenScreen focusTick={ticks.essen} initialSeg={essenSeg} /></Page>}
