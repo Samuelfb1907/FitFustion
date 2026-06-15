@@ -19,6 +19,7 @@ import { todayTrainingKcal } from '../lib/trainingBonus';
 import { hasStepsPermission, getTodayActivity } from '../lib/health';
 import BackButton from '../components/BackButton';
 import SwipeBack from '../components/SwipeBack';
+import { useAndroidBack } from '../lib/useBackHandler';
 import Segmented from '../components/Segmented';
 import GlassFill from '../components/GlassFill';
 import { usePaywall } from '../components/Paywall';
@@ -64,7 +65,7 @@ const MEAL_ION: Record<MealType, { icon: string; fg: string; bg: string }> = {
 
 // todayStr -> lib/date.ts
 
-export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: boolean; focusTick?: number }) {
+export default function FoodTrackerScreen({ embedded, focusTick, focused = true }: { embedded?: boolean; focusTick?: number; focused?: boolean }) {
   const { session, isPremium } = useAuth();
   const userId = session?.user?.id;
   const { openPaywall } = usePaywall();
@@ -110,6 +111,18 @@ export default function FoodTrackerScreen({ embedded, focusTick }: { embedded?: 
   const [favDraft, setFavDraft] = useState<{ name: string; items: FavItem[] } | null>(null);
   const [savingFav, setSavingFav] = useState(false);
   const [favErr, setFavErr] = useState<string | null>(null);
+
+  // Android-System-Zurueck: tiefste offene Modus-Ebene zuruecknavigieren (spiegelt die
+  // SwipeBack-onBack-Kette). 'diary' ist die Startebene -> false (Fallback in MainTabs).
+  // `focused` ist nur true, wenn der Essen-Tab sichtbar UND das Tracker-Segment aktiv ist.
+  // pickBack/cancelFavNew sind Funktions-Deklarationen weiter unten (gehoisted).
+  useAndroidBack(() => {
+    if (mode === 'amount') { setMode(backTarget); return true; }
+    if (mode === 'newfood') { setMode('pick'); return true; }
+    if (mode === 'favnew') { cancelFavNew(); return true; }
+    if (mode === 'pick') { pickBack(); return true; }
+    return false;
+  }, focused);
   const [favMsg, setFavMsg] = useState<string | null>(null);
   const [usualByMeal, setUsualByMeal] = useState<Partial<Record<MealType, UsualMeal>>>({});
   // "Sprich's einfach": Mahlzeit in Sprache eingeben -> KI erkennt

@@ -18,6 +18,7 @@ import { useFocusTick } from '../lib/useFocusTick';
 import { healthSupported, healthAvailable, hasStepsPermission, requestHealthPermission, openHealthSettings, openHealthConnectInstall } from '../lib/health';
 import BackButton from '../components/BackButton';
 import SwipeBack from '../components/SwipeBack';
+import { useAndroidBack } from '../lib/useBackHandler';
 import GlassFill from '../components/GlassFill';
 import Segmented from '../components/Segmented';
 import { TAB_BAR_SPACE } from '../lib/layout';
@@ -26,7 +27,7 @@ import { TAB_BAR_SPACE } from '../lib/layout';
 // Abmelden-Button klar ueber der schwebenden Glas-Pille endet und man bequem dorthin scrollt.
 const BOTTOM_PAD = TAB_BAR_SPACE + 72;
 
-export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
+export default function SettingsScreen({ focusTick, focused = true }: { focusTick?: number; focused?: boolean }) {
   const { session, refreshProfile } = useAuth();
   const { mode, setMode } = useTheme();
   const t = useT();
@@ -35,6 +36,12 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
   const styles = useMemo(() => makeStyles(c), [c]);
 
   const [view, setView] = useState<'menu' | 'profile' | 'legal' | 'privacy' | 'impressum' | 'terms' | 'password'>('menu');
+
+  // Android-System-Zurueck: aus einer Unterseite zurueck ins Menue (sonst Fallback in MainTabs).
+  useAndroidBack(() => {
+    if (view !== 'menu') { setView('menu'); return true; }
+    return false;
+  }, focused);
   const [rem, setRem] = useState<ReminderPrefs | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [msgErr, setMsgErr] = useState(false);

@@ -12,7 +12,7 @@ import { useFocusTick } from '../lib/useFocusTick';
 
 export type Seg = 'tracker' | 'protein' | 'water';
 
-export default function EssenScreen({ focusTick, initialSeg }: { focusTick?: number; initialSeg?: Seg }) {
+export default function EssenScreen({ focusTick, initialSeg, focused = true }: { focusTick?: number; initialSeg?: Seg; focused?: boolean }) {
   const c = useColors();
   const t = useT();
   const styles = useMemo(() => makeStyles(c), [c]);
@@ -39,7 +39,7 @@ export default function EssenScreen({ focusTick, initialSeg }: { focusTick?: num
         c={c}
       />
       <View style={{ flex: 1, marginTop: 14 }}>
-        <View style={[styles.page, seg !== 'tracker' && styles.hidden]}><FoodTrackerScreen embedded focusTick={focusTick} /></View>
+        <View style={[styles.page, seg !== 'tracker' && styles.hidden]}><FoodTrackerScreen embedded focusTick={focusTick} focused={focused && seg === 'tracker'} /></View>
         <View style={[styles.page, seg !== 'protein' && styles.hidden]}><ProteinScreen embedded /></View>
         <View style={[styles.page, seg !== 'water' && styles.hidden]}><WaterScreen embedded focusTick={focusTick} /></View>
       </View>

@@ -17,6 +17,7 @@ import ProgressScreen from './ProgressScreen';
 import SettingsScreen from './SettingsScreen';
 import Ambient from '../components/Ambient';
 import StepsPrompt from '../components/StepsPrompt';
+import { useAndroidBack } from '../lib/useBackHandler';
 
 type Tab = 'home' | 'training' | 'essen' | 'progress' | 'settings';
 const TAB_ORDER: Tab[] = ['home', 'training', 'essen', 'progress', 'settings'];
@@ -47,6 +48,15 @@ export default function MainTabs() {
     setTicks((k) => ({ ...k, [target]: k[target] + 1 }));
     setTab(target);
   };
+
+  // Android-System-Zurueck als unterste Ebene (wird zuerst registriert -> kommt zuletzt
+  // dran). Jeder Tab faengt sein eigenes Zurueck ab, solange er einen Unterscreen offen
+  // hat; ist er auf seiner Startebene, landen wir hier: nicht-Start-Tab -> zum Start-Tab,
+  // auf "Start" geben wir false zurueck -> die App schliesst sich (Android-Standard).
+  useAndroidBack(() => {
+    if (tab !== 'home') { go('home'); return true; }
+    return false;
+  });
 
   // Glas-Toenung: in Dunkel ein zarter heller Schimmer (Glas faengt Licht); in Hell frostig hell.
   const glassTint = dark ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.45)';
@@ -80,10 +90,10 @@ export default function MainTabs() {
       <Ambient c={c} />
       <View style={{ flex: 1 }}>
         {mounted.home && <Page active={tab === 'home'}><HomeScreen onNavigate={(tb, seg) => go(tb as Tab, seg as EssenSeg | undefined)} focusTick={ticks.home} /></Page>}
-        {mounted.training && <Page active={tab === 'training'}><TrainingScreen focusTick={ticks.training} /></Page>}
-        {mounted.essen && <Page active={tab === 'essen'}><EssenScreen focusTick={ticks.essen} initialSeg={essenSeg} /></Page>}
-        {mounted.progress && <Page active={tab === 'progress'}><ProgressScreen focusTick={ticks.progress} /></Page>}
-        {mounted.settings && <Page active={tab === 'settings'}><SettingsScreen focusTick={ticks.settings} /></Page>}
+        {mounted.training && <Page active={tab === 'training'}><TrainingScreen focusTick={ticks.training} focused={tab === 'training'} /></Page>}
+        {mounted.essen && <Page active={tab === 'essen'}><EssenScreen focusTick={ticks.essen} initialSeg={essenSeg} focused={tab === 'essen'} /></Page>}
+        {mounted.progress && <Page active={tab === 'progress'}><ProgressScreen focusTick={ticks.progress} focused={tab === 'progress'} /></Page>}
+        {mounted.settings && <Page active={tab === 'settings'}><SettingsScreen focusTick={ticks.settings} focused={tab === 'settings'} /></Page>}
       </View>
       {/* Tab-Leiste: iOS = schwebende Glas-Pille; Android = durchgehende, DECKENDE Leiste am
           unteren Rand (deckt den Inhalt ab -> kein Durchscheinen wie beim Blur auf Android). */}

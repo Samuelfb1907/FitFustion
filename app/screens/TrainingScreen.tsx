@@ -20,6 +20,7 @@ import { CARD_SHADOW as shadow } from '../lib/ui';
 import BodyMuscleMap from '../components/BodyMuscleMap';
 import BackButton from '../components/BackButton';
 import SwipeBack from '../components/SwipeBack';
+import { useAndroidBack } from '../lib/useBackHandler';
 import GlassFill from '../components/GlassFill';
 import { usePaywall } from '../components/Paywall';
 
@@ -29,7 +30,7 @@ type Exercise = { id: string; name: string; difficulty: string; equipment: strin
 // Reihenfolge je Muskel-Key (clientseitig, damit die Anordnung stabil bleibt).
 const MUSCLE_ORDER = ['chest', 'back', 'shoulders', 'neck', 'biceps', 'triceps', 'abs', 'legs', 'glutes', 'calves'];
 
-export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
+export default function TrainingScreen({ focusTick, focused = true }: { focusTick?: number; focused?: boolean }) {
   const { profile, isPremium } = useAuth();
   const { openPaywall } = usePaywall();
   const c = useColors();
@@ -49,6 +50,15 @@ export default function TrainingScreen({ focusTick }: { focusTick?: number }) {
   const [refreshing, setRefreshing] = useState(false);
   const [planEx, setPlanEx] = useState<Selected | null>(null);
   const [planRefresh, setPlanRefresh] = useState(0);
+
+  // Android-System-Zurueck: tiefste offene Ebene zuerst schliessen (genau wie das
+  // Wischen vom Rand). Auf der Startebene false -> der globale Handler (MainTabs) uebernimmt.
+  useAndroidBack(() => {
+    if (planEx) { setPlanEx(null); setPlanRefresh((n) => n + 1); return true; }
+    if (selectedExercise) { setSelectedExercise(null); return true; }
+    if (selectedMuscle) { setSelectedMuscle(null); return true; }
+    return false;
+  }, focused);
 
   const allowedDiff = ALLOWED_DIFF[profile?.experience_level ?? 'beginner'] ?? ['beginner'];
   const allowedEquip = ALLOWED_EQUIP[profile?.training_environment ?? 'gym'] ?? ALLOWED_EQUIP.gym;

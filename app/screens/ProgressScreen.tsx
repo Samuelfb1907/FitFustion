@@ -11,6 +11,7 @@ import { useT } from '../contexts/LanguageContext';
 import { Ionicons } from '@expo/vector-icons';
 import { LineChart, BarChart } from '../components/Charts';
 import SwipeBack from '../components/SwipeBack';
+import { useAndroidBack } from '../lib/useBackHandler';
 import GlassFill from '../components/GlassFill';
 import ExerciseProgress from '../components/ExerciseProgress';
 import ErrorRetry from '../components/ErrorRetry';
@@ -44,7 +45,7 @@ function mondayOf(d: Date): Date {
 
 // unwrap -> lib/format.ts
 
-export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
+export default function ProgressScreen({ focusTick, focused = true }: { focusTick?: number; focused?: boolean }) {
   const { session, isPremium } = useAuth();
   const { openPaywall } = usePaywall();
   const c = useColors();
@@ -63,6 +64,12 @@ export default function ProgressScreen({ focusTick }: { focusTick?: number }) {
   const [history, setHistory] = useState<HistRow[]>([]);
   const [exList, setExList] = useState<ExItem[]>([]);
   const [selExercise, setSelExercise] = useState<{ id: string; name: string } | null>(null);
+
+  // Android-System-Zurueck: offene Uebungs-Detailansicht schliessen (sonst Fallback in MainTabs).
+  useAndroidBack(() => {
+    if (selExercise) { setSelExercise(null); return true; }
+    return false;
+  }, focused);
 
   const [weightInput, setWeightInput] = useState('');
   const [savingW, setSavingW] = useState(false);
