@@ -44,17 +44,31 @@ export function healthSupported(): boolean {
   return !!hc();
 }
 
+// Schutz gegen haengende native Aufrufe: nach `ms` mit `fallback` aufloesen,
+// damit die UI nie ewig im "busy"-Zustand stehenbleibt (sonst "nichts passiert").
+function withTimeout<T>(p: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return new Promise<T>((resolve) => {
+    let settled = false;
+    const id = setTimeout(() => { if (!settled) { settled = true; resolve(fallback); } }, ms);
+    p.then(
+      (v) => { if (!settled) { settled = true; clearTimeout(id); resolve(v); } },
+      () => { if (!settled) { settled = true; clearTimeout(id); resolve(fallback); } },
+    );
+  });
+}
+
 // Ist Health Connect auf dem Geraet verfuegbar (App installiert / im System vorhanden)?
+// Mit Timeout: kommt der native Aufruf auf manchen Geraeten nicht zurueck, gilt "nicht verfuegbar".
 export async function healthAvailable(): Promise<boolean> {
   if (Platform.OS === 'ios') {
     const P = ped();
     if (!P) return false;
-    try { return await P.isAvailableAsync(); } catch { return false; }
+    try { return await withTimeout(P.isAvailableAsync(), 8000, false); } catch { return false; }
   }
   const HC = hc();
   if (!HC) return false;
   try {
-    const status = await HC.getSdkStatus();
+    const status = await withTimeout(HC.getSdkStatus(), 8000, -1);
     return status === HC.SdkAvailabilityStatus.SDK_AVAILABLE;
   } catch {
     return false;

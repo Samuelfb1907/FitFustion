@@ -63,34 +63,21 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
   // in der falschen Sprache stehenbleibt.
   useEffect(() => { setMsg(null); setPwMsg(null); }, [lang]);
 
-  function connectHealth() {
-    if (Platform.OS === 'ios') {
-      // iOS: eingebauter Schrittzaehler ("Bewegung & Fitness") - direkte Berechtigungsabfrage.
-      Alert.alert(
-        t('settings.health.ios.alert.connectTitle'),
-        t('settings.health.ios.alert.connectBody'),
-        [
-          { text: t('settings.btn.cancel'), style: 'cancel' },
-          { text: t('settings.btn.connect'), onPress: doConnectHealth },
-        ],
-      );
-      return;
-    }
-    // Android: Pflicht-Hinweis (Google) VOR der Berechtigungsabfrage: was wird gelesen + wohin.
-    Alert.alert(
-      t('settings.health.alert.connectTitle'),
-      t('settings.health.alert.connectBody'),
-      [
-        { text: t('settings.btn.cancel'), style: 'cancel' },
-        { text: t('settings.btn.connect'), onPress: doConnectHealth },
-      ],
-    );
-  }
-  async function doConnectHealth() {
+  // Schritt 1: ZUERST pruefen, ob die Gesundheitsquelle verfuegbar ist, DANN genau
+  // EINEN Dialog zeigen. Android verschluckt sonst einen Alert, der direkt aus dem
+  // Knopf eines anderen Alerts geoeffnet wird -> es wuerde "nichts passieren".
+  async function connectHealth() {
+    if (busy) return;
     setBusy(true); setMsg(null);
-    const available = await healthAvailable();
+    let available = false;
+    try {
+      available = await healthAvailable();
+    } catch {
+      available = false;
+    }
+    setBusy(false);
+
     if (!available) {
-      setBusy(false);
       if (Platform.OS === 'ios') {
         showMsg(t('settings.health.ios.unavailable'), true);
         return;
@@ -105,8 +92,30 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
       );
       return;
     }
-    const ok = await requestHealthPermission();
-    setBusy(false);
+
+    // Verfuegbar -> Pflicht-Hinweis (was wird gelesen + wohin), dann System-Abfrage.
+    Alert.alert(
+      Platform.OS === 'ios' ? t('settings.health.ios.alert.connectTitle') : t('settings.health.alert.connectTitle'),
+      Platform.OS === 'ios' ? t('settings.health.ios.alert.connectBody') : t('settings.health.alert.connectBody'),
+      [
+        { text: t('settings.btn.cancel'), style: 'cancel' },
+        { text: t('settings.btn.connect'), onPress: requestHealthAndShow },
+      ],
+    );
+  }
+
+  // Schritt 2: System-Berechtigung anfragen (oeffnet die Health-Connect- bzw. iOS-Abfrage)
+  // und das Ergebnis als Inline-Meldung anzeigen - kein zweiter Alert, also kein Race.
+  async function requestHealthAndShow() {
+    setBusy(true); setMsg(null);
+    let ok = false;
+    try {
+      ok = await requestHealthPermission();
+    } catch {
+      ok = false;
+    } finally {
+      setBusy(false);
+    }
     setStepsConnected(ok);
     if (Platform.OS === 'ios') {
       showMsg(ok ? t('settings.health.ios.connected') : t('settings.health.ios.denied'), !ok);
