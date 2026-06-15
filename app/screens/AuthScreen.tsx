@@ -302,7 +302,7 @@ function makeStyles(c: Colors) {
     wordmark: { fontSize: 34, fontWeight: '900', color: c.heading, letterSpacing: 0.2 },
     tagline: { fontSize: 14, fontWeight: '600', color: c.textMuted, marginTop: 10, textAlign: 'center' },
 
-    form: { width: '100%', maxWidth: 420, alignSelf: 'center', borderRadius: 22, padding: 22, borderWidth: StyleSheet.hairlineWidth, borderColor: c.hairline, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.12, shadowRadius: 18, elevation: 6 },
+    form: { width: '100%', maxWidth: 420, alignSelf: 'center', borderRadius: 22, padding: 22, borderWidth: StyleSheet.hairlineWidth, borderColor: c.hairline, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.12, shadowRadius: 18, elevation: Platform.OS === 'android' ? 2 : 6 },
     heading: { fontSize: 22, fontWeight: '800', color: c.heading },
     sub: { fontSize: 14, color: c.textMuted, marginTop: 6 },
 

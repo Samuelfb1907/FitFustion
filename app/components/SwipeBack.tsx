@@ -7,7 +7,7 @@
 // `behind` + `c` optional: ohne sie verhaelt sich SwipeBack wie ein einfaches
 // Weg-Wischen (transparente Seite) – fuer einen schrittweisen Rollout.
 import { ReactNode, useRef, useState } from 'react';
-import { Animated, Dimensions, PanResponder, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { Animated, Dimensions, PanResponder, Platform, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { Colors } from '../contexts/ThemeContext';
 import Ambient from './Ambient';
 
@@ -114,6 +114,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: -3, height: 0 },
     shadowOpacity: 0.18,
     shadowRadius: 8,
-    elevation: 8,
+    elevation: Platform.OS === 'android' ? 3 : 8,
   },
 });

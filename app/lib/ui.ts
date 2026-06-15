@@ -1,14 +1,16 @@
 // Gemeinsames Design-System (Clean Light): flach, viel Weissraum, feine Linien, EIN Akzent.
 // Tiefe entsteht NICHT durch starke Schatten, sondern durch feine Raender + Flaechenkontrast.
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 
 // Sehr dezenter, fast flacher Karten-Schatten (bewusst zurueckhaltend).
+// Android: KEINE Elevation -> flach (Tiefe kommt aus feinen Raendern, nicht aus Schatten);
+// die Elevation-Schatten wirkten auf Android zu hart. iOS behaelt den weichen shadow*-Schatten.
 export const CARD_SHADOW = {
   shadowColor: '#0E1217',
   shadowOpacity: 0.04,
   shadowRadius: 10,
   shadowOffset: { width: 0, height: 2 },
-  elevation: 1,
+  elevation: Platform.OS === 'android' ? 0 : 1,
 };
 
 // Einheitliche Eckenradien.

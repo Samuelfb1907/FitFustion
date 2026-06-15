@@ -4,7 +4,7 @@
 // Seiten unten TAB_BAR_SPACE Platz (siehe lib/layout). Pille = abgerundet + durchscheinend
 // (BlurView) + zarte Lichtkante. Aktiver Reiter GRUEN, Rest grau. Tippen oder seitlich WISCHEN.
 import { useRef, useState, ReactNode } from 'react';
-import { PanResponder, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { PanResponder, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -68,6 +68,10 @@ export default function MainTabs() {
 
   // Glas-Toenung: in Dunkel ein zarter heller Schimmer (Glas faengt Licht); in Hell frostig hell.
   const glassTint = dark ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.45)';
+  // Android: expo-blur rendert die Pille oft komplett durchsichtig. Daher dort KEIN BlurView,
+  // sondern ein solider (fast deckender) Hintergrund + dezente Elevation; iOS behaelt das Glas.
+  const isAndroid = Platform.OS === 'android';
+  const androidBarBg = dark ? 'rgba(18,24,30,0.96)' : 'rgba(255,255,255,0.96)';
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
@@ -80,9 +84,9 @@ export default function MainTabs() {
         {mounted.settings && <Page active={tab === 'settings'}><SettingsScreen focusTick={ticks.settings} /></Page>}
       </View>
       {/* SCHWEBENDE Glas-Pille: absolut, liegt frei ueber dem Inhalt (kein Streifen drumherum) */}
-      <View style={[styles.bar, { bottom: Math.max(insets.bottom, 12), borderColor: c.hairline }]}>
-        <BlurView intensity={dark ? 32 : 52} tint={dark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: glassTint }]} />
+      <View style={[styles.bar, { bottom: Math.max(insets.bottom, 12), borderColor: c.hairline }, isAndroid && { backgroundColor: androidBarBg, elevation: 4 }]}>
+        {!isAndroid && <BlurView intensity={dark ? 32 : 52} tint={dark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />}
+        {!isAndroid && <View style={[StyleSheet.absoluteFill, { backgroundColor: glassTint }]} />}
         {TAB_ORDER.map((k) => {
           const active = tab === k;
           const color = active ? c.primary : c.textMuted;
