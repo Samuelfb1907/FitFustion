@@ -42,7 +42,7 @@ const LIGHT: Colors = {
 // im Hintergrund). Karten sind nahezu deckend mit feiner heller Kante - das
 // wirkt ruhiger und hochwertiger als durchscheinende gruene Flaechen.
 const DARK: Colors = {
-  bg: '#090D11', card: 'rgba(18,24,30,0.92)', text: '#E9EDF1', textMuted: '#8A94A0', heading: Platform.OS === 'android' ? '#B6C0CA' : '#F3F6F8',
+  bg: '#090D11', card: 'rgba(18,24,30,0.92)', text: '#E9EDF1', textMuted: '#8A94A0', heading: Platform.OS === 'android' ? '#CED6DE' : '#F3F6F8',
   primary: '#19C98F', onPrimary: '#062E20', border: 'rgba(255,255,255,0.10)', cardBorder: 'rgba(255,255,255,0.07)', inputBg: 'rgba(255,255,255,0.06)',
   danger: '#FF6B6B', success: '#2BD79B', track: '#1A232B',
   accent: '#2BD79B', hero: '#10231C', muscle: '#2A2F36',

@@ -109,7 +109,7 @@ function makeStyles(c: Colors) {
     presetActive: { backgroundColor: c.primary, borderColor: c.primary },
     presetText: { fontSize: 13, fontWeight: '700', color: c.text },
     presetTextActive: { color: c.onPrimary },
-    time: { fontSize: 42, fontWeight: Platform.OS === 'android' ? '500' : '800', color: c.heading, textAlign: 'center', marginTop: 12, fontVariant: ['tabular-nums'] },
+    time: { fontSize: 42, fontWeight: '800', color: c.heading, textAlign: 'center', marginTop: 12, fontVariant: ['tabular-nums'] },
     track: { height: 8, backgroundColor: c.track, borderRadius: 4, overflow: 'hidden', marginTop: 8 },
     fill: { height: 8, borderRadius: 4 },
     btns: { flexDirection: 'row', gap: 10, marginTop: 14 },
