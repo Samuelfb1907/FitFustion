@@ -2,7 +2,7 @@
 // Endpunkt und Fuell-Animation. Darunter: gegessen | Tagesziel mit Trennlinie.
 // Theme- und sprachfaehig (DE/EN).
 import { useEffect, useRef, useState } from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import { Animated, Platform, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { useColors, useTheme } from '../contexts/ThemeContext';
 import { useT, useLang } from '../contexts/LanguageContext';
@@ -120,11 +120,12 @@ export default function CalorieGauge({ target, eaten }: { target: number; eaten:
 const styles = StyleSheet.create({
   wrap: { alignItems: 'center', alignSelf: 'stretch' },
   center: { position: 'absolute', left: 0, top: 0, width: SIZE, height: SIZE, alignItems: 'center', justifyContent: 'center' },
-  big: { fontSize: 42, fontWeight: '900', letterSpacing: -1, lineHeight: 46 },
+  // Android: weniger fett -> die hellen Ziffern "bluehen" sonst auf dem dunklen Grund (wirkt wie Glow).
+  big: { fontSize: 42, fontWeight: Platform.OS === 'android' ? '700' : '900', letterSpacing: -1, lineHeight: 46 },
   label: { fontSize: 13, fontWeight: '500', marginTop: 8 },
   footRow: { flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch', marginTop: 18 },
   foot: { flex: 1, alignItems: 'center' },
-  footValue: { fontSize: 21, fontWeight: '800', letterSpacing: -0.3 },
+  footValue: { fontSize: 21, fontWeight: Platform.OS === 'android' ? '700' : '800', letterSpacing: -0.3 },
   footLabel: { fontSize: 12, fontWeight: '500', marginTop: 8 },
   footSep: { width: 1, height: 40 },
 });

@@ -2,7 +2,7 @@
 // Header (Begruessung + Level/Streak) -> Kalorien-Karte -> 3 Uebersichts-Kacheln
 // (Wasser/Training/Gewicht, fuehren in ihren Bereich) -> Training-laeuft -> Tagesziele.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Animated, Dimensions, Modal, PanResponder, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Animated, Dimensions, Modal, PanResponder, Platform, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useT, useLang } from '../contexts/LanguageContext';
@@ -618,7 +618,7 @@ function makeStyles(c: Colors) {
     macros: { flexDirection: 'row', gap: 14, marginTop: 18, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.border, paddingTop: 16 },
     macro: { flex: 1, minWidth: 0 },
     macroLabel: { fontSize: 11, fontWeight: '600', color: c.textMuted, marginBottom: 8 },
-    macroValue: { fontSize: 16, fontWeight: '800', color: c.heading },
+    macroValue: { fontSize: 16, fontWeight: Platform.OS === 'android' ? '700' : '800', color: c.heading },
     macroMax: { fontSize: 11, fontWeight: '500', color: c.textMuted },
     macroTrack: { height: 6, borderRadius: 4, backgroundColor: c.track, overflow: 'hidden', marginTop: 10 },
     macroFill: { height: 6, borderRadius: 4 },
@@ -628,7 +628,7 @@ function makeStyles(c: Colors) {
     statTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
     statChip: { width: 38, height: 38, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
     quickBtn: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
-    statValue: { fontSize: 21, fontWeight: '800', color: c.heading, marginTop: 14, letterSpacing: -0.3 },
+    statValue: { fontSize: 21, fontWeight: Platform.OS === 'android' ? '700' : '800', color: c.heading, marginTop: 14, letterSpacing: -0.3 },
     statSub: { fontSize: 11, color: c.textMuted, fontWeight: '500', marginTop: 7 },
     statBar: { height: 5, backgroundColor: c.track, borderRadius: 3, overflow: 'hidden', marginTop: 11 },
     statFill: { height: 5, borderRadius: 3 },
