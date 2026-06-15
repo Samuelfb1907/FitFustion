@@ -218,6 +218,19 @@ export async function openHealthSettings(): Promise<void> {
   }
 }
 
+// Play-Store-Seite von Health Connect oeffnen (zum Installieren/Aktualisieren) - nur Android.
+// Wird genutzt, wenn Health Connect noch gar nicht verfuegbar ist (openHealthConnectSettings
+// kann dann nichts oeffnen).
+export async function openHealthConnectInstall(): Promise<void> {
+  if (Platform.OS !== 'android') return;
+  try {
+    const { Linking } = require('react-native');
+    await Linking.openURL('https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata');
+  } catch {
+    /* ignore */
+  }
+}
+
 // Grobe kcal-Schaetzung aus Schritten: ~0.04 kcal/Schritt bei 70 kg, skaliert mit Gewicht.
 // Bewusst konservativ – nur eine Orientierung (wie der Trainingsbonus).
 export function stepsKcal(steps: number, weightKg: number): number {

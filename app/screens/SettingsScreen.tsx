@@ -15,7 +15,7 @@ import { exportUserData, deleteAccount } from '../lib/gdpr';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loadReminderPrefs, saveReminderPrefs, applyReminders, ensurePermission, ReminderPrefs } from '../lib/reminders';
 import { useFocusTick } from '../lib/useFocusTick';
-import { healthSupported, healthAvailable, hasStepsPermission, requestHealthPermission, openHealthSettings } from '../lib/health';
+import { healthSupported, healthAvailable, hasStepsPermission, requestHealthPermission, openHealthSettings, openHealthConnectInstall } from '../lib/health';
 import BackButton from '../components/BackButton';
 import SwipeBack from '../components/SwipeBack';
 import GlassFill from '../components/GlassFill';
@@ -100,7 +100,7 @@ export default function SettingsScreen({ focusTick }: { focusTick?: number }) {
         t('settings.health.alert.neededBody'),
         [
           { text: t('settings.btn.cancel'), style: 'cancel' },
-          { text: t('settings.btn.open'), onPress: () => { openHealthSettings(); } },
+          { text: t('settings.btn.open'), onPress: () => { openHealthConnectInstall(); } },
         ],
       );
       return;
