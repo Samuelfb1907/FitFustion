@@ -32,6 +32,38 @@ function withHealthPermissions(config) {
   });
 }
 
+// Android 14+ (API 34): Health Connect ist Teil des Systems. Damit das System die
+// Berechtigungs-Abfrage ueberhaupt anzeigt, MUSS die App einen "VIEW_PERMISSION_USAGE"-
+// Einstieg fuer die Kategorie HEALTH_PERMISSIONS deklarieren (sonst verweigert das
+// System die Abfrage still -> beim Tippen auf "Verbinden" passiert nichts). Das
+// mitgelieferte Plugin fuegt nur den alten Rationale-Intent (Android <=13) hinzu.
+function withHealthRationaleActivity(config) {
+  return withAndroidManifest(config, (cfg) => {
+    const app = cfg.modResults.manifest.application && cfg.modResults.manifest.application[0];
+    if (!app) return cfg;
+    app['activity-alias'] = app['activity-alias'] || [];
+    const NAME = 'ViewPermissionUsageActivity';
+    const exists = app['activity-alias'].some((a) => a.$ && a.$['android:name'] === NAME);
+    if (!exists) {
+      app['activity-alias'].push({
+        $: {
+          'android:name': NAME,
+          'android:exported': 'true',
+          'android:targetActivity': '.MainActivity',
+          'android:permission': 'android.permission.START_VIEW_PERMISSION_USAGE',
+        },
+        'intent-filter': [
+          {
+            action: [{ $: { 'android:name': 'android.intent.action.VIEW_PERMISSION_USAGE' } }],
+            category: [{ $: { 'android:name': 'android.intent.category.HEALTH_PERMISSIONS' } }],
+          },
+        ],
+      });
+    }
+    return cfg;
+  });
+}
+
 function withPermissionDelegate(config) {
   return withMainActivity(config, (cfg) => {
     if (cfg.modResults.language !== 'kt') return cfg; // erwarten Kotlin (Expo SDK 54)
@@ -52,6 +84,7 @@ function withPermissionDelegate(config) {
 
 module.exports = function withHealthConnect(config) {
   config = withHealthPermissions(config);
+  config = withHealthRationaleActivity(config);
   config = withPermissionDelegate(config);
   return config;
 };
