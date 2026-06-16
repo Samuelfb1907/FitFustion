@@ -115,9 +115,9 @@ export default function TrainingScreen({ focusTick, focused = true }: { focusTic
         .order('difficulty');
       if (error) throw error;
       const all = data ?? [];
-      // Gratis: nur 2 Uebungen pro Muskel; Premium: alle.
-      setExercises(isPremium ? all : all.slice(0, 2));
-      setMoreCount(isPremium ? 0 : Math.max(0, all.length - 2));
+      // Gratis: begrenzte Auswahl pro Muskel; Premium: alle.
+      setExercises(isPremium ? all : all.slice(0, 4));
+      setMoreCount(isPremium ? 0 : Math.max(0, all.length - 4));
     } catch (e) {
       setExError(errorMessage(e));
     } finally {

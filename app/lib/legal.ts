@@ -175,7 +175,7 @@ export const TERMS_SECTIONS: { h: string; p: string }[] = [
   },
   {
     h: '2. Leistungen – Gratis & Premium',
-    p: 'FitAvo ist in einer kostenlosen Basis-Version nutzbar (u. a. manuelles Tracking von Kalorien, Wasser, Gewicht sowie Freies Training). Mit „FitAvo Premium" werden zusätzliche Funktionen freigeschaltet: KI-gestützte Mahlzeitenerkennung, Barcode-Scanner, Teilnahme an der Bestenliste, alle Übungen je Muskelgruppe (statt zwei), Level/XP/Erfolge sowie eigene Trainingspläne. Der Funktionsumfang kann sich weiterentwickeln.',
+    p: 'FitAvo ist in einer kostenlosen Basis-Version nutzbar (u. a. manuelles Tracking von Kalorien, Wasser, Gewicht sowie Freies Training). Mit „FitAvo Premium" werden zusätzliche Funktionen freigeschaltet: KI-gestützte Mahlzeitenerkennung, Barcode-Scanner, Teilnahme an der Bestenliste, alle Übungen je Muskelgruppe (statt einer begrenzten Auswahl), Level/XP/Erfolge sowie eigene Trainingspläne. Der Funktionsumfang kann sich weiterentwickeln.',
   },
   {
     h: '3. Premium-Abo, Preis & Laufzeit',
@@ -397,7 +397,7 @@ export const TERMS_SECTIONS_EN: { h: string; p: string }[] = [
   },
   {
     h: '2. Services – Free & Premium',
-    p: 'FitAvo can be used in a free basic version (including manual tracking of calories, water, weight as well as free training). With “FitAvo Premium”, additional functions are unlocked: AI-assisted meal recognition, barcode scanner, participation in the leaderboard, all exercises per muscle group (instead of two), levels/XP/achievements as well as custom training plans. The range of functions may evolve.',
+    p: 'FitAvo can be used in a free basic version (including manual tracking of calories, water, weight as well as free training). With “FitAvo Premium”, additional functions are unlocked: AI-assisted meal recognition, barcode scanner, participation in the leaderboard, all exercises per muscle group (instead of a limited selection), levels/XP/achievements as well as custom training plans. The range of functions may evolve.',
   },
   {
     h: '3. Premium subscription, price & term',
