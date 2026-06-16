@@ -12,6 +12,7 @@ import RestTimer from './RestTimer';
 import GlassFill from './GlassFill';
 import { exerciseGifId } from '../lib/exerciseMedia';
 import { startOfTodayISO } from '../lib/date';
+import { TAB_BAR_SPACE } from '../lib/layout';
 import { DIFF_LABELS, EQUIP_LABELS } from '../lib/training';
 
 type Exercise = { id: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null };
@@ -162,7 +163,7 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 60 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE + 24 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
       <BackButton onPress={onBack} c={c} />
       <Text style={styles.title}>{exercise.name}</Text>
       <View style={styles.badges}>
