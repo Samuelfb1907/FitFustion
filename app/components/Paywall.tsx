@@ -7,7 +7,7 @@
 // Store-Preis + 7-Tage-Gratis-Test). Der Kauf-Button startet den echten Kauf
 // des gewaehlten Pakets — nur in einem echten App-Build (nicht in Expo Go).
 import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from 'react';
-import { ActivityIndicator, Alert, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { useT, useLang } from '../contexts/LanguageContext';
 import LegalText from './LegalText';
@@ -141,6 +141,12 @@ function PaywallSheet({ visible, feature, onClose }: { visible: boolean; feature
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={close}>
       <View style={s.backdrop}>
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={close}
+          accessibilityRole="button"
+          accessibilityLabel={t('paywall.close')}
+        />
         <View style={s.sheet}>
           {legal ? (
             <>

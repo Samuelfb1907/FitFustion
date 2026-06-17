@@ -3,7 +3,7 @@ export const de = {
   "paywall.trialBanner": "🎁 {n} Tage kostenlos testen",
 
   "paywall.benefit.ai.title": "KI-Mahlzeitenerkennung",
-  "paywall.benefit.ai.desc": "„Sprich’s einfach\" – einfach eintippen, was du gegessen hast.",
+  "paywall.benefit.ai.desc": "Mach ein Foto deiner Mahlzeit – die KI erkennt Kalorien & Nährwerte. Oder einfach eintippen.",
   "paywall.benefit.scan.title": "Barcode-Scanner",
   "paywall.benefit.scan.desc": "Lebensmittel per Kamera scannen statt suchen.",
   "paywall.benefit.leaderboard.title": "Bestenliste",
@@ -73,7 +73,7 @@ export const en = {
   "paywall.trialBanner": "🎁 {n} days free trial",
 
   "paywall.benefit.ai.title": "AI meal recognition",
-  "paywall.benefit.ai.desc": "“Just say it” – simply type in what you ate.",
+  "paywall.benefit.ai.desc": "Take a photo of your meal – AI detects calories & nutrients. Or just type it.",
   "paywall.benefit.scan.title": "Barcode scanner",
   "paywall.benefit.scan.desc": "Scan foods with your camera instead of searching.",
   "paywall.benefit.leaderboard.title": "Leaderboard",
