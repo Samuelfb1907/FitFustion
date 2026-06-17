@@ -163,7 +163,7 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE + 24 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE + 80 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
       <BackButton onPress={onBack} c={c} />
       <Text style={styles.title}>{exercise.name}</Text>
       <View style={styles.badges}>
