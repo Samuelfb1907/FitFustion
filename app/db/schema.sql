@@ -177,6 +177,16 @@ create table if not exists public.user_achievements (
 );
 create index if not exists user_ach_user_idx on public.user_achievements(user_id);
 
+-- ID->Hash-Mapping fuer Uebungs-GIFs (jsDelivr-CDN, siehe db/037_exercise_gif.sql).
+-- Befuellt einmalig durch die Edge Function seed-exercise-gifs; gelesen von exercisedb-image.
+create table if not exists public.exercise_gif (
+  id   text primary key,
+  hash text not null
+);
+alter table public.exercise_gif enable row level security;
+drop policy if exists "exercise_gif_public_read" on public.exercise_gif;
+create policy "exercise_gif_public_read" on public.exercise_gif for select using (true);
+
 -- ============================================================================
 --  TRIGGER
 -- ============================================================================
