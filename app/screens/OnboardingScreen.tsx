@@ -139,7 +139,7 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
   }
 
   return (
-    <KeyboardAvoidingView style={styles.container} {...swipe.panHandlers} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={styles.container} {...swipe.panHandlers} behavior="padding">
       <Ambient c={c} />
       <View style={styles.progress}>
         {[1, 2, 3, 4].map((s) => (<View key={s} style={[styles.progressBar, s <= step && styles.progressBarActive]} />))}

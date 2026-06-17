@@ -681,7 +681,7 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
     const unit = foodUnit(selectedFood);
     return (
       <SwipeBack key="food-amount" onBack={() => setMode(backTarget)} c={c} behind={backTarget === 'pick' ? renderPick() : renderDiary()}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
         <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: embedded ? TAB_BAR_SPACE : 24 }} keyboardShouldPersistTaps="handled">
           <BackButton onPress={() => setMode(backTarget)} c={c} />
           <Text style={styles.title}>{selectedFood.name}</Text>
@@ -885,7 +885,7 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
     const draft = favDraft ?? { name: '', items: [] };
     const totalKcal = draft.items.reduce((s, it) => s + Math.round((it.kcal * it.amount_g) / 100), 0);
     return (
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
         <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: embedded ? TAB_BAR_SPACE : 24 }} keyboardShouldPersistTaps="handled">
           <BackButton onPress={cancelFavNew} c={c} />
           <Text style={styles.title}>{t('food.createFavoriteTitle')}</Text>
@@ -1112,7 +1112,7 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
     </ScrollView>
     <BarcodeScanner visible={scannerOpen} c={c} onClose={() => setScannerOpen(false)} onScanned={handleScanned} />
     <Modal visible={!!nlItems} transparent animationType="slide" onRequestClose={() => setNlItems(null)}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
       <View style={styles.nlOverlay}>
         <View style={styles.nlSheet}>
           <Text style={styles.nlSheetTitle}>{t('food.nlSheetTitle')}</Text>
