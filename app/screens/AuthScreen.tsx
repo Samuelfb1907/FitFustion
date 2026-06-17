@@ -131,7 +131,7 @@ export default function AuthScreen() {
   return (
     <View style={styles.root}>
       <Ambient c={c} />
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={styles.flex} behavior="padding">
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <View style={styles.brand}>
             <Image source={require('../assets/avocado.png')} style={styles.logoImg} resizeMode="contain" />
