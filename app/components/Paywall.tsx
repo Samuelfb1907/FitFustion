@@ -21,6 +21,7 @@ export const PREMIUM_PRICE = '9,99 € / Monat';
 const BENEFITS: [string, string, string][] = [
   ['🍽️', 'paywall.benefit.ai.title', 'paywall.benefit.ai.desc'],
   ['📷', 'paywall.benefit.scan.title', 'paywall.benefit.scan.desc'],
+  ['🔎', 'paywall.benefit.search.title', 'paywall.benefit.search.desc'],
   ['🏆', 'paywall.benefit.leaderboard.title', 'paywall.benefit.leaderboard.desc'],
   ['💪', 'paywall.benefit.exercises.title', 'paywall.benefit.exercises.desc'],
   ['⭐', 'paywall.benefit.level.title', 'paywall.benefit.level.desc'],
@@ -31,6 +32,7 @@ const BENEFITS: [string, string, string][] = [
 const FEATURE_HINT: Record<string, string> = {
   ki: 'paywall.featureHint.ki',
   scan: 'paywall.featureHint.scan',
+  search: 'paywall.featureHint.search',
   leaderboard: 'paywall.featureHint.leaderboard',
   level: 'paywall.featureHint.level',
   plan: 'paywall.featureHint.plan',

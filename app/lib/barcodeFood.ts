@@ -10,7 +10,7 @@ export type ResolveResult = { food: FoodRow; created: boolean } | { food: null; 
 
 const COLS = 'id, name, category, kcal, protein, carbs, fat';
 
-export async function resolveBarcodeFood(userId: string, barcode: string): Promise<ResolveResult> {
+export async function resolveBarcodeFood(userId: string, barcode: string, category = 'Gescannt'): Promise<ResolveResult> {
   // 1) Schon vorhanden (von dir oder jemand anderem gescannt)?
   const { data: existing } = await supabase.from('foods').select(COLS).eq('barcode', barcode).limit(1).maybeSingle();
   if (existing) return { food: existing as FoodRow, created: false };
@@ -22,7 +22,7 @@ export async function resolveBarcodeFood(userId: string, barcode: string): Promi
   // 3) Neu anlegen (mit Barcode + Besitzer)
   const { data: created, error } = await supabase
     .from('foods')
-    .insert({ name: off.name, category: 'Gescannt', kcal: off.kcal, protein: off.protein, carbs: off.carbs, fat: off.fat, barcode, user_id: userId })
+    .insert({ name: off.name, category, kcal: off.kcal, protein: off.protein, carbs: off.carbs, fat: off.fat, barcode, user_id: userId })
     .select(COLS)
     .single();
   if (!error && created) return { food: created as FoodRow, created: true };

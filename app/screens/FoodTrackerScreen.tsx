@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { computeNutrition, ageFromBirthDate, Gender, ActivityLevel, GoalType } from '../lib/nutrition';
 import BarcodeScanner from '../components/BarcodeScanner';
 import { resolveBarcodeFood } from '../lib/barcodeFood';
+import { searchOpenFoodFacts, OffSearchItem } from '../lib/openFoodFacts';
 import { TRACKER_MEALS, MealType, mealByHour, normalizeMeal } from '../lib/meals';
 import { getLegalShort } from '../lib/legal';
 import { useFocusTick } from '../lib/useFocusTick';
@@ -79,6 +80,9 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
   const [loading, setLoading] = useState(true);
   const [searchResults, setSearchResults] = useState<Food[]>([]);
   const [searching, setSearching] = useState(false);
+  // Open-Food-Facts-Datenbank-Suche (Premium): Treffer + Lade-Status, getrennt von der lokalen Suche.
+  const [offResults, setOffResults] = useState<OffSearchItem[]>([]);
+  const [offSearching, setOffSearching] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [targetKcal, setTargetKcal] = useState<number | null>(null);
   const [macroTargets, setMacroTargets] = useState<{ p: number; c: number; f: number } | null>(null);
@@ -167,6 +171,26 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
     return () => { cancelled = true; clearTimeout(t); };
   }, [search, mode, userId]);
 
+  // Premium: zusaetzlich die Open-Food-Facts-Datenbank per Freitext durchsuchen.
+  // Laeuft getrennt von der lokalen Suche (Netz), etwas spaeter entprellt, nur im
+  // Zutaten-Tab und ab 2 Zeichen. Gratis-Nutzer loesen das nicht aus (kein Netz-Call).
+  useEffect(() => {
+    const onIngredients = addingTo === 'favorite' || pickTab === 'zutaten';
+    if (mode !== 'pick' || !isPremium || !onIngredients) { setOffResults([]); setOffSearching(false); return; }
+    const q = search.trim();
+    if (q.length < 2) { setOffResults([]); setOffSearching(false); return; }
+    let cancelled = false;
+    setOffSearching(true);
+    const run = async () => {
+      const items = await searchOpenFoodFacts(q, lang === 'en' ? 'en' : 'de');
+      if (cancelled) return;
+      setOffResults(items);
+      setOffSearching(false);
+    };
+    const id = setTimeout(run, 500);
+    return () => { cancelled = true; clearTimeout(id); };
+  }, [search, mode, isPremium, pickTab, addingTo, lang]);
+
   async function handleScanned(code: string) {
     setScannerOpen(false);
     if (!userId) return;
@@ -185,6 +209,20 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
     setAmount('100');
     setMealType(mealByHour());
     setBackTarget('diary'); // vom Scan kam man aus dem Tagebuch -> dorthin zurueck
+    setMode('amount');
+  }
+
+  // Treffer aus der Datenbank-Suche -> wie ein Scan zu einem Lebensmittel aufloesen -> Mengen-Screen.
+  async function handlePickOff(item: OffSearchItem) {
+    if (!userId || scanning) return;
+    setScanning(true);
+    setError(null);
+    const res = await resolveBarcodeFood(userId, item.code, 'Datenbank');
+    setScanning(false);
+    if (!res.food) { setError(t('food.barcodeFetchFailed')); return; }
+    setSelectedFood(res.food);
+    setAmount('100');
+    setBackTarget('pick'); // aus der Suche kam man -> dorthin zurueck (addingTo bleibt erhalten)
     setMode('amount');
   }
 
@@ -819,6 +857,55 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
       </View>
     );
 
+    // Datenbank-Treffer (Open Food Facts) als Fuss unter der lokalen Liste – ab 2 Zeichen.
+    // Premium: echte Treffer; Gratis: ein Hinweis, der die Funktion erklaert + zur Paywall fuehrt.
+    const dbFooter = () => {
+      const q = search.trim();
+      if (q.length < 2) return null;
+      if (!isPremium) {
+        return (
+          <TouchableOpacity style={styles.dbUpsell} onPress={() => openPaywall('search')} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={t('food.dbPremiumCta')}>
+            <GlassFill radius={16} />
+            <Ionicons name="lock-closed" size={16} color={c.primary} />
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={styles.dbUpsellTitle} numberOfLines={1}>{t('food.dbPremiumCta')}</Text>
+              <Text style={styles.dbUpsellHint} numberOfLines={2}>{t('food.dbPremiumHint')}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={c.textMuted} />
+          </TouchableOpacity>
+        );
+      }
+      // Treffer, die schon lokal vorhanden sind (gleicher Name), nicht doppelt zeigen.
+      const localNames = new Set(searchResults.map((f) => f.name.trim().toLowerCase()));
+      const dbItems = offResults.filter((o) => !localNames.has(o.name.trim().toLowerCase()));
+      return (
+        <View style={styles.dbWrap}>
+          <View style={styles.dbHeadRow}>
+            <Text style={styles.sectionHead}>{t('food.dbSectionTitle')}</Text>
+            <Text style={styles.dbSource}>Open Food Facts</Text>
+          </View>
+          {offSearching && dbItems.length === 0 ? (
+            <View style={styles.dbLoading}>
+              <ActivityIndicator color={c.primary} size="small" />
+              <Text style={styles.countHint}>  {t('food.dbSearching')}</Text>
+            </View>
+          ) : dbItems.length === 0 ? (
+            <Text style={styles.noResult}>{t('food.dbNoResult')}</Text>
+          ) : (
+            dbItems.map((o) => (
+              <TouchableOpacity key={o.code} style={styles.foodRow} onPress={() => handlePickOff(o)} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={o.name}>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={styles.foodName} numberOfLines={1}>{o.name}</Text>
+                  <Text style={styles.foodMeta} numberOfLines={1}>{o.brand || t('food.dbSectionTitle')}</Text>
+                </View>
+                <Text style={styles.foodKcal}>{o.kcal} kcal</Text>
+              </TouchableOpacity>
+            ))
+          )}
+        </View>
+      );
+    };
+
     // Die Liste IST die Seite: Kopf scrollt mit weg, Eintraege nutzen die volle Hoehe.
     if (showZutaten) {
       return (
@@ -850,7 +937,8 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
               </TouchableOpacity>
             );
           }}
-          ListEmptyComponent={searching ? null : <Text style={styles.noResult}>{search.trim() ? t('food.noResultFor', { q: search.trim() }) : t('food.noResult')}</Text>}
+          ListFooterComponent={dbFooter()}
+          ListEmptyComponent={searching || search.trim().length >= 2 ? null : <Text style={styles.noResult}>{search.trim() ? t('food.noResultFor', { q: search.trim() }) : t('food.noResult')}</Text>}
         />
       );
     }
@@ -1305,5 +1393,13 @@ function makeStyles(c: Colors) {
     macroRow: { flexDirection: 'row', gap: 10 },
     macroCol: { flex: 1 },
     error: { color: c.danger, fontSize: 14, marginTop: 14, textAlign: 'center' },
+    // Datenbank-Suche (Open Food Facts)
+    dbWrap: { marginTop: 16 },
+    dbHeadRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    dbSource: { fontSize: 10, fontWeight: '700', color: c.textMuted, letterSpacing: 0.3, marginBottom: 8, marginRight: 4, opacity: 0.7 },
+    dbLoading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16 },
+    dbUpsell: { flexDirection: 'row', alignItems: 'center', gap: 11, backgroundColor: c.card, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 13, marginTop: 16, borderWidth: 1, borderColor: 'rgba(25,201,143,0.45)', overflow: 'hidden' },
+    dbUpsellTitle: { fontSize: 14, fontWeight: '700', color: c.heading },
+    dbUpsellHint: { fontSize: 12, color: c.textMuted, marginTop: 2, lineHeight: 16 },
   });
 }
