@@ -22,6 +22,7 @@ import { useAndroidBack } from '../lib/useBackHandler';
 import GlassFill from '../components/GlassFill';
 import Segmented from '../components/Segmented';
 import { TAB_BAR_SPACE } from '../lib/layout';
+import { openStoreReview } from '../lib/reviewPrompt';
 
 // Unterer Abstand fuer Scroll-Inhalte: GROSSZUEGIG (Platz der Pille + extra), damit der
 // Abmelden-Button klar ueber der schwebenden Glas-Pille endet und man bequem dorthin scrollt.
@@ -534,6 +535,10 @@ export default function SettingsScreen({ focusTick, focused = true }: { focusTic
       <Text style={styles.section}>{t('settings.section.about')}</Text>
       <View style={styles.card}>
         <GlassFill radius={20} />
+        <TouchableOpacity style={styles.linkRow} onPress={() => { openStoreReview(); }} accessibilityRole="button">
+          <Ionicons name="star" size={18} color={c.primary} />
+          <Text style={styles.link}>{t('settings.about.rate')}</Text>
+        </TouchableOpacity>
         <View style={styles.row}><Text style={styles.rowLabel}>{t('settings.about.app')}</Text><Text style={styles.rowValue}>FitAvo</Text></View>
         <View style={styles.row}><Text style={styles.rowLabel}>{t('settings.about.version')}</Text><Text style={styles.rowValue}>1.0.0</Text></View>
       </View>

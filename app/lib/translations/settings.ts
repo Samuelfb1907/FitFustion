@@ -118,6 +118,7 @@ export const de = {
   'settings.pw.changed': 'Passwort geändert ✓',
 
   // Über
+  'settings.about.rate': 'FitAvo bewerten ⭐',
   'settings.about.app': 'App',
   'settings.about.version': 'Version',
 };
@@ -240,6 +241,7 @@ export const en = {
   'settings.pw.changed': "Password changed ✓",
 
   // About
+  'settings.about.rate': "Rate FitAvo ⭐",
   'settings.about.app': "App",
   'settings.about.version': "Version",
 };

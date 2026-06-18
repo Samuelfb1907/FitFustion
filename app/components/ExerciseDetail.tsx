@@ -14,6 +14,7 @@ import { exerciseGifId } from '../lib/exerciseMedia';
 import { startOfTodayISO } from '../lib/date';
 import { TAB_BAR_SPACE } from '../lib/layout';
 import { DIFF_LABELS, EQUIP_LABELS } from '../lib/training';
+import { registerGoodMoment } from '../lib/reviewPrompt';
 
 type Exercise = { id: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null };
 type SetLog = { id: string; set_index: number; reps: number | null; weight_kg: number | null };
@@ -148,6 +149,7 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
 
   async function endTraining() {
     if (!sessionId) return;
+    const hadSets = sets.length > 0;
     setEnding(true);
     setError(null);
     const { error: eErr } = await supabase
@@ -160,6 +162,9 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
     setSets([]);
     setReps('');
     setEnded(true);
+    // Positiver Moment: Training mit mitgeschriebenen Saetzen abgeschlossen
+    // -> ggf. (sparsam) um eine Store-Bewertung bitten.
+    if (hadSets) registerGoodMoment();
   }
 
   return (

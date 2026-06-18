@@ -10,6 +10,7 @@ import { computeNutrition, ageFromBirthDate, Gender, ActivityLevel, GoalType } f
 import BarcodeScanner from '../components/BarcodeScanner';
 import { resolveBarcodeFood } from '../lib/barcodeFood';
 import { searchOpenFoodFacts, OffSearchItem } from '../lib/openFoodFacts';
+import { registerGoodMoment } from '../lib/reviewPrompt';
 import { TRACKER_MEALS, MealType, mealByHour, normalizeMeal } from '../lib/meals';
 import { getLegalShort } from '../lib/legal';
 import { useFocusTick } from '../lib/useFocusTick';
@@ -342,6 +343,7 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
       setQuickMsg(t('food.usualAdded', { meal: mealLabel(meal) }));
       setTimeout(() => setQuickMsg(null), 2500);
       await init(true);
+      registerGoodMoment(); // positiver Moment: tägliche Routine mit 1 Tipp geloggt
     } finally { busyRef.current = false; }
   }
 
@@ -600,6 +602,7 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
       if (e) { setError(t('food.errApplyFavorite')); setMode('diary'); return; }
       setMode('diary'); setSearch('');
       await init(true);
+      registerGoodMoment(); // positiver Moment: gespeicherte Mahlzeit angewendet
     } finally { busyRef.current = false; }
   }
   function confirmDeleteFavorite(fav: Favorite) {
