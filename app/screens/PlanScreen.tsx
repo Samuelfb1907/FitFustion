@@ -12,6 +12,7 @@ import { errorMessage } from '../lib/errors';
 import { startOfTodayISO } from '../lib/date';
 import { DIFF_LABELS, ALLOWED_DIFF, ALLOWED_EQUIP } from '../lib/training';
 import { CARD_SHADOW as shadow } from '../lib/ui';
+import { TAB_BAR_SPACE } from '../lib/layout';
 import BackButton from '../components/BackButton';
 import SwipeBack from '../components/SwipeBack';
 import GlassFill from '../components/GlassFill';
@@ -375,7 +376,7 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
 
   function renderCreate() {
     return (
-      <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 24 }}>
+      <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: embedded ? TAB_BAR_SPACE : 24 }}>
         {!embedded && <Text style={styles.title}>{t('plan.createTitle')}</Text>}
         <Text style={styles.subtitle}>{t('plan.daysPerWeekQuestion')}</Text>
         <View style={styles.dayPicker}>
@@ -405,7 +406,7 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
   return (
     <ScrollView
       style={[styles.container, embedded && styles.embedded]}
-      contentContainerStyle={{ paddingBottom: 24 }}
+      contentContainerStyle={{ paddingBottom: embedded ? TAB_BAR_SPACE : 24 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
     >
       {!embedded && <Text style={styles.title}>{t('plan.yourPlanTitle')}</Text>}

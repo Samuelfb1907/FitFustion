@@ -10,6 +10,7 @@ import GlassFill from '../components/GlassFill';
 import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
 import { CARD_SHADOW as shadow } from '../lib/ui';
+import { TAB_BAR_SPACE } from '../lib/layout';
 import { Ionicons } from '@expo/vector-icons';
 import { LeaderRow, getMyEntry, joinLeaderboard, refreshMyScores, leaveLeaderboard, fetchBoard, effectiveScore } from '../lib/leaderboard';
 
@@ -106,7 +107,7 @@ export default function LeaderboardScreen({ embedded }: { embedded?: boolean }) 
   // Opt-in-Ansicht
   if (!optedIn) {
     return (
-      <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
+      <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: embedded ? TAB_BAR_SPACE : 24 }} keyboardShouldPersistTaps="handled">
         {!embedded && <Text style={styles.title}>{t('leaderboard.title')}</Text>}
         <View style={styles.tile}>
           <GlassFill radius={20} />
@@ -151,7 +152,7 @@ export default function LeaderboardScreen({ embedded }: { embedded?: boolean }) 
   return (
     <ScrollView
       style={[styles.container, embedded && styles.embedded]}
-      contentContainerStyle={{ paddingBottom: 24 }}
+      contentContainerStyle={{ paddingBottom: embedded ? TAB_BAR_SPACE : 24 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
     >
       {!embedded && <Text style={styles.title}>{t('leaderboard.title')}</Text>}
