@@ -8,6 +8,7 @@ import { useT } from '../contexts/LanguageContext';
 import { buildBirthDate, splitBirthDate } from '../lib/birthdate';
 import BackButton from '../components/BackButton';
 import GlassFill from '../components/GlassFill';
+import { TAB_BAR_SPACE } from '../lib/layout';
 
 type Opt = { label: string; value: string };
 const GENDERS: Opt[] = [
@@ -198,7 +199,7 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 24 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE + 48 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
       {onBack && <BackButton onPress={onBack} c={c} label={t('profile.backToSettings')} />}
       <Text style={styles.title}>{t('profile.title')}</Text>
       <Text style={styles.subtitle}>{t('profile.subtitle')}</Text>
