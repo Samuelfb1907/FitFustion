@@ -30,8 +30,16 @@ export default function Glass({
         style,
       ]}
     >
-      <BlurView intensity={intensity ?? (dark ? 46 : 66)} tint={dark ? 'dark' : 'light'} experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : undefined} style={StyleSheet.absoluteFill} />
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: c.glass }]} pointerEvents="none" />
+      {Platform.OS === 'android' ? (
+        // Android: expo-blur (dimezisBlurView) rendert milchig-grau -> stattdessen deckende
+        // Kartenflaeche, damit Schrift (z. B. Umschalter-Labels) lesbar bleibt. iOS = echtes Glas.
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: c.card }]} pointerEvents="none" />
+      ) : (
+        <>
+          <BlurView intensity={intensity ?? (dark ? 46 : 66)} tint={dark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: c.glass }]} pointerEvents="none" />
+        </>
+      )}
       {children}
     </View>
   );
