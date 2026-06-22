@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Dimensions, Platform, RefreshControl, ScrollView, Share, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { usePaywall } from '../components/Paywall';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { useT } from '../contexts/LanguageContext';
 import { Ionicons } from '@expo/vector-icons';
@@ -47,9 +46,8 @@ function mondayOf(d: Date): Date {
 
 // unwrap -> lib/format.ts
 
-export default function ProgressScreen({ focusTick, focused = true }: { focusTick?: number; focused?: boolean }) {
-  const { session, isPremium } = useAuth();
-  const { openPaywall } = usePaywall();
+export default function ProgressScreen({ focusTick, focused = true, initialSeg }: { focusTick?: number; focused?: boolean; initialSeg?: 'me' | 'board' }) {
+  const { session } = useAuth();
   const c = useColors();
   const t = useT();
   const styles = useMemo(() => makeStyles(c), [c]);
@@ -87,7 +85,7 @@ export default function ProgressScreen({ focusTick, focused = true }: { focusTic
   const [showHist, setShowHist] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [seg, setSeg] = useState<'me' | 'board'>('me');
+  const [seg, setSeg] = useState<'me' | 'board'>(initialSeg ?? 'me');
 
   const load = useCallback(async (silent = false) => {
     const userId = session?.user?.id;
@@ -219,7 +217,7 @@ export default function ProgressScreen({ focusTick, focused = true }: { focusTic
   }, [load]);
 
   // Reiter erneut angetippt -> Detailansicht schliessen + leise aktualisieren (ohne Spinner)
-  useFocusTick(focusTick, () => { setSelExercise(null); setSeg('me'); load(true); });
+  useFocusTick(focusTick, () => { setSelExercise(null); setSeg(initialSeg ?? 'me'); load(true); });
 
   const onRefresh = useCallback(() => { setRefreshing(true); load(true); }, [load]);
 
@@ -331,7 +329,7 @@ export default function ProgressScreen({ focusTick, focused = true }: { focusTic
       <Segmented
         options={[{ key: 'me', label: t('progress.tabMyValues') }, { key: 'board', label: t('progress.tabLeaderboard') }]}
         value={seg}
-        onChange={(k) => { if (k === 'board' && !isPremium) { openPaywall('leaderboard'); return; } setSeg(k as 'me' | 'board'); }}
+        onChange={(k) => setSeg(k as 'me' | 'board')}
         c={c}
       />
       {seg === 'board' ? (

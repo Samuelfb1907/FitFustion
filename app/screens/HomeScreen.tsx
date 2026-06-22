@@ -23,6 +23,7 @@ import { errorMessage } from '../lib/errors';
 import { CARD_SHADOW as shadow } from '../lib/ui';
 import { WATER_GOAL } from '../lib/water';
 import { fetchMyLobbies, fetchLobbyBoard } from '../lib/lobby';
+import { getMyEntry } from '../lib/leaderboard';
 
 const GOAL_LABELS: Record<string, string> = {
   lose_weight: 'home.goal.lose_weight', build_muscle: 'home.goal.build_muscle', gain_strength: 'home.goal.gain_strength',
@@ -109,6 +110,19 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
         const idx = board.findIndex((r) => r.is_me);
         if (!cancelled) setLobbySnap({ name: ls[0].name, rank: idx + 1, total: board.length, steps: idx >= 0 ? board[idx].steps_today : 0 });
       } catch { if (!cancelled) setLobbySnap(null); }
+    })();
+    return () => { cancelled = true; };
+  }, [session?.user?.id, focusTick]);
+
+  // Bestenlisten-Opt-in-Status: die Werbe-Karte erscheint nur, solange man NICHT eingetragen ist.
+  const [onBoard, setOnBoard] = useState<boolean | null>(null);
+  useEffect(() => {
+    const uid = session?.user?.id;
+    if (!uid) return;
+    let cancelled = false;
+    (async () => {
+      try { const mine = await getMyEntry(uid); if (!cancelled) setOnBoard(!!mine); }
+      catch { if (!cancelled) setOnBoard(null); }
     })();
     return () => { cancelled = true; };
   }, [session?.user?.id, focusTick]);
@@ -469,6 +483,19 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
               </View>
               <Ionicons name="chevron-forward" size={20} color={c.textMuted} />
             </TouchableOpacity>
+
+            {/* BESTENLISTE-HINWEIS (nur solange man noch nicht eingetragen ist -> Awareness) */}
+            {onBoard === false && (
+              <TouchableOpacity style={styles.lobbyCard} onPress={() => onNavigate?.('progress', 'board')} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={t('home.board.title')}>
+                <GlassFill radius={18} />
+                <View style={[styles.lobbyIcon, { backgroundColor: 'rgba(240,180,41,0.16)' }]}><Text style={{ fontSize: 20 }}>🏆</Text></View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.lobbyTitle}>{t('home.board.title')}</Text>
+                  <Text style={styles.lobbySub} numberOfLines={2}>{t('home.board.cta')}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={c.textMuted} />
+              </TouchableOpacity>
+            )}
 
             {/* ERSTE SCHRITTE (nur fuer Neulinge: noch kein Training und kein Tracker-Eintrag) */}
             {stats && stats.sessions === 0 && stats.foodLogs === 0 && (
