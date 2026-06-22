@@ -67,7 +67,7 @@ const SCHEDULE_BY_DAYS: Record<number, number[]> = {
 
 type PlanEx = { rowId: string; exId: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null; muscleKey: string | null; muscleName: string | null; sets: number; reps: number };
 type DayView = { id: string; day_index: number; focus: string | null; exercises: PlanEx[] };
-export type Selected = { exercise: { id: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null }; muscleKey: string | null; muscleName: string | null };
+export type Selected = { exercise: { id: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null }; muscleKey: string | null; muscleName: string | null; targetSets: number; targetReps: number };
 
 export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { embedded?: boolean; onOpenExercise?: (sel: Selected) => void; refreshTick?: number }) {
   const { session, profile } = useAuth();
@@ -480,7 +480,7 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
                 </View>
               ) : (
                 <TouchableOpacity key={ex.rowId} style={styles.exItem} activeOpacity={0.7}
-                  onPress={() => { const now = Date.now(); if (now - lastExerciseOpen < 600) return; lastExerciseOpen = now; onOpenExercise?.({ exercise: { id: ex.exId, name: ex.name, difficulty: ex.difficulty, equipment: ex.equipment, description: ex.description, instructions: ex.instructions }, muscleKey: ex.muscleKey, muscleName: ex.muscleName }); }}>
+                  onPress={() => { const now = Date.now(); if (now - lastExerciseOpen < 600) return; lastExerciseOpen = now; onOpenExercise?.({ exercise: { id: ex.exId, name: ex.name, difficulty: ex.difficulty, equipment: ex.equipment, description: ex.description, instructions: ex.instructions }, muscleKey: ex.muscleKey, muscleName: ex.muscleName, targetSets: ex.sets, targetReps: ex.reps }); }}>
                   <View style={{ flex: 1 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       {doneToday.has(ex.exId) && <Ionicons name="checkmark-circle" size={15} color={c.success} />}

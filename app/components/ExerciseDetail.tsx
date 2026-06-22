@@ -71,7 +71,7 @@ function tipsFor(equipment: string, difficulty: string): string[] {
   return t.slice(0, 4);
 }
 
-export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName }: { exercise: Exercise; onBack: () => void; muscleKey?: string | null; muscleName?: string | null }) {
+export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName, targetSets, targetReps }: { exercise: Exercise; onBack: () => void; muscleKey?: string | null; muscleName?: string | null; targetSets?: number; targetReps?: number }) {
   const { session } = useAuth();
   const userId = session?.user?.id;
   const c = useColors();
@@ -151,6 +151,12 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
   }, [userId, exercise.id]);
 
   useEffect(() => { setGifFailed(false); }, [exercise.id]);
+
+  // Plan-Soll als Vorbefuellung fuer die Wiederholungen, falls der Nutzer (bzw. der
+  // "Letztes Mal"-Prefill) das Feld noch nicht belegt hat.
+  useEffect(() => {
+    if (targetReps != null && targetReps > 0) setReps((prev) => (prev === '' ? String(targetReps) : prev));
+  }, [exercise.id, targetReps]);
 
   async function refreshSets(sid: string) {
     const { data } = await supabase
@@ -287,6 +293,9 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
       <View style={styles.logCard}>
         <GlassFill radius={16} />
         <Text style={styles.h2}>{t('exercise.logHeading')}</Text>
+        {targetSets != null && targetReps != null && (
+          <Text style={styles.targetHint}>{t('exercise.planTarget', { sets: targetSets, reps: targetReps })}</Text>
+        )}
         {loading ? (
           <ActivityIndicator color={c.primary} style={{ marginVertical: 12 }} />
         ) : (
@@ -375,6 +384,7 @@ function makeStyles(c: Colors) {
     tipText: { flex: 1, fontSize: 14, color: c.textMuted, lineHeight: 20 },
     logCard: { backgroundColor: c.card, borderRadius: 16, padding: 18, marginTop: 18, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     hint: { fontSize: 14, color: c.textMuted, marginBottom: 12 },
+    targetHint: { fontSize: 13, color: c.primary, fontWeight: '700', marginBottom: 12 },
     coachChip: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', backgroundColor: c.inputBg, borderWidth: 1, borderColor: c.primary, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7, marginBottom: 12 },
     coachChipText: { fontSize: 13, color: c.primary, fontWeight: '700' },
     plates: { fontSize: 13, color: c.textMuted, marginTop: -4, marginBottom: 12 },
