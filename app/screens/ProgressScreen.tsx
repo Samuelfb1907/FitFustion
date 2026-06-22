@@ -22,6 +22,7 @@ import { useFocusTick } from '../lib/useFocusTick';
 import { localDateStr, ddmm } from '../lib/date';
 import { errorMessage } from '../lib/errors';
 import { computeStreak } from '../lib/gamification';
+import { loadMeasurements, addMeasurement, Measurement } from '../lib/measurements';
 import { grp, unwrap } from '../lib/format';
 import { CARD_SHADOW as shadow } from '../lib/ui';
 import { WeightPoint, loadWeights, saveTodayWeight, deleteWeight, deltaOver, parseWeight, WEIGHT_MIN, WEIGHT_MAX } from '../lib/weight';
@@ -62,6 +63,11 @@ export default function ProgressScreen({ focusTick, focused = true }: { focusTic
   const [stats, setStats] = useState({ sessions: 0, sets: 0, volume: 0, weekVolume: 0 });
   const [weekStats, setWeekStats] = useState({ workouts: 0, sets: 0, streak: 0 });
   const [sharing, setSharing] = useState(false);
+  const [meas, setMeas] = useState<Measurement[]>([]);
+  const [mInput, setMInput] = useState({ waist: '', chest: '', hips: '', arm: '', thigh: '' });
+  const [savingM, setSavingM] = useState(false);
+  const [mMsg, setMMsg] = useState<string | null>(null);
+  useEffect(() => { const uid = session?.user?.id; if (uid) loadMeasurements(uid).then(setMeas).catch(() => {}); }, [session?.user?.id]);
   const [weekly, setWeekly] = useState<{ label: string; value: number }[]>([]);
   const [records, setRecords] = useState<PR[]>([]);
   const [history, setHistory] = useState<HistRow[]>([]);
@@ -264,6 +270,21 @@ export default function ProgressScreen({ focusTick, focused = true }: { focusTic
     }
   }
 
+  async function saveMeasurement() {
+    const uid = session?.user?.id;
+    if (!uid || savingM) return;
+    setSavingM(true); setMMsg(null);
+    const toNum = (s: string) => { const n = Number(s.replace(',', '.')); return s.trim() && isFinite(n) ? n : null; };
+    const err = await addMeasurement(uid, {
+      waist_cm: toNum(mInput.waist), chest_cm: toNum(mInput.chest), hips_cm: toNum(mInput.hips),
+      arm_cm: toNum(mInput.arm), thigh_cm: toNum(mInput.thigh),
+    });
+    setSavingM(false);
+    if (err) { setMMsg(err); return; }
+    setMInput({ waist: '', chest: '', hips: '', arm: '', thigh: '' });
+    try { setMeas(await loadMeasurements(uid)); } catch {}
+  }
+
   async function removeWeight(id: string) {
     const err = await deleteWeight(id);
     if (err) { Alert.alert(t('progress.deleteFailedTitle'), err); return; }
@@ -417,6 +438,27 @@ export default function ProgressScreen({ focusTick, focused = true }: { focusTic
                   ))}
               </>
             )}
+          </View>
+
+          {/* KOERPERMASSE (Umfaenge) */}
+          <View style={styles.card}>
+            <GlassFill radius={20} />
+            <View style={styles.cardHead}>
+              <Ionicons name="body" size={14} color={c.textMuted} />
+              <Text style={styles.cardLabel} numberOfLines={1}>{t('progress.measTitle')}</Text>
+            </View>
+            <View style={styles.mGrid}>
+              <View style={styles.mField}><Text style={styles.mLabel}>{t('progress.measWaist')}</Text><TextInput style={styles.mInput} value={mInput.waist} onChangeText={(v) => setMInput((p) => ({ ...p, waist: v }))} placeholder="–" placeholderTextColor={c.textMuted} keyboardType="numeric" inputMode="decimal" /></View>
+              <View style={styles.mField}><Text style={styles.mLabel}>{t('progress.measChest')}</Text><TextInput style={styles.mInput} value={mInput.chest} onChangeText={(v) => setMInput((p) => ({ ...p, chest: v }))} placeholder="–" placeholderTextColor={c.textMuted} keyboardType="numeric" inputMode="decimal" /></View>
+              <View style={styles.mField}><Text style={styles.mLabel}>{t('progress.measHips')}</Text><TextInput style={styles.mInput} value={mInput.hips} onChangeText={(v) => setMInput((p) => ({ ...p, hips: v }))} placeholder="–" placeholderTextColor={c.textMuted} keyboardType="numeric" inputMode="decimal" /></View>
+              <View style={styles.mField}><Text style={styles.mLabel}>{t('progress.measArm')}</Text><TextInput style={styles.mInput} value={mInput.arm} onChangeText={(v) => setMInput((p) => ({ ...p, arm: v }))} placeholder="–" placeholderTextColor={c.textMuted} keyboardType="numeric" inputMode="decimal" /></View>
+              <View style={styles.mField}><Text style={styles.mLabel}>{t('progress.measThigh')}</Text><TextInput style={styles.mInput} value={mInput.thigh} onChangeText={(v) => setMInput((p) => ({ ...p, thigh: v }))} placeholder="–" placeholderTextColor={c.textMuted} keyboardType="numeric" inputMode="decimal" /></View>
+            </View>
+            <TouchableOpacity style={[styles.saveBtn, { marginTop: 12 }, savingM && { opacity: 0.6 }]} onPress={saveMeasurement} disabled={savingM}>
+              {savingM ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.saveText}>{t('progress.submit')}</Text>}
+            </TouchableOpacity>
+            {mMsg && <Text style={[styles.msg, { color: c.danger }]}>{mMsg}</Text>}
+            {meas[0] && <Text style={styles.hint}>{t('progress.measLatest', { date: ddmm(meas[0].measured_on), n: meas.length })}</Text>}
           </View>
 
           {(weekStats.workouts > 0 || weekStats.sets > 0) && (
@@ -613,6 +655,10 @@ function makeStyles(c: Colors) {
     caption: { fontSize: 12, color: c.textMuted, marginTop: 8 },
     shareBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: c.primary, borderRadius: 14, paddingVertical: 13, marginTop: 12 },
     shareBtnText: { color: c.onPrimary, fontSize: 15, fontWeight: '700' },
+    mGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 4 },
+    mField: { flexGrow: 1, flexBasis: '28%', minWidth: 88 },
+    mLabel: { fontSize: 12, color: c.textMuted, marginBottom: 4 },
+    mInput: { borderWidth: 1, borderColor: c.border, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 10, fontSize: 15, backgroundColor: c.inputBg, color: c.text },
     hint: { fontSize: 14, color: c.textMuted, lineHeight: 20, paddingVertical: 6 },
 
     row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 11, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.border },
