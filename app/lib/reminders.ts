@@ -9,6 +9,7 @@ export type ReminderPrefs = { enabled: boolean; water: boolean; training: boolea
 const KEY = 'fitavo.reminders';
 const DEFAULT: ReminderPrefs = { enabled: false, water: true, training: true, trainingHour: 18, motivation: true, motivationHour: 8 };
 const WATER_TIMES: [number, number][] = [[10, 0], [13, 0], [16, 0], [19, 0]];
+const WINBACK_IDS = ['fitavo.winback.day3', 'fitavo.winback.day7'] as const;
 
 // Hinweise auch im Vordergrund anzeigen (greift im Dev-Build)
 Notifications.setNotificationHandler({
@@ -56,7 +57,7 @@ export async function applyReminders(p: ReminderPrefs): Promise<void> {
     // Taegliche Motivation: einzelne Benachrichtigungen fuer die naechsten Wochen
     // (rotierende Sprueche, zufaelliger Startpunkt). Wird bei jedem App-Start neu aufgefuellt.
     if (p.motivation && MOTIVATION_QUOTES.length > 0) {
-      const DAYS = 45; // unter iOS-Limit (64) bleiben, kombiniert mit Wasser/Training
+      const DAYS = 43; // unter iOS-Limit (64) bleiben, kombiniert mit Wasser/Training + 2 Win-back-Pushes
       // Startindex deterministisch pro Tag -> mehrfacher App-Start am selben Tag
       // erzeugt denselben Plan (kein Neu-Wuerfeln, keine doppelten/verlorenen Termine).
       const start = Math.floor(Date.now() / 86400000) % MOTIVATION_QUOTES.length;
@@ -76,4 +77,38 @@ export async function applyReminders(p: ReminderPrefs): Promise<void> {
   } catch {
     // In Expo Go ggf. nicht unterstuetzt – im Dev-Build aktiv.
   }
+}
+
+export async function scheduleWinback(): Promise<void> {
+  try {
+    // Erst evtl. noch offene Win-back-Termine entfernen, dann neu planen.
+    await cancelWinback();
+    const plan: [number, string, string][] = [
+      [3, '👋 Wir vermissen dich!', 'Schon 3 Tage kein Training getrackt. Komm zurück und halte dran – dein Ich von morgen dankt dir.'],
+      [7, '💪 Zeit für ein Comeback', 'Eine Woche Pause ist okay. Starte heute klein – eine Einheit reicht, um wieder reinzukommen.'],
+    ];
+    const now = new Date();
+    for (let i = 0; i < plan.length; i++) {
+      const [days, title, body] = plan[i];
+      const d = new Date(now);
+      d.setDate(d.getDate() + days);
+      d.setHours(11, 0, 0, 0);
+      if (d.getTime() <= Date.now() + 60000) continue;
+      await Notifications.scheduleNotificationAsync({
+        identifier: WINBACK_IDS[i],
+        content: { title, body },
+        trigger: { type: 'date', date: d } as any,
+      });
+    }
+  } catch {
+    // In Expo Go ggf. nicht unterstuetzt – im Dev-Build aktiv.
+  }
+}
+
+export async function cancelWinback(): Promise<void> {
+  try {
+    for (const id of WINBACK_IDS) {
+      await Notifications.cancelScheduledNotificationAsync(id).catch(() => {});
+    }
+  } catch {}
 }

@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, AppState, AppStateStatus, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider, useTheme, Colors } from './contexts/ThemeContext';
@@ -12,7 +12,7 @@ import MainTabs from './screens/MainTabs';
 import OfflineBanner from './components/OfflineBanner';
 import ErrorBoundary from './components/ErrorBoundary';
 import { PaywallProvider } from './components/Paywall';
-import { loadReminderPrefs, applyReminders } from './lib/reminders';
+import { loadReminderPrefs, applyReminders, scheduleWinback, cancelWinback } from './lib/reminders';
 
 function Root() {
   const { session, profile, loading, refreshProfile } = useAuth();
@@ -28,6 +28,31 @@ function Root() {
         if (prefs.enabled) await applyReminders(prefs);
       } catch {}
     })();
+  }, [session?.user?.id]);
+
+  // Win-back: beim Hintergrund-Wechsel Tag-3/7-Inaktivitaets-Pushes planen,
+  // beim Zurueckkehren (Vordergrund/Start) wieder canceln.
+  const appStateRef = useRef(AppState.currentState);
+  useEffect(() => {
+    if (!session?.user) return;
+    // Beim Mount im Vordergrund evtl. offene Win-back-Termine entfernen.
+    cancelWinback().catch(() => {});
+    const onChange = (next: AppStateStatus) => {
+      const prev = appStateRef.current;
+      appStateRef.current = next;
+      (async () => {
+        try {
+          if (next === 'active') {
+            await cancelWinback();
+          } else if (next === 'background') {
+            const prefs = await loadReminderPrefs();
+            if (prefs.enabled) await scheduleWinback();
+          }
+        } catch {}
+      })();
+    };
+    const sub = AppState.addEventListener('change', onChange);
+    return () => sub.remove();
   }, [session?.user?.id]);
 
   let content;
