@@ -47,6 +47,7 @@ Alle `.sql`-Dateien werden **manuell** im Supabase **SQL Editor** ausgeführt
 | 39 | `039_body_measurements.sql` | Körpermaße (Umfänge in cm) je Nutzer + RLS |
 | 40 | `040_foods_search_index.sql` | pg_trgm-GIN-Index auf foods.name (schnellere Lebensmittel-Suche) |
 | 41 | `041_friends.sql` | Freunde (#48): friendships-Tabelle + RLS + RPCs add_friend/remove_friend/friends_leaderboard |
+| 42 | `042_step_lobbies.sql` | Schritte-Lobbys (#48b): lobbies/lobby_members/daily_steps + RLS + RPCs create_lobby/join_lobby/upsert_today_steps/lobby_board |
 
 ## Hinweise
 - **Reihenfolge zählt:** Spätere Migrationen bauen auf früheren auf.
