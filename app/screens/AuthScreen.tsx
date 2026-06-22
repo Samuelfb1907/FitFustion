@@ -1,5 +1,5 @@
 // Login-/Registrierungs-Screen – Clean-Light, mit dezentem Smaragd-Hintergrund (Ambient).
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Image, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
@@ -9,6 +9,7 @@ import LegalText from '../components/LegalText';
 import { DISCLAIMER_VERSION, getTermsSections, getPrivacySections, getDisclaimerSections } from '../lib/legal';
 import Ambient from '../components/Ambient';
 import GlassFill from '../components/GlassFill';
+import WelcomeIntro from '../components/WelcomeIntro';
 import { Ionicons } from '@expo/vector-icons';
 import * as AppleAuthentication from 'expo-apple-authentication';
 
@@ -48,6 +49,7 @@ export default function AuthScreen() {
   const [resetMsg, setResetMsg] = useState<string | null>(null);
   const [resetErr, setResetErr] = useState(false);
   const [appleAvailable, setAppleAvailable] = useState(false);
+  const [showIntro, setShowIntro] = useState<boolean | undefined>(undefined);
 
   function show(message: string, error: boolean) { setInfo(message); setIsError(error); }
   function switchMode(m: 'login' | 'register') { setMode(m); setInfo(null); }
@@ -102,6 +104,20 @@ export default function AuthScreen() {
   useEffect(() => {
     if (Platform.OS === 'ios') AppleAuthentication.isAvailableAsync().then(setAppleAvailable).catch(() => {});
   }, []);
+
+  // Value-Intro nur fuer neue Nutzer (einmalig). Flag liegt lokal; setzt showIntro.
+  useEffect(() => {
+    let active = true;
+    AsyncStorage.getItem('fitavo.welcomeSeen')
+      .then((v) => { if (active) setShowIntro(v !== '1'); })
+      .catch(() => { if (active) setShowIntro(false); });
+    return () => { active = false; };
+  }, []);
+
+  const dismissIntro = useCallback(async () => {
+    setShowIntro(false);
+    try { await AsyncStorage.setItem('fitavo.welcomeSeen', '1'); } catch {}
+  }, []);
   async function signInWithApple() {
     setInfo(null);
     try {
@@ -131,6 +147,7 @@ export default function AuthScreen() {
   return (
     <View style={styles.root}>
       <Ambient c={c} />
+      {showIntro === true && <WelcomeIntro onDone={dismissIntro} />}
       <KeyboardAvoidingView style={styles.flex} behavior="padding">
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <View style={styles.brand}>

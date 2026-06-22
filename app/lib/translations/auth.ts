@@ -74,6 +74,17 @@ export const de = {
   "auth.reset.newPasswordPlaceholder": "mindestens 8 Zeichen",
   "auth.button.setPasswordLogin": "Passwort setzen & einloggen",
   "auth.button.cancel": "Abbrechen",
+
+  // Value-Intro (WelcomeIntro vor der Registrierung)
+  "welcome.skip": "Überspringen",
+  "welcome.next": "Weiter",
+  "welcome.start": "Los geht's",
+  "welcome.slide1.title": "Werbefrei & fokussiert",
+  "welcome.slide1.body": "Keine Werbung, keine Ablenkung. Nur du, dein Training und deine Ernährung.",
+  "welcome.slide2.title": "Mahlzeit per Foto erfassen",
+  "welcome.slide2.body": "Foto machen, fertig: Die KI schätzt Kalorien und Nährwerte für dich.",
+  "welcome.slide3.title": "Fortschritt & Datenschutz",
+  "welcome.slide3.body": "Behalte Gewicht und Erfolge im Blick. Deine Gesundheitsdaten bleiben DSGVO-konform geschützt.",
 };
 
 export const en = {
@@ -152,4 +163,15 @@ export const en = {
   "auth.reset.newPasswordPlaceholder": "at least 8 characters",
   "auth.button.setPasswordLogin": "Set password & sign in",
   "auth.button.cancel": "Cancel",
+
+  // Value intro (WelcomeIntro before registration)
+  "welcome.skip": "Skip",
+  "welcome.next": "Next",
+  "welcome.start": "Get started",
+  "welcome.slide1.title": "Ad-free & focused",
+  "welcome.slide1.body": "No ads, no distractions. Just you, your training and your nutrition.",
+  "welcome.slide2.title": "Log meals from a photo",
+  "welcome.slide2.body": "Snap a photo and you're done: the AI estimates calories and nutrients for you.",
+  "welcome.slide3.title": "Progress & privacy",
+  "welcome.slide3.body": "Keep weight and milestones in view. Your health data stays protected and GDPR-compliant.",
 };
