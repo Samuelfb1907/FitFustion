@@ -13,7 +13,7 @@ import OfflineBanner from './components/OfflineBanner';
 import ErrorBoundary from './components/ErrorBoundary';
 import { PaywallProvider } from './components/Paywall';
 import { loadReminderPrefs, applyReminders, scheduleWinback, cancelWinback } from './lib/reminders';
-import { addFriend, friendCodeFromUrl } from './lib/friends';
+import { addFriend, friendCodeFromUrl, fetchPendingNudges } from './lib/friends';
 import { lobbyCodeFromUrl, joinLobby, syncTodaySteps } from './lib/lobby';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -93,6 +93,26 @@ function Root() {
     if (!session?.user) return;
     syncTodaySteps().catch(() => {});
     const sub = AppState.addEventListener('change', (s) => { if (s === 'active') syncTodaySteps().catch(() => {}); });
+    return () => sub.remove();
+  }, [session?.user?.id]);
+
+  // Anstupsen: beim Start + bei Vordergrund-Rueckkehr offene Stupser holen + kurz anzeigen.
+  useEffect(() => {
+    if (!session?.user) return;
+    const check = async () => {
+      try {
+        const ns = await fetchPendingNudges();
+        if (!ns.length) return;
+        Alert.alert(
+          t('friends.nudgedYouTitle'),
+          ns.length === 1
+            ? t('friends.nudgedYouOne', { name: ns[0].from_name })
+            : t('friends.nudgedYouMany', { name: ns[0].from_name, n: ns.length - 1 }),
+        );
+      } catch {}
+    };
+    check();
+    const sub = AppState.addEventListener('change', (s) => { if (s === 'active') check(); });
     return () => sub.remove();
   }, [session?.user?.id]);
 

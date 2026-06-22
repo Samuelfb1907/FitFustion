@@ -8,7 +8,7 @@ import { useT } from '../contexts/LanguageContext';
 import GlassFill from './GlassFill';
 import { CARD_SHADOW as shadow } from '../lib/ui';
 import { errorMessage } from '../lib/errors';
-import { Friend, getMyFriendCode, fetchFriends, addFriendByCode, removeFriendByCode } from '../lib/friends';
+import { Friend, getMyFriendCode, fetchFriends, addFriendByCode, removeFriendByCode, sendNudge } from '../lib/friends';
 
 export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
   const c = useColors();
@@ -58,6 +58,11 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
       setBusy(false);
       setErr(errorMessage(e));
     }
+  }
+
+  async function nudge(f: Friend) {
+    const ok = await sendNudge(f.friend_code);
+    if (ok) Alert.alert(t('friends.nudged', { name: f.display_name }));
   }
 
   function confirmRemove(f: Friend) {
@@ -122,6 +127,9 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
             <View key={f.friend_code} style={[styles.row, i > 0 && styles.rowDivider]}>
               <View style={styles.avatar}><Text style={styles.avatarText}>{(f.display_name.charAt(0) || '?').toUpperCase()}</Text></View>
               <Text style={styles.name} numberOfLines={1}>{f.display_name}</Text>
+              <TouchableOpacity onPress={() => nudge(f)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button" accessibilityLabel={t('friends.nudge')} style={{ marginRight: 16 }}>
+                <Ionicons name="hand-left-outline" size={20} color={c.primary} />
+              </TouchableOpacity>
               <TouchableOpacity onPress={() => confirmRemove(f)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button" accessibilityLabel={t('friends.remove')}>
                 <Ionicons name="person-remove-outline" size={20} color={c.textMuted} />
               </TouchableOpacity>

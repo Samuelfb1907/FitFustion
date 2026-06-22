@@ -12,6 +12,11 @@ export const de = {
   "friends.removeTitle": "{name} entfernen?",
   "friends.removeBody": "Ihr seht euch dann nicht mehr als Freunde. Du kannst jederzeit wieder hinzufügen.",
   "friends.remove": "Entfernen",
+  "friends.nudge": "Anstupsen",
+  "friends.nudged": "Du hast {name} angestupst 👋",
+  "friends.nudgedYouTitle": "Angestupst! 👋",
+  "friends.nudgedYouOne": "{name} hat dich angestupst – auf geht's! 💪",
+  "friends.nudgedYouMany": "{name} und {n} weitere haben dich angestupst! 💪",
 };
 
 export const en = {
@@ -28,4 +33,9 @@ export const en = {
   "friends.removeTitle": "Remove {name}?",
   "friends.removeBody": "You'll no longer be friends. You can add each other again any time.",
   "friends.remove": "Remove",
+  "friends.nudge": "Nudge",
+  "friends.nudged": "You nudged {name} 👋",
+  "friends.nudgedYouTitle": "You got nudged! 👋",
+  "friends.nudgedYouOne": "{name} nudged you – let's go! 💪",
+  "friends.nudgedYouMany": "{name} and {n} others nudged you! 💪",
 };
