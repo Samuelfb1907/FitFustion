@@ -9,6 +9,9 @@ import Ambient from '../components/Ambient';
 import GlassFill from '../components/GlassFill';
 import { buildBirthDate, isUnderMinAge, MIN_AGE_YEARS } from '../lib/birthdate';
 import { DISCLAIMER_VERSION } from '../lib/legal';
+import { usePaywall } from '../components/Paywall';
+import { computeNutrition, ageFromBirthDate, Gender, ActivityLevel, GoalType } from '../lib/nutrition';
+import { ensurePermission, applyReminders, loadReminderPrefs, saveReminderPrefs } from '../lib/reminders';
 
 type Opt = { label: string; value: string };
 
@@ -52,12 +55,15 @@ function Choice({ options, value, onChange, styles, t }: { options: Opt[]; value
 }
 export default function OnboardingScreen({ onDone }: { onDone: () => Promise<void> | void }) {
   const { session } = useAuth();
+  const { openPaywall } = usePaywall();
   const c = useColors();
   const t = useT();
   const styles = useMemo(() => makeStyles(c), [c]);
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false); // Aha-Karte nach erfolgreichem Speichern
+  const [pushOn, setPushOn] = useState(false); // Push-Erlaubnis im Abschluss-Schritt erteilt
 
   const [firstName, setFirstName] = useState('');
   const [birthDay, setBirthDay] = useState('');
@@ -135,7 +141,69 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
     const { error: gErr } = await supabase.from('goals').insert({ user_id: userId, goal_type: goal, target_weight_kg: goal === 'lose_weight' ? num(targetWeight) : null, target_date: targetDate, is_active: true });
     setSaving(false);
     if (pErr || gErr) { console.error('Onboarding speichern:', pErr?.message || gErr?.message); setError(t('onboarding.error.saveFailed')); }
-    else await onDone();
+    else setDone(true);
+  }
+
+  // Tagesziel aus den Onboarding-Daten (reine Berechnung, kein DB-Zugriff).
+  const plan = useMemo(() => {
+    const birth_date = buildBirthDate(birthDay, birthMonth, birthYear);
+    return computeNutrition({
+      weightKg: num(weight), heightCm: num(height), age: ageFromBirthDate(birth_date),
+      gender: (gender || 'prefer_not') as Gender, activity: activity as ActivityLevel, goal: (goal || 'general_fitness') as GoalType,
+    });
+  }, [weight, height, birthDay, birthMonth, birthYear, gender, activity, goal]);
+
+  // Sanfte Push-Erlaubnis -> bei Zusage sinnvolle Standard-Erinnerungen aktivieren.
+  async function enablePush() {
+    const ok = await ensurePermission();
+    if (!ok) { setPushOn(false); return; }
+    const prefs = await loadReminderPrefs();
+    const next = { ...prefs, enabled: true };
+    await saveReminderPrefs(next);
+    await applyReminders(next);
+    setPushOn(true);
+  }
+
+  if (done) {
+    return (
+      <View style={styles.container}>
+        <Ambient c={c} />
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 24 }}>
+          <Text style={styles.title}>{t('onboarding.done.title', { name: firstName.trim() })}</Text>
+          <Text style={styles.hint}>{t('onboarding.done.subtitle')}</Text>
+
+          <View style={styles.planCard}>
+            <GlassFill radius={20} />
+            <Text style={styles.planKcal}>{t('onboarding.done.kcalValue', { kcal: plan.targetCalories })}</Text>
+            <Text style={styles.planKcalLabel}>{t('onboarding.done.kcalLabel')}</Text>
+            <View style={styles.macroRow}>
+              <View style={styles.macroItem}><Text style={styles.macroVal}>{t('onboarding.done.gram', { n: plan.proteinG })}</Text><Text style={styles.macroLabel}>{t('onboarding.done.protein')}</Text></View>
+              <View style={styles.macroItem}><Text style={styles.macroVal}>{t('onboarding.done.gram', { n: plan.carbsG })}</Text><Text style={styles.macroLabel}>{t('onboarding.done.carbs')}</Text></View>
+              <View style={styles.macroItem}><Text style={styles.macroVal}>{t('onboarding.done.gram', { n: plan.fatG })}</Text><Text style={styles.macroLabel}>{t('onboarding.done.fat')}</Text></View>
+            </View>
+          </View>
+
+          <TouchableOpacity style={styles.trialBtn} activeOpacity={0.85} onPress={() => openPaywall('plan')} accessibilityRole="button" accessibilityLabel={t('onboarding.done.tryTrial')}>
+            <Text style={styles.trialBtnText}>{t('onboarding.done.tryTrial')}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.pushRow} activeOpacity={0.85} onPress={enablePush} disabled={pushOn} accessibilityRole="button" accessibilityLabel={pushOn ? t('onboarding.done.pushOn') : t('onboarding.done.pushCta')}>
+            <GlassFill radius={16} />
+            <Text style={styles.pushIcon}>{pushOn ? '✓' : '🔔'}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.pushTitle}>{pushOn ? t('onboarding.done.pushOn') : t('onboarding.done.pushCta')}</Text>
+              <Text style={styles.pushDesc}>{t('onboarding.done.pushDesc')}</Text>
+            </View>
+          </TouchableOpacity>
+        </ScrollView>
+
+        <View style={styles.nav}>
+          <TouchableOpacity style={[styles.navBtn, styles.navNext]} onPress={() => onDone()} accessibilityRole="button" accessibilityLabel={t('onboarding.done.start')}>
+            <Text style={styles.navNextText}>{t('onboarding.done.start')}</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
   }
 
   return (
@@ -226,5 +294,18 @@ function makeStyles(c: Colors) {
     navBackText: { color: c.primary, fontWeight: '600', fontSize: 16 },
     navNext: { backgroundColor: c.primary },
     navNextText: { color: c.onPrimary, fontWeight: '700', fontSize: 16 },
+    planCard: { marginTop: 8, borderRadius: 20, paddingVertical: 22, paddingHorizontal: 18, alignItems: 'center', overflow: 'hidden' },
+    planKcal: { fontSize: 40, fontWeight: '800', color: c.primary },
+    planKcalLabel: { fontSize: 13, color: c.textMuted, marginTop: 2 },
+    macroRow: { flexDirection: 'row', gap: 16, marginTop: 18 },
+    macroItem: { alignItems: 'center', flex: 1 },
+    macroVal: { fontSize: 17, fontWeight: '800', color: c.heading },
+    macroLabel: { fontSize: 12, color: c.textMuted, marginTop: 2 },
+    trialBtn: { marginTop: 20, backgroundColor: c.primary, borderRadius: 16, paddingVertical: 16, alignItems: 'center' },
+    trialBtnText: { color: c.onPrimary, fontSize: 17, fontWeight: '800' },
+    pushRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 14, borderRadius: 16, padding: 14, overflow: 'hidden' },
+    pushIcon: { fontSize: 22 },
+    pushTitle: { fontSize: 15, fontWeight: '700', color: c.heading },
+    pushDesc: { fontSize: 13, color: c.textMuted, marginTop: 1, lineHeight: 18 },
   });
 }
