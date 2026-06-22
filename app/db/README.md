@@ -41,6 +41,9 @@ Alle `.sql`-Dateien werden **manuell** im Supabase **SQL Editor** ausgeführt
 | 33 | `033_premium.sql` | profiles.is_premium (Abo-Status) |
 | 34 | `034_protect_is_premium.sql` | is_premium gegen Client-Änderungen schützen (UPDATE-Trigger) |
 | 35 | `035_protect_is_premium_insert.sql` | is_premium-Schutz auf INSERT erweitern (DELETE+INSERT-Lücke schließen) |
+| 36 | `036_neck.sql` | Nacken-Muskel + zugehörige Übungen |
+| 37 | `037_exercise_gif.sql` | exercise_gif-Tabelle (id → GIF-Hash) |
+| 38 | `038_ai_usage_export.sql` | DSGVO: SECURITY-DEFINER-RPC `export_my_ai_usage` (ai_usage für den Datenexport lesbar) |
 
 ## Hinweise
 - **Reihenfolge zählt:** Spätere Migrationen bauen auf früheren auf.
@@ -49,3 +52,15 @@ Alle `.sql`-Dateien werden **manuell** im Supabase **SQL Editor** ausgeführt
   Lese-Policy versehen – nach erneutem Seeden von 006 ggf. 015/018 erneut laufen lassen.
 - Neue Migration? Datei `0XX_kurzbeschreibung.sql` anlegen, hier eintragen,
   idempotent schreiben (`create table if not exists`, `drop policy if exists`, …).
+
+## Mehrere auf einmal einspielen (Helfer)
+Statt jede Datei einzeln zu kopieren, gibt das Skript alle Migrationen **ab einer Nummer**
+in korrekter Reihenfolge kombiniert aus (idempotent, Mehrfach-Ausführung schadet nicht):
+
+```
+node db/concat.js 38        # nur ab 038 (z. B. die neueste/ausstehende)
+node db/concat.js 24 > pending.sql   # ab 024 in eine Datei
+node db/concat.js           # alle (ohne schema.sql)
+```
+
+Den ausgegebenen Block einfach in den Supabase SQL-Editor einfügen und ausführen.
