@@ -39,3 +39,32 @@ export async function fetchFriendsBoard(): Promise<FriendRow[]> {
   if (error) throw error;
   return (data ?? []) as FriendRow[];
 }
+
+// --- Freund-Codes (#48c): kurzer persoenlicher Code statt Link (Migration 043) ---
+export type Friend = { friend_code: string; display_name: string };
+
+// Eigener Freund-Code zum Teilen. Liest die eigene profiles-Zeile (per RLS erlaubt).
+export async function getMyFriendCode(): Promise<string | null> {
+  const { data: u } = await supabase.auth.getUser();
+  const uid = u.user?.id;
+  if (!uid) return null;
+  const { data } = await supabase.from('profiles').select('friend_code').eq('id', uid).maybeSingle();
+  return (data as any)?.friend_code ?? null;
+}
+
+// Freund per Code hinzufuegen. Gibt den Vornamen zurueck, oder null (Code unbekannt/eigener).
+export async function addFriendByCode(code: string): Promise<string | null> {
+  const { data, error } = await supabase.rpc('add_friend_by_code', { p_code: code });
+  if (error) throw error;
+  return (data ?? null) as string | null;
+}
+
+export async function fetchFriends(): Promise<Friend[]> {
+  const { data, error } = await supabase.rpc('friends_list');
+  if (error) throw error;
+  return (data ?? []) as Friend[];
+}
+
+export async function removeFriendByCode(code: string): Promise<void> {
+  await supabase.rpc('remove_friend_by_code', { p_code: code });
+}

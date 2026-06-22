@@ -48,6 +48,7 @@ Alle `.sql`-Dateien werden **manuell** im Supabase **SQL Editor** ausgeführt
 | 40 | `040_foods_search_index.sql` | pg_trgm-GIN-Index auf foods.name (schnellere Lebensmittel-Suche) |
 | 41 | `041_friends.sql` | Freunde (#48): friendships-Tabelle + RLS + RPCs add_friend/remove_friend/friends_leaderboard |
 | 42 | `042_step_lobbies.sql` | Schritte-Lobbys (#48b): lobbies/lobby_members/daily_steps + RLS + RPCs create_lobby/join_lobby/upsert_today_steps/lobby_board |
+| 43 | `043_friend_codes.sql` | Freund-Codes (#48c): profiles.friend_code (kurz, eindeutig) + RPCs add_friend_by_code/friends_list/remove_friend_by_code |
 
 ## Hinweise
 - **Reihenfolge zählt:** Spätere Migrationen bauen auf früheren auf.
