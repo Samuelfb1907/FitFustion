@@ -63,6 +63,23 @@ export async function fetchLobbyBoard(lobbyId: string): Promise<LobbyRow[]> {
   return (data ?? []) as LobbyRow[];
 }
 
+// Wochen-Wertung (#44): Schritte-Summe der laufenden Woche je Mitglied.
+export type LobbyWeekRow = { display_name: string; steps: number; is_me: boolean };
+export type HallEntry = { week_key: string; display_name: string; steps: number };
+
+export async function fetchLobbyWeekBoard(lobbyId: string): Promise<LobbyWeekRow[]> {
+  const { data, error } = await supabase.rpc('lobby_week_board', { p_lobby: lobbyId });
+  if (error) throw error;
+  return (data ?? []) as LobbyWeekRow[];
+}
+
+// Ruhmeshalle: finalisiert serverseitig die letzte Woche (lazy) + liefert die Sieger.
+export async function fetchLobbyHallOfFame(lobbyId: string): Promise<HallEntry[]> {
+  const { data, error } = await supabase.rpc('lobby_hall_of_fame', { p_lobby: lobbyId });
+  if (error) throw error;
+  return (data ?? []) as HallEntry[];
+}
+
 // Heutige Schritte ermitteln + hochladen. Echter Build: echte Sensor-Schritte.
 // Expo Go (kein Sensor): stabiler Beispielwert, damit die Rangliste beim Testen lebt.
 export async function syncTodaySteps(): Promise<number> {
