@@ -50,6 +50,7 @@ Alle `.sql`-Dateien werden **manuell** im Supabase **SQL Editor** ausgeführt
 | 42 | `042_step_lobbies.sql` | Schritte-Lobbys (#48b): lobbies/lobby_members/daily_steps + RLS + RPCs create_lobby/join_lobby/upsert_today_steps/lobby_board |
 | 43 | `043_friend_codes.sql` | Freund-Codes (#48c): profiles.friend_code (kurz, eindeutig) + RPCs add_friend_by_code/friends_list/remove_friend_by_code |
 | 44 | `044_lobby_weekly.sql` | Lobby Wochen-Wertung + Ruhmeshalle: lobby_week_winners + RPCs lobby_week_board/lobby_hall_of_fame (lazy Wochen-Abrechnung) |
+| 45 | `045_nudges.sql` | Anstupsen (#48d): nudges-Tabelle + RLS + RPCs send_nudge (Freund per Code) / pending_nudges (abrufen + als gesehen markieren) |
 
 ## Hinweise
 - **Reihenfolge zählt:** Spätere Migrationen bauen auf früheren auf.

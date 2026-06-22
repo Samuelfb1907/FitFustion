@@ -68,3 +68,20 @@ export async function fetchFriends(): Promise<Friend[]> {
 export async function removeFriendByCode(code: string): Promise<void> {
   await supabase.rpc('remove_friend_by_code', { p_code: code });
 }
+
+// --- Anstupsen (#48d, Migration 045) ---
+export type Nudge = { from_name: string; created_at: string };
+
+// Freund (per Code) anstupsen. true = angestupst (oder schon offen), false = ging nicht.
+export async function sendNudge(code: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc('send_nudge', { p_code: code });
+  if (error) return false;
+  return !!data;
+}
+
+// Offene Stupser abrufen + serverseitig als gesehen markieren.
+export async function fetchPendingNudges(): Promise<Nudge[]> {
+  const { data, error } = await supabase.rpc('pending_nudges');
+  if (error) return [];
+  return (data ?? []) as Nudge[];
+}
