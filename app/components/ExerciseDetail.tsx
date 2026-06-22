@@ -16,6 +16,7 @@ import { TAB_BAR_SPACE } from '../lib/layout';
 import { DIFF_LABELS, EQUIP_LABELS } from '../lib/training';
 import { registerGoodMoment } from '../lib/reviewPrompt';
 import { hTap, hSuccess } from '../lib/haptics';
+import Confetti from './Confetti';
 
 type Exercise = { id: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null };
 type SetLog = { id: string; set_index: number; reps: number | null; weight_kg: number | null };
@@ -85,6 +86,7 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [confettiKey, setConfettiKey] = useState(0); // hochzaehlen -> Konfetti-Regen (neuer Rekord)
   const [error, setError] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sets, setSets] = useState<SetLog[]>([]);
@@ -215,7 +217,7 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
         // Neuer persoenlicher Rekord (Gewicht uebertroffen) = starker Positiv-Moment fuer die Bewertungs-Abfrage.
         if (w != null) {
           const prevBest = bestWeightRef.current;
-          if (prevBest != null && w > prevBest) { registerGoodMoment(); hSuccess(); }
+          if (prevBest != null && w > prevBest) { registerGoodMoment(); hSuccess(); setConfettiKey((k) => k + 1); }
           if (prevBest == null || w > prevBest) bestWeightRef.current = w;
         }
       }
@@ -258,6 +260,7 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
   }
 
   return (
+    <View style={{ flex: 1 }}>
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE + 80 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
       <BackButton onPress={onBack} c={c} />
       <Text style={styles.title}>{exercise.name}</Text>
@@ -375,6 +378,8 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
         )}
       </View>
     </ScrollView>
+      <Confetti fireKey={confettiKey} />
+    </View>
   );
 }
 
