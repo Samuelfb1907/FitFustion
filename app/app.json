@@ -4,6 +4,13 @@
     "slug": "app",
     "version": "1.0.0",
     "scheme": "fitavo",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/75146814-4f6b-45f6-8928-dbb2004f15c8",
+      "fallbackToCacheTimeout": 0
+    },
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
