@@ -1,0 +1,31 @@
+export const de = {
+  "friends.yourCode": "DEIN FREUND-CODE",
+  "friends.share": "Code teilen",
+  "friends.shareMsg": "Füg mich bei FitAvo als Freund hinzu! Mein Code: {code} 💪",
+  "friends.addHeading": "Freund per Code hinzufügen",
+  "friends.codePlaceholder": "Code (z. B. A3F9C1)",
+  "friends.add": "Hinzufügen",
+  "friends.added": "{name} hinzugefügt 🎉",
+  "friends.notFound": "Diesen Code gibt es nicht. Prüfe ihn nochmal.",
+  "friends.listLabel": "DEINE FREUNDE ({n})",
+  "friends.empty": "Noch keine Freunde. Teile deinen Code oder gib den eines Freundes ein!",
+  "friends.removeTitle": "{name} entfernen?",
+  "friends.removeBody": "Ihr seht euch dann nicht mehr als Freunde. Du kannst jederzeit wieder hinzufügen.",
+  "friends.remove": "Entfernen",
+};
+
+export const en = {
+  "friends.yourCode": "YOUR FRIEND CODE",
+  "friends.share": "Share code",
+  "friends.shareMsg": "Add me as a friend on FitAvo! My code: {code} 💪",
+  "friends.addHeading": "Add a friend by code",
+  "friends.codePlaceholder": "Code (e.g. A3F9C1)",
+  "friends.add": "Add",
+  "friends.added": "Added {name} 🎉",
+  "friends.notFound": "That code doesn't exist. Please check it again.",
+  "friends.listLabel": "YOUR FRIENDS ({n})",
+  "friends.empty": "No friends yet. Share your code or enter a friend's code!",
+  "friends.removeTitle": "Remove {name}?",
+  "friends.removeBody": "You'll no longer be friends. You can add each other again any time.",
+  "friends.remove": "Remove",
+};

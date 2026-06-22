@@ -7,6 +7,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { useT } from '../contexts/LanguageContext';
 import GlassFill from '../components/GlassFill';
+import Segmented from '../components/Segmented';
+import FriendsPanel from '../components/FriendsPanel';
 import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
 import { CARD_SHADOW as shadow } from '../lib/ui';
@@ -39,6 +41,7 @@ export default function LobbyScreen({ focusTick }: { focusTick?: number; focused
   const [nameInput, setNameInput] = useState('');
   const [codeInput, setCodeInput] = useState('');
   const [showForms, setShowForms] = useState(false);
+  const [view, setView] = useState<'lobby' | 'friends'>('lobby'); // Reiter: Schritte-Lobby oder Freunde
 
   useEffect(() => { init(); }, []);
   // Tab-Fokus: Schritte hochladen + Rangliste auffrischen (focusTick steigt bei jedem Tippen).
@@ -136,34 +139,21 @@ export default function LobbyScreen({ focusTick }: { focusTick?: number; focused
     setBusy(false);
   }
 
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.title}>{t('lobby.title')}</Text>
-        <ActivityIndicator size="large" color={c.primary} style={{ marginTop: 40 }} />
-      </View>
-    );
-  }
-  if (err && lobbies.length === 0) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.title}>{t('lobby.title')}</Text>
-        <ErrorRetry message={err} onRetry={() => load(false)} />
-      </View>
-    );
-  }
-
   const myRank = board.findIndex((r) => r.is_me) + 1; // 0 = nicht in der Liste
 
-  return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE }}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => reload(true)} tintColor={c.primary} colors={[c.primary]} />}
-      keyboardShouldPersistTaps="handled"
-    >
-      <Text style={styles.title}>{t('lobby.title')}</Text>
-      <Text style={styles.tagline}>{t('lobby.tagline')}</Text>
+  // Lobby-Inhalt (Schritte-Reiter) mit eigenen Lade-/Fehlerzustaenden. Der Freunde-Reiter
+  // (FriendsPanel) ist unabhaengig und bleibt erreichbar, auch wenn die Lobby gerade laedt.
+  function renderLobby() {
+    if (loading) return <ActivityIndicator size="large" color={c.primary} style={{ marginTop: 40 }} />;
+    if (err && lobbies.length === 0) return <ErrorRetry message={err} onRetry={() => load(false)} />;
+    return (
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => reload(true)} tintColor={c.primary} colors={[c.primary]} />}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text style={styles.tagline}>{t('lobby.tagline')}</Text>
       {!healthSupported() && <Text style={styles.testNote}>{t('lobby.testMode')}</Text>}
 
       {lobbies.length === 0 ? (
@@ -231,7 +221,28 @@ export default function LobbyScreen({ focusTick }: { focusTick?: number; focused
           </TouchableOpacity>
         </>
       )}
-    </ScrollView>
+      </ScrollView>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>{t('lobby.hubTitle')}</Text>
+      <Segmented
+        options={[{ key: 'lobby', label: t('lobby.segLobby') }, { key: 'friends', label: t('lobby.segFriends') }]}
+        value={view}
+        onChange={(k) => setView(k as 'lobby' | 'friends')}
+        c={c}
+      />
+      <View style={{ height: 10 }} />
+      {view === 'friends' ? (
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE }} keyboardShouldPersistTaps="handled">
+          <FriendsPanel focusTick={focusTick} />
+        </ScrollView>
+      ) : (
+        renderLobby()
+      )}
+    </View>
   );
 
   // Erstellen-/Beitreten-Formular (im Leerzustand prominent, sonst aufklappbar).

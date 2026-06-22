@@ -1,6 +1,9 @@
 export const de = {
   "lobby.title": "Lobby",
   "lobby.tagline": "Tritt gegen Freunde an – wer macht heute die meisten Schritte? 🚶",
+  "lobby.hubTitle": "Freunde & Lobby",
+  "lobby.segLobby": "Lobby",
+  "lobby.segFriends": "Freunde",
   "lobby.testMode": "Test-Modus: Beispiel-Schritte. Echte Schritte zählen in der installierten App.",
   "lobby.empty.title": "Noch keine Lobby",
   "lobby.empty.body": "Erstelle eine Lobby und lade Freunde ein – täglich zählt, wer die meisten Schritte macht.",
@@ -36,6 +39,9 @@ export const de = {
 export const en = {
   "lobby.title": "Lobby",
   "lobby.tagline": "Compete with friends – who takes the most steps today? 🚶",
+  "lobby.hubTitle": "Friends & Lobby",
+  "lobby.segLobby": "Lobby",
+  "lobby.segFriends": "Friends",
   "lobby.testMode": "Test mode: sample steps. Real steps count in the installed app.",
   "lobby.empty.title": "No lobby yet",
   "lobby.empty.body": "Create a lobby and invite friends – every day the most steps win.",
