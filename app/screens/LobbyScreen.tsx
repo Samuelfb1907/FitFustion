@@ -15,7 +15,7 @@ import { CARD_SHADOW as shadow } from '../lib/ui';
 import { TAB_BAR_SPACE } from '../lib/layout';
 import { Ionicons } from '@expo/vector-icons';
 import { healthSupported } from '../lib/health';
-import { Lobby, LobbyRow, fetchMyLobbies, fetchLobbyBoard, createLobby, joinLobby, leaveLobby, lobbyInviteLink, syncTodaySteps } from '../lib/lobby';
+import { Lobby, LobbyRow, LobbyWeekRow, HallEntry, fetchMyLobbies, fetchLobbyBoard, fetchLobbyWeekBoard, fetchLobbyHallOfFame, createLobby, joinLobby, leaveLobby, lobbyInviteLink, syncTodaySteps } from '../lib/lobby';
 
 const MEDAL_COLORS = ['#F0B429', '#C0C7CF', '#CD7F32']; // Gold, Silber, Bronze
 const NAME_KEY = 'fitavo.lobbyName';
@@ -23,6 +23,12 @@ const NAME_KEY = 'fitavo.lobbyName';
 // Tausender-Punkt ohne Intl-Abhaengigkeit (Hermes): 8432 -> "8.432".
 function formatSteps(n: number): string {
   return String(Math.max(0, Math.round(n))).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+// Wochen-Key (Montag "YYYY-MM-DD") -> "DD.MM." fuer die Ruhmeshalle.
+function formatWeek(key: string): string {
+  const m = key.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[3]}.${m[2]}.` : key;
 }
 
 export default function LobbyScreen({ focusTick }: { focusTick?: number; focused?: boolean }) {
@@ -37,6 +43,9 @@ export default function LobbyScreen({ focusTick }: { focusTick?: number; focused
   const [lobbies, setLobbies] = useState<Lobby[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [board, setBoard] = useState<LobbyRow[]>([]);
+  const [weekBoard, setWeekBoard] = useState<LobbyWeekRow[]>([]);
+  const [hall, setHall] = useState<HallEntry[]>([]);
+  const [period, setPeriod] = useState<'today' | 'week'>('today');
   const [myName, setMyName] = useState('');
   const [nameInput, setNameInput] = useState('');
   const [codeInput, setCodeInput] = useState('');
@@ -55,7 +64,16 @@ export default function LobbyScreen({ focusTick }: { focusTick?: number; focused
       setLobbies(ls);
       const active = activeId && ls.some((l) => l.id === activeId) ? activeId : (ls[0]?.id ?? null);
       setActiveId(active);
-      setBoard(active ? await fetchLobbyBoard(active) : []);
+      if (active) {
+        const [b, wb, h] = await Promise.all([
+          fetchLobbyBoard(active),
+          fetchLobbyWeekBoard(active).catch(() => [] as LobbyWeekRow[]),
+          fetchLobbyHallOfFame(active).catch(() => [] as HallEntry[]),
+        ]);
+        setBoard(b); setWeekBoard(wb); setHall(h);
+      } else {
+        setBoard([]); setWeekBoard([]); setHall([]);
+      }
       setErr(null);
     } catch (e) {
       setErr(errorMessage(e));
@@ -76,7 +94,14 @@ export default function LobbyScreen({ focusTick }: { focusTick?: number; focused
   async function selectLobby(id: string) {
     setActiveId(id);
     setBusy(true);
-    try { setBoard(await fetchLobbyBoard(id)); } catch (e) { setErr(errorMessage(e)); }
+    try {
+      const [b, wb, h] = await Promise.all([
+        fetchLobbyBoard(id),
+        fetchLobbyWeekBoard(id).catch(() => [] as LobbyWeekRow[]),
+        fetchLobbyHallOfFame(id).catch(() => [] as HallEntry[]),
+      ]);
+      setBoard(b); setWeekBoard(wb); setHall(h);
+    } catch (e) { setErr(errorMessage(e)); }
     setBusy(false);
   }
 
@@ -139,7 +164,11 @@ export default function LobbyScreen({ focusTick }: { focusTick?: number; focused
     setBusy(false);
   }
 
-  const myRank = board.findIndex((r) => r.is_me) + 1; // 0 = nicht in der Liste
+  // Anzeige-Zeilen je nach Zeitraum (heute = board, Woche = weekBoard) auf ein gemeinsames Format.
+  const displayRows = period === 'week'
+    ? weekBoard.map((r) => ({ name: r.display_name, steps: r.steps, is_me: r.is_me }))
+    : board.map((r) => ({ name: r.display_name, steps: r.steps_today, is_me: r.is_me }));
+  const myRank = displayRows.findIndex((r) => r.is_me) + 1; // 0 = nicht in der Liste
 
   // Lobby-Inhalt (Schritte-Reiter) mit eigenen Lade-/Fehlerzustaenden. Der Freunde-Reiter
   // (FriendsPanel) ist unabhaengig und bleibt erreichbar, auch wenn die Lobby gerade laedt.
@@ -187,28 +216,54 @@ export default function LobbyScreen({ focusTick }: { focusTick?: number; focused
             </View>
           )}
 
+          <View style={{ marginTop: 12 }}>
+            <Segmented
+              options={[{ key: 'today', label: t('lobby.period.today') }, { key: 'week', label: t('lobby.period.week') }]}
+              value={period}
+              onChange={(k) => setPeriod(k as 'today' | 'week')}
+              c={c}
+            />
+          </View>
+
           <View style={styles.tile}>
             <GlassFill radius={16} />
             <View style={styles.boardHead}>
-              <Text style={styles.tileLabel}>{t('lobby.board.label')}</Text>
-              {myRank > 0 && <Text style={styles.myRank}>{t('lobby.myRank', { rank: myRank, total: board.length })}</Text>}
+              <Text style={styles.tileLabel}>{period === 'week' ? t('lobby.board.labelWeek') : t('lobby.board.label')}</Text>
+              {myRank > 0 && <Text style={styles.myRank}>{t('lobby.myRank', { rank: myRank, total: displayRows.length })}</Text>}
             </View>
-            {board.length === 0 ? (
+            {displayRows.length === 0 ? (
               <Text style={styles.empty}>{t('lobby.board.empty')}</Text>
             ) : (
-              board.map((r, i) => (
+              displayRows.map((r, i) => (
                 <View key={i} style={[styles.rankRow, i > 0 && styles.rankDivider, r.is_me && styles.rankRowMe]}>
                   {i < 3 ? (
                     <View style={styles.rankPosBox}><Ionicons name="medal" size={22} color={MEDAL_COLORS[i]} /></View>
                   ) : (
                     <Text style={styles.rankPos}>#{i + 1}</Text>
                   )}
-                  <Text style={[styles.rankName, r.is_me && styles.rankNameMe]} numberOfLines={1}>{r.display_name}{r.is_me ? t('lobby.you') : ''}</Text>
-                  <Text style={styles.rankScore} numberOfLines={1}>{formatSteps(r.steps_today)}</Text>
+                  <Text style={[styles.rankName, r.is_me && styles.rankNameMe]} numberOfLines={1}>{r.name}{r.is_me ? t('lobby.you') : ''}</Text>
+                  <Text style={styles.rankScore} numberOfLines={1}>{formatSteps(r.steps)}</Text>
                 </View>
               ))
             )}
           </View>
+
+          {hall.length > 0 && (
+            <View style={styles.tile}>
+              <GlassFill radius={16} />
+              <Text style={styles.tileLabel}>{t('lobby.hall.label')}</Text>
+              {hall.map((w, i) => (
+                <View key={i} style={[styles.rankRow, i > 0 && styles.rankDivider]}>
+                  <Ionicons name="trophy" size={18} color="#F0B429" style={{ width: 30 }} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.hallName} numberOfLines={1}>{w.display_name}</Text>
+                    <Text style={styles.hallWeek}>{t('lobby.hall.week', { date: formatWeek(w.week_key) })}</Text>
+                  </View>
+                  <Text style={styles.rankScore} numberOfLines={1}>{formatSteps(w.steps)}</Text>
+                </View>
+              ))}
+            </View>
+          )}
 
           <TouchableOpacity style={styles.secondaryBtn} onPress={() => setShowForms((s) => !s)} activeOpacity={0.85}>
             <Ionicons name={showForms ? 'chevron-up' : 'add'} size={18} color={c.primary} />
@@ -336,6 +391,8 @@ function makeStyles(c: Colors) {
     rankName: { flex: 1, fontSize: 15, color: c.text, fontWeight: '600', marginRight: 10 },
     rankNameMe: { color: c.primary, fontWeight: '800' },
     rankScore: { fontSize: 16, fontWeight: '800', color: c.heading },
+    hallName: { fontSize: 15, fontWeight: '700', color: c.text },
+    hallWeek: { fontSize: 12, color: c.textMuted, marginTop: 1 },
 
     // Aktionen
     secondaryBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 14, marginTop: 12 },
