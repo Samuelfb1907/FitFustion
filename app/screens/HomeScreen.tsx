@@ -22,6 +22,7 @@ import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
 import { CARD_SHADOW as shadow } from '../lib/ui';
 import { WATER_GOAL } from '../lib/water';
+import { fetchMyLobbies, fetchLobbyBoard } from '../lib/lobby';
 
 const GOAL_LABELS: Record<string, string> = {
   lose_weight: 'home.goal.lose_weight', build_muscle: 'home.goal.build_muscle', gain_strength: 'home.goal.gain_strength',
@@ -95,6 +96,22 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
   const [activityKcal, setActivityKcal] = useState(0);
   const [activityMeasured, setActivityMeasured] = useState(false);
   const [daySteps, setDaySteps] = useState<number[]>([]); // Schritte je Tag, Index = Tage zurueck (0 = heute)
+
+  // Schritte-Lobby-Schnappschuss fuer die Startseiten-Karte (eigene, fail-safe geladene Mini-Abfrage).
+  const [lobbySnap, setLobbySnap] = useState<{ name: string; rank: number; total: number; steps: number } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const ls = await fetchMyLobbies();
+        if (!ls.length) { if (!cancelled) setLobbySnap(null); return; }
+        const board = await fetchLobbyBoard(ls[0].id);
+        const idx = board.findIndex((r) => r.is_me);
+        if (!cancelled) setLobbySnap({ name: ls[0].name, rank: idx + 1, total: board.length, steps: idx >= 0 ? board[idx].steps_today : 0 });
+      } catch { if (!cancelled) setLobbySnap(null); }
+    })();
+    return () => { cancelled = true; };
+  }, [session?.user?.id, focusTick]);
 
   const load = useCallback(async (silent = false) => {
       const userId = session?.user?.id;
@@ -436,6 +453,23 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
               />
             </View>
 
+            {/* SCHRITTE-LOBBY */}
+            <TouchableOpacity style={styles.lobbyCard} onPress={() => onNavigate?.('lobby')} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={t('home.lobby.title')}>
+              <GlassFill radius={18} />
+              <View style={styles.lobbyIcon}><Text style={{ fontSize: 20 }}>🚶</Text></View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.lobbyTitle}>{t('home.lobby.title')}</Text>
+                <Text style={styles.lobbySub} numberOfLines={1}>
+                  {lobbySnap
+                    ? (lobbySnap.rank > 0
+                        ? t('home.lobby.rank', { name: lobbySnap.name, rank: lobbySnap.rank, total: lobbySnap.total, steps: String(lobbySnap.steps).replace(/\B(?=(\d{3})+(?!\d))/g, '.') })
+                        : lobbySnap.name)
+                    : t('home.lobby.cta')}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={c.textMuted} />
+            </TouchableOpacity>
+
             {/* ERSTE SCHRITTE (nur fuer Neulinge: noch kein Training und kein Tracker-Eintrag) */}
             {stats && stats.sessions === 0 && stats.foodLogs === 0 && (
               <View style={styles.card}>
@@ -664,6 +698,12 @@ function makeStyles(c: Colors) {
     activeSub: { fontSize: 13, color: c.textMuted, marginTop: 2 },
     activeBtn: { backgroundColor: c.primary, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10, marginLeft: 12 },
     activeBtnText: { color: c.onPrimary, fontSize: 14, fontWeight: '700' },
+
+    // Schritte-Lobby-Karte
+    lobbyCard: { ...shadow, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: c.card, borderRadius: 18, padding: 16, borderWidth: 1, borderColor: c.cardBorder, overflow: 'hidden' },
+    lobbyIcon: { width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(25,201,143,0.12)', alignItems: 'center', justifyContent: 'center' },
+    lobbyTitle: { fontSize: 15, fontWeight: '800', color: c.heading },
+    lobbySub: { fontSize: 13, color: c.textMuted, marginTop: 2 },
 
     // Tagesziele (Icon + Text + Haken)
     goalRow: { flexDirection: 'row', alignItems: 'center', gap: 13, paddingVertical: 12 },
