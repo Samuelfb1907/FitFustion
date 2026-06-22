@@ -29,6 +29,22 @@ function parseSteps(instr: string | null): string[] {
 }
 
 // allgemein gueltige, hilfreiche Technik-Tipps (nach Geraet & Level)
+// Progressive Overload: aus dem letzten Satz einen konkreten naechsten Zielwert ableiten.
+function nextGoal(
+  last: { reps: number | null; weight: number | null } | null,
+  equipment: string,
+): { reps: number; weight: number | null } | null {
+  if (!last || last.reps == null) return null;
+  // Mit Gewicht: kleines, geraeteabhaengiges Increment auf das letzte Gewicht.
+  if (last.weight != null && last.weight > 0) {
+    const step = equipment === 'barbell' ? 2.5 : 1;
+    const w = Math.round((last.weight + step) * 2) / 2; // auf 0,5 kg runden
+    return { reps: last.reps, weight: w };
+  }
+  // Ohne Gewicht (Bodyweight o. Ae.): eine Wiederholung mehr.
+  return { reps: last.reps + 1, weight: null };
+}
+
 function tipsFor(equipment: string, difficulty: string): string[] {
   const t = [
     'Bewegung langsam & kontrolliert ausführen – kein Schwung.',
@@ -67,6 +83,7 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
   const savingRef = useRef(false);
   const bestWeightRef = useRef<number | null>(null);
   const [lastEntry, setLastEntry] = useState<{ reps: number | null; weight: number | null } | null>(null);
+  const goal = useMemo(() => nextGoal(lastEntry, exercise.equipment), [lastEntry, exercise.equipment]);
 
   useEffect(() => {
     let active = true;
@@ -278,6 +295,16 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
             {lastEntry && lastEntry.reps != null && (
               <Text style={styles.hint}>{lastEntry.weight != null ? t('exercise.lastTime', { weight: lastEntry.weight, reps: lastEntry.reps }) : t('exercise.lastTimeNoWeight', { reps: lastEntry.reps })}</Text>
             )}
+            {goal && (
+              <TouchableOpacity
+                style={styles.coachChip}
+                onPress={() => { setReps(String(goal.reps)); setWeight(goal.weight != null ? String(goal.weight) : ''); }}
+                accessibilityRole="button"
+                accessibilityLabel={goal.weight != null ? t('exercise.coachGoalA11y', { weight: goal.weight, reps: goal.reps }) : t('exercise.coachGoalRepsA11y', { reps: goal.reps })}
+              >
+                <Text style={styles.coachChipText}>{goal.weight != null ? t('exercise.coachGoal', { weight: goal.weight, reps: goal.reps }) : t('exercise.coachGoalReps', { reps: goal.reps })}</Text>
+              </TouchableOpacity>
+            )}
             <View style={styles.inputRow}>
               <View style={styles.inputCol}>
                 <Text style={styles.inputLabel}>{t('exercise.repsLabel')}</Text>
@@ -329,6 +356,8 @@ function makeStyles(c: Colors) {
     tipText: { flex: 1, fontSize: 14, color: c.textMuted, lineHeight: 20 },
     logCard: { backgroundColor: c.card, borderRadius: 16, padding: 18, marginTop: 18, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
     hint: { fontSize: 14, color: c.textMuted, marginBottom: 12 },
+    coachChip: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', backgroundColor: c.inputBg, borderWidth: 1, borderColor: c.primary, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7, marginBottom: 12 },
+    coachChipText: { fontSize: 13, color: c.primary, fontWeight: '700' },
     setList: { marginBottom: 12 },
     setRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomColor: c.border, borderBottomWidth: StyleSheet.hairlineWidth },
     setIdx: { fontSize: 15, color: c.textMuted, fontWeight: '600' },
