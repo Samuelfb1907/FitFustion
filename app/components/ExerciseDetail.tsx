@@ -96,6 +96,7 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
   const savingRef = useRef(false);
   const bestWeightRef = useRef<number | null>(null);
   const [lastEntry, setLastEntry] = useState<{ reps: number | null; weight: number | null } | null>(null);
+  const [best1RM, setBest1RM] = useState<number | null>(null);
   const goal = useMemo(() => nextGoal(lastEntry, exercise.equipment), [lastEntry, exercise.equipment]);
   // Hantelscheiben-Rechner: nur bei Langhantel, live aus dem Gewichts-Feld.
   const plateW = Number(weight.replace(',', '.'));
@@ -132,10 +133,18 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
       if (!userId) return;
       const [lastRes, bestRes] = await Promise.all([
         supabase.from('set_logs').select('reps, weight_kg').eq('user_id', userId).eq('exercise_id', exercise.id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
-        supabase.from('set_logs').select('weight_kg').eq('user_id', userId).eq('exercise_id', exercise.id).not('weight_kg', 'is', null).order('weight_kg', { ascending: false }).limit(1).maybeSingle(),
+        supabase.from('set_logs').select('reps, weight_kg').eq('user_id', userId).eq('exercise_id', exercise.id).not('weight_kg', 'is', null).order('weight_kg', { ascending: false }).limit(50),
       ]);
       if (!active) return;
-      bestWeightRef.current = bestRes.data?.weight_kg ?? null;
+      const bestRows = (bestRes.data ?? []) as { reps: number | null; weight_kg: number | null }[];
+      bestWeightRef.current = bestRows[0]?.weight_kg ?? null;
+      // Geschaetztes 1RM (Epley-Formel): groesster Wert ueber die schwersten Saetze. weight * (1 + reps/30).
+      let best1 = 0;
+      for (const r of bestRows) {
+        const w = Number(r.weight_kg) || 0; const reps = Number(r.reps) || 0;
+        if (w > 0 && reps > 0) best1 = Math.max(best1, Math.round(w * (1 + reps / 30)));
+      }
+      setBest1RM(best1 > 0 ? best1 : null);
       const last = lastRes.data;
       if (last) {
         setLastEntry({ reps: last.reps, weight: last.weight_kg });
@@ -317,6 +326,9 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
             ) : (
               <Text style={styles.hint}>{t('exercise.noSets')}</Text>
             )}
+            {best1RM != null && best1RM > 0 && (
+              <Text style={styles.oneRm}>{t('exercise.oneRm', { kg: best1RM })}</Text>
+            )}
             {lastEntry && lastEntry.reps != null && (
               <Text style={styles.hint}>{lastEntry.weight != null ? t('exercise.lastTime', { weight: lastEntry.weight, reps: lastEntry.reps }) : t('exercise.lastTimeNoWeight', { reps: lastEntry.reps })}</Text>
             )}
@@ -388,6 +400,7 @@ function makeStyles(c: Colors) {
     coachChip: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', backgroundColor: c.inputBg, borderWidth: 1, borderColor: c.primary, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7, marginBottom: 12 },
     coachChipText: { fontSize: 13, color: c.primary, fontWeight: '700' },
     plates: { fontSize: 13, color: c.textMuted, marginTop: -4, marginBottom: 12 },
+    oneRm: { fontSize: 13, color: c.primary, fontWeight: '700', marginBottom: 8 },
     setList: { marginBottom: 12 },
     setRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomColor: c.border, borderBottomWidth: StyleSheet.hairlineWidth },
     setIdx: { fontSize: 15, color: c.textMuted, fontWeight: '600' },
