@@ -31,6 +31,7 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import { foodUnit } from '../lib/foodUnit';
 import { TAB_BAR_SPACE } from '../lib/layout';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { FREE_FOOD_SEARCHES_PER_DAY, loadFoodSearchCount, bumpFoodSearchCount } from '../lib/foodSearchQuota';
 import { CARD_SHADOW as shadow } from '../lib/ui';
 
 type Food = { id: string; name: string; category: string | null; kcal: number; protein: number; carbs: number; fat: number; user_id?: string | null };
@@ -84,6 +85,10 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
   // Open-Food-Facts-Datenbank-Suche (Premium): Treffer + Lade-Status, getrennt von der lokalen Suche.
   const [offResults, setOffResults] = useState<OffSearchItem[]>([]);
   const [offSearching, setOffSearching] = useState(false);
+  // Gratis-Kontingent fuer die Datenbank-Suche (pro Kalendertag). offUsed = bereits heute verbrauchte Suchen.
+  const [offUsed, setOffUsed] = useState(0);
+  // Begriffe, die heute bereits gezaehlt wurden -> derselbe Begriff kostet kein zweites Kontingent.
+  const countedQueriesRef = useRef<Set<string>>(new Set());
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [targetKcal, setTargetKcal] = useState<number | null>(null);
   const [macroTargets, setMacroTargets] = useState<{ p: number; c: number; f: number } | null>(null);
@@ -140,6 +145,11 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
   const [aiConsent, setAiConsent] = useState(false);
   const [aiConsentAsk, setAiConsentAsk] = useState(false);
   useEffect(() => { AsyncStorage.getItem('fitavo.aiConsentAt').then((v) => { if (v) setAiConsent(true); }).catch(() => {}); }, []);
+  // Heutigen Verbrauch der Datenbank-Suche laden (nur Gratis-Nutzer; Premium = unbegrenzt).
+  useEffect(() => {
+    if (isPremium) return;
+    loadFoodSearchCount().then(setOffUsed).catch(() => {});
+  }, [isPremium]);
   const busyRef = useRef(false); // verhindert doppelte Tagebuch-Eintraege bei schnellem Doppel-Tippen
 
   useEffect(() => { init(); }, [userId]);
@@ -177,12 +187,27 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
   // Zutaten-Tab und ab 2 Zeichen. Gratis-Nutzer loesen das nicht aus (kein Netz-Call).
   useEffect(() => {
     const onIngredients = addingTo === 'favorite' || pickTab === 'zutaten';
-    if (mode !== 'pick' || !isPremium || !onIngredients) { setOffResults([]); setOffSearching(false); return; }
+    if (mode !== 'pick' || !onIngredients) { setOffResults([]); setOffSearching(false); return; }
     const q = search.trim();
     if (q.length < 2) { setOffResults([]); setOffSearching(false); return; }
+    // Gratis-Nutzer: nur suchen, wenn entweder dieser Begriff heute schon gezaehlt wurde
+    // (Wiederholung kostet nichts) oder noch Kontingent frei ist. Sonst kein Netz-Call -> Upsell.
+    const qKey = q.toLowerCase();
+    if (!isPremium) {
+      const alreadyCounted = countedQueriesRef.current.has(qKey);
+      if (!alreadyCounted && offUsed >= FREE_FOOD_SEARCHES_PER_DAY) {
+        setOffResults([]); setOffSearching(false); return;
+      }
+    }
     let cancelled = false;
     setOffSearching(true);
     const run = async () => {
+      // Kontingent erst jetzt verbrauchen (nur Gratis, nur neuer Begriff).
+      if (!isPremium && !countedQueriesRef.current.has(qKey)) {
+        countedQueriesRef.current.add(qKey);
+        const n = await bumpFoodSearchCount();
+        if (!cancelled) setOffUsed(n);
+      }
       const items = await searchOpenFoodFacts(q, lang === 'en' ? 'en' : 'de');
       if (cancelled) return;
       setOffResults(items);
@@ -190,7 +215,7 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
     };
     const id = setTimeout(run, 500);
     return () => { cancelled = true; clearTimeout(id); };
-  }, [search, mode, isPremium, pickTab, addingTo, lang]);
+  }, [search, mode, isPremium, pickTab, addingTo, lang, offUsed]);
 
   async function handleScanned(code: string) {
     setScannerOpen(false);
@@ -865,14 +890,18 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
     const dbFooter = () => {
       const q = search.trim();
       if (q.length < 2) return null;
-      if (!isPremium) {
+      // Gratis-Nutzer: Kontingent verbraucht -> Upsell. Solange Rest frei ist, faellt es durch
+      // auf den echten Treffer-Block unten (mit Rest-Hinweis im dbHeadRow).
+      const offRemaining = Math.max(0, FREE_FOOD_SEARCHES_PER_DAY - offUsed);
+      const qCounted = countedQueriesRef.current.has(q.toLowerCase());
+      if (!isPremium && offRemaining <= 0 && !qCounted) {
         return (
-          <TouchableOpacity style={styles.dbUpsell} onPress={() => openPaywall('search')} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={t('food.dbPremiumCta')}>
+          <TouchableOpacity style={styles.dbUpsell} onPress={() => openPaywall('search')} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={t('food.dbQuotaCta')}>
             <GlassFill radius={16} />
             <Ionicons name="lock-closed" size={16} color={c.primary} />
             <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={styles.dbUpsellTitle} numberOfLines={1}>{t('food.dbPremiumCta')}</Text>
-              <Text style={styles.dbUpsellHint} numberOfLines={2}>{t('food.dbPremiumHint')}</Text>
+              <Text style={styles.dbUpsellTitle} numberOfLines={1}>{t('food.dbQuotaCta')}</Text>
+              <Text style={styles.dbUpsellHint} numberOfLines={2}>{t('food.dbQuotaHint', { n: FREE_FOOD_SEARCHES_PER_DAY })}</Text>
             </View>
             <Ionicons name="chevron-forward" size={16} color={c.textMuted} />
           </TouchableOpacity>
@@ -885,7 +914,7 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
         <View style={styles.dbWrap}>
           <View style={styles.dbHeadRow}>
             <Text style={styles.sectionHead}>{t('food.dbSectionTitle')}</Text>
-            <Text style={styles.dbSource}>Open Food Facts</Text>
+            <Text style={styles.dbSource}>{isPremium ? 'Open Food Facts' : t('food.dbFreeLeft', { n: Math.max(0, FREE_FOOD_SEARCHES_PER_DAY - offUsed) })}</Text>
           </View>
           {offSearching && dbItems.length === 0 ? (
             <View style={styles.dbLoading}>
