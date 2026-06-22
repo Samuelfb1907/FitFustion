@@ -15,6 +15,7 @@ import { startOfTodayISO } from '../lib/date';
 import { TAB_BAR_SPACE } from '../lib/layout';
 import { DIFF_LABELS, EQUIP_LABELS } from '../lib/training';
 import { registerGoodMoment } from '../lib/reviewPrompt';
+import { hTap, hSuccess } from '../lib/haptics';
 
 type Exercise = { id: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null };
 type SetLog = { id: string; set_index: number; reps: number | null; weight_kg: number | null };
@@ -210,10 +211,11 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
         setLastEntry({ reps: r, weight: w });
         // Letzten Satz als Vorbefuellung behalten -> schnelleres Mitschreiben der Folgesaetze.
         setReps(String(r));
+        hTap(); // spuerbares Feedback: Satz gespeichert
         // Neuer persoenlicher Rekord (Gewicht uebertroffen) = starker Positiv-Moment fuer die Bewertungs-Abfrage.
         if (w != null) {
           const prevBest = bestWeightRef.current;
-          if (prevBest != null && w > prevBest) registerGoodMoment();
+          if (prevBest != null && w > prevBest) { registerGoodMoment(); hSuccess(); }
           if (prevBest == null || w > prevBest) bestWeightRef.current = w;
         }
       }
@@ -252,7 +254,7 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
     setEnded(true);
     // Positiver Moment: Training mit mitgeschriebenen Saetzen abgeschlossen
     // -> ggf. (sparsam) um eine Store-Bewertung bitten.
-    if (hadSets) registerGoodMoment();
+    if (hadSets) { registerGoodMoment(); hSuccess(); }
   }
 
   return (
