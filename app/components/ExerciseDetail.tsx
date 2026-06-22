@@ -65,6 +65,8 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
   const [gifFailed, setGifFailed] = useState(false);
   const [restSignal, setRestSignal] = useState(0);
   const savingRef = useRef(false);
+  const bestWeightRef = useRef<number | null>(null);
+  const [lastEntry, setLastEntry] = useState<{ reps: number | null; weight: number | null } | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -87,6 +89,31 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
       if (active) setLoading(false);
     }
     init();
+    return () => { active = false; };
+  }, [userId, exercise.id]);
+
+  // "Letztes Mal"-Werte + persoenlichen Rekord (Gewicht) fuer diese Uebung laden (sessionuebergreifend).
+  useEffect(() => {
+    let active = true;
+    async function loadHistory() {
+      if (!userId) return;
+      const [lastRes, bestRes] = await Promise.all([
+        supabase.from('set_logs').select('reps, weight_kg').eq('user_id', userId).eq('exercise_id', exercise.id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+        supabase.from('set_logs').select('weight_kg').eq('user_id', userId).eq('exercise_id', exercise.id).not('weight_kg', 'is', null).order('weight_kg', { ascending: false }).limit(1).maybeSingle(),
+      ]);
+      if (!active) return;
+      bestWeightRef.current = bestRes.data?.weight_kg ?? null;
+      const last = lastRes.data;
+      if (last) {
+        setLastEntry({ reps: last.reps, weight: last.weight_kg });
+        // Vorbefuellen, aber nur wenn der Nutzer noch nichts eingegeben hat.
+        const lr = last.reps;
+        const lw = last.weight_kg;
+        if (lr != null) setReps((prev) => (prev === '' ? String(lr) : prev));
+        if (lw != null) setWeight((prev) => (prev === '' ? String(lw) : prev));
+      }
+    }
+    loadHistory();
     return () => { active = false; };
   }, [userId, exercise.id]);
 
@@ -128,7 +155,20 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
         user_id: userId, session_id: sid, exercise_id: exercise.id, set_index: (sets.length ? Math.max(...sets.map((s) => s.set_index)) : 0) + 1, reps: r, weight_kg: w,
       });
       if (iErr) setError(iErr.message);
-      else { await refreshSets(sid); setReps(''); setEnded(false); setRestSignal((n) => n + 1); }
+      else {
+        await refreshSets(sid);
+        setEnded(false);
+        setRestSignal((n) => n + 1);
+        setLastEntry({ reps: r, weight: w });
+        // Letzten Satz als Vorbefuellung behalten -> schnelleres Mitschreiben der Folgesaetze.
+        setReps(String(r));
+        // Neuer persoenlicher Rekord (Gewicht uebertroffen) = starker Positiv-Moment fuer die Bewertungs-Abfrage.
+        if (w != null) {
+          const prevBest = bestWeightRef.current;
+          if (prevBest != null && w > prevBest) registerGoodMoment();
+          if (prevBest == null || w > prevBest) bestWeightRef.current = w;
+        }
+      }
     } finally {
       savingRef.current = false;
       setSaving(false);
@@ -234,6 +274,9 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
               </View>
             ) : (
               <Text style={styles.hint}>{t('exercise.noSets')}</Text>
+            )}
+            {lastEntry && lastEntry.reps != null && (
+              <Text style={styles.hint}>{lastEntry.weight != null ? t('exercise.lastTime', { weight: lastEntry.weight, reps: lastEntry.reps }) : t('exercise.lastTimeNoWeight', { reps: lastEntry.reps })}</Text>
             )}
             <View style={styles.inputRow}>
               <View style={styles.inputCol}>
