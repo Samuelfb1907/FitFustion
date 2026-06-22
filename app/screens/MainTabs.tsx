@@ -15,13 +15,14 @@ import TrainingScreen from './TrainingScreen';
 import EssenScreen, { Seg as EssenSeg } from './EssenScreen';
 import ProgressScreen from './ProgressScreen';
 import SettingsScreen from './SettingsScreen';
+import LobbyScreen from './LobbyScreen';
 import Ambient from '../components/Ambient';
 import StepsPrompt from '../components/StepsPrompt';
 import { useAndroidBack } from '../lib/useBackHandler';
 
-type Tab = 'home' | 'training' | 'essen' | 'progress' | 'settings';
-const TAB_ORDER: Tab[] = ['home', 'training', 'essen', 'progress', 'settings'];
-const TAB_ICON: Record<Tab, string> = { home: 'home', training: 'barbell', essen: 'restaurant', progress: 'stats-chart', settings: 'settings' };
+type Tab = 'home' | 'training' | 'essen' | 'progress' | 'lobby' | 'settings';
+const TAB_ORDER: Tab[] = ['home', 'training', 'essen', 'progress', 'lobby', 'settings'];
+const TAB_ICON: Record<Tab, string> = { home: 'home', training: 'barbell', essen: 'restaurant', progress: 'stats-chart', lobby: 'people', settings: 'settings' };
 
 function Page({ active, children }: { active: boolean; children: ReactNode }) {
   return <View style={active ? styles.page : styles.pageHidden}>{children}</View>;
@@ -29,8 +30,8 @@ function Page({ active, children }: { active: boolean; children: ReactNode }) {
 
 export default function MainTabs() {
   const [tab, setTab] = useState<Tab>('home');
-  const [mounted, setMounted] = useState<Record<Tab, boolean>>({ home: true, training: false, essen: false, progress: false, settings: false });
-  const [ticks, setTicks] = useState<Record<Tab, number>>({ home: 0, training: 0, essen: 0, progress: 0, settings: 0 });
+  const [mounted, setMounted] = useState<Record<Tab, boolean>>({ home: true, training: false, essen: false, progress: false, lobby: false, settings: false });
+  const [ticks, setTicks] = useState<Record<Tab, number>>({ home: 0, training: 0, essen: 0, progress: 0, lobby: 0, settings: 0 });
   const [essenSeg, setEssenSeg] = useState<EssenSeg>('tracker'); // welcher Unter-Reiter im Essen-Hub geoeffnet wird
   const c = useColors();
   const { theme } = useTheme();
@@ -39,7 +40,7 @@ export default function MainTabs() {
   const insets = useSafeAreaInsets();
 
   const TAB_LABEL: Record<Tab, string> = {
-    home: t('tabs.start'), training: t('tabs.training'), essen: t('tabs.food'), progress: t('tabs.progress'), settings: t('tabs.settings'),
+    home: t('tabs.start'), training: t('tabs.training'), essen: t('tabs.food'), progress: t('tabs.progress'), lobby: t('tabs.lobby'), settings: t('tabs.settings'),
   };
 
   const go = (target: Tab, seg?: EssenSeg) => {
@@ -93,6 +94,7 @@ export default function MainTabs() {
         {mounted.training && <Page active={tab === 'training'}><TrainingScreen focusTick={ticks.training} focused={tab === 'training'} /></Page>}
         {mounted.essen && <Page active={tab === 'essen'}><EssenScreen focusTick={ticks.essen} initialSeg={essenSeg} focused={tab === 'essen'} /></Page>}
         {mounted.progress && <Page active={tab === 'progress'}><ProgressScreen focusTick={ticks.progress} focused={tab === 'progress'} /></Page>}
+        {mounted.lobby && <Page active={tab === 'lobby'}><LobbyScreen focusTick={ticks.lobby} focused={tab === 'lobby'} /></Page>}
         {mounted.settings && <Page active={tab === 'settings'}><SettingsScreen focusTick={ticks.settings} focused={tab === 'settings'} /></Page>}
       </View>
       {/* Tab-Leiste: iOS = schwebende Glas-Pille; Android = durchgehende, DECKENDE Leiste am
