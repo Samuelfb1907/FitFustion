@@ -29,6 +29,19 @@ function parseSteps(instr: string | null): string[] {
 }
 
 // allgemein gueltige, hilfreiche Technik-Tipps (nach Geraet & Level)
+// Hantelscheiben-Rechner: zerlegt das Gewicht pro Seite in Standard-Scheiben (Olympia-Stange 20 kg).
+const PLATES = [25, 20, 15, 10, 5, 2.5, 1.25];
+function platesPerSide(total: number, bar = 20): { plate: number; count: number }[] | null {
+  if (!isFinite(total) || total < bar) return null;
+  let perSide = (total - bar) / 2;
+  const out: { plate: number; count: number }[] = [];
+  for (const p of PLATES) {
+    const n = Math.floor(perSide / p + 1e-9);
+    if (n > 0) { out.push({ plate: p, count: n }); perSide = Math.round((perSide - n * p) * 100) / 100; }
+  }
+  return out;
+}
+
 // Progressive Overload: aus dem letzten Satz einen konkreten naechsten Zielwert ableiten.
 function nextGoal(
   last: { reps: number | null; weight: number | null } | null,
@@ -84,6 +97,9 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
   const bestWeightRef = useRef<number | null>(null);
   const [lastEntry, setLastEntry] = useState<{ reps: number | null; weight: number | null } | null>(null);
   const goal = useMemo(() => nextGoal(lastEntry, exercise.equipment), [lastEntry, exercise.equipment]);
+  // Hantelscheiben-Rechner: nur bei Langhantel, live aus dem Gewichts-Feld.
+  const plateW = Number(weight.replace(',', '.'));
+  const plates = exercise.equipment === 'barbell' && weight.trim() !== '' && isFinite(plateW) ? platesPerSide(plateW) : null;
 
   useEffect(() => {
     let active = true;
@@ -315,6 +331,9 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
                 <TextInput style={styles.input} value={weight} onChangeText={setWeight} placeholder={t('exercise.weightPlaceholder')} placeholderTextColor={c.textMuted} keyboardType="numeric" />
               </View>
             </View>
+            {plates !== null && (
+              <Text style={styles.plates}>{plates.length === 0 ? t('exercise.platesBarOnly') : t('exercise.platesLabel', { plates: plates.map((p) => `${p.count}×${p.plate}`).join(' · ') })}</Text>
+            )}
             <TouchableOpacity style={[styles.saveBtn, saving && { opacity: 0.6 }]} onPress={saveSet} disabled={saving}>
               {saving ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.saveText}>{t('exercise.saveSet')}</Text>}
             </TouchableOpacity>
@@ -358,6 +377,7 @@ function makeStyles(c: Colors) {
     hint: { fontSize: 14, color: c.textMuted, marginBottom: 12 },
     coachChip: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', backgroundColor: c.inputBg, borderWidth: 1, borderColor: c.primary, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7, marginBottom: 12 },
     coachChipText: { fontSize: 13, color: c.primary, fontWeight: '700' },
+    plates: { fontSize: 13, color: c.textMuted, marginTop: -4, marginBottom: 12 },
     setList: { marginBottom: 12 },
     setRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomColor: c.border, borderBottomWidth: StyleSheet.hairlineWidth },
     setIdx: { fontSize: 15, color: c.textMuted, fontWeight: '600' },
