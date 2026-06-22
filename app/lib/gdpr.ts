@@ -7,8 +7,10 @@ const USER_TABLES = [
   'food_logs', 'meal_favorites', 'water_logs', 'progress_entries', 'goals', 'user_achievements',
 ];
 // Hinweis: meals/nutrition_plans wurden in Migration 019 entfernt -> stehen bewusst NICHT hier.
-// ai_usage (KI-Tageslimit) hat keine Client-RLS-Policy; es wird bei der Konto-Loeschung ueber
-// die Edge Function "delete-account" (auth.users-Cascade) serverseitig mitgeloescht.
+// ai_usage (KI-Tageslimit) hat keine Client-RLS-Policy; fuer den DSGVO-Export werden die
+// eigenen Zeilen ueber die SECURITY-DEFINER-RPC export_my_ai_usage (Migration 038) gelesen.
+// Bei der Konto-Loeschung wird ai_usage ueber die Edge Function "delete-account"
+// (auth.users-Cascade) serverseitig mitgeloescht.
 
 // Sammelt alle personenbezogenen Daten des Nutzers als JSON-Objekt.
 export async function exportUserData(userId: string): Promise<Record<string, any>> {
@@ -23,6 +25,14 @@ export async function exportUserData(userId: string): Promise<Record<string, any
   out.foods_eigene = ownFoods ?? [];
   const { data: lb } = await supabase.from('leaderboard_entries').select('*').eq('user_id', userId);
   out.leaderboard_entries = lb ?? [];
+  // ai_usage (KI-Tageslimit) ist per RLS nicht direkt client-lesbar -> SECURITY-DEFINER-RPC.
+  // Fail-open: fehlt die Migration (038) noch, bleibt das Feld leer statt den Export zu sprengen.
+  try {
+    const { data: aiUsage } = await supabase.rpc('export_my_ai_usage');
+    out.ai_usage = aiUsage ?? [];
+  } catch {
+    out.ai_usage = [];
+  }
   return out;
 }
 
