@@ -73,12 +73,18 @@ Deno.serve(async (req: Request) => {
     const admin = service ? createClient(url, service, { auth: { persistSession: false } }) : null;
     try {
       const reader = admin ?? userClient;
-      const { data: prof } = await reader.from('profiles').select('is_premium').eq('id', user.id).maybeSingle();
+      const { data: prof } = await reader.from('profiles').select('is_premium, ai_consent_at').eq('id', user.id).maybeSingle();
       if (prof && prof.is_premium !== true) {
         return json({ error: 'premium_required', message: 'Die KI-Erkennung ist Teil von FitAvo Premium.' }, 403);
       }
+      // Art.-9-Einwilligung (DSGVO) serverseitig erzwingen: ohne gesetztes ai_consent_at gehen
+      // KEINE Daten (Text/Foto) an den KI-Anbieter (Drittland USA). Der Client setzt die
+      // Einwilligung, bevor er aufruft - ein manipulierter/widerrufener Client wird hier zuverlaessig geblockt.
+      if (prof && !prof.ai_consent_at) {
+        return json({ error: 'consent_required', message: 'Fuer die KI-Erkennung ist deine Einwilligung zur Verarbeitung erforderlich.' }, 403);
+      }
     } catch (e) {
-      console.error('parse-meal premium check failed (fail-open):', e);
+      console.error('parse-meal premium/consent check failed (fail-open):', e);
     }
 
     // 2) Eingabe pruefen (bevor wir das Limit verbrauchen). Zwei Modi: Text ODER Foto.
