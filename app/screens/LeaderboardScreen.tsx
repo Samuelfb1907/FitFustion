@@ -1,7 +1,7 @@
 // Bestenliste (opt-in, datenschutzfreundlich): Rangliste nach aktiven Ziel-Tagen
 // (getrackt ODER trainiert) - umschaltbar Woche/Monat. Eigene Zeile hervorgehoben.
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Platform, RefreshControl, ScrollView, Share, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { useT } from '../contexts/LanguageContext';
@@ -13,6 +13,7 @@ import { CARD_SHADOW as shadow } from '../lib/ui';
 import { TAB_BAR_SPACE } from '../lib/layout';
 import { Ionicons } from '@expo/vector-icons';
 import { LeaderRow, getMyEntry, joinLeaderboard, refreshMyScores, leaveLeaderboard, fetchBoard, effectiveScore } from '../lib/leaderboard';
+import { inviteLink, fetchFriendsBoard, FriendRow } from '../lib/friends';
 
 const MEDAL_COLORS = ['#F0B429', '#C0C7CF', '#CD7F32']; // Gold, Silber, Bronze
 
@@ -29,6 +30,8 @@ export default function LeaderboardScreen({ embedded }: { embedded?: boolean }) 
   const [optedIn, setOptedIn] = useState(false);
   const [board, setBoard] = useState<LeaderRow[]>([]);
   const [period, setPeriod] = useState<'week' | 'month'>('week');
+  const [scope, setScope] = useState<'global' | 'friends'>('global');
+  const [friendsBoard, setFriendsBoard] = useState<FriendRow[]>([]);
   const [nameInput, setNameInput] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -45,6 +48,9 @@ export default function LeaderboardScreen({ embedded }: { embedded?: boolean }) 
       setOptedIn(!!mine);
       if (mine) await refreshMyScores(userId);
       setBoard(await fetchBoard());
+      // Freundes-Liga separat + gekapselt: scheitert sie (z. B. Migration 041 noch nicht
+      // eingespielt), bleibt die globale Bestenliste trotzdem nutzbar.
+      try { setFriendsBoard(await fetchFriendsBoard()); } catch { setFriendsBoard([]); }
       setErr(null);
     } catch (e) {
       setErr(errorMessage(e));
@@ -65,6 +71,15 @@ export default function LeaderboardScreen({ embedded }: { embedded?: boolean }) 
     if (e) { setErr(errorMessage(e)); return; }
     setNameInput('');
     await init(true);
+  }
+
+  async function shareInvite() {
+    if (!userId) return;
+    const link = inviteLink(userId);
+    const message = t('leaderboard.friends.shareMsg', { link });
+    try {
+      await Share.share(Platform.OS === 'ios' ? { message, url: link } : { message }, { dialogTitle: t('leaderboard.friends.invite') });
+    } catch {}
   }
 
   function confirmLeave() {
@@ -142,7 +157,8 @@ export default function LeaderboardScreen({ embedded }: { embedded?: boolean }) 
   }
 
   // Rangliste
-  const scored = board
+  const activeBoard = scope === 'friends' ? friendsBoard : board;
+  const scored = activeBoard
     .map((r) => ({ row: r, score: effectiveScore(r, period) }))
     .sort((a, b) => b.score - a.score || a.row.display_name.localeCompare(b.row.display_name));
   const myIndex = scored.findIndex((s) => s.row.is_me);
@@ -158,11 +174,28 @@ export default function LeaderboardScreen({ embedded }: { embedded?: boolean }) 
       {!embedded && <Text style={styles.title}>{t('leaderboard.title')}</Text>}
 
       <Segmented
+        options={[{ key: 'global', label: t('leaderboard.scope.global') }, { key: 'friends', label: t('leaderboard.scope.friends') }]}
+        value={scope}
+        onChange={(k) => setScope(k as 'global' | 'friends')}
+        c={c}
+      />
+      <View style={{ height: 8 }} />
+      <Segmented
         options={[{ key: 'week', label: t('leaderboard.period.week') }, { key: 'month', label: t('leaderboard.period.month') }]}
         value={period}
         onChange={(k) => setPeriod(k as 'week' | 'month')}
         c={c}
       />
+
+      {scope === 'friends' && (
+        <>
+          <TouchableOpacity style={styles.inviteBtn} onPress={shareInvite} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={t('leaderboard.friends.invite')}>
+            <Ionicons name="person-add" size={18} color={c.onPrimary} />
+            <Text style={styles.inviteText}>{t('leaderboard.friends.invite')}</Text>
+          </TouchableOpacity>
+          {friendsBoard.length <= 1 && <Text style={styles.friendsHint}>{t('leaderboard.friends.empty')}</Text>}
+        </>
+      )}
 
       {/* Mein Platz */}
       <View style={styles.myTile}>
@@ -251,5 +284,8 @@ function makeStyles(c: Colors) {
     footerNote: { fontSize: 13, color: c.textMuted, lineHeight: 19, marginBottom: 12 },
     leaveBtn: { borderRadius: 14, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: c.border },
     leaveText: { color: c.danger, fontSize: 14, fontWeight: '700' },
+    inviteBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: c.primary, borderRadius: 16, paddingVertical: 14, marginTop: 12 },
+    inviteText: { color: c.onPrimary, fontSize: 15, fontWeight: '800' },
+    friendsHint: { fontSize: 13, color: c.textMuted, textAlign: 'center', marginTop: 10, lineHeight: 19 },
   });
 }

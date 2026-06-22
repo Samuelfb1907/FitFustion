@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, AppState, AppStateStatus, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, AppState, AppStateStatus, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider, useTheme, Colors } from './contexts/ThemeContext';
-import { LanguageProvider } from './contexts/LanguageContext';
+import { LanguageProvider, useT } from './contexts/LanguageContext';
 import { isSupabaseConfigured } from './lib/supabase';
 import AuthScreen from './screens/AuthScreen';
 import OnboardingScreen from './screens/OnboardingScreen';
@@ -13,10 +13,12 @@ import OfflineBanner from './components/OfflineBanner';
 import ErrorBoundary from './components/ErrorBoundary';
 import { PaywallProvider } from './components/Paywall';
 import { loadReminderPrefs, applyReminders, scheduleWinback, cancelWinback } from './lib/reminders';
+import { addFriend, friendCodeFromUrl } from './lib/friends';
 
 function Root() {
   const { session, profile, loading, refreshProfile } = useAuth();
   const { colors, theme } = useTheme();
+  const t = useT();
 
   // Erinnerungen beim Start neu auffuellen (Motivations-Benachrichtigungen werden als
   // einzelne Termine fuer ~45 Tage geplant und muessen regelmaessig nachgefuellt werden).
@@ -52,6 +54,24 @@ function Root() {
       })();
     };
     const sub = AppState.addEventListener('change', onChange);
+    return () => sub.remove();
+  }, [session?.user?.id]);
+
+  // Einladungslink: oeffnet jemand fitavo://freund?u=<id> (bzw. den Web-Link, der dorthin
+  // weiterleitet), wird er als Freund hinzugefuegt (beidseitig). Kaltstart + Betrieb.
+  useEffect(() => {
+    if (!session?.user) return;
+    const seen = new Set<string>();
+    async function handle(url: string | null) {
+      if (!url) return;
+      const code = friendCodeFromUrl(url);
+      if (!code || seen.has(code)) return;
+      seen.add(code);
+      const err = await addFriend(code);
+      if (!err) Alert.alert(t('leaderboard.friends.addedTitle'), t('leaderboard.friends.addedBody'));
+    }
+    Linking.getInitialURL().then(handle).catch(() => {});
+    const sub = Linking.addEventListener('url', (e) => handle(e.url));
     return () => sub.remove();
   }, [session?.user?.id]);
 
