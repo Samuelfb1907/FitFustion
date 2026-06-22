@@ -12,6 +12,7 @@ export const de = {
   'settings.section.privacy': 'DATENSCHUTZ (DSGVO)',
   'settings.section.legal': 'RECHTLICHES',
   'settings.section.about': 'ÜBER',
+  'settings.section.membership': 'MITGLIEDSCHAFT',
   'settings.language': 'Sprache',
   'settings.logout': 'Abmelden',
 
@@ -121,6 +122,12 @@ export const de = {
   'settings.about.rate': 'FitAvo bewerten ⭐',
   'settings.about.app': 'App',
   'settings.about.version': 'Version',
+
+  // Mitgliedschaft / Abo
+  'settings.membership.status': 'Status',
+  'settings.membership.premiumActive': 'Premium aktiv ✨',
+  'settings.membership.free': 'Gratis-Version',
+  'settings.membership.manage': 'Abo verwalten',
 };
 
 export const en = {
@@ -135,6 +142,7 @@ export const en = {
   'settings.section.privacy': "PRIVACY (GDPR)",
   'settings.section.legal': "LEGAL",
   'settings.section.about': "ABOUT",
+  'settings.section.membership': "MEMBERSHIP",
   'settings.language': "Language",
   'settings.logout': "Log out",
 
@@ -244,4 +252,10 @@ export const en = {
   'settings.about.rate': "Rate FitAvo ⭐",
   'settings.about.app': "App",
   'settings.about.version': "Version",
+
+  // Membership / subscription
+  'settings.membership.status': "Status",
+  'settings.membership.premiumActive': "Premium active ✨",
+  'settings.membership.free': "Free version",
+  'settings.membership.manage': "Manage subscription",
 };

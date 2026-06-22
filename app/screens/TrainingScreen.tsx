@@ -229,7 +229,7 @@ export default function TrainingScreen({ focusTick, focused = true }: { focusTic
           maxToRenderPerBatch={12}
           windowSize={7}
           removeClippedSubviews
-          ListHeaderComponent={<Text style={styles.countHint}>{exercises.length === 1 ? t('training.exerciseCountOne', { n: exercises.length }) : t('training.exerciseCountMany', { n: exercises.length })}</Text>}
+          ListHeaderComponent={<Text style={styles.countHint}>{!isPremium && moreCount > 0 ? t('training.freeBasicsHint') : (exercises.length === 1 ? t('training.exerciseCountOne', { n: exercises.length }) : t('training.exerciseCountMany', { n: exercises.length }))}</Text>}
           ListFooterComponent={!isPremium && moreCount > 0 ? (
             <TouchableOpacity style={styles.exRow} onPress={() => openPaywall('exercises')} activeOpacity={0.7}>
               <View style={styles.lockChip}>

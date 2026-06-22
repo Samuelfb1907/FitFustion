@@ -1,6 +1,6 @@
 // Einstellungen: Profil-Unterseite, Dark-Mode-Schalter, Abmelden und übliche App-Einstellungen.
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Platform, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, Platform, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { supabase } from '../lib/supabase';
@@ -29,7 +29,7 @@ import { openStoreReview } from '../lib/reviewPrompt';
 const BOTTOM_PAD = TAB_BAR_SPACE + 72;
 
 export default function SettingsScreen({ focusTick, focused = true }: { focusTick?: number; focused?: boolean }) {
-  const { session, refreshProfile } = useAuth();
+  const { session, refreshProfile, isPremium } = useAuth();
   const { mode, setMode } = useTheme();
   const t = useT();
   const { lang, setLang } = useLang();
@@ -529,6 +529,19 @@ export default function SettingsScreen({ focusTick, focused = true }: { focusTic
         <TouchableOpacity style={styles.linkRow} onPress={() => setView('terms')}>
           <Ionicons name="reader" size={18} color={c.primary} />
           <Text style={styles.link}>{t('settings.legal.termsLink')}</Text>
+        </TouchableOpacity>
+      </View>
+
+      <Text style={styles.section}>{t('settings.section.membership')}</Text>
+      <View style={styles.card}>
+        <GlassFill radius={20} />
+        <View style={styles.row}>
+          <Text style={styles.rowLabel}>{t('settings.membership.status')}</Text>
+          <Text style={[styles.rowValue, isPremium && { color: c.primary }]}>{isPremium ? t('settings.membership.premiumActive') : t('settings.membership.free')}</Text>
+        </View>
+        <TouchableOpacity style={styles.linkRow} onPress={() => { Linking.openURL(Platform.OS === 'android' ? 'https://play.google.com/store/account/subscriptions' : 'https://apps.apple.com/account/subscriptions').catch(() => {}); }} accessibilityRole="button">
+          <Ionicons name="card-outline" size={18} color={c.primary} />
+          <Text style={styles.link}>{t('settings.membership.manage')}</Text>
         </TouchableOpacity>
       </View>
 

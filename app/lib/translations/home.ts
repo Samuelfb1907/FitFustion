@@ -15,6 +15,7 @@ export const de = {
   "home.goal.get_defined": "Definieren",
 
   "home.levelStreakA11y": "Level {level}, Streak {streak} Tage",
+  "home.levelA11y": "Level {level}",
   "home.unlockToLevelA11y": "Premium freischalten, um zu leveln",
   "home.levelLocked": "Lv",
 
@@ -98,6 +99,7 @@ export const en = {
   "home.goal.get_defined": "Get defined",
 
   "home.levelStreakA11y": "Level {level}, streak {streak} days",
+  "home.levelA11y": "Level {level}",
   "home.unlockToLevelA11y": "Unlock Premium to level up",
   "home.levelLocked": "Lv",
 

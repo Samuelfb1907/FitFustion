@@ -11,9 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { computeNutrition, ageFromBirthDate, NutritionResult, Gender, ActivityLevel, GoalType } from '../lib/nutrition';
 import { computeXp, levelInfo, computeStreak, ACHIEVEMENTS, GameStats } from '../lib/gamification';
 import CalorieGauge from '../components/CalorieGauge';
-import GlassFill from '../components/GlassFill';
-import { usePaywall } from '../components/Paywall';
-import { todayTrainingKcal } from '../lib/trainingBonus';
+import GlassFill from '../components/GlassFill';import { todayTrainingKcal } from '../lib/trainingBonus';
 import { hasStepsPermission, getTodayActivity, getStepsLastDays, stepsKcal } from '../lib/health';
 import { dailyGoals, Goal } from '../lib/goals';
 import { todayWeekday } from '../lib/weekdays';
@@ -66,8 +64,7 @@ function greeting(): string {
 }
 
 export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (tab: string, seg?: string) => void; focusTick?: number }) {
-  const { session, profile, isPremium } = useAuth();
-  const { openPaywall } = usePaywall();
+  const { session, profile } = useAuth();
   const t = useT();
   const c = useColors();
   const { theme } = useTheme();
@@ -341,11 +338,11 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
                     <Ionicons name="flame" size={13} color={amber} />
                     <Text style={[styles.pillText, { color: amber }]} numberOfLines={1}>{stats.streak}</Text>
                   </View>
-                  <TouchableOpacity style={styles.pill} activeOpacity={isPremium ? 1 : 0.7} disabled={isPremium} onPress={() => openPaywall('level')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button" accessibilityLabel={isPremium ? t('home.levelStreakA11y', { level: lv.level, streak: stats.streak }) : t('home.unlockToLevelA11y')}>
+                  <View style={styles.pill} accessible accessibilityLabel={t('home.levelA11y', { level: lv.level })}>
                     <GlassFill radius={999} />
-                    <Ionicons name={isPremium ? 'star' : 'lock-closed'} size={13} color={c.primary} />
-                    <Text style={[styles.pillText, { color: c.primary }]} numberOfLines={1}>{isPremium ? `Lv ${lv.level}` : t('home.levelLocked')}</Text>
-                  </TouchableOpacity>
+                    <Ionicons name="star" size={13} color={c.primary} />
+                    <Text style={[styles.pillText, { color: c.primary }]} numberOfLines={1}>{`Lv ${lv.level}`}</Text>
+                  </View>
                 </View>
               )}
             </View>
