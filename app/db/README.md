@@ -44,6 +44,7 @@ Alle `.sql`-Dateien werden **manuell** im Supabase **SQL Editor** ausgeführt
 | 36 | `036_neck.sql` | Nacken-Muskel + zugehörige Übungen |
 | 37 | `037_exercise_gif.sql` | exercise_gif-Tabelle (id → GIF-Hash) |
 | 38 | `038_ai_usage_export.sql` | DSGVO: SECURITY-DEFINER-RPC `export_my_ai_usage` (ai_usage für den Datenexport lesbar) |
+| 39 | `039_body_measurements.sql` | Körpermaße (Umfänge in cm) je Nutzer + RLS |
 
 ## Hinweise
 - **Reihenfolge zählt:** Spätere Migrationen bauen auf früheren auf.
