@@ -2,7 +2,7 @@
 // persoenliche Rekorde und Trainingshistorie. Liest aus set_logs / workout_sessions
 // / progress_entries. Keine DB-Aenderung noetig.
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Dimensions, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Dimensions, Platform, RefreshControl, ScrollView, Share, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { usePaywall } from '../components/Paywall';
@@ -21,6 +21,7 @@ import LeaderboardScreen from './LeaderboardScreen';
 import { useFocusTick } from '../lib/useFocusTick';
 import { localDateStr, ddmm } from '../lib/date';
 import { errorMessage } from '../lib/errors';
+import { computeStreak } from '../lib/gamification';
 import { grp, unwrap } from '../lib/format';
 import { CARD_SHADOW as shadow } from '../lib/ui';
 import { WeightPoint, loadWeights, saveTodayWeight, deleteWeight, deltaOver, parseWeight, WEIGHT_MIN, WEIGHT_MAX } from '../lib/weight';
@@ -59,6 +60,8 @@ export default function ProgressScreen({ focusTick, focused = true }: { focusTic
   const [profileWeight, setProfileWeight] = useState<number | null>(null);
   const [targetWeight, setTargetWeight] = useState<number | null>(null);
   const [stats, setStats] = useState({ sessions: 0, sets: 0, volume: 0, weekVolume: 0 });
+  const [weekStats, setWeekStats] = useState({ workouts: 0, sets: 0, streak: 0 });
+  const [sharing, setSharing] = useState(false);
   const [weekly, setWeekly] = useState<{ label: string; value: number }[]>([]);
   const [records, setRecords] = useState<PR[]>([]);
   const [history, setHistory] = useState<HistRow[]>([]);
@@ -132,6 +135,14 @@ export default function ProgressScreen({ focusTick, focused = true }: { focusTic
     for (const r of sets) if (perfDate(r) >= mondayStr) weekVolume += vol(r);
 
     setStats({ sessions: totalSessions, sets: sets.length, volume: Math.round(totalVolume), weekVolume: Math.round(weekVolume) });
+
+    // Wochenwerte fuer die teilbare "Deine Woche"-Karte.
+    const weekSessions = new Set<string>();
+    let weekSetCount = 0;
+    for (const r of sets) {
+      if (perfDate(r) >= mondayStr) { weekSessions.add(String(r.session_id)); weekSetCount++; }
+    }
+    setWeekStats({ workouts: weekSessions.size, sets: weekSetCount, streak: computeStreak([...new Set(sets.map(perfDate))]) });
 
     // 3) Persoenliche Rekorde: hoechstes Gewicht je Uebung
     const recMap = new Map<string, PR>();
@@ -227,6 +238,29 @@ export default function ProgressScreen({ focusTick, focused = true }: { focusTic
       setMsgErr(false);
       setWeightInput('');
       await load();
+    }
+  }
+
+  // Wochen-Zusammenfassung als Text teilen (RN Share). Keine Rezepte, keine sensiblen Daten.
+  async function shareWeek() {
+    if (sharing) return;
+    setSharing(true);
+    try {
+      const message = t('progress.shareBody', {
+        workouts: weekStats.workouts,
+        sets: weekStats.sets,
+        kg: stats.weekVolume,
+        streak: weekStats.streak,
+        url: t('progress.shareUrl'),
+      });
+      await Share.share(
+        Platform.OS === 'ios' ? { message, url: t('progress.shareUrl') } : { message },
+        { dialogTitle: t('progress.shareButton') },
+      );
+    } catch {
+      // Teilen abgebrochen/fehlgeschlagen -> still ignorieren.
+    } finally {
+      setSharing(false);
     }
   }
 
@@ -384,6 +418,20 @@ export default function ProgressScreen({ focusTick, focused = true }: { focusTic
               </>
             )}
           </View>
+
+          {(weekStats.workouts > 0 || weekStats.sets > 0) && (
+            <View style={styles.card}>
+              <GlassFill radius={20} />
+              <View style={styles.cardHead}>
+                <Ionicons name="sparkles-outline" size={18} color={c.primary} />
+                <Text style={styles.cardLabel}>{t('progress.shareCardTitle')}</Text>
+              </View>
+              <TouchableOpacity style={styles.shareBtn} onPress={shareWeek} disabled={sharing} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={t('progress.shareButton')}>
+                <Ionicons name="share-social-outline" size={18} color={c.onPrimary} />
+                <Text style={styles.shareBtnText}>{t('progress.shareButton')}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* STATISTIK-KACHELN (Icon-Chip + Wert + Unterzeile, wie Home) */}
           <View style={styles.statGrid}>
@@ -563,6 +611,8 @@ function makeStyles(c: Colors) {
     statLabel: { fontSize: 11, color: c.textMuted, fontWeight: '500', marginTop: 7 },
 
     caption: { fontSize: 12, color: c.textMuted, marginTop: 8 },
+    shareBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: c.primary, borderRadius: 14, paddingVertical: 13, marginTop: 12 },
+    shareBtnText: { color: c.onPrimary, fontSize: 15, fontWeight: '700' },
     hint: { fontSize: 14, color: c.textMuted, lineHeight: 20, paddingVertical: 6 },
 
     row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 11, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.border },
