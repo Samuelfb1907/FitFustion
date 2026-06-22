@@ -436,6 +436,18 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
               />
             </View>
 
+            {/* ERSTE SCHRITTE (nur fuer Neulinge: noch kein Training und kein Tracker-Eintrag) */}
+            {stats && stats.sessions === 0 && stats.foodLogs === 0 && (
+              <View style={styles.card}>
+                <GlassFill radius={22} />
+                <Text style={styles.cardLabel}>{t('home.firstSteps.label')}</Text>
+                <Text style={styles.firstStepsIntro}>{t('home.firstSteps.intro')}</Text>
+                <FirstStep icon="restaurant-outline" tint={{ fg: '#E69500', bg: 'rgba(230,149,0,0.14)' }} title={t('home.firstSteps.meal')} onPress={() => onNavigate?.('essen')} styles={styles} c={c} />
+                <FirstStep icon="barbell-outline" tint={{ fg: c.primary, bg: dark ? 'rgba(25,201,143,0.14)' : 'rgba(14,159,110,0.12)' }} title={t('home.firstSteps.training')} onPress={() => onNavigate?.('training')} styles={styles} c={c} />
+                <FirstStep icon="scale-outline" tint={{ fg: dark ? '#C3A8FF' : '#7C5CD6', bg: 'rgba(157,123,244,0.14)' }} title={t('home.firstSteps.weight')} onPress={() => onNavigate?.('progress')} styles={styles} c={c} last />
+              </View>
+            )}
+
             {/* TRAINING LÄUFT */}
             {activeSession && (
               <View style={styles.activeCard}>
@@ -552,6 +564,19 @@ function Stat({ a11y, value, sub, pct, barColor, icon, tint, onPress, styles, qu
   );
 }
 
+// Erste-Schritte-Zeile: Icon-Chip + Titel + Chevron, springt in den jeweiligen Tab.
+function FirstStep({ icon, tint, title, onPress, styles, c, last }: { icon: string; tint: { fg: string; bg: string }; title: string; onPress: () => void; styles: any; c: Colors; last?: boolean }) {
+  return (
+    <TouchableOpacity style={[styles.fsRow, !last && styles.fsRowBorder]} onPress={onPress} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={title}>
+      <View style={[styles.fsChip, { backgroundColor: tint.bg }]}>
+        <Ionicons name={icon as any} size={18} color={tint.fg} />
+      </View>
+      <Text style={styles.fsTitle} numberOfLines={1}>{title}</Text>
+      <Ionicons name="chevron-forward" size={18} color={c.textMuted} />
+    </TouchableOpacity>
+  );
+}
+
 // Tagesziel-Zeile: Icon + Text + Haken (erledigt hell, offen gedimmt).
 function GoalRow({ g, last, c, styles, t }: { g: Goal; last: boolean; c: Colors; styles: any; t: (k: string, p?: Record<string, string | number>) => string }) {
   return (
@@ -644,6 +669,12 @@ function makeStyles(c: Colors) {
     goalRow: { flexDirection: 'row', alignItems: 'center', gap: 13, paddingVertical: 12 },
     goalRowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.border },
     goalLabel: { flex: 1, fontSize: 14, fontWeight: '600' },
+    // Erste Schritte (Neuling-Onboarding)
+    firstStepsIntro: { fontSize: 13, color: c.textMuted, fontWeight: '500', marginTop: 8, marginBottom: 4, lineHeight: 18 },
+    fsRow: { flexDirection: 'row', alignItems: 'center', gap: 13, paddingVertical: 13 },
+    fsRowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.border },
+    fsChip: { width: 38, height: 38, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+    fsTitle: { flex: 1, fontSize: 14, fontWeight: '600', color: c.heading },
 
     error: { color: c.danger, fontSize: 14, marginTop: 8, textAlign: 'center' },
   });

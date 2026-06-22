@@ -17,6 +17,11 @@ export const de = {
   "home.levelStreakA11y": "Level {level}, Streak {streak} Tage",
   "home.levelA11y": "Level {level}",
   "home.unlockToLevelA11y": "Premium freischalten, um zu leveln",
+  "home.firstSteps.label": "ERSTE SCHRITTE",
+  "home.firstSteps.intro": "Leg direkt los – such dir einen Punkt aus und starte deine Reise.",
+  "home.firstSteps.meal": "Erste Mahlzeit loggen",
+  "home.firstSteps.training": "Erstes Training starten",
+  "home.firstSteps.weight": "Gewicht eintragen",
   "home.levelLocked": "Lv",
 
   "home.todayLabel": "HEUTE",
@@ -101,6 +106,11 @@ export const en = {
   "home.levelStreakA11y": "Level {level}, streak {streak} days",
   "home.levelA11y": "Level {level}",
   "home.unlockToLevelA11y": "Unlock Premium to level up",
+  "home.firstSteps.label": "GETTING STARTED",
+  "home.firstSteps.intro": "Jump right in – pick one and start your journey.",
+  "home.firstSteps.meal": "Log your first meal",
+  "home.firstSteps.training": "Start your first workout",
+  "home.firstSteps.weight": "Log your weight",
   "home.levelLocked": "Lv",
 
   "home.todayLabel": "TODAY",
