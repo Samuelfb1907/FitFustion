@@ -14,6 +14,8 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { PaywallProvider } from './components/Paywall';
 import { loadReminderPrefs, applyReminders, scheduleWinback, cancelWinback } from './lib/reminders';
 import { addFriend, friendCodeFromUrl } from './lib/friends';
+import { lobbyCodeFromUrl, joinLobby, syncTodaySteps } from './lib/lobby';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 function Root() {
   const { session, profile, loading, refreshProfile } = useAuth();
@@ -65,13 +67,32 @@ function Root() {
     async function handle(url: string | null) {
       if (!url) return;
       const code = friendCodeFromUrl(url);
-      if (!code || seen.has(code)) return;
-      seen.add(code);
-      const err = await addFriend(code);
-      if (!err) Alert.alert(t('leaderboard.friends.addedTitle'), t('leaderboard.friends.addedBody'));
+      if (code && !seen.has(code)) {
+        seen.add(code);
+        const err = await addFriend(code);
+        if (!err) Alert.alert(t('leaderboard.friends.addedTitle'), t('leaderboard.friends.addedBody'));
+      }
+      // Lobby-Einladungslink (fitavo://lobby?code= bzw. Web-Link): per Code beitreten.
+      const lCode = lobbyCodeFromUrl(url);
+      if (lCode && !seen.has(lCode)) {
+        seen.add(lCode);
+        let name = 'Ich';
+        try { const n = await AsyncStorage.getItem('fitavo.lobbyName'); if (n) name = n; } catch {}
+        const id = await joinLobby(lCode, name);
+        if (id) Alert.alert(t('lobby.joined'), t('lobby.deeplinkBody'));
+      }
     }
     Linking.getInitialURL().then(handle).catch(() => {});
     const sub = Linking.addEventListener('url', (e) => handle(e.url));
+    return () => sub.remove();
+  }, [session?.user?.id]);
+
+  // Schritte fuer die Lobby aktuell halten: beim Start + bei jeder Rueckkehr in den Vordergrund
+  // die heutigen Schritte hochladen (in Expo Go Beispielwerte, im echten Build echte Schritte).
+  useEffect(() => {
+    if (!session?.user) return;
+    syncTodaySteps().catch(() => {});
+    const sub = AppState.addEventListener('change', (s) => { if (s === 'active') syncTodaySteps().catch(() => {}); });
     return () => sub.remove();
   }, [session?.user?.id]);
 
