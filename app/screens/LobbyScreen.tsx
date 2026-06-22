@@ -42,7 +42,7 @@ export default function LobbyScreen({ focusTick }: { focusTick?: number; focused
 
   useEffect(() => { init(); }, []);
   // Tab-Fokus: Schritte hochladen + Rangliste auffrischen (focusTick steigt bei jedem Tippen).
-  useEffect(() => { if (focusTick) reload(true); }, [focusTick]);
+  useEffect(() => { if (focusTick) reload(); }, [focusTick]);
 
   async function load(silent: boolean) {
     if (!silent) setLoading(true);
@@ -66,7 +66,9 @@ export default function LobbyScreen({ focusTick }: { focusTick?: number; focused
     try { const stored = await AsyncStorage.getItem(NAME_KEY); if (stored) setMyName(stored); } catch {}
     await load(false);
   }
-  function reload(silent = false) { if (!silent) setRefreshing(true); load(silent); }
+  // Auffrischen OHNE Vollbild-Ladezustand (sonst flackert kurz der leere Hintergrund - "Blackscreen").
+  // load() laeuft hier immer silent; withSpinner zeigt zusaetzlich den Pull-to-Refresh-Spinner.
+  function reload(withSpinner = false) { if (withSpinner) setRefreshing(true); load(true); }
 
   async function selectLobby(id: string) {
     setActiveId(id);
@@ -157,7 +159,7 @@ export default function LobbyScreen({ focusTick }: { focusTick?: number; focused
     <ScrollView
       style={styles.container}
       contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE }}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => reload()} tintColor={c.primary} colors={[c.primary]} />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => reload(true)} tintColor={c.primary} colors={[c.primary]} />}
       keyboardShouldPersistTaps="handled"
     >
       <Text style={styles.title}>{t('lobby.title')}</Text>
