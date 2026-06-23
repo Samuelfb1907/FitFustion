@@ -72,6 +72,8 @@ export const de = {
   "home.close": "Schließen",
 
   "home.streakA11y": "Streak: {streak} Tage",
+  "home.streakCelebrateTitle": "🔥 {n} Tage in Folge!",
+  "home.streakCelebrateBody": "Wahnsinn — bleib dran und schnapp dir den nächsten Meilenstein! 💪",
   "home.gauge.remaining": "kcal übrig",
   "home.gauge.over": "kcal über Ziel",
   "home.gauge.eaten": "gegessen",
@@ -166,6 +168,8 @@ export const en = {
   "home.close": "Close",
 
   "home.streakA11y": "Streak: {streak} days",
+  "home.streakCelebrateTitle": "🔥 {n}-day streak!",
+  "home.streakCelebrateBody": "Amazing — keep going and grab the next milestone! 💪",
   "home.gauge.remaining": "kcal left",
   "home.gauge.over": "kcal over goal",
   "home.gauge.eaten": "eaten",

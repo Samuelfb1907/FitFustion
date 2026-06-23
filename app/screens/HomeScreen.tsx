@@ -24,6 +24,9 @@ import { CARD_SHADOW as shadow } from '../lib/ui';
 import { WATER_GOAL } from '../lib/water';
 import { fetchMyLobbies, fetchLobbyBoard } from '../lib/lobby';
 import { getMyEntry } from '../lib/leaderboard';
+import { touchStreak } from '../lib/streak';
+import Confetti from '../components/Confetti';
+import * as Haptics from 'expo-haptics';
 
 const GOAL_LABELS: Record<string, string> = {
   lose_weight: 'home.goal.lose_weight', build_muscle: 'home.goal.build_muscle', gain_strength: 'home.goal.gain_strength',
@@ -80,6 +83,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
   const [goalLabel, setGoalLabel] = useState('');
   const [stats, setStats] = useState<GameStats | null>(null);
   const [achOpen, setAchOpen] = useState(false);
+  const [confettiKey, setConfettiKey] = useState(0);
   const [eaten, setEaten] = useState<Eaten>({ kcal: 0, p: 0, c: 0, f: 0 });
   const [days, setDays] = useState<Eaten[]>([]); // gegessen je Tag, Index = Tage zurueck (0 = heute)
   const [dayOffset, setDayOffset] = useState(0); // welcher Tag auf der Kalorien-Karte gerade gezeigt wird
@@ -134,7 +138,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
 
       try {
       const [profRes, goalRes, fdt, actRes, sessions, sets, foodLogs, sdRes, fd, schedRes] = await Promise.all([
-        supabase.from('profiles').select('weight_kg, height_cm, birth_date, gender, activity_level').eq('id', userId).maybeSingle(),
+        supabase.from('profiles').select('weight_kg, height_cm, birth_date, gender, activity_level, streak_current').eq('id', userId).maybeSingle(),
         supabase.from('goals').select('goal_type').eq('user_id', userId).eq('is_active', true).order('created_at', { ascending: false }).limit(1).maybeSingle(),
         supabase.from('food_logs').select('amount_g, log_date, foods(kcal, protein, carbs, fat)').eq('user_id', userId).gte('log_date', daysAgoStr(DAYS_BACK)),
         supabase.from('workout_sessions').select('id').eq('user_id', userId).is('ended_at', null).gte('performed_at', startOfTodayISO()).order('performed_at', { ascending: false }).limit(1).maybeSingle(),
@@ -204,7 +208,23 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
       const sdDates = ((sd ?? []) as any[]).map((r) => localDateStr(r.performed_at));
       const fdDates = fd.error ? [] : ((fd.data ?? []) as any[]).map((r) => String(r.log_date).slice(0, 10));
       const dates = [...sdDates, ...fdDates];
-      setStats({ sessions, sets, foodLogs, streak: computeStreak(dates), goalSet: !!goal });
+      // Streak: server-seitig persistent (Migration 051). Heute aktiv -> zaehlen + ggf. Meilenstein feiern;
+      // sonst den gespeicherten Stand zeigen. Faellt auf die lokale Berechnung zurueck, falls die RPC fehlt.
+      let streakVal = computeStreak(dates);
+      if (dates.includes(todayStr())) {
+        const st = await touchStreak(todayStr(), streakVal);
+        if (st) {
+          streakVal = st.streak;
+          if (st.milestone > 0) {
+            setConfettiKey((k) => k + 1);
+            try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
+            Alert.alert(t('home.streakCelebrateTitle', { n: st.milestone }), t('home.streakCelebrateBody', { n: st.milestone }));
+          }
+        }
+      } else if (prof && typeof (prof as any).streak_current === 'number' && (prof as any).streak_current > 0) {
+        streakVal = (prof as any).streak_current;
+      }
+      setStats({ sessions, sets, foodLogs, streak: streakVal, goalSet: !!goal });
       const today = todayStr(), mon = mondayStr();
       setGoalsData({
         trainedToday: sdDates.includes(today),
@@ -551,6 +571,8 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
           </View>
         )}
       </ScrollView>
+
+      <Confetti fireKey={confettiKey} />
 
       <Modal visible={achOpen} animationType="slide" transparent onRequestClose={() => setAchOpen(false)}>
         <View style={styles.achBackdrop}>
