@@ -8,9 +8,10 @@ import Segmented from '../components/Segmented';
 import FoodTrackerScreen from './FoodTrackerScreen';
 import WaterScreen from './WaterScreen';
 import ProteinScreen from './ProteinScreen';
+import FastingScreen from './FastingScreen';
 import { useFocusTick } from '../lib/useFocusTick';
 
-export type Seg = 'tracker' | 'protein' | 'water';
+export type Seg = 'tracker' | 'protein' | 'water' | 'fasten';
 
 export default function EssenScreen({ focusTick, initialSeg, focused = true }: { focusTick?: number; initialSeg?: Seg; focused?: boolean }) {
   const c = useColors();
@@ -33,6 +34,7 @@ export default function EssenScreen({ focusTick, initialSeg, focused = true }: {
           { key: 'tracker', label: t('essen.segTracker') },
           { key: 'protein', label: t('essen.segProtein') },
           { key: 'water', label: t('essen.segWater') },
+          { key: 'fasten', label: t('essen.segFasten') },
         ]}
         value={seg}
         onChange={(k) => setSeg(k as Seg)}
@@ -42,6 +44,7 @@ export default function EssenScreen({ focusTick, initialSeg, focused = true }: {
         <View style={[styles.page, seg !== 'tracker' && styles.hidden]}><FoodTrackerScreen embedded focusTick={focusTick} focused={focused && seg === 'tracker'} /></View>
         <View style={[styles.page, seg !== 'protein' && styles.hidden]}><ProteinScreen embedded /></View>
         <View style={[styles.page, seg !== 'water' && styles.hidden]}><WaterScreen embedded focusTick={focusTick} /></View>
+        <View style={[styles.page, seg !== 'fasten' && styles.hidden]}><FastingScreen focusTick={focusTick} /></View>
       </View>
     </View>
   );

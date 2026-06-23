@@ -3,6 +3,7 @@ export const de = {
   "essen.segTracker": "Tracker",
   "essen.segProtein": "Protein",
   "essen.segWater": "Wasser",
+  "essen.segFasten": "Fasten",
 };
 
 export const en = {
@@ -10,4 +11,5 @@ export const en = {
   "essen.segTracker": "Tracker",
   "essen.segProtein": "Protein",
   "essen.segWater": "Water",
+  "essen.segFasten": "Fasting",
 };
