@@ -1,6 +1,6 @@
 // "Frag den Coach" (#1) - Vollbild-Chat (in einem Modal). Premium wird vom Aufrufer (Home)
 // gegatet; Einwilligung (DSGVO/KI) + Tageslimit prueft die Edge Function serverseitig.
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,11 +9,12 @@ import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { useT, useLang } from '../contexts/LanguageContext';
 import { askCoach, CoachMessage } from '../lib/coach';
+import { workoutsLast7Days } from '../lib/coachContext';
 
 type Msg = CoachMessage & { error?: boolean };
 
 export default function CoachChat({ onClose }: { onClose: () => void }) {
-  const { session } = useAuth();
+  const { session, profile } = useAuth();
   const c = useColors();
   const t = useT();
   const { lang } = useLang();
@@ -23,16 +24,43 @@ export default function CoachChat({ onClose }: { onClose: () => void }) {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [askConsent, setAskConsent] = useState(false);
+  const [w7, setW7] = useState<number | null>(null);
   const scrollRef = useRef<ScrollView>(null);
+
+  useEffect(() => {
+    const uid = session?.user?.id;
+    if (uid) workoutsLast7Days(uid).then(setW7).catch(() => {});
+  }, [session?.user?.id]);
 
   const STARTERS = [t('coach.starter1'), t('coach.starter2'), t('coach.starter3')];
   const scrollDown = () => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 60);
+
+  // DSGVO-schonender Trainings-Kontext (KEINE Koerper-/Gewichtsdaten).
+  function buildContext(): string {
+    const parts: string[] = [];
+    const exp = profile?.experience_level as string | undefined;
+    const env = profile?.training_environment as string | undefined;
+    if (exp) {
+      const m: Record<string, string> = lang === 'en'
+        ? { beginner: 'beginner', intermediate: 'intermediate', advanced: 'advanced' }
+        : { beginner: 'Anfaenger', intermediate: 'Fortgeschritten', advanced: 'Profi' };
+      parts.push((lang === 'en' ? 'experience: ' : 'Erfahrung: ') + (m[exp] ?? exp));
+    }
+    if (env) {
+      const m: Record<string, string> = lang === 'en'
+        ? { gym: 'gym', home: 'at home' }
+        : { gym: 'Fitnessstudio', home: 'Zuhause' };
+      parts.push((lang === 'en' ? 'trains: ' : 'Trainingsort: ') + (m[env] ?? env));
+    }
+    if (w7 != null) parts.push(lang === 'en' ? `${w7} workouts in the last 7 days` : `${w7} Workouts in den letzten 7 Tagen`);
+    return parts.join(' · ');
+  }
 
   async function runSend(history: Msg[]) {
     setSending(true);
     scrollDown();
     const payload: CoachMessage[] = history.filter((m) => !m.error).map((m) => ({ role: m.role, content: m.content }));
-    const res = await askCoach(payload, lang);
+    const res = await askCoach(payload, lang, buildContext());
     setSending(false);
     if ('reply' in res) {
       setMessages((prev) => [...prev, { role: 'assistant', content: res.reply.trim() || t('coach.empty') }]);

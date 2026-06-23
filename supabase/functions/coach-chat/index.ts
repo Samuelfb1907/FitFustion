@@ -76,13 +76,22 @@ Deno.serve(async (req: Request) => {
       .map((m: any) => ({ role: m.role, content: String(m.content).slice(0, 1000) }));
     if (!messages.length || messages[messages.length - 1].role !== 'user') return json({ error: 'invalid' }, 400);
 
+    // Optionaler, dezenter Trainings-Kontext vom Client (KEINE Koerper-/Gewichtsdaten).
+    const ctx = typeof payload.context === 'string' ? payload.context.trim().slice(0, 300) : '';
+    let system = lang === 'en' ? systemEn : systemDe;
+    if (ctx) {
+      system += (lang === 'en'
+        ? '\n\nUser background (use it subtly to tailor advice, do not just list it back): '
+        : '\n\nHintergrund zum Nutzer (dezent fuer passende Tipps nutzen, nicht stur aufzaehlen): ') + ctx;
+    }
+
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
       body: JSON.stringify({
         model: MODEL,
         max_tokens: 700,
-        system: lang === 'en' ? systemEn : systemDe,
+        system,
         messages,
       }),
     });

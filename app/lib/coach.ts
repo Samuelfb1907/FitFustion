@@ -6,10 +6,11 @@ export type CoachMessage = { role: 'user' | 'assistant'; content: string };
 export type CoachError = 'premium_required' | 'rate_limited' | 'consent_required' | 'error';
 export type CoachResult = { reply: string } | { error: CoachError };
 
-export async function askCoach(messages: CoachMessage[], lang: string): Promise<CoachResult> {
+export async function askCoach(messages: CoachMessage[], lang: string, context?: string): Promise<CoachResult> {
   try {
+    const ctx = context && context.trim() ? context.trim().slice(0, 300) : undefined;
     const { data, error } = await supabase.functions.invoke('coach-chat', {
-      body: { messages, lang: lang === 'en' ? 'en' : 'de' },
+      body: { messages, lang: lang === 'en' ? 'en' : 'de', context: ctx },
     });
     if (error || !data) return { error: 'error' };
     const d = data as any;
