@@ -52,11 +52,29 @@ export async function getMyFriendCode(): Promise<string | null> {
   return (data as any)?.friend_code ?? null;
 }
 
-// Freund per Code hinzufuegen. Gibt den Vornamen zurueck, oder null (Code unbekannt/eigener).
-export async function addFriendByCode(code: string): Promise<string | null> {
+export type AddFriendStatus = 'requested' | 'accepted' | 'already_friends' | 'error';
+
+// Freund per Code hinzufuegen -> legt eine ANFRAGE an (Migration 047). 'accepted', wenn der
+// andere mich schon angefragt hatte; 'already_friends', wenn schon befreundet.
+export async function addFriendByCode(code: string): Promise<AddFriendStatus> {
   const { data, error } = await supabase.rpc('add_friend_by_code', { p_code: code });
+  if (error) return 'error';
+  const s = data as string;
+  return s === 'requested' || s === 'accepted' || s === 'already_friends' ? s : 'error';
+}
+
+// Eingehende Freundschaftsanfragen (an mich) + Annehmen/Ablehnen per Absender-Code.
+export type FriendRequest = { friend_code: string; display_name: string };
+export async function incomingRequests(): Promise<FriendRequest[]> {
+  const { data, error } = await supabase.rpc('incoming_requests');
   if (error) throw error;
-  return (data ?? null) as string | null;
+  return (data ?? []) as FriendRequest[];
+}
+export async function acceptRequest(code: string): Promise<void> {
+  await supabase.rpc('accept_request', { p_code: code });
+}
+export async function declineRequest(code: string): Promise<void> {
+  await supabase.rpc('decline_request', { p_code: code });
 }
 
 export async function fetchFriends(): Promise<Friend[]> {

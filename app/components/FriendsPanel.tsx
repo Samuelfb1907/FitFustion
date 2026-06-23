@@ -8,7 +8,7 @@ import { useT } from '../contexts/LanguageContext';
 import GlassFill from './GlassFill';
 import { CARD_SHADOW as shadow } from '../lib/ui';
 import { errorMessage } from '../lib/errors';
-import { Friend, getMyFriendCode, fetchFriends, addFriendByCode, removeFriendByCode, sendNudge } from '../lib/friends';
+import { Friend, FriendRequest, getMyFriendCode, fetchFriends, addFriendByCode, removeFriendByCode, sendNudge, incomingRequests, acceptRequest, declineRequest } from '../lib/friends';
 
 export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
   const c = useColors();
@@ -17,6 +17,7 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
 
   const [myCode, setMyCode] = useState<string | null>(null);
   const [friends, setFriends] = useState<Friend[]>([]);
+  const [requests, setRequests] = useState<FriendRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [codeInput, setCodeInput] = useState('');
@@ -27,9 +28,14 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
 
   async function load() {
     try {
-      const [code, list] = await Promise.all([getMyFriendCode(), fetchFriends()]);
+      const [code, list, reqs] = await Promise.all([
+        getMyFriendCode(),
+        fetchFriends(),
+        incomingRequests().catch(() => [] as FriendRequest[]),
+      ]);
       setMyCode(code);
       setFriends(list);
+      setRequests(reqs);
       setErr(null);
     } catch (e) {
       setErr(errorMessage(e));
@@ -48,12 +54,14 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
     if (!code) return;
     setBusy(true);
     try {
-      const name = await addFriendByCode(code);
+      const status = await addFriendByCode(code);
       setBusy(false);
-      if (!name) { Alert.alert(t('friends.notFound')); return; }
+      if (status === 'error') { Alert.alert(t('friends.notFound')); return; }
       setCodeInput('');
       await load();
-      Alert.alert(t('friends.added', { name }));
+      if (status === 'already_friends') Alert.alert(t('friends.alreadyFriends'));
+      else if (status === 'accepted') Alert.alert(t('friends.addedNow'));
+      else Alert.alert(t('friends.requestSent'));
     } catch (e) {
       setBusy(false);
       setErr(errorMessage(e));
@@ -75,6 +83,17 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
   async function doRemove(f: Friend) {
     setBusy(true);
     try { await removeFriendByCode(f.friend_code); await load(); } catch (e) { setErr(errorMessage(e)); }
+    setBusy(false);
+  }
+
+  async function accept(r: FriendRequest) {
+    setBusy(true);
+    try { await acceptRequest(r.friend_code); await load(); } catch (e) { setErr(errorMessage(e)); }
+    setBusy(false);
+  }
+  async function decline(r: FriendRequest) {
+    setBusy(true);
+    try { await declineRequest(r.friend_code); await load(); } catch (e) { setErr(errorMessage(e)); }
     setBusy(false);
   }
 
@@ -116,6 +135,26 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Eingehende Freundschaftsanfragen */}
+      {requests.length > 0 && (
+        <View style={styles.tile}>
+          <GlassFill radius={16} />
+          <Text style={styles.tileLabel}>{t('friends.requestsLabel', { n: requests.length })}</Text>
+          {requests.map((r, i) => (
+            <View key={r.friend_code} style={[styles.row, i > 0 && styles.rowDivider]}>
+              <View style={styles.avatar}><Text style={styles.avatarText}>{(r.display_name.charAt(0) || '?').toUpperCase()}</Text></View>
+              <Text style={styles.name} numberOfLines={1}>{r.display_name}</Text>
+              <TouchableOpacity onPress={() => accept(r)} disabled={busy} hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('friends.accept')} style={{ marginRight: 14 }}>
+                <Ionicons name="checkmark-circle" size={27} color={c.primary} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => decline(r)} disabled={busy} hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('friends.decline')}>
+                <Ionicons name="close-circle-outline" size={27} color={c.textMuted} />
+              </TouchableOpacity>
+            </View>
+          ))}
+        </View>
+      )}
 
       {/* Freundesliste */}
       <View style={styles.tile}>
