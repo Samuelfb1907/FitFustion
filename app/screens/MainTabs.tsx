@@ -4,7 +4,7 @@
 // Seiten unten TAB_BAR_SPACE Platz (siehe lib/layout). Pille = abgerundet + durchscheinend
 // (BlurView) + zarte Lichtkante. Aktiver Reiter GRUEN, Rest grau. Wechsel NUR per Tippen.
 import { useState, ReactNode } from 'react';
-import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,6 +19,9 @@ import LobbyScreen from './LobbyScreen';
 import Ambient from '../components/Ambient';
 import StepsPrompt from '../components/StepsPrompt';
 import { useAndroidBack } from '../lib/useBackHandler';
+import { useAuth } from '../contexts/AuthContext';
+import { usePaywall } from '../components/Paywall';
+import CoachChat from '../components/CoachChat';
 
 type Tab = 'home' | 'training' | 'essen' | 'progress' | 'lobby' | 'settings';
 const TAB_ORDER: Tab[] = ['home', 'training', 'essen', 'progress', 'lobby', 'settings'];
@@ -39,6 +42,9 @@ export default function MainTabs() {
   const dark = theme === 'dark';
   const t = useT();
   const insets = useSafeAreaInsets();
+  const { isPremium } = useAuth();
+  const { openPaywall } = usePaywall();
+  const [showCoach, setShowCoach] = useState(false);
 
   const TAB_LABEL: Record<Tab, string> = {
     home: t('tabs.start'), training: t('tabs.training'), essen: t('tabs.food'), progress: t('tabs.progress'), lobby: t('tabs.lobby'), settings: t('tabs.settings'),
@@ -112,6 +118,21 @@ export default function MainTabs() {
           {tabs}
         </View>
       )}
+      {/* Schwebender KI-Coach-Knopf (ueber allen Tabs, knapp ueber der Tab-Leiste). */}
+      <TouchableOpacity
+        style={[styles.fab, { bottom: isAndroid ? Math.max(insets.bottom, 8) + 64 : Math.max(insets.bottom, 12) + 76, backgroundColor: c.primary }]}
+        onPress={() => { if (!isPremium) openPaywall('ki'); else setShowCoach(true); }}
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel={t('coach.title')}
+      >
+        <Text style={{ fontSize: 25 }}>🤖</Text>
+      </TouchableOpacity>
+
+      <Modal visible={showCoach} animationType="slide" onRequestClose={() => setShowCoach(false)} presentationStyle="fullScreen">
+        <CoachChat onClose={() => setShowCoach(false)} />
+      </Modal>
+
       <StepsPrompt />
     </View>
   );
@@ -125,5 +146,6 @@ const styles = StyleSheet.create({
   // Android: durchgehende, deckende Leiste am unteren Rand (full-width), abgerundete Oberkante, flach.
   barAndroid: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', paddingTop: 8, borderTopLeftRadius: 22, borderTopRightRadius: 22, borderTopWidth: StyleSheet.hairlineWidth },
   tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, paddingHorizontal: 4 },
+  fab: { position: 'absolute', right: 18, width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 8 },
   label: { fontSize: 11, letterSpacing: 0.1 },
 });

@@ -24,8 +24,6 @@ import { CARD_SHADOW as shadow } from '../lib/ui';
 import { WATER_GOAL } from '../lib/water';
 import { fetchMyLobbies, fetchLobbyBoard } from '../lib/lobby';
 import { getMyEntry } from '../lib/leaderboard';
-import { usePaywall } from '../components/Paywall';
-import CoachChat from '../components/CoachChat';
 
 const GOAL_LABELS: Record<string, string> = {
   lose_weight: 'home.goal.lose_weight', build_muscle: 'home.goal.build_muscle', gain_strength: 'home.goal.gain_strength',
@@ -68,8 +66,7 @@ function greeting(): string {
 }
 
 export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (tab: string, seg?: string) => void; focusTick?: number }) {
-  const { session, profile, isPremium } = useAuth();
-  const { openPaywall } = usePaywall();
+  const { session, profile } = useAuth();
   const t = useT();
   const c = useColors();
   const { theme } = useTheme();
@@ -83,7 +80,6 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
   const [goalLabel, setGoalLabel] = useState('');
   const [stats, setStats] = useState<GameStats | null>(null);
   const [achOpen, setAchOpen] = useState(false);
-  const [showCoach, setShowCoach] = useState(false);
   const [eaten, setEaten] = useState<Eaten>({ kcal: 0, p: 0, c: 0, f: 0 });
   const [days, setDays] = useState<Eaten[]>([]); // gegessen je Tag, Index = Tage zurueck (0 = heute)
   const [dayOffset, setDayOffset] = useState(0); // welcher Tag auf der Kalorien-Karte gerade gezeigt wird
@@ -501,18 +497,6 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
               </TouchableOpacity>
             )}
 
-            {/* FRAG DEN COACH (KI-Coach, Premium) */}
-            <TouchableOpacity style={styles.lobbyCard} onPress={() => { if (!isPremium) openPaywall('ki'); else setShowCoach(true); }} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={t('coach.title')}>
-              <GlassFill radius={18} />
-              <View style={[styles.lobbyIcon, { backgroundColor: 'rgba(25,201,143,0.16)' }]}><Text style={{ fontSize: 20 }}>🤖</Text></View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.lobbyTitle}>{t('coach.cardTitle')}</Text>
-                <Text style={styles.lobbySub} numberOfLines={2}>{t('coach.cardSub')}</Text>
-              </View>
-              {!isPremium && <View style={{ backgroundColor: amber, borderRadius: 8, paddingHorizontal: 7, paddingVertical: 2, marginRight: 4 }}><Text style={{ color: '#1a1300', fontSize: 10, fontWeight: '900' }}>PRO</Text></View>}
-              <Ionicons name="chevron-forward" size={20} color={c.textMuted} />
-            </TouchableOpacity>
-
             {/* ERSTE SCHRITTE (nur fuer Neulinge: noch kein Training und kein Tracker-Eintrag) */}
             {stats && stats.sessions === 0 && stats.foodLogs === 0 && (
               <View style={styles.card}>
@@ -567,10 +551,6 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
           </View>
         )}
       </ScrollView>
-
-      <Modal visible={showCoach} animationType="slide" onRequestClose={() => setShowCoach(false)} presentationStyle="fullScreen">
-        <CoachChat onClose={() => setShowCoach(false)} />
-      </Modal>
 
       <Modal visible={achOpen} animationType="slide" transparent onRequestClose={() => setAchOpen(false)}>
         <View style={styles.achBackdrop}>
