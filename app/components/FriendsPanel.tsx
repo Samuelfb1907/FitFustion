@@ -9,6 +9,17 @@ import GlassFill from './GlassFill';
 import { CARD_SHADOW as shadow } from '../lib/ui';
 import { errorMessage } from '../lib/errors';
 import { Friend, FriendRequest, getMyFriendCode, fetchFriends, addFriendByCode, removeFriendByCode, sendNudge, incomingRequests, acceptRequest, declineRequest } from '../lib/friends';
+import { FeedItem, fetchFriendsFeed } from '../lib/activity';
+
+// Relativer Zeitstempel fuer den Feed: gibt i18n-Key + Zahl zurueck.
+function agoKey(iso: string): { key: string; n: number } {
+  const diff = Date.now() - new Date(iso).getTime();
+  const min = Math.max(1, Math.floor(diff / 60000));
+  if (min < 60) return { key: 'friends.feed.minAgo', n: min };
+  const h = Math.floor(min / 60);
+  if (h < 24) return { key: 'friends.feed.hAgo', n: h };
+  return { key: 'friends.feed.dAgo', n: Math.floor(h / 24) };
+}
 
 export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
   const c = useColors();
@@ -18,6 +29,7 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
   const [myCode, setMyCode] = useState<string | null>(null);
   const [friends, setFriends] = useState<Friend[]>([]);
   const [requests, setRequests] = useState<FriendRequest[]>([]);
+  const [feed, setFeed] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [codeInput, setCodeInput] = useState('');
@@ -28,14 +40,16 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
 
   async function load() {
     try {
-      const [code, list, reqs] = await Promise.all([
+      const [code, list, reqs, fd] = await Promise.all([
         getMyFriendCode(),
         fetchFriends(),
         incomingRequests().catch(() => [] as FriendRequest[]),
+        fetchFriendsFeed().catch(() => [] as FeedItem[]),
       ]);
       setMyCode(code);
       setFriends(list);
       setRequests(reqs);
+      setFeed(fd);
       setErr(null);
     } catch (e) {
       setErr(errorMessage(e));
@@ -156,6 +170,29 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
         </View>
       )}
 
+      {/* Was die Freunde machen (Aktivitaets-Feed) */}
+      {feed.length > 0 && (
+        <View style={styles.tile}>
+          <GlassFill radius={16} />
+          <Text style={styles.tileLabel}>{t('friends.feed.label')}</Text>
+          {feed.map((item, i) => {
+            const a = agoKey(item.created_at);
+            const text = item.type === 'record'
+              ? (item.detail ? t('friends.feed.recordEx', { name: item.display_name, ex: item.detail }) : t('friends.feed.record', { name: item.display_name }))
+              : t('friends.feed.trained', { name: item.display_name });
+            return (
+              <View key={i} style={[styles.row, i > 0 && styles.rowDivider]}>
+                <Ionicons name={item.type === 'record' ? 'trophy' : 'barbell'} size={18} color={item.type === 'record' ? '#F0B429' : c.primary} style={{ width: 28 }} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.feedText} numberOfLines={2}>{text}</Text>
+                  <Text style={styles.feedTime}>{t(a.key, { n: a.n })}</Text>
+                </View>
+              </View>
+            );
+          })}
+        </View>
+      )}
+
       {/* Freundesliste */}
       <View style={styles.tile}>
         <GlassFill radius={16} />
@@ -204,5 +241,7 @@ function makeStyles(c: Colors) {
     avatar: { width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(25,201,143,0.16)', alignItems: 'center', justifyContent: 'center' },
     avatarText: { color: c.primary, fontSize: 16, fontWeight: '800' },
     name: { flex: 1, fontSize: 15, color: c.text, fontWeight: '600' },
+    feedText: { fontSize: 14, color: c.text, fontWeight: '600', lineHeight: 19 },
+    feedTime: { fontSize: 12, color: c.textMuted, marginTop: 1 },
   });
 }
