@@ -53,6 +53,7 @@ Alle `.sql`-Dateien werden **manuell** im Supabase **SQL Editor** ausgeführt
 | 45 | `045_nudges.sql` | Anstupsen (#48d): nudges-Tabelle + RLS + RPCs send_nudge (Freund per Code) / pending_nudges (abrufen + als gesehen markieren) |
 | 46 | `046_push_tokens.sql` | push_tokens (Expo-Push-Token je Nutzer) für Remote-Push; genutzt von Edge Function send-nudge |
 | 47 | `047_friend_requests.sql` | Freundschaftsanfragen (#48e): friend_requests + add_friend_by_code wird Anfrage + RPCs incoming_requests/accept_request/decline_request |
+| 48 | `048_activity_feed.sql` | Freunde-Aktivitäts-Feed (#48f): activity_events + RPCs log_activity (Anti-Spam) / friends_feed |
 
 ## Hinweise
 - **Reihenfolge zählt:** Spätere Migrationen bauen auf früheren auf.

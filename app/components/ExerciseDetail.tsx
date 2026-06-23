@@ -17,6 +17,7 @@ import { DIFF_LABELS, EQUIP_LABELS } from '../lib/training';
 import { registerGoodMoment } from '../lib/reviewPrompt';
 import { hTap, hSuccess } from '../lib/haptics';
 import Confetti from './Confetti';
+import { logActivity } from '../lib/activity';
 
 type Exercise = { id: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null };
 type SetLog = { id: string; set_index: number; reps: number | null; weight_kg: number | null };
@@ -217,7 +218,7 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
         // Neuer persoenlicher Rekord (Gewicht uebertroffen) = starker Positiv-Moment fuer die Bewertungs-Abfrage.
         if (w != null) {
           const prevBest = bestWeightRef.current;
-          if (prevBest != null && w > prevBest) { registerGoodMoment(); hSuccess(); setConfettiKey((k) => k + 1); }
+          if (prevBest != null && w > prevBest) { registerGoodMoment(); hSuccess(); setConfettiKey((k) => k + 1); logActivity('record', exercise.name); }
           if (prevBest == null || w > prevBest) bestWeightRef.current = w;
         }
       }
@@ -256,7 +257,7 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
     setEnded(true);
     // Positiver Moment: Training mit mitgeschriebenen Saetzen abgeschlossen
     // -> ggf. (sparsam) um eine Store-Bewertung bitten.
-    if (hadSets) { registerGoodMoment(); hSuccess(); }
+    if (hadSets) { registerGoodMoment(); hSuccess(); logActivity('trained'); }
   }
 
   return (
