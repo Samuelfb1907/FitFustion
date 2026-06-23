@@ -23,6 +23,7 @@ import { errorMessage } from '../lib/errors';
 import { computeStreak } from '../lib/gamification';
 import { loadMeasurements, addMeasurement, Measurement } from '../lib/measurements';
 import { loadMuscleRecovery } from '../lib/muscleRecovery';
+import { loadCareer, Career, milestones } from '../lib/career';
 import MuscleHeatmap from '../components/MuscleHeatmap';
 import { grp, unwrap } from '../lib/format';
 import { CARD_SHADOW as shadow } from '../lib/ui';
@@ -65,11 +66,13 @@ export default function ProgressScreen({ focusTick, focused = true, initialSeg }
   const [sharing, setSharing] = useState(false);
   const [meas, setMeas] = useState<Measurement[]>([]);
   const [recovery, setRecovery] = useState<Record<string, number>>({}); // Muskel-Key -> Tage seit letztem Training
+  const [career, setCareer] = useState<Career | null>(null);
   const [mInput, setMInput] = useState({ waist: '', chest: '', hips: '', arm: '', thigh: '' });
   const [savingM, setSavingM] = useState(false);
   const [mMsg, setMMsg] = useState<string | null>(null);
   useEffect(() => { const uid = session?.user?.id; if (uid) loadMeasurements(uid).then(setMeas).catch(() => {}); }, [session?.user?.id]);
   useEffect(() => { const uid = session?.user?.id; if (uid) loadMuscleRecovery(uid).then(setRecovery).catch(() => {}); }, [session?.user?.id, focusTick]);
+  useEffect(() => { const uid = session?.user?.id; if (uid) loadCareer(uid).then(setCareer).catch(() => {}); }, [session?.user?.id, focusTick]);
   const [weekly, setWeekly] = useState<{ label: string; value: number }[]>([]);
   const [records, setRecords] = useState<PR[]>([]);
   const [history, setHistory] = useState<HistRow[]>([]);
@@ -492,6 +495,40 @@ export default function ProgressScreen({ focusTick, focused = true, initialSeg }
               </View>
             ))}
           </View>
+
+          {/* DEINE KARRIERE (Lifetime-Werte + Meilensteine) */}
+          {career && (career.workouts > 0 || career.foodLogs > 0) && (
+            <View style={styles.card}>
+              <GlassFill radius={20} />
+              <View style={styles.cardHead}>
+                <Ionicons name="trophy" size={14} color={c.textMuted} />
+                <Text style={styles.cardLabel} numberOfLines={1}>{t('career.title')}</Text>
+              </View>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
+                {[
+                  { v: String(career.workouts), l: t('career.workouts') },
+                  { v: `${(career.tonnageKg / 1000).toFixed(1)} t`, l: t('career.tonnage') },
+                  { v: String(career.longestStreak), l: t('career.streak') },
+                  { v: String(career.activeDays), l: t('career.activeDays') },
+                ].map((s, i) => (
+                  <View key={i} style={{ flexGrow: 1, flexBasis: '46%', backgroundColor: c.inputBg, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 14 }}>
+                    <Text style={{ fontSize: 20, fontWeight: '800', color: c.heading }}>{s.v}</Text>
+                    <Text style={{ fontSize: 12, color: c.textMuted, marginTop: 2 }}>{s.l}</Text>
+                  </View>
+                ))}
+              </View>
+              <Text style={[styles.cardLabel, { marginTop: 16, marginBottom: 8 }]}>{t('career.milestones')}</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingRight: 16 }}>
+                {milestones(career).map((m) => (
+                  <View key={m.key} style={{ alignItems: 'center', width: 94, paddingVertical: 12, paddingHorizontal: 6, borderRadius: 14, borderWidth: 1, borderColor: m.earned ? c.primary : c.border, backgroundColor: m.earned ? 'rgba(25,201,143,0.10)' : 'transparent', opacity: m.earned ? 1 : 0.55 }}>
+                    <Text style={{ fontSize: 22 }}>{m.icon}</Text>
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: m.earned ? c.heading : c.textMuted, textAlign: 'center', marginTop: 4 }} numberOfLines={2}>{t(`career.ms.${m.type}`, { n: m.target })}</Text>
+                    {!m.earned && <Text style={{ fontSize: 10, color: c.textMuted, marginTop: 2 }}>{m.value}/{m.target}</Text>}
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          )}
 
           {/* MUSKEL-HEATMAP / ERHOLUNG */}
           <View style={styles.card}>

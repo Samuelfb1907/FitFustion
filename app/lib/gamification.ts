@@ -42,6 +42,24 @@ export function computeStreak(dates: string[]): number {
   return streak;
 }
 
+// Laengste je erreichte Streak (laengster zusammenhaengender Tage-Block) aus Aktiv-Tagen.
+export function computeLongestStreak(dates: string[]): number {
+  const set = new Set(dates);
+  if (set.size === 0) return 0;
+  const parse = (s: string) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+  const fmt = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  let longest = 0;
+  for (const d of set) {
+    const prev = parse(d); prev.setDate(prev.getDate() - 1);
+    if (set.has(fmt(prev))) continue; // nur an Block-Anfaengen zaehlen
+    let run = 0; const cur = parse(d);
+    while (set.has(fmt(cur))) { run++; cur.setDate(cur.getDate() + 1); }
+    if (run > longest) longest = run;
+  }
+  return longest;
+}
+
 export type Achievement = {
   key: string;
   name: string;
