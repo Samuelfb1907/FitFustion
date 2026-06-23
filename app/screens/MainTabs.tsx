@@ -126,7 +126,7 @@ export default function MainTabs() {
         accessibilityRole="button"
         accessibilityLabel={t('coach.title')}
       >
-        <Text style={{ fontSize: 25 }}>🤖</Text>
+        <Ionicons name="chatbubble-ellipses" size={24} color={c.onPrimary} />
       </TouchableOpacity>
 
       <Modal visible={showCoach} animationType="slide" onRequestClose={() => setShowCoach(false)} presentationStyle="fullScreen">
