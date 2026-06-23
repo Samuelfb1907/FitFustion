@@ -24,6 +24,9 @@ import { computeStreak } from '../lib/gamification';
 import { loadMeasurements, addMeasurement, Measurement } from '../lib/measurements';
 import { loadMuscleRecovery } from '../lib/muscleRecovery';
 import { loadCareer, Career, milestones } from '../lib/career';
+import { loadChallenges, ChallengeProgress } from '../lib/challenges';
+import Confetti from '../components/Confetti';
+import * as Haptics from 'expo-haptics';
 import MuscleHeatmap from '../components/MuscleHeatmap';
 import { grp, unwrap } from '../lib/format';
 import { CARD_SHADOW as shadow } from '../lib/ui';
@@ -67,12 +70,26 @@ export default function ProgressScreen({ focusTick, focused = true, initialSeg }
   const [meas, setMeas] = useState<Measurement[]>([]);
   const [recovery, setRecovery] = useState<Record<string, number>>({}); // Muskel-Key -> Tage seit letztem Training
   const [career, setCareer] = useState<Career | null>(null);
+  const [challenges, setChallenges] = useState<ChallengeProgress[]>([]);
+  const [confettiKey, setConfettiKey] = useState(0);
   const [mInput, setMInput] = useState({ waist: '', chest: '', hips: '', arm: '', thigh: '' });
   const [savingM, setSavingM] = useState(false);
   const [mMsg, setMMsg] = useState<string | null>(null);
   useEffect(() => { const uid = session?.user?.id; if (uid) loadMeasurements(uid).then(setMeas).catch(() => {}); }, [session?.user?.id]);
   useEffect(() => { const uid = session?.user?.id; if (uid) loadMuscleRecovery(uid).then(setRecovery).catch(() => {}); }, [session?.user?.id, focusTick]);
   useEffect(() => { const uid = session?.user?.id; if (uid) loadCareer(uid).then(setCareer).catch(() => {}); }, [session?.user?.id, focusTick]);
+  useEffect(() => {
+    const uid = session?.user?.id;
+    if (!uid) return;
+    loadChallenges(uid).then((res) => {
+      setChallenges(res.items);
+      if (res.newlyEarned.length > 0) {
+        setConfettiKey((k) => k + 1);
+        try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
+        Alert.alert(t('challenges.celebrateTitle'), t('challenges.celebrateBody', { name: t(`challenges.${res.newlyEarned[0].key}.name`) }));
+      }
+    }).catch(() => {});
+  }, [session?.user?.id, focusTick]);
   const [weekly, setWeekly] = useState<{ label: string; value: number }[]>([]);
   const [records, setRecords] = useState<PR[]>([]);
   const [history, setHistory] = useState<HistRow[]>([]);
@@ -530,6 +547,40 @@ export default function ProgressScreen({ focusTick, focused = true, initialSeg }
             </View>
           )}
 
+          {/* MONATS-CHALLENGES (#3/#68) */}
+          {challenges.length > 0 && (
+            <View style={styles.card}>
+              <GlassFill radius={20} />
+              <View style={styles.cardHead}>
+                <Ionicons name="ribbon" size={14} color={c.textMuted} />
+                <Text style={styles.cardLabel} numberOfLines={1}>{t('challenges.title')}</Text>
+              </View>
+              <Text style={{ fontSize: 13, color: c.textMuted, marginTop: 4, marginBottom: 12, lineHeight: 18 }}>{t('challenges.subtitle')}</Text>
+              <View style={{ gap: 14 }}>
+                {challenges.map((ch) => {
+                  const pct = Math.max(0, Math.min(100, Math.round((ch.value / ch.target) * 100)));
+                  return (
+                    <View key={ch.key}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                        <Text style={{ fontSize: 22 }}>{ch.icon}</Text>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 15, fontWeight: '700', color: c.heading }}>{t(`challenges.${ch.key}.name`)}</Text>
+                          <Text style={{ fontSize: 12, color: c.textMuted, marginTop: 1 }}>{t(`challenges.${ch.key}.goal`, { n: ch.target })}</Text>
+                        </View>
+                        {ch.done
+                          ? <Ionicons name="checkmark-circle" size={24} color={c.primary} />
+                          : <Text style={{ fontSize: 13, fontWeight: '800', color: c.textMuted }}>{t('challenges.progress', { value: ch.value, target: ch.target })}</Text>}
+                      </View>
+                      <View style={{ height: 7, borderRadius: 4, backgroundColor: c.inputBg, marginTop: 8, overflow: 'hidden' }}>
+                        <View style={{ width: `${pct}%`, height: '100%', borderRadius: 4, backgroundColor: c.primary }} />
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          )}
+
           {/* MUSKEL-HEATMAP / ERHOLUNG */}
           <View style={styles.card}>
             <GlassFill radius={20} />
@@ -633,6 +684,7 @@ export default function ProgressScreen({ focusTick, focused = true, initialSeg }
       )}
     </ScrollView>
       )}
+      <Confetti fireKey={confettiKey} />
     </View>
   );
 

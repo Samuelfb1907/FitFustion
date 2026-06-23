@@ -28,6 +28,7 @@ import { de as lobbyDe, en as lobbyEn } from './translations/lobby';
 import { de as friendsDe, en as friendsEn } from './translations/friends';
 import { de as fastingDe, en as fastingEn } from './translations/fasting';
 import { de as coachDe, en as coachEn } from './translations/coach';
+import { de as challengesDe, en as challengesEn } from './translations/challenges';
 
 export type Lang = 'de' | 'en';
 export const LANGS: Lang[] = ['de', 'en'];
@@ -59,13 +60,13 @@ const DICTS: Record<Lang, Dict> = {
     ...de, ...homeDe, ...trainingDe, ...planDe, ...foodDe, ...authDe, ...onboardingDe,
     ...profileDe, ...progressDe, ...waterDe, ...proteinDe, ...leaderboardDe, ...tabsDe,
     ...essenDe, ...paywallDe, ...exerciseDe, ...timerDe, ...errorRetryDe, ...offlineDe, ...scannerDe,
-    ...settingsDe, ...stepsPromptDe, ...lobbyDe, ...friendsDe, ...fastingDe, ...coachDe,
+    ...settingsDe, ...stepsPromptDe, ...lobbyDe, ...friendsDe, ...fastingDe, ...coachDe, ...challengesDe,
   },
   en: {
     ...en, ...homeEn, ...trainingEn, ...planEn, ...foodEn, ...authEn, ...onboardingEn,
     ...profileEn, ...progressEn, ...waterEn, ...proteinEn, ...leaderboardEn, ...tabsEn,
     ...essenEn, ...paywallEn, ...exerciseEn, ...timerEn, ...errorRetryEn, ...offlineEn, ...scannerEn,
-    ...settingsEn, ...stepsPromptEn, ...lobbyEn, ...friendsEn, ...fastingEn, ...coachEn,
+    ...settingsEn, ...stepsPromptEn, ...lobbyEn, ...friendsEn, ...fastingEn, ...coachEn, ...challengesEn,
   },
 };
 

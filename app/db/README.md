@@ -57,6 +57,7 @@ Alle `.sql`-Dateien werden **manuell** im Supabase **SQL Editor** ausgeführt
 | 49 | `049_fasting.sql` | Intervallfasten-Timer (#2): fasting_sessions + RLS (own CRUD) |
 | 50 | `050_custom_exercises.sql` | Eigene Übungen (#7): exercises.created_by + RLS (global+eigene lesen, eigene schreiben) |
 | 51 | `051_streak.sql` | Streak-System (#46): profiles.streak_* + RPC touch_streak (persistent, 1 Freeze/Woche, Meilensteine) |
+| 52 | `052_user_badges.sql` | Monats-Challenges (#68): user_badges (verdiente Abzeichen je Monat) + RLS own |
 
 ## Hinweise
 - **Reihenfolge zählt:** Spätere Migrationen bauen auf früheren auf.
