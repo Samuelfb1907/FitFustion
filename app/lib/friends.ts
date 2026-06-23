@@ -72,11 +72,19 @@ export async function removeFriendByCode(code: string): Promise<void> {
 // --- Anstupsen (#48d, Migration 045) ---
 export type Nudge = { from_name: string; created_at: string };
 
-// Freund (per Code) anstupsen. true = angestupst (oder schon offen), false = ging nicht.
-export async function sendNudge(code: string): Promise<boolean> {
-  const { data, error } = await supabase.rpc('send_nudge', { p_code: code });
-  if (error) return false;
-  return !!data;
+export type NudgeStatus = 'sent' | 'too_soon' | 'not_friend' | 'error';
+
+// Freund (per Code) anstupsen - via Edge Function (Freundschafts-Check + 15-Min-Limit +
+// Eintrag + Push serverseitig). Gibt den Status zurueck.
+export async function sendNudge(code: string): Promise<NudgeStatus> {
+  try {
+    const { data, error } = await supabase.functions.invoke('send-nudge', { body: { code } });
+    if (error) return 'error';
+    const s = (data as any)?.status;
+    return s === 'sent' || s === 'too_soon' || s === 'not_friend' ? s : 'error';
+  } catch {
+    return 'error';
+  }
 }
 
 // Offene Stupser abrufen + serverseitig als gesehen markieren.

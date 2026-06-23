@@ -51,6 +51,7 @@ Alle `.sql`-Dateien werden **manuell** im Supabase **SQL Editor** ausgeführt
 | 43 | `043_friend_codes.sql` | Freund-Codes (#48c): profiles.friend_code (kurz, eindeutig) + RPCs add_friend_by_code/friends_list/remove_friend_by_code |
 | 44 | `044_lobby_weekly.sql` | Lobby Wochen-Wertung + Ruhmeshalle: lobby_week_winners + RPCs lobby_week_board/lobby_hall_of_fame (lazy Wochen-Abrechnung) |
 | 45 | `045_nudges.sql` | Anstupsen (#48d): nudges-Tabelle + RLS + RPCs send_nudge (Freund per Code) / pending_nudges (abrufen + als gesehen markieren) |
+| 46 | `046_push_tokens.sql` | push_tokens (Expo-Push-Token je Nutzer) für Remote-Push; genutzt von Edge Function send-nudge |
 
 ## Hinweise
 - **Reihenfolge zählt:** Spätere Migrationen bauen auf früheren auf.

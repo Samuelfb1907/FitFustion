@@ -14,6 +14,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { PaywallProvider } from './components/Paywall';
 import { loadReminderPrefs, applyReminders, scheduleWinback, cancelWinback } from './lib/reminders';
 import { addFriend, friendCodeFromUrl, fetchPendingNudges } from './lib/friends';
+import { registerForPush } from './lib/push';
 import { lobbyCodeFromUrl, joinLobby, syncTodaySteps } from './lib/lobby';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -91,6 +92,7 @@ function Root() {
   // die heutigen Schritte hochladen (in Expo Go Beispielwerte, im echten Build echte Schritte).
   useEffect(() => {
     if (!session?.user) return;
+    registerForPush(); // Push-Token fuers Anstupsen registrieren (nur echter Build; Expo Go -> no-op)
     syncTodaySteps().catch(() => {});
     const sub = AppState.addEventListener('change', (s) => { if (s === 'active') syncTodaySteps().catch(() => {}); });
     return () => sub.remove();

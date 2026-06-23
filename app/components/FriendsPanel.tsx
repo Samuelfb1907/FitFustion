@@ -61,8 +61,9 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
   }
 
   async function nudge(f: Friend) {
-    const ok = await sendNudge(f.friend_code);
-    if (ok) Alert.alert(t('friends.nudged', { name: f.display_name }));
+    const status = await sendNudge(f.friend_code);
+    if (status === 'sent') Alert.alert(t('friends.nudged', { name: f.display_name }));
+    else if (status === 'too_soon') Alert.alert(t('friends.nudgeTooSoon', { name: f.display_name }));
   }
 
   function confirmRemove(f: Friend) {
