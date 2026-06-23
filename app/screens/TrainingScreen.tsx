@@ -2,7 +2,7 @@
 // Freies Training: Koerperregion (Karte/Koerper) antippen -> gefilterte Uebungen -> Detail.
 // Zurueck per Wischen zeigt die vorherige Seite dahinter (SwipeBack mit `behind`).
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Modal, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
@@ -16,6 +16,7 @@ import { TAB_BAR_SPACE } from '../lib/layout';
 import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
 import { DIFF_LABELS, EQUIP_LABELS, ALLOWED_DIFF, ALLOWED_EQUIP } from '../lib/training';
+import { createCustomExercise, deleteCustomExercise } from '../lib/customExercises';
 import { CARD_SHADOW as shadow } from '../lib/ui';
 import BodyMuscleMap from '../components/BodyMuscleMap';
 import BackButton from '../components/BackButton';
@@ -31,7 +32,7 @@ type Exercise = { id: string; name: string; difficulty: string; equipment: strin
 const MUSCLE_ORDER = ['chest', 'back', 'shoulders', 'neck', 'biceps', 'triceps', 'abs', 'legs', 'glutes', 'calves'];
 
 export default function TrainingScreen({ focusTick, focused = true }: { focusTick?: number; focused?: boolean }) {
-  const { profile, isPremium } = useAuth();
+  const { profile, isPremium, session } = useAuth();
   const { openPaywall } = usePaywall();
   const c = useColors();
   const t = useT();
@@ -50,6 +51,11 @@ export default function TrainingScreen({ focusTick, focused = true }: { focusTic
   const [refreshing, setRefreshing] = useState(false);
   const [planEx, setPlanEx] = useState<Selected | null>(null);
   const [planRefresh, setPlanRefresh] = useState(0);
+  const [customIds, setCustomIds] = useState<Set<string>>(new Set());
+  const [showCreate, setShowCreate] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newEquip, setNewEquip] = useState('bodyweight');
+  const [creating, setCreating] = useState(false);
 
   // Android-System-Zurueck: tiefste offene Ebene zuerst schliessen (genau wie das
   // Wischen vom Rand). Auf der Startebene false -> der globale Handler (MainTabs) uebernimmt.
@@ -106,23 +112,54 @@ export default function TrainingScreen({ focusTick, focused = true }: { focusTic
     setLoadingExercises(true);
     setExError(null);
     try {
-      const { data, error } = await supabase
-        .from('exercises')
-        .select('id, name, difficulty, equipment, description, instructions')
-        .eq('primary_muscle_id', m.id)
-        .in('difficulty', allowedDiff)
-        .in('equipment', allowedEquip)
-        .order('difficulty');
-      if (error) throw error;
-      const all = data ?? [];
-      // Gratis: begrenzte Auswahl pro Muskel; Premium: alle.
-      setExercises(isPremium ? all : all.slice(0, 4));
-      setMoreCount(isPremium ? 0 : Math.max(0, all.length - 4));
+      const uid = session?.user?.id;
+      const SEL = 'id, name, difficulty, equipment, description, instructions';
+      // Globale Uebungen (created_by null) gefiltert. Faellt zurueck auf die alte Query,
+      // falls die Spalte created_by noch fehlt (Migration 050 noch nicht eingespielt).
+      let globals: Exercise[] = [];
+      let customs: Exercise[] = [];
+      const globRes = await supabase.from('exercises').select(SEL).eq('primary_muscle_id', m.id).is('created_by', null).in('difficulty', allowedDiff).in('equipment', allowedEquip).order('difficulty');
+      if (globRes.error) {
+        const allRes = await supabase.from('exercises').select(SEL).eq('primary_muscle_id', m.id).in('difficulty', allowedDiff).in('equipment', allowedEquip).order('difficulty');
+        if (allRes.error) throw allRes.error;
+        globals = (allRes.data ?? []) as Exercise[];
+      } else {
+        globals = (globRes.data ?? []) as Exercise[];
+        if (uid) {
+          // Eigene Uebungen (ohne Schwierigkeits-/Equipment-Filter -> immer sichtbar).
+          const custRes = await supabase.from('exercises').select(SEL).eq('primary_muscle_id', m.id).eq('created_by', uid).order('name');
+          customs = (custRes.data ?? []) as Exercise[];
+        }
+      }
+      setCustomIds(new Set(customs.map((x) => x.id)));
+      // Gratis: globale Auswahl begrenzt; eigene Uebungen IMMER zeigen.
+      const limited = isPremium ? globals : globals.slice(0, 4);
+      setExercises([...customs, ...limited]);
+      setMoreCount(isPremium ? 0 : Math.max(0, globals.length - 4));
     } catch (e) {
       setExError(errorMessage(e));
     } finally {
       setLoadingExercises(false);
     }
+  }
+
+  async function doCreate() {
+    const uid = session?.user?.id;
+    const name = newName.trim();
+    if (!uid || !selectedMuscle || !name || creating) return;
+    setCreating(true);
+    const id = await createCustomExercise(uid, name, selectedMuscle.id, newEquip);
+    setCreating(false);
+    if (!id) { Alert.alert(t('training.createFailed')); return; }
+    setShowCreate(false);
+    openMuscle(selectedMuscle); // Liste neu laden -> eigene Uebung erscheint
+  }
+
+  function confirmDeleteCustom(ex: Exercise) {
+    Alert.alert(t('training.deleteCustomTitle', { name: ex.name }), t('training.deleteCustomBody'), [
+      { text: t('exercise.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: async () => { const ok = await deleteCustomExercise(ex.id); if (ok) { if (selectedMuscle) openMuscle(selectedMuscle); } else Alert.alert(t('training.deleteCustomFailed')); } },
+    ]);
   }
 
   // Stabiler Callback fuer das Koerper-Modell, damit BodyMuscleMap (schweres SVG)
@@ -230,27 +267,38 @@ export default function TrainingScreen({ focusTick, focused = true }: { focusTic
           windowSize={7}
           removeClippedSubviews
           ListHeaderComponent={<Text style={styles.countHint}>{!isPremium && moreCount > 0 ? t('training.freeBasicsHint') : (exercises.length === 1 ? t('training.exerciseCountOne', { n: exercises.length }) : t('training.exerciseCountMany', { n: exercises.length }))}</Text>}
-          ListFooterComponent={!isPremium && moreCount > 0 ? (
-            <TouchableOpacity style={styles.exRow} onPress={() => openPaywall('exercises')} activeOpacity={0.7}>
-              <View style={styles.lockChip}>
-                <Ionicons name="lock-closed" size={17} color={c.primary} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.exName}>{moreCount === 1 ? t('training.moreLockedOne', { n: moreCount }) : t('training.moreLockedMany', { n: moreCount })}</Text>
-                <Text style={styles.exMeta}>{t('training.moreLockedHint')}</Text>
-              </View>
-              <Text style={styles.chev}>›</Text>
-            </TouchableOpacity>
-          ) : null}
-          renderItem={({ item: ex }) => (
-            <TouchableOpacity style={styles.exRow} onPress={() => setSelectedExercise(ex)} activeOpacity={0.7}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.exName}>{ex.name}</Text>
-                <Text style={styles.exMeta}>{DIFF_LABELS[ex.difficulty] ?? ex.difficulty} · {EQUIP_LABELS[ex.equipment] ?? ex.equipment}</Text>
-              </View>
-              <Text style={styles.chev}>›</Text>
-            </TouchableOpacity>
-          )}
+          ListFooterComponent={
+            <>
+              {!isPremium && moreCount > 0 && (
+                <TouchableOpacity style={styles.exRow} onPress={() => openPaywall('exercises')} activeOpacity={0.7}>
+                  <View style={styles.lockChip}>
+                    <Ionicons name="lock-closed" size={17} color={c.primary} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.exName}>{moreCount === 1 ? t('training.moreLockedOne', { n: moreCount }) : t('training.moreLockedMany', { n: moreCount })}</Text>
+                    <Text style={styles.exMeta}>{t('training.moreLockedHint')}</Text>
+                  </View>
+                  <Text style={styles.chev}>›</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity style={styles.exRow} onPress={() => { setNewName(''); setNewEquip('bodyweight'); setShowCreate(true); }} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={t('training.createCustom')}>
+                <View style={styles.lockChip}><Ionicons name="add" size={20} color={c.primary} /></View>
+                <Text style={[styles.exName, { flex: 1, color: c.primary }]}>{t('training.createCustom')}</Text>
+              </TouchableOpacity>
+            </>
+          }
+          renderItem={({ item: ex }) => {
+            const mine = customIds.has(ex.id);
+            return (
+              <TouchableOpacity style={styles.exRow} onPress={() => setSelectedExercise(ex)} onLongPress={mine ? () => confirmDeleteCustom(ex) : undefined} activeOpacity={0.7}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.exName}>{ex.name}</Text>
+                  <Text style={styles.exMeta}>{mine ? `${t('training.customBadge')} · ` : ''}{DIFF_LABELS[ex.difficulty] ?? ex.difficulty} · {EQUIP_LABELS[ex.equipment] ?? ex.equipment}</Text>
+                </View>
+                <Text style={styles.chev}>›</Text>
+              </TouchableOpacity>
+            );
+          }}
         />
       )}
     </View>
@@ -300,6 +348,29 @@ export default function TrainingScreen({ focusTick, focused = true }: { focusTic
           </SwipeBack>
         </View>
       )}
+
+      <Modal visible={showCreate} transparent animationType="fade" onRequestClose={() => setShowCreate(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>{t('training.createTitle', { muscle: selectedMuscle?.name_de ?? '' })}</Text>
+            <TextInput style={styles.modalInput} value={newName} onChangeText={setNewName} placeholder={t('training.createNamePlaceholder')} placeholderTextColor={c.textMuted} maxLength={60} autoCapitalize="sentences" underlineColorAndroid="transparent" />
+            <Text style={styles.modalLabel}>{t('training.createEquip')}</Text>
+            <View style={styles.equipWrap}>
+              {['bodyweight', 'dumbbell', 'barbell', 'machine', 'cable', 'none', 'other'].map((eq) => (
+                <TouchableOpacity key={eq} onPress={() => setNewEquip(eq)} style={[styles.equipChip, newEquip === eq && styles.equipChipOn]} activeOpacity={0.85}>
+                  <Text style={[styles.equipChipText, newEquip === eq && styles.equipChipTextOn]}>{EQUIP_LABELS[eq]}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <TouchableOpacity style={[styles.modalCreate, creating && { opacity: 0.6 }]} onPress={doCreate} disabled={creating} activeOpacity={0.85}>
+              {creating ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.modalCreateText}>{t('training.createCta')}</Text>}
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.modalCancel} onPress={() => setShowCreate(false)} activeOpacity={0.7}>
+              <Text style={styles.modalCancelText}>{t('exercise.cancel')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -307,6 +378,20 @@ export default function TrainingScreen({ focusTick, focused = true }: { focusTic
 function makeStyles(c: Colors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: 'transparent', paddingTop: 56, paddingHorizontal: 16 },
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', paddingHorizontal: 24 },
+    modalCard: { backgroundColor: c.bg, borderRadius: 22, padding: 22, borderWidth: 1, borderColor: c.cardBorder },
+    modalTitle: { fontSize: 18, fontWeight: '800', color: c.heading, marginBottom: 14 },
+    modalInput: { backgroundColor: c.inputBg, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 16, color: c.text, borderWidth: 1, borderColor: c.border },
+    modalLabel: { fontSize: 13, color: c.text, fontWeight: '700', marginTop: 16, marginBottom: 8 },
+    equipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    equipChip: { paddingVertical: 9, paddingHorizontal: 14, borderRadius: 12, borderWidth: 1, borderColor: c.border, backgroundColor: c.inputBg },
+    equipChipOn: { borderColor: c.primary, backgroundColor: 'rgba(25,201,143,0.12)' },
+    equipChipText: { fontSize: 14, fontWeight: '700', color: c.textMuted },
+    equipChipTextOn: { color: c.primary },
+    modalCreate: { backgroundColor: c.primary, borderRadius: 16, paddingVertical: 15, alignItems: 'center', marginTop: 20 },
+    modalCreateText: { color: c.onPrimary, fontSize: 16, fontWeight: '800' },
+    modalCancel: { paddingVertical: 12, alignItems: 'center', marginTop: 4 },
+    modalCancelText: { color: c.textMuted, fontSize: 15, fontWeight: '600' },
     title: { fontSize: 28, fontWeight: '800', color: c.heading, letterSpacing: -0.5 },
     subtitle: { fontSize: 15, color: c.textMuted, marginTop: 2, marginBottom: 16 },
     back: { color: c.primary, fontSize: 15, fontWeight: '600', marginBottom: 10 },

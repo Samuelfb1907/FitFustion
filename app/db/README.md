@@ -55,6 +55,7 @@ Alle `.sql`-Dateien werden **manuell** im Supabase **SQL Editor** ausgeführt
 | 47 | `047_friend_requests.sql` | Freundschaftsanfragen (#48e): friend_requests + add_friend_by_code wird Anfrage + RPCs incoming_requests/accept_request/decline_request |
 | 48 | `048_activity_feed.sql` | Freunde-Aktivitäts-Feed (#48f): activity_events + RPCs log_activity (Anti-Spam) / friends_feed |
 | 49 | `049_fasting.sql` | Intervallfasten-Timer (#2): fasting_sessions + RLS (own CRUD) |
+| 50 | `050_custom_exercises.sql` | Eigene Übungen (#7): exercises.created_by + RLS (global+eigene lesen, eigene schreiben) |
 
 ## Hinweise
 - **Reihenfolge zählt:** Spätere Migrationen bauen auf früheren auf.
