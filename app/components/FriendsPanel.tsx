@@ -1,11 +1,12 @@
-// Freunde-Bereich (#48c): zeigt den eigenen Freund-Code (teilbar), erlaubt Hinzufuegen per
-// Code und listet die Freunde (mit Entfernen). Selbst-ladend; als Reiter im Lobby-Tab genutzt.
+// Freunde-Bereich (#48c): eigener Freund-Code (teilbar), Hinzufuegen per Code, Anfragen,
+// Aktivitaets-Feed und Freundesliste. Selbst-ladend; als Reiter im Lobby-Tab genutzt.
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Share, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { useT } from '../contexts/LanguageContext';
 import GlassFill from './GlassFill';
+import SectionHead from './SectionHead';
 import { CARD_SHADOW as shadow } from '../lib/ui';
 import { errorMessage } from '../lib/errors';
 import { Friend, FriendRequest, getMyFriendCode, fetchFriends, addFriendByCode, removeFriendByCode, sendNudge, incomingRequests, acceptRequest, declineRequest } from '../lib/friends';
@@ -117,10 +118,10 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
     <View>
       {err && <Text style={styles.err}>{err}</Text>}
 
-      {/* Mein Code */}
-      <View style={styles.codeTile}>
-        <GlassFill radius={20} />
-        <Text style={styles.codeLabel}>{t('friends.yourCode')}</Text>
+      {/* Mein Code (Hero) */}
+      <View style={styles.hero}>
+        <GlassFill radius={22} />
+        <Text style={styles.heroLabel}>{t('friends.yourCode')}</Text>
         <Text style={styles.code} selectable>{myCode ?? '–'}</Text>
         <TouchableOpacity style={styles.shareBtn} onPress={share} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={t('friends.share')}>
           <Ionicons name="share-social" size={16} color="#fff" />
@@ -129,10 +130,10 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
       </View>
 
       {/* Freund per Code hinzufuegen */}
-      <View style={styles.tile}>
-        <GlassFill radius={16} />
-        <Text style={styles.label}>{t('friends.addHeading')}</Text>
-        <View style={{ flexDirection: 'row', gap: 8 }}>
+      <View style={styles.card}>
+        <GlassFill radius={20} />
+        <SectionHead icon="person-add" title={t('friends.addHeading')} />
+        <View style={{ flexDirection: 'row', gap: 10 }}>
           <TextInput
             style={[styles.input, { flex: 1 }]}
             value={codeInput}
@@ -152,18 +153,18 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
 
       {/* Eingehende Freundschaftsanfragen */}
       {requests.length > 0 && (
-        <View style={styles.tile}>
-          <GlassFill radius={16} />
-          <Text style={styles.tileLabel}>{t('friends.requestsLabel', { n: requests.length })}</Text>
+        <View style={styles.card}>
+          <GlassFill radius={20} />
+          <SectionHead icon="person-add" title={t('friends.requestsLabel', { n: requests.length })} tint="#F0B429" />
           {requests.map((r, i) => (
             <View key={r.friend_code} style={[styles.row, i > 0 && styles.rowDivider]}>
               <View style={styles.avatar}><Text style={styles.avatarText}>{(r.display_name.charAt(0) || '?').toUpperCase()}</Text></View>
               <Text style={styles.name} numberOfLines={1}>{r.display_name}</Text>
-              <TouchableOpacity onPress={() => accept(r)} disabled={busy} hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('friends.accept')} style={{ marginRight: 14 }}>
-                <Ionicons name="checkmark-circle" size={27} color={c.primary} />
+              <TouchableOpacity onPress={() => accept(r)} disabled={busy} hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('friends.accept')} style={{ marginRight: 12 }}>
+                <Ionicons name="checkmark-circle" size={28} color={c.primary} />
               </TouchableOpacity>
               <TouchableOpacity onPress={() => decline(r)} disabled={busy} hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('friends.decline')}>
-                <Ionicons name="close-circle-outline" size={27} color={c.textMuted} />
+                <Ionicons name="close-circle-outline" size={28} color={c.textMuted} />
               </TouchableOpacity>
             </View>
           ))}
@@ -172,17 +173,19 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
 
       {/* Was die Freunde machen (Aktivitaets-Feed) */}
       {feed.length > 0 && (
-        <View style={styles.tile}>
-          <GlassFill radius={16} />
-          <Text style={styles.tileLabel}>{t('friends.feed.label')}</Text>
+        <View style={styles.card}>
+          <GlassFill radius={20} />
+          <SectionHead icon="pulse" title={t('friends.feed.label')} />
           {feed.map((item, i) => {
             const a = agoKey(item.created_at);
-            const text = item.type === 'record'
+            const isRec = item.type === 'record';
+            const tint = isRec ? '#F0B429' : c.primary;
+            const text = isRec
               ? (item.detail ? t('friends.feed.recordEx', { name: item.display_name, ex: item.detail }) : t('friends.feed.record', { name: item.display_name }))
               : t('friends.feed.trained', { name: item.display_name });
             return (
               <View key={i} style={[styles.row, i > 0 && styles.rowDivider]}>
-                <Ionicons name={item.type === 'record' ? 'trophy' : 'barbell'} size={18} color={item.type === 'record' ? '#F0B429' : c.primary} style={{ width: 28 }} />
+                <View style={[styles.avatar, { backgroundColor: tint + '22' }]}><Ionicons name={isRec ? 'trophy' : 'barbell'} size={18} color={tint} /></View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.feedText} numberOfLines={2}>{text}</Text>
                   <Text style={styles.feedTime}>{t(a.key, { n: a.n })}</Text>
@@ -194,20 +197,23 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
       )}
 
       {/* Freundesliste */}
-      <View style={styles.tile}>
-        <GlassFill radius={16} />
-        <Text style={styles.tileLabel}>{t('friends.listLabel', { n: friends.length })}</Text>
+      <View style={styles.card}>
+        <GlassFill radius={20} />
+        <SectionHead icon="people" title={t('friends.listLabel', { n: friends.length })} />
         {friends.length === 0 ? (
-          <Text style={styles.empty}>{t('friends.empty')}</Text>
+          <View style={styles.emptyWrap}>
+            <Text style={styles.emptyIcon}>🤝</Text>
+            <Text style={styles.empty}>{t('friends.empty')}</Text>
+          </View>
         ) : (
           friends.map((f, i) => (
             <View key={f.friend_code} style={[styles.row, i > 0 && styles.rowDivider]}>
               <View style={styles.avatar}><Text style={styles.avatarText}>{(f.display_name.charAt(0) || '?').toUpperCase()}</Text></View>
               <Text style={styles.name} numberOfLines={1}>{f.display_name}</Text>
-              <TouchableOpacity onPress={() => nudge(f)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button" accessibilityLabel={t('friends.nudge')} style={{ marginRight: 16 }}>
+              <TouchableOpacity onPress={() => nudge(f)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button" accessibilityLabel={t('friends.nudge')} style={styles.iconBtn}>
                 <Ionicons name="hand-left-outline" size={20} color={c.primary} />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => confirmRemove(f)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button" accessibilityLabel={t('friends.remove')}>
+              <TouchableOpacity onPress={() => confirmRemove(f)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button" accessibilityLabel={t('friends.remove')} style={styles.iconBtn}>
                 <Ionicons name="person-remove-outline" size={20} color={c.textMuted} />
               </TouchableOpacity>
             </View>
@@ -222,25 +228,31 @@ function makeStyles(c: Colors) {
   return StyleSheet.create({
     err: { color: c.danger, fontSize: 13, marginBottom: 8 },
 
-    codeTile: { ...shadow, backgroundColor: c.hero, borderRadius: 20, padding: 18, marginTop: 12, alignItems: 'center', overflow: 'hidden' },
-    codeLabel: { color: 'rgba(255,255,255,0.75)', fontSize: 11, fontWeight: '800', letterSpacing: 1.6 },
-    code: { color: '#fff', fontSize: 34, fontWeight: '900', letterSpacing: 6, marginTop: 6, marginLeft: 6 },
-    shareBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.22)', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 16, marginTop: 12 },
+    // Eigener Code (Hero)
+    hero: { ...shadow, backgroundColor: c.hero, borderRadius: 22, padding: 20, marginTop: 14, alignItems: 'center', overflow: 'hidden' },
+    heroLabel: { color: 'rgba(255,255,255,0.75)', fontSize: 11, fontWeight: '800', letterSpacing: 1.6 },
+    code: { color: '#fff', fontSize: 36, fontWeight: '900', letterSpacing: 6, marginTop: 8, marginLeft: 6 },
+    shareBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.22)', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 18, marginTop: 14 },
     shareText: { color: '#fff', fontSize: 14, fontWeight: '800' },
 
-    tile: { ...shadow, backgroundColor: c.card, borderRadius: 16, padding: 16, marginTop: 12, borderWidth: 1, borderColor: c.cardBorder, overflow: 'hidden' },
-    label: { fontSize: 13, color: c.text, fontWeight: '700', marginBottom: 8 },
-    tileLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1.6, color: c.textMuted, marginBottom: 4 },
+    // Einheitliche Karten
+    card: { ...shadow, backgroundColor: c.card, borderRadius: 20, padding: 16, marginTop: 14, borderWidth: 1, borderColor: c.cardBorder, overflow: 'hidden' },
     input: { backgroundColor: c.inputBg, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 18, fontWeight: '700', letterSpacing: 2, color: c.text, borderWidth: 1, borderColor: c.border },
     addBtn: { backgroundColor: c.primary, borderRadius: 14, paddingHorizontal: 20, alignItems: 'center', justifyContent: 'center' },
     addText: { color: c.onPrimary, fontSize: 15, fontWeight: '800' },
 
-    empty: { fontSize: 14, color: c.textMuted, fontStyle: 'italic', textAlign: 'center', paddingVertical: 10, lineHeight: 20 },
+    // Leerzustand
+    emptyWrap: { alignItems: 'center', paddingVertical: 10 },
+    emptyIcon: { fontSize: 32, marginBottom: 8 },
+    empty: { fontSize: 14, color: c.textMuted, textAlign: 'center', lineHeight: 20 },
+
+    // Zeilen (Anfragen / Feed / Freunde)
     row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11 },
     rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.border },
     avatar: { width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(25,201,143,0.16)', alignItems: 'center', justifyContent: 'center' },
     avatarText: { color: c.primary, fontSize: 16, fontWeight: '800' },
     name: { flex: 1, fontSize: 15, color: c.text, fontWeight: '600' },
+    iconBtn: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: c.inputBg },
     feedText: { fontSize: 14, color: c.text, fontWeight: '600', lineHeight: 19 },
     feedTime: { fontSize: 12, color: c.textMuted, marginTop: 1 },
   });

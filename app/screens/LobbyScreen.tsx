@@ -9,6 +9,7 @@ import { useT } from '../contexts/LanguageContext';
 import GlassFill from '../components/GlassFill';
 import Segmented from '../components/Segmented';
 import FriendsPanel from '../components/FriendsPanel';
+import SectionHead from '../components/SectionHead';
 import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
 import { CARD_SHADOW as shadow } from '../lib/ui';
@@ -226,9 +227,11 @@ export default function LobbyScreen({ focusTick }: { focusTick?: number; focused
           </View>
 
           <View style={styles.tile}>
-            <GlassFill radius={16} />
+            <GlassFill radius={20} />
             <View style={styles.boardHead}>
-              <Text style={styles.tileLabel}>{period === 'week' ? t('lobby.board.labelWeek') : t('lobby.board.label')}</Text>
+              <View style={{ flex: 1 }}>
+                <SectionHead icon={period === 'week' ? 'calendar' : 'footsteps'} title={period === 'week' ? t('lobby.board.labelWeek') : t('lobby.board.label')} />
+              </View>
               {myRank > 0 && <Text style={styles.myRank}>{t('lobby.myRank', { rank: myRank, total: displayRows.length })}</Text>}
             </View>
             {displayRows.length === 0 ? (
@@ -250,8 +253,8 @@ export default function LobbyScreen({ focusTick }: { focusTick?: number; focused
 
           {hall.length > 0 && (
             <View style={styles.tile}>
-              <GlassFill radius={16} />
-              <Text style={styles.tileLabel}>{t('lobby.hall.label')}</Text>
+              <GlassFill radius={20} />
+              <SectionHead icon="trophy" title={t('lobby.hall.label')} tint="#F0B429" />
               {hall.map((w, i) => (
                 <View key={i} style={[styles.rankRow, i > 0 && styles.rankDivider]}>
                   <Ionicons name="trophy" size={18} color="#F0B429" style={{ width: 30 }} />
@@ -315,7 +318,7 @@ export default function LobbyScreen({ focusTick }: { focusTick?: number; focused
           </View>
         )}
         <View style={styles.tile}>
-          <GlassFill radius={16} />
+          <GlassFill radius={20} />
           <Text style={styles.label}>{t('lobby.yourName')}</Text>
           <TextInput style={styles.input} value={myName} onChangeText={setMyName} placeholder={t('lobby.yourNamePlaceholder')} placeholderTextColor={c.textMuted} maxLength={24} autoCapitalize="words" underlineColorAndroid="transparent" />
 
