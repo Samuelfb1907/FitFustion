@@ -1,5 +1,5 @@
-// Freunde-Bereich (#48c): eigener Freund-Code (teilbar), Hinzufuegen per Code, Anfragen,
-// Aktivitaets-Feed und Freundesliste. Selbst-ladend; als Reiter im Lobby-Tab genutzt.
+// Freunde-Bereich (#48c): kompakter eigener Code, eine vereinte Karte (Hinzufuegen + Anfragen
+// + Freundesliste) und eine ruhige Aktivitaets-Karte. Selbst-ladend; Reiter im Lobby-Tab.
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Share, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -114,25 +114,29 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
 
   if (loading) return <ActivityIndicator size="large" color={c.primary} style={{ marginTop: 30 }} />;
 
+  const initial = (n: string) => (n.charAt(0) || '?').toUpperCase();
+
   return (
     <View>
       {err && <Text style={styles.err}>{err}</Text>}
 
-      {/* Mein Code (Hero) */}
-      <View style={styles.hero}>
-        <GlassFill radius={22} />
-        <Text style={styles.heroLabel}>{t('friends.yourCode')}</Text>
-        <Text style={styles.code} selectable>{myCode ?? '–'}</Text>
+      {/* Kompakter eigener Code */}
+      <View style={styles.codeStrip}>
+        <GlassFill radius={20} />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.codeStripLabel}>{t('friends.yourCode')}</Text>
+          <Text style={styles.codeStripCode} selectable numberOfLines={1}>{myCode ?? '–'}</Text>
+        </View>
         <TouchableOpacity style={styles.shareBtn} onPress={share} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={t('friends.share')}>
-          <Ionicons name="share-social" size={16} color="#fff" />
+          <Ionicons name="share-social" size={16} color={c.onPrimary} />
           <Text style={styles.shareText}>{t('friends.share')}</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Freund per Code hinzufuegen */}
+      {/* Vereinte Freunde-Karte: Hinzufuegen + Anfragen + Liste */}
       <View style={styles.card}>
         <GlassFill radius={20} />
-        <SectionHead icon="person-add" title={t('friends.addHeading')} />
+
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <TextInput
             style={[styles.input, { flex: 1 }]}
@@ -149,27 +153,48 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
             {busy ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.addText}>{t('friends.add')}</Text>}
           </TouchableOpacity>
         </View>
-      </View>
 
-      {/* Eingehende Freundschaftsanfragen */}
-      {requests.length > 0 && (
-        <View style={styles.card}>
-          <GlassFill radius={20} />
-          <SectionHead icon="person-add" title={t('friends.requestsLabel', { n: requests.length })} tint="#F0B429" />
-          {requests.map((r, i) => (
-            <View key={r.friend_code} style={[styles.row, i > 0 && styles.rowDivider]}>
-              <View style={styles.avatar}><Text style={styles.avatarText}>{(r.display_name.charAt(0) || '?').toUpperCase()}</Text></View>
-              <Text style={styles.name} numberOfLines={1}>{r.display_name}</Text>
-              <TouchableOpacity onPress={() => accept(r)} disabled={busy} hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('friends.accept')} style={{ marginRight: 12 }}>
-                <Ionicons name="checkmark-circle" size={28} color={c.primary} />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => decline(r)} disabled={busy} hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('friends.decline')}>
-                <Ionicons name="close-circle-outline" size={28} color={c.textMuted} />
-              </TouchableOpacity>
+        {requests.length > 0 && (
+          <View style={styles.sub}>
+            <SectionHead icon="person-add" title={t('friends.requestsLabel', { n: requests.length })} tint="#F0B429" />
+            {requests.map((r, i) => (
+              <View key={r.friend_code} style={[styles.row, i > 0 && styles.rowDivider]}>
+                <View style={styles.avatar}><Text style={styles.avatarText}>{initial(r.display_name)}</Text></View>
+                <Text style={styles.name} numberOfLines={1}>{r.display_name}</Text>
+                <TouchableOpacity onPress={() => accept(r)} disabled={busy} hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('friends.accept')} style={{ marginLeft: 8 }}>
+                  <Ionicons name="checkmark-circle" size={28} color={c.primary} />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => decline(r)} disabled={busy} hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('friends.decline')} style={{ marginLeft: 14 }}>
+                  <Ionicons name="close-circle-outline" size={28} color={c.textMuted} />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        )}
+
+        <View style={styles.sub}>
+          <SectionHead icon="people" title={t('friends.listLabel', { n: friends.length })} />
+          {friends.length === 0 ? (
+            <View style={styles.emptyWrap}>
+              <Text style={styles.emptyIcon}>🤝</Text>
+              <Text style={styles.empty}>{t('friends.empty')}</Text>
             </View>
-          ))}
+          ) : (
+            friends.map((f, i) => (
+              <View key={f.friend_code} style={[styles.row, i > 0 && styles.rowDivider]}>
+                <View style={styles.avatar}><Text style={styles.avatarText}>{initial(f.display_name)}</Text></View>
+                <Text style={styles.name} numberOfLines={1}>{f.display_name}</Text>
+                <TouchableOpacity onPress={() => nudge(f)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button" accessibilityLabel={t('friends.nudge')} style={{ marginLeft: 10 }}>
+                  <Ionicons name="hand-left-outline" size={21} color={c.primary} />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => confirmRemove(f)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button" accessibilityLabel={t('friends.remove')} style={{ marginLeft: 18 }}>
+                  <Ionicons name="person-remove-outline" size={20} color={c.textMuted} />
+                </TouchableOpacity>
+              </View>
+            ))
+          )}
         </View>
-      )}
+      </View>
 
       {/* Was die Freunde machen (Aktivitaets-Feed) */}
       {feed.length > 0 && (
@@ -185,7 +210,7 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
               : t('friends.feed.trained', { name: item.display_name });
             return (
               <View key={i} style={[styles.row, i > 0 && styles.rowDivider]}>
-                <View style={[styles.avatar, { backgroundColor: tint + '22' }]}><Ionicons name={isRec ? 'trophy' : 'barbell'} size={18} color={tint} /></View>
+                <View style={[styles.feedIcon, { backgroundColor: tint + '22' }]}><Ionicons name={isRec ? 'trophy' : 'barbell'} size={17} color={tint} /></View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.feedText} numberOfLines={2}>{text}</Text>
                   <Text style={styles.feedTime}>{t(a.key, { n: a.n })}</Text>
@@ -195,31 +220,6 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
           })}
         </View>
       )}
-
-      {/* Freundesliste */}
-      <View style={styles.card}>
-        <GlassFill radius={20} />
-        <SectionHead icon="people" title={t('friends.listLabel', { n: friends.length })} />
-        {friends.length === 0 ? (
-          <View style={styles.emptyWrap}>
-            <Text style={styles.emptyIcon}>🤝</Text>
-            <Text style={styles.empty}>{t('friends.empty')}</Text>
-          </View>
-        ) : (
-          friends.map((f, i) => (
-            <View key={f.friend_code} style={[styles.row, i > 0 && styles.rowDivider]}>
-              <View style={styles.avatar}><Text style={styles.avatarText}>{(f.display_name.charAt(0) || '?').toUpperCase()}</Text></View>
-              <Text style={styles.name} numberOfLines={1}>{f.display_name}</Text>
-              <TouchableOpacity onPress={() => nudge(f)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button" accessibilityLabel={t('friends.nudge')} style={styles.iconBtn}>
-                <Ionicons name="hand-left-outline" size={20} color={c.primary} />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => confirmRemove(f)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button" accessibilityLabel={t('friends.remove')} style={styles.iconBtn}>
-                <Ionicons name="person-remove-outline" size={20} color={c.textMuted} />
-              </TouchableOpacity>
-            </View>
-          ))
-        )}
-      </View>
     </View>
   );
 }
@@ -228,31 +228,34 @@ function makeStyles(c: Colors) {
   return StyleSheet.create({
     err: { color: c.danger, fontSize: 13, marginBottom: 8 },
 
-    // Eigener Code (Hero)
-    hero: { ...shadow, backgroundColor: c.hero, borderRadius: 22, padding: 20, marginTop: 14, alignItems: 'center', overflow: 'hidden' },
-    heroLabel: { color: 'rgba(255,255,255,0.75)', fontSize: 11, fontWeight: '800', letterSpacing: 1.6 },
-    code: { color: '#fff', fontSize: 36, fontWeight: '900', letterSpacing: 6, marginTop: 8, marginLeft: 6 },
-    shareBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.22)', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 18, marginTop: 14 },
-    shareText: { color: '#fff', fontSize: 14, fontWeight: '800' },
+    // Kompakter Code-Streifen
+    codeStrip: { ...shadow, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: c.card, borderRadius: 20, padding: 16, marginTop: 14, borderWidth: 1, borderColor: c.cardBorder, overflow: 'hidden' },
+    codeStripLabel: { fontSize: 12, color: c.textMuted, fontWeight: '600', marginBottom: 3 },
+    codeStripCode: { fontSize: 26, fontWeight: '900', letterSpacing: 5, color: c.heading },
+    shareBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.primary, borderRadius: 14, paddingVertical: 11, paddingHorizontal: 15 },
+    shareText: { color: c.onPrimary, fontSize: 14, fontWeight: '800' },
 
-    // Einheitliche Karten
+    // Karten
     card: { ...shadow, backgroundColor: c.card, borderRadius: 20, padding: 16, marginTop: 14, borderWidth: 1, borderColor: c.cardBorder, overflow: 'hidden' },
     input: { backgroundColor: c.inputBg, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 18, fontWeight: '700', letterSpacing: 2, color: c.text, borderWidth: 1, borderColor: c.border },
     addBtn: { backgroundColor: c.primary, borderRadius: 14, paddingHorizontal: 20, alignItems: 'center', justifyContent: 'center' },
     addText: { color: c.onPrimary, fontSize: 15, fontWeight: '800' },
 
+    // Unterabschnitt innerhalb der Karte (feine Trennlinie statt neuer Kasten)
+    sub: { marginTop: 14, paddingTop: 14, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.border },
+
     // Leerzustand
-    emptyWrap: { alignItems: 'center', paddingVertical: 10 },
-    emptyIcon: { fontSize: 32, marginBottom: 8 },
+    emptyWrap: { alignItems: 'center', paddingVertical: 8 },
+    emptyIcon: { fontSize: 30, marginBottom: 6 },
     empty: { fontSize: 14, color: c.textMuted, textAlign: 'center', lineHeight: 20 },
 
-    // Zeilen (Anfragen / Feed / Freunde)
-    row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11 },
+    // Zeilen
+    row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 },
     rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.border },
-    avatar: { width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(25,201,143,0.16)', alignItems: 'center', justifyContent: 'center' },
-    avatarText: { color: c.primary, fontSize: 16, fontWeight: '800' },
+    avatar: { width: 38, height: 38, borderRadius: 19, backgroundColor: c.inputBg, alignItems: 'center', justifyContent: 'center' },
+    avatarText: { color: c.heading, fontSize: 16, fontWeight: '800' },
     name: { flex: 1, fontSize: 15, color: c.text, fontWeight: '600' },
-    iconBtn: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: c.inputBg },
+    feedIcon: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
     feedText: { fontSize: 14, color: c.text, fontWeight: '600', lineHeight: 19 },
     feedTime: { fontSize: 12, color: c.textMuted, marginTop: 1 },
   });
