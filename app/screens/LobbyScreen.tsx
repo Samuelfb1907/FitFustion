@@ -206,6 +206,7 @@ export default function LobbyScreen({ focusTick }: { focusTick?: number; focused
           {activeLobby && (
             <View style={styles.headerTile}>
               <GlassFill radius={20} />
+              <View style={styles.lobbyIcon}><Ionicons name="people" size={20} color={c.primary} /></View>
               <View style={{ flex: 1, marginRight: 10 }}>
                 <Text style={styles.lobbyName} numberOfLines={1}>{activeLobby.name}</Text>
                 <Text style={styles.lobbyCode}>{t('lobby.code', { code: activeLobby.invite_code })}</Text>
@@ -373,11 +374,12 @@ function makeStyles(c: Colors) {
     orText: { fontSize: 12, color: c.textMuted, fontWeight: '700' },
 
     // Lobby-Kopf
-    headerTile: { ...shadow, flexDirection: 'row', alignItems: 'center', backgroundColor: c.hero, borderRadius: 20, padding: 16, marginTop: 12, overflow: 'hidden' },
-    lobbyName: { color: '#fff', fontSize: 18, fontWeight: '800' },
-    lobbyCode: { color: 'rgba(255,255,255,0.8)', fontSize: 13, fontWeight: '600', marginTop: 2, letterSpacing: 0.5 },
-    inviteBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.22)', borderRadius: 14, paddingVertical: 10, paddingHorizontal: 14 },
-    inviteText: { color: '#fff', fontSize: 14, fontWeight: '800' },
+    headerTile: { ...shadow, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: c.card, borderRadius: 20, padding: 16, marginTop: 12, borderWidth: 1, borderColor: c.cardBorder, overflow: 'hidden' },
+    lobbyIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(25,201,143,0.16)', alignItems: 'center', justifyContent: 'center' },
+    lobbyName: { color: c.heading, fontSize: 17, fontWeight: '800' },
+    lobbyCode: { color: c.textMuted, fontSize: 13, fontWeight: '600', marginTop: 2, letterSpacing: 0.5 },
+    inviteBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.primary, borderRadius: 14, paddingVertical: 10, paddingHorizontal: 14 },
+    inviteText: { color: c.onPrimary, fontSize: 14, fontWeight: '800' },
 
     // Umschalter
     switchPill: { backgroundColor: c.card, borderRadius: 999, paddingVertical: 8, paddingHorizontal: 16, borderWidth: 1, borderColor: c.cardBorder, maxWidth: 180 },
