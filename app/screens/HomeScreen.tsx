@@ -25,6 +25,7 @@ import { WATER_GOAL } from '../lib/water';
 import { fetchMyLobbies, fetchLobbyBoard } from '../lib/lobby';
 import { getMyEntry } from '../lib/leaderboard';
 import { touchStreak } from '../lib/streak';
+import { syncStreakReminder } from '../lib/reminders';
 import Confetti from '../components/Confetti';
 import * as Haptics from 'expo-haptics';
 
@@ -225,6 +226,8 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
         streakVal = (prof as any).streak_current;
       }
       setStats({ sessions, sets, foodLogs, streak: streakVal, goalSet: !!goal });
+      // Streak-Schutz-Erinnerung mit aktuellem Stand setzen (feuert nur, wenn heute nichts lief).
+      void syncStreakReminder(streakVal, dates.includes(todayStr()));
       const today = todayStr(), mon = mondayStr();
       setGoalsData({
         trainedToday: sdDates.includes(today),

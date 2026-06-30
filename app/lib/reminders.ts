@@ -4,12 +4,14 @@ import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MOTIVATION_QUOTES } from './quotes';
 
-export type ReminderPrefs = { enabled: boolean; water: boolean; training: boolean; trainingHour: number; motivation: boolean; motivationHour: number };
+export type ReminderPrefs = { enabled: boolean; water: boolean; training: boolean; trainingHour: number; motivation: boolean; motivationHour: number; streakRisk: boolean };
 
 const KEY = 'fitavo.reminders';
-const DEFAULT: ReminderPrefs = { enabled: false, water: true, training: true, trainingHour: 18, motivation: true, motivationHour: 8 };
+const DEFAULT: ReminderPrefs = { enabled: false, water: true, training: true, trainingHour: 18, motivation: true, motivationHour: 8, streakRisk: true };
 const WATER_TIMES: [number, number][] = [[10, 0], [13, 0], [16, 0], [19, 0]];
 const WINBACK_IDS = ['fitavo.winback.day3', 'fitavo.winback.day7'] as const;
+const STREAK_ID = 'fitavo.streakrisk';
+const STREAK_HOUR = 19, STREAK_MIN = 30; // abends, leicht versetzt zur Wasser-Erinnerung
 
 // Hinweise auch im Vordergrund anzeigen (greift im Dev-Build)
 Notifications.setNotificationHandler({
@@ -111,4 +113,30 @@ export async function cancelWinback(): Promise<void> {
       await Notifications.cancelScheduledNotificationAsync(id).catch(() => {});
     }
   } catch {}
+}
+
+// Streak-Schutz-Erinnerung (#46): EINE dezente Abend-Benachrichtigung, die NUR feuert,
+// wenn eine echte Serie auf dem Spiel steht (>= 3 Tage UND heute noch nichts gemacht).
+// Wird bei jedem Home-Laden mit dem aktuellen Stand neu gesetzt -> wer heute aktiv war,
+// kriegt nichts. Abschaltbar (prefs.streakRisk) und an den Master-Schalter gekoppelt.
+export async function syncStreakReminder(streak: number, activeToday: boolean): Promise<void> {
+  try {
+    await Notifications.cancelScheduledNotificationAsync(STREAK_ID).catch(() => {});
+    const p = await loadReminderPrefs();
+    if (!p.enabled || !p.streakRisk) return;
+    if (streak < 3 || activeToday) return; // keine Serie in Gefahr -> still bleiben
+    const fire = new Date();
+    fire.setHours(STREAK_HOUR, STREAK_MIN, 0, 0);
+    if (fire.getTime() <= Date.now() + 60000) return; // Abend-Fenster heute schon vorbei
+    await Notifications.scheduleNotificationAsync({
+      identifier: STREAK_ID,
+      content: {
+        title: '🔥 Deine Serie ist in Gefahr!',
+        body: `Du bist bei ${streak} Tagen in Folge. Eine Einheit oder ein Eintrag heute hält sie am Leben.`,
+      },
+      trigger: { type: 'date', date: fire } as any,
+    });
+  } catch {
+    // In Expo Go ggf. nicht unterstuetzt – im Dev-Build aktiv.
+  }
 }

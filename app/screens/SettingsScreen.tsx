@@ -512,6 +512,13 @@ export default function SettingsScreen({ focusTick, focused = true }: { focusTic
                 </View>
               </View>
             )}
+            <View style={styles.row}>
+              <View style={styles.rowLeft}>
+                <Ionicons name="flame" size={18} color={c.textMuted} />
+                <Text style={styles.rowLabel}>{t('settings.rem.streak')}</Text>
+              </View>
+              <Switch value={!!rem?.streakRisk} onValueChange={(v) => { if (rem) updateRem({ ...rem, streakRisk: v }); }} accessibilityLabel={t('settings.rem.streak')} />
+            </View>
           </>
         )}
         <Text style={styles.hint}>{t('settings.rem.hint')}</Text>
