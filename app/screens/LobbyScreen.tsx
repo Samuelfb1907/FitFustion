@@ -9,6 +9,7 @@ import { useT } from '../contexts/LanguageContext';
 import GlassFill from '../components/GlassFill';
 import Segmented from '../components/Segmented';
 import FriendsPanel from '../components/FriendsPanel';
+import LeaguePanel from '../components/LeaguePanel';
 import SectionHead from '../components/SectionHead';
 import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
@@ -51,7 +52,7 @@ export default function LobbyScreen({ focusTick }: { focusTick?: number; focused
   const [nameInput, setNameInput] = useState('');
   const [codeInput, setCodeInput] = useState('');
   const [showForms, setShowForms] = useState(false);
-  const [view, setView] = useState<'lobby' | 'friends'>('lobby'); // Reiter: Schritte-Lobby oder Freunde
+  const [view, setView] = useState<'liga' | 'lobby' | 'friends'>('liga'); // Reiter: Liga, Schritte-Lobby oder Freunde
 
   useEffect(() => { init(); }, []);
   // Tab-Fokus: Schritte hochladen + Rangliste auffrischen (focusTick steigt bei jedem Tippen).
@@ -288,13 +289,17 @@ export default function LobbyScreen({ focusTick }: { focusTick?: number; focused
     <View style={styles.container}>
       <Text style={styles.title}>{t('lobby.hubTitle')}</Text>
       <Segmented
-        options={[{ key: 'lobby', label: t('lobby.segLobby') }, { key: 'friends', label: t('lobby.segFriends') }]}
+        options={[{ key: 'liga', label: t('league.tab') }, { key: 'lobby', label: t('lobby.segLobby') }, { key: 'friends', label: t('lobby.segFriends') }]}
         value={view}
-        onChange={(k) => setView(k as 'lobby' | 'friends')}
+        onChange={(k) => setView(k as 'liga' | 'lobby' | 'friends')}
         c={c}
       />
       <View style={{ height: 10 }} />
-      {view === 'friends' ? (
+      {view === 'liga' ? (
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE }} keyboardShouldPersistTaps="handled">
+          <LeaguePanel focusTick={focusTick} />
+        </ScrollView>
+      ) : view === 'friends' ? (
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE }} keyboardShouldPersistTaps="handled">
           <FriendsPanel focusTick={focusTick} />
         </ScrollView>
