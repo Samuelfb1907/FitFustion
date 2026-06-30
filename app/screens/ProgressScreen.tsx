@@ -26,6 +26,7 @@ import { loadMuscleRecovery } from '../lib/muscleRecovery';
 import { loadCareer, Career, milestones } from '../lib/career';
 import { loadChallenges, ChallengeProgress } from '../lib/challenges';
 import { loadTrophy, BadgeView } from '../lib/badges';
+import { projectGoal } from '../lib/projection';
 import TrophyRoom from '../components/TrophyRoom';
 import Confetti from '../components/Confetti';
 import * as Haptics from 'expo-haptics';
@@ -353,6 +354,8 @@ export default function ProgressScreen({ focusTick, focused = true, initialSeg }
     targetWeight != null && start != null && current != null && Math.abs(start - targetWeight) > 0.01
       ? Math.max(0, Math.min(1, (Math.abs(start - targetWeight) - Math.abs(current - targetWeight)) / Math.abs(start - targetWeight)))
       : null;
+  // Ziel-Prognose: geschaetztes Datum, an dem das Zielgewicht beim aktuellen Tempo erreicht wird.
+  const proj = projectGoal(weights, targetWeight);
 
   // Kachel-Daten: Ionicons-Name + Farbton (Icon-Chip) je Statistik.
   const statCards = [
@@ -442,6 +445,17 @@ export default function ProgressScreen({ focusTick, focused = true, initialSeg }
                 </View>
               </View>
             )}
+
+            {proj?.status === 'ok' && (
+              <View style={styles.projWrap}>
+                <Ionicons name="flag" size={15} color={c.primary} />
+                <Text style={styles.projText}>
+                  {t('progress.projection', { date: proj.etaDate })} <Text style={styles.projRate}>· {t('progress.projectionRate', { n: proj.perWeek })}</Text>
+                </Text>
+              </View>
+            )}
+            {proj?.status === 'no_trend' && <Text style={styles.projMuted}>{t('progress.projectionNoTrend')}</Text>}
+            {proj?.status === 'far' && <Text style={styles.projMuted}>{t('progress.projectionFar')}</Text>}
 
             <View style={styles.inputRow}>
               <TextInput
@@ -764,6 +778,10 @@ function makeStyles(c: Colors) {
     goalCaption: { fontSize: 12, color: c.textMuted, fontWeight: '600' },
     goalTrack: { height: 8, backgroundColor: c.track, borderRadius: 4, overflow: 'hidden' },
     goalFill: { height: 8, backgroundColor: c.success, borderRadius: 4 },
+    projWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14 },
+    projText: { flex: 1, fontSize: 13, color: c.heading, fontWeight: '700', lineHeight: 18 },
+    projRate: { color: c.textMuted, fontWeight: '700' },
+    projMuted: { fontSize: 12.5, color: c.textMuted, fontStyle: 'italic', marginTop: 14, lineHeight: 17 },
 
     histToggle: { marginTop: 14, alignItems: 'center' },
     histToggleText: { color: c.primary, fontSize: 14, fontWeight: '700' },
