@@ -525,17 +525,12 @@ export default function ProgressScreen({ focusTick, focused = true, initialSeg }
           </CollapsibleCard>
 
           {(weekStats.workouts > 0 || weekStats.sets > 0) && (
-            <View style={styles.card}>
-              <GlassFill radius={20} />
-              <View style={styles.cardHead}>
-                <Ionicons name="sparkles-outline" size={18} color={c.primary} />
-                <Text style={styles.cardLabel}>{t('progress.shareCardTitle')}</Text>
-              </View>
+            <CollapsibleCard icon="sparkles-outline" title={t('progress.shareCardTitle')} storageKey="share" tint={c.primary}>
               <TouchableOpacity style={styles.shareBtn} onPress={shareWeek} disabled={sharing} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={t('progress.shareButton')}>
                 <Ionicons name="share-social-outline" size={18} color={c.onPrimary} />
                 <Text style={styles.shareBtnText}>{t('progress.shareButton')}</Text>
               </TouchableOpacity>
-            </View>
+            </CollapsibleCard>
           )}
 
           {/* STATISTIK-KACHELN (Icon-Chip + Wert + Unterzeile, wie Home) */}
