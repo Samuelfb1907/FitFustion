@@ -61,6 +61,7 @@ Alle `.sql`-Dateien werden **manuell** im Supabase **SQL Editor** ausgeführt
 | 53 | `053_auto_progression.sql` | Auto-Progression: target_weight_kg in workout_plan_exercises |
 | 54 | `054_league.sql` | Trainings-Liga (#76b): league_members + RPCs league_join/league_board (Wochen-Liga, Auf-/Abstieg, server-seitige Punkte, Bot-Seeding) |
 | 55 | `055_rewards.sql` | Belohnungen: RPC grant_freeze (schenkt Streak-Freezes je verdientem Abzeichen) |
+| 56 | `056_progress_photos.sql` | Fortschritts-Fotos (#76e): privater Storage-Bucket 'progress-photos' + Policies + progress_photos-Tabelle (RLS own) |
 
 ## Hinweise
 - **Reihenfolge zählt:** Spätere Migrationen bauen auf früheren auf.

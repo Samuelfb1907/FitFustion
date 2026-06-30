@@ -27,7 +27,12 @@ import { loadCareer, Career, milestones } from '../lib/career';
 import { loadChallenges, ChallengeProgress } from '../lib/challenges';
 import { loadTrophy, BadgeView } from '../lib/badges';
 import { projectGoal } from '../lib/projection';
+import { loadBingo, BingoResult } from '../lib/bingo';
+import { loadThrowback, ThrowbackItem } from '../lib/throwback';
 import TrophyRoom from '../components/TrophyRoom';
+import WeeklyBingo from '../components/WeeklyBingo';
+import ThrowbackCard from '../components/ThrowbackCard';
+import ProgressPhotos from '../components/ProgressPhotos';
 import Confetti from '../components/Confetti';
 import * as Haptics from 'expo-haptics';
 import MuscleHeatmap from '../components/MuscleHeatmap';
@@ -75,6 +80,8 @@ export default function ProgressScreen({ focusTick, focused = true, initialSeg }
   const [career, setCareer] = useState<Career | null>(null);
   const [challenges, setChallenges] = useState<ChallengeProgress[]>([]);
   const [trophies, setTrophies] = useState<BadgeView[]>([]);
+  const [bingo, setBingo] = useState<BingoResult | null>(null);
+  const [throwback, setThrowback] = useState<ThrowbackItem[]>([]);
   const [confettiKey, setConfettiKey] = useState(0);
   const [mInput, setMInput] = useState({ waist: '', chest: '', hips: '', arm: '', thigh: '' });
   const [savingM, setSavingM] = useState(false);
@@ -104,6 +111,19 @@ export default function ProgressScreen({ focusTick, focused = true, initialSeg }
         try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
         const names = res.newlyEarned.map((b) => t(`rewards.badge.${b.key}`)).join(', ');
         Alert.alert(t('rewards.earnedTitle', { n: res.newlyEarned.length }), t('rewards.earnedBody', { names }));
+      }
+    }).catch(() => {});
+  }, [session?.user?.id, focusTick]);
+  useEffect(() => {
+    const uid = session?.user?.id;
+    if (!uid) return;
+    loadThrowback(uid).then(setThrowback).catch(() => {});
+    loadBingo(uid).then((res) => {
+      setBingo(res);
+      if (res.newFull || res.newLine) {
+        setConfettiKey((k) => k + 1);
+        try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
+        Alert.alert(t('bingo.rewardTitle'), res.newFull ? t('bingo.rewardFull') : t('bingo.rewardLine'));
       }
     }).catch(() => {});
   }, [session?.user?.id, focusTick]);
@@ -577,6 +597,19 @@ export default function ProgressScreen({ focusTick, focused = true, initialSeg }
             </View>
           )}
 
+          {/* WOCHEN-BINGO (#76c) */}
+          {bingo && (
+            <View style={styles.card}>
+              <GlassFill radius={20} />
+              <View style={styles.cardHead}>
+                <Ionicons name="grid" size={14} color={c.textMuted} />
+                <Text style={styles.cardLabel} numberOfLines={1}>{t('bingo.title')}</Text>
+              </View>
+              <Text style={{ fontSize: 13, color: c.textMuted, marginTop: 4, marginBottom: 14, lineHeight: 18 }}>{t('bingo.subtitle')}</Text>
+              <WeeklyBingo cells={bingo.cells} lines={bingo.lines} full={bingo.full} />
+            </View>
+          )}
+
           {/* MONATS-CHALLENGES (#3/#68) */}
           {challenges.length > 0 && (
             <View style={styles.card}>
@@ -623,6 +656,30 @@ export default function ProgressScreen({ focusTick, focused = true, initialSeg }
               <TrophyRoom items={trophies} />
             </View>
           )}
+
+          {/* RUECKBLICK "VOR X MONATEN" (#76d) */}
+          {throwback.length > 0 && (
+            <View style={styles.card}>
+              <GlassFill radius={20} />
+              <View style={styles.cardHead}>
+                <Ionicons name="time" size={14} color={c.textMuted} />
+                <Text style={styles.cardLabel} numberOfLines={1}>{t('throwback.title')}</Text>
+              </View>
+              <Text style={{ fontSize: 13, color: c.textMuted, marginTop: 4, marginBottom: 14, lineHeight: 18 }}>{t('throwback.subtitle')}</Text>
+              <ThrowbackCard items={throwback} />
+            </View>
+          )}
+
+          {/* FORTSCHRITTS-FOTOS (#76e) */}
+          <View style={styles.card}>
+            <GlassFill radius={20} />
+            <View style={styles.cardHead}>
+              <Ionicons name="images" size={14} color={c.textMuted} />
+              <Text style={styles.cardLabel} numberOfLines={1}>{t('photos.title')}</Text>
+            </View>
+            <Text style={{ fontSize: 13, color: c.textMuted, marginTop: 4, marginBottom: 14, lineHeight: 18 }}>{t('photos.subtitle')}</Text>
+            <ProgressPhotos focusTick={focusTick} />
+          </View>
 
           {/* MUSKEL-HEATMAP / ERHOLUNG */}
           <View style={styles.card}>
