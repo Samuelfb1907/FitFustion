@@ -33,6 +33,7 @@ import TrophyRoom from '../components/TrophyRoom';
 import WeeklyBingo from '../components/WeeklyBingo';
 import ThrowbackCard from '../components/ThrowbackCard';
 import ProgressPhotos from '../components/ProgressPhotos';
+import CollapsibleCard from '../components/CollapsibleCard';
 import Confetti from '../components/Confetti';
 import * as Haptics from 'expo-haptics';
 import MuscleHeatmap from '../components/MuscleHeatmap';
@@ -415,12 +416,7 @@ export default function ProgressScreen({ focusTick, focused = true, initialSeg }
       ) : (
         <>
           {/* GEWICHT */}
-          <View style={styles.card}>
-            <GlassFill radius={20} />
-            <View style={styles.cardHead}>
-              <Ionicons name="scale" size={14} color={c.textMuted} />
-              <Text style={styles.cardLabel} numberOfLines={1}>{t('progress.weightCardTitle')}</Text>
-            </View>
+          <CollapsibleCard icon="scale" title={t('progress.weightCardTitle')} storageKey="weight">
             <View style={styles.weightRow}>
               <View style={styles.weightCol}>
                 <Text style={styles.bigWeight} numberOfLines={1}>{current != null ? `${current}` : '–'}</Text>
@@ -510,15 +506,10 @@ export default function ProgressScreen({ focusTick, focused = true, initialSeg }
                   ))}
               </>
             )}
-          </View>
+          </CollapsibleCard>
 
           {/* KOERPERMASSE (Umfaenge) */}
-          <View style={styles.card}>
-            <GlassFill radius={20} />
-            <View style={styles.cardHead}>
-              <Ionicons name="body" size={14} color={c.textMuted} />
-              <Text style={styles.cardLabel} numberOfLines={1}>{t('progress.measTitle')}</Text>
-            </View>
+          <CollapsibleCard icon="body" title={t('progress.measTitle')} storageKey="measures" defaultCollapsed>
             <View style={styles.mGrid}>
               <View style={styles.mField}><Text style={styles.mLabel}>{t('progress.measWaist')}</Text><TextInput style={styles.mInput} value={mInput.waist} onChangeText={(v) => setMInput((p) => ({ ...p, waist: v }))} placeholder="–" placeholderTextColor={c.textMuted} keyboardType="numeric" inputMode="decimal" /></View>
               <View style={styles.mField}><Text style={styles.mLabel}>{t('progress.measChest')}</Text><TextInput style={styles.mInput} value={mInput.chest} onChangeText={(v) => setMInput((p) => ({ ...p, chest: v }))} placeholder="–" placeholderTextColor={c.textMuted} keyboardType="numeric" inputMode="decimal" /></View>
@@ -531,7 +522,7 @@ export default function ProgressScreen({ focusTick, focused = true, initialSeg }
             </TouchableOpacity>
             {mMsg && <Text style={[styles.msg, { color: c.danger }]}>{mMsg}</Text>}
             {meas[0] && <Text style={styles.hint}>{t('progress.measLatest', { date: ddmm(meas[0].measured_on), n: meas.length })}</Text>}
-          </View>
+          </CollapsibleCard>
 
           {(weekStats.workouts > 0 || weekStats.sets > 0) && (
             <View style={styles.card}>
@@ -565,12 +556,7 @@ export default function ProgressScreen({ focusTick, focused = true, initialSeg }
 
           {/* DEINE KARRIERE (Lifetime-Werte + Meilensteine) */}
           {career && (career.workouts > 0 || career.foodLogs > 0) && (
-            <View style={styles.card}>
-              <GlassFill radius={20} />
-              <View style={styles.cardHead}>
-                <Ionicons name="trophy" size={14} color={c.textMuted} />
-                <Text style={styles.cardLabel} numberOfLines={1}>{t('career.title')}</Text>
-              </View>
+            <CollapsibleCard icon="trophy" title={t('career.title')} storageKey="career" defaultCollapsed>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
                 {[
                   { v: String(career.workouts), l: t('career.workouts') },
@@ -594,30 +580,20 @@ export default function ProgressScreen({ focusTick, focused = true, initialSeg }
                   </View>
                 ))}
               </ScrollView>
-            </View>
+            </CollapsibleCard>
           )}
 
           {/* WOCHEN-BINGO (#76c) */}
           {bingo && (
-            <View style={styles.card}>
-              <GlassFill radius={20} />
-              <View style={styles.cardHead}>
-                <Ionicons name="grid" size={14} color={c.textMuted} />
-                <Text style={styles.cardLabel} numberOfLines={1}>{t('bingo.title')}</Text>
-              </View>
+            <CollapsibleCard icon="grid" title={t('bingo.title')} storageKey="bingo">
               <Text style={{ fontSize: 13, color: c.textMuted, marginTop: 4, marginBottom: 14, lineHeight: 18 }}>{t('bingo.subtitle')}</Text>
               <WeeklyBingo cells={bingo.cells} lines={bingo.lines} full={bingo.full} />
-            </View>
+            </CollapsibleCard>
           )}
 
           {/* MONATS-CHALLENGES (#3/#68) */}
           {challenges.length > 0 && (
-            <View style={styles.card}>
-              <GlassFill radius={20} />
-              <View style={styles.cardHead}>
-                <Ionicons name="ribbon" size={14} color={c.textMuted} />
-                <Text style={styles.cardLabel} numberOfLines={1}>{t('challenges.title')}</Text>
-              </View>
+            <CollapsibleCard icon="ribbon" title={t('challenges.title')} storageKey="challenges">
               <Text style={{ fontSize: 13, color: c.textMuted, marginTop: 4, marginBottom: 12, lineHeight: 18 }}>{t('challenges.subtitle')}</Text>
               <View style={{ gap: 14 }}>
                 {challenges.map((ch) => {
@@ -641,53 +617,33 @@ export default function ProgressScreen({ focusTick, focused = true, initialSeg }
                   );
                 })}
               </View>
-            </View>
+            </CollapsibleCard>
           )}
 
           {/* TROPHAEEN-RAUM (Belohnung: Abzeichen-Sammlung) */}
           {trophies.length > 0 && (
-            <View style={styles.card}>
-              <GlassFill radius={20} />
-              <View style={styles.cardHead}>
-                <Ionicons name="trophy" size={14} color={c.textMuted} />
-                <Text style={styles.cardLabel} numberOfLines={1}>{t('rewards.trophyTitle', { earned: trophies.filter((b) => b.earned).length, total: trophies.length })}</Text>
-              </View>
+            <CollapsibleCard icon="trophy" title={t('rewards.trophyTitle', { earned: trophies.filter((b) => b.earned).length, total: trophies.length })} storageKey="trophies" defaultCollapsed>
               <Text style={{ fontSize: 13, color: c.textMuted, marginTop: 4, marginBottom: 14, lineHeight: 18 }}>{t('rewards.trophySubtitle')}</Text>
               <TrophyRoom items={trophies} />
-            </View>
+            </CollapsibleCard>
           )}
 
           {/* RUECKBLICK "VOR X MONATEN" (#76d) */}
           {throwback.length > 0 && (
-            <View style={styles.card}>
-              <GlassFill radius={20} />
-              <View style={styles.cardHead}>
-                <Ionicons name="time" size={14} color={c.textMuted} />
-                <Text style={styles.cardLabel} numberOfLines={1}>{t('throwback.title')}</Text>
-              </View>
+            <CollapsibleCard icon="time" title={t('throwback.title')} storageKey="throwback">
               <Text style={{ fontSize: 13, color: c.textMuted, marginTop: 4, marginBottom: 14, lineHeight: 18 }}>{t('throwback.subtitle')}</Text>
               <ThrowbackCard items={throwback} />
-            </View>
+            </CollapsibleCard>
           )}
 
           {/* FORTSCHRITTS-FOTOS (#76e) */}
-          <View style={styles.card}>
-            <GlassFill radius={20} />
-            <View style={styles.cardHead}>
-              <Ionicons name="images" size={14} color={c.textMuted} />
-              <Text style={styles.cardLabel} numberOfLines={1}>{t('photos.title')}</Text>
-            </View>
+          <CollapsibleCard icon="images" title={t('photos.title')} storageKey="photos" defaultCollapsed>
             <Text style={{ fontSize: 13, color: c.textMuted, marginTop: 4, marginBottom: 14, lineHeight: 18 }}>{t('photos.subtitle')}</Text>
             <ProgressPhotos focusTick={focusTick} />
-          </View>
+          </CollapsibleCard>
 
           {/* MUSKEL-HEATMAP / ERHOLUNG */}
-          <View style={styles.card}>
-            <GlassFill radius={20} />
-            <View style={styles.cardHead}>
-              <Ionicons name="body" size={14} color={c.textMuted} />
-              <Text style={styles.cardLabel} numberOfLines={1}>{t('progress.heatmap.title')}</Text>
-            </View>
+          <CollapsibleCard icon="body" title={t('progress.heatmap.title')} storageKey="heatmap" defaultCollapsed>
             {Object.keys(recovery).length === 0 ? (
               <Text style={{ fontSize: 13, color: c.textMuted, fontStyle: 'italic', marginTop: 6, lineHeight: 18 }}>{t('progress.heatmap.empty')}</Text>
             ) : (
@@ -696,15 +652,10 @@ export default function ProgressScreen({ focusTick, focused = true, initialSeg }
                 <MuscleHeatmap recovery={recovery} c={c} />
               </>
             )}
-          </View>
+          </CollapsibleCard>
 
           {/* VOLUMEN JE WOCHE */}
-          <View style={styles.card}>
-            <GlassFill radius={20} />
-            <View style={styles.cardHead}>
-              <Ionicons name="stats-chart" size={14} color={c.textMuted} />
-              <Text style={styles.cardLabel} numberOfLines={1}>{t('progress.weeklyVolumeTitle')}</Text>
-            </View>
+          <CollapsibleCard icon="stats-chart" title={t('progress.weeklyVolumeTitle')} storageKey="volume" defaultCollapsed>
             {stats.volume > 0 ? (
               <>
                 <BarChart
@@ -720,15 +671,10 @@ export default function ProgressScreen({ focusTick, focused = true, initialSeg }
             ) : (
               <Text style={styles.hint}>{t('progress.weeklyVolumeHint')}</Text>
             )}
-          </View>
+          </CollapsibleCard>
 
           {/* REKORDE */}
-          <View style={styles.card}>
-            <GlassFill radius={20} />
-            <View style={styles.cardHead}>
-              <Ionicons name="trophy" size={14} color={c.textMuted} />
-              <Text style={styles.cardLabel} numberOfLines={1}>{t('progress.recordsTitle')}</Text>
-            </View>
+          <CollapsibleCard icon="trophy" title={t('progress.recordsTitle')} storageKey="records">
             {records.length > 0 ? (
               records.map((r, i) => (
                 <TouchableOpacity key={r.id} style={[styles.row, i === records.length - 1 && styles.rowLast]} onPress={() => setSelExercise({ id: r.id, name: r.name })} activeOpacity={0.7}>
@@ -739,16 +685,11 @@ export default function ProgressScreen({ focusTick, focused = true, initialSeg }
             ) : (
               <Text style={styles.hint}>{t('progress.recordsHint')}</Text>
             )}
-          </View>
+          </CollapsibleCard>
 
           {/* UEBUNGS-FORTSCHRITT */}
           {exList.length > 0 && (
-            <View style={styles.card}>
-              <GlassFill radius={20} />
-              <View style={styles.cardHead}>
-                <Ionicons name="trending-up" size={14} color={c.textMuted} />
-                <Text style={styles.cardLabel} numberOfLines={1}>{t('progress.exerciseProgressTitle')}</Text>
-              </View>
+            <CollapsibleCard icon="trending-up" title={t('progress.exerciseProgressTitle')} storageKey="exercises" defaultCollapsed>
               <Text style={[styles.caption, { marginTop: 0, marginBottom: 8 }]}>{t('progress.exerciseProgressCaption')}</Text>
               {exList.slice(0, 12).map((e, i) => (
                 <TouchableOpacity key={e.id} style={[styles.row, i === Math.min(exList.length, 12) - 1 && styles.rowLast]} onPress={() => setSelExercise({ id: e.id, name: e.name })} activeOpacity={0.7}>
@@ -756,16 +697,11 @@ export default function ProgressScreen({ focusTick, focused = true, initialSeg }
                   <Text style={styles.rowValue}>{e.sessions}×  ›</Text>
                 </TouchableOpacity>
               ))}
-            </View>
+            </CollapsibleCard>
           )}
 
           {/* HISTORIE */}
-          <View style={styles.card}>
-            <GlassFill radius={20} />
-            <View style={styles.cardHead}>
-              <Ionicons name="time" size={14} color={c.textMuted} />
-              <Text style={styles.cardLabel} numberOfLines={1}>{t('progress.historyTitle')}</Text>
-            </View>
+          <CollapsibleCard icon="time" title={t('progress.historyTitle')} storageKey="history" defaultCollapsed>
             {history.length > 0 ? (
               history.map((h, i) => (
                 <View key={`${h.date}-${i}`} style={[styles.row, i === history.length - 1 && styles.rowLast]}>
@@ -779,7 +715,7 @@ export default function ProgressScreen({ focusTick, focused = true, initialSeg }
             ) : (
               <Text style={styles.hint}>{t('progress.historyHint')}</Text>
             )}
-          </View>
+          </CollapsibleCard>
         </>
       )}
     </ScrollView>
