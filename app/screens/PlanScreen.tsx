@@ -65,9 +65,9 @@ const SCHEDULE_BY_DAYS: Record<number, number[]> = {
   6: [0, 1, 2, 3, 4, 5], // Mo-Sa
 };
 
-type PlanEx = { rowId: string; exId: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null; muscleKey: string | null; muscleName: string | null; sets: number; reps: number };
+type PlanEx = { rowId: string; exId: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null; muscleKey: string | null; muscleName: string | null; sets: number; reps: number; weightKg: number | null };
 type DayView = { id: string; day_index: number; focus: string | null; exercises: PlanEx[] };
-export type Selected = { exercise: { id: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null }; muscleKey: string | null; muscleName: string | null; targetSets: number; targetReps: number };
+export type Selected = { exercise: { id: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null }; muscleKey: string | null; muscleName: string | null; targetSets: number; targetReps: number; targetWeight: number | null; planExerciseId: string };
 
 export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { embedded?: boolean; onOpenExercise?: (sel: Selected) => void; refreshTick?: number }) {
   const { session, profile } = useAuth();
@@ -127,7 +127,7 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
     if (dayIds.length) {
       const { data } = await supabase
         .from('workout_plan_exercises')
-        .select('id, plan_day_id, order_index, target_sets, target_reps, exercise_id, exercises(id, name, difficulty, equipment, description, instructions, primary_muscle_id)')
+        .select('id, plan_day_id, order_index, target_sets, target_reps, target_weight_kg, exercise_id, exercises(id, name, difficulty, equipment, description, instructions, primary_muscle_id)')
         .in('plan_day_id', dayIds).order('order_index');
       peRows = data ?? [];
     }
@@ -140,7 +140,7 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
       exercises: peRows.filter((pe: any) => pe.plan_day_id === d.id).map((pe: any) => {
         const ex = unwrap(pe.exercises) || {};
         const mu = muscById[ex.primary_muscle_id] || {};
-        return { rowId: pe.id, exId: ex.id ?? pe.exercise_id, name: ex.name ?? '—', difficulty: ex.difficulty ?? '', equipment: ex.equipment ?? '', description: ex.description ?? null, instructions: ex.instructions ?? null, muscleKey: mu.key ?? null, muscleName: mu.name_de ?? null, sets: pe.target_sets ?? 3, reps: pe.target_reps ?? 10 };
+        return { rowId: pe.id, exId: ex.id ?? pe.exercise_id, name: ex.name ?? '—', difficulty: ex.difficulty ?? '', equipment: ex.equipment ?? '', description: ex.description ?? null, instructions: ex.instructions ?? null, muscleKey: mu.key ?? null, muscleName: mu.name_de ?? null, sets: pe.target_sets ?? 3, reps: pe.target_reps ?? 10, weightKg: pe.target_weight_kg ?? null };
       }),
     }));
     setPlanName(plan.name); setDays(assembled); setMode('view');
@@ -206,6 +206,12 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
     if (error) { Alert.alert(t('plan.notSavedTitle'), errorMessage(error)); loadPlan(true); }
   }
 
+  async function updateWeight(dayId: string, rowId: string, w: number | null) {
+    setDays((prev) => prev.map((d) => (d.id === dayId ? { ...d, exercises: d.exercises.map((e) => (e.rowId === rowId ? { ...e, weightKg: w } : e)) } : d)));
+    const { error } = await supabase.from('workout_plan_exercises').update({ target_weight_kg: w }).eq('id', rowId);
+    if (error) { Alert.alert(t('plan.notSavedTitle'), errorMessage(error)); loadPlan(true); }
+  }
+
   async function openAddPicker(dayId: string) {
     setAddingToDay(dayId);
     setPickerSearch('');
@@ -236,7 +242,7 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
       muscleKey = mu?.key ?? null; muscleName = mu?.name_de ?? null;
     }
     if (ex) {
-      const newEx: PlanEx = { rowId: row.id, exId: ex.id, name: ex.name, difficulty: ex.difficulty, equipment: ex.equipment, description: ex.description, instructions: ex.instructions, muscleKey, muscleName, sets: 3, reps: 10 };
+      const newEx: PlanEx = { rowId: row.id, exId: ex.id, name: ex.name, difficulty: ex.difficulty, equipment: ex.equipment, description: ex.description, instructions: ex.instructions, muscleKey, muscleName, sets: 3, reps: 10, weightKg: null };
       setDays((prev) => prev.map((d) => (d.id === dayId ? { ...d, exercises: [...d.exercises, newEx] } : d)));
     }
   }
@@ -472,6 +478,7 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
                     <View style={styles.editControls}>
                       <Stepper label={t('plan.sets')} value={ex.sets} onDec={() => updateSetsReps(d.id, ex.rowId, Math.max(1, ex.sets - 1), ex.reps)} onInc={() => updateSetsReps(d.id, ex.rowId, Math.min(10, ex.sets + 1), ex.reps)} styles={styles} />
                       <Stepper label={t('plan.reps')} value={ex.reps} onDec={() => updateSetsReps(d.id, ex.rowId, ex.sets, Math.max(1, ex.reps - 1))} onInc={() => updateSetsReps(d.id, ex.rowId, ex.sets, Math.min(50, ex.reps + 1))} styles={styles} />
+                      <Stepper label="kg" value={ex.weightKg ?? 0} onDec={() => updateWeight(d.id, ex.rowId, Math.max(0, (ex.weightKg ?? 0) - 2.5) || null)} onInc={() => updateWeight(d.id, ex.rowId, (ex.weightKg ?? 0) + 2.5)} styles={styles} />
                     </View>
                   </View>
                   <TouchableOpacity onPress={() => removeExercise(d.id, ex.rowId)} style={styles.removeBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
@@ -480,13 +487,13 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
                 </View>
               ) : (
                 <TouchableOpacity key={ex.rowId} style={styles.exItem} activeOpacity={0.7}
-                  onPress={() => { const now = Date.now(); if (now - lastExerciseOpen < 600) return; lastExerciseOpen = now; onOpenExercise?.({ exercise: { id: ex.exId, name: ex.name, difficulty: ex.difficulty, equipment: ex.equipment, description: ex.description, instructions: ex.instructions }, muscleKey: ex.muscleKey, muscleName: ex.muscleName, targetSets: ex.sets, targetReps: ex.reps }); }}>
+                  onPress={() => { const now = Date.now(); if (now - lastExerciseOpen < 600) return; lastExerciseOpen = now; onOpenExercise?.({ exercise: { id: ex.exId, name: ex.name, difficulty: ex.difficulty, equipment: ex.equipment, description: ex.description, instructions: ex.instructions }, muscleKey: ex.muscleKey, muscleName: ex.muscleName, targetSets: ex.sets, targetReps: ex.reps, targetWeight: ex.weightKg, planExerciseId: ex.rowId }); }}>
                   <View style={{ flex: 1 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       {doneToday.has(ex.exId) && <Ionicons name="checkmark-circle" size={15} color={c.success} />}
                       <Text style={[styles.exName, doneToday.has(ex.exId) && { color: c.success, fontWeight: '700' }]} numberOfLines={1}>{ex.name}</Text>
                     </View>
-                    <Text style={styles.exMeta}>{ex.sets} × {ex.reps} · {DIFF_LABELS[ex.difficulty] ?? ex.difficulty}{ex.muscleName ? ` · ${ex.muscleName}` : ''}</Text>
+                    <Text style={styles.exMeta}>{ex.sets} × {ex.reps}{ex.weightKg != null ? ` · ${ex.weightKg} kg` : ''} · {DIFF_LABELS[ex.difficulty] ?? ex.difficulty}{ex.muscleName ? ` · ${ex.muscleName}` : ''}</Text>
                   </View>
                   <Ionicons name="chevron-forward" size={18} color={c.textMuted} style={{ marginLeft: 8 }} />
                 </TouchableOpacity>

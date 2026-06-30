@@ -343,6 +343,8 @@ export default function TrainingScreen({ focusTick, focused = true }: { focusTic
               muscleName={planEx.muscleName}
               targetSets={planEx.targetSets}
               targetReps={planEx.targetReps}
+              targetWeight={planEx.targetWeight}
+              planExerciseId={planEx.planExerciseId}
               onBack={() => { setPlanEx(null); setPlanRefresh((t) => t + 1); }}
             />
           </SwipeBack>

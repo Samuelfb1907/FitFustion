@@ -18,6 +18,7 @@ import { registerGoodMoment } from '../lib/reviewPrompt';
 import { hTap, hSuccess } from '../lib/haptics';
 import Confetti from './Confetti';
 import { logActivity } from '../lib/activity';
+import { checkProgression, ProgressionResult } from '../lib/progression';
 
 type Exercise = { id: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null };
 type SetLog = { id: string; set_index: number; reps: number | null; weight_kg: number | null };
@@ -74,7 +75,7 @@ function tipsFor(equipment: string, difficulty: string): string[] {
   return t.slice(0, 4);
 }
 
-export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName, targetSets, targetReps }: { exercise: Exercise; onBack: () => void; muscleKey?: string | null; muscleName?: string | null; targetSets?: number; targetReps?: number }) {
+export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName, targetSets, targetReps, targetWeight, planExerciseId }: { exercise: Exercise; onBack: () => void; muscleKey?: string | null; muscleName?: string | null; targetSets?: number; targetReps?: number; targetWeight?: number | null; planExerciseId?: string }) {
   const { session } = useAuth();
   const userId = session?.user?.id;
   const c = useColors();
@@ -97,6 +98,7 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
   const [ended, setEnded] = useState(false);
   const [gifFailed, setGifFailed] = useState(false);
   const [restSignal, setRestSignal] = useState(0);
+  const [progResult, setProgResult] = useState<ProgressionResult | null>(null);
   const savingRef = useRef(false);
   const bestWeightRef = useRef<number | null>(null);
   const [lastEntry, setLastEntry] = useState<{ reps: number | null; weight: number | null } | null>(null);
@@ -165,11 +167,10 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
 
   useEffect(() => { setGifFailed(false); }, [exercise.id]);
 
-  // Plan-Soll als Vorbefuellung fuer die Wiederholungen, falls der Nutzer (bzw. der
-  // "Letztes Mal"-Prefill) das Feld noch nicht belegt hat.
   useEffect(() => {
     if (targetReps != null && targetReps > 0) setReps((prev) => (prev === '' ? String(targetReps) : prev));
-  }, [exercise.id, targetReps]);
+    if (targetWeight != null && targetWeight > 0) setWeight((prev) => (prev === '' ? String(targetWeight) : prev));
+  }, [exercise.id, targetReps, targetWeight]);
 
   async function refreshSets(sid: string) {
     const { data } = await supabase
@@ -251,12 +252,15 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
       .eq('id', sessionId);
     setEnding(false);
     if (eErr) { setError(eErr.message); return; }
+    if (hadSets && planExerciseId && targetSets != null && targetReps != null) {
+      const setsData = sets.map((s) => ({ reps: s.reps, weight_kg: s.weight_kg }));
+      const pr = await checkProgression(planExerciseId, exercise.equipment, setsData, targetSets, targetReps, targetWeight ?? null);
+      if (pr) { setProgResult(pr); if (pr.type === 'weight_up' || pr.type === 'reps_up') { hSuccess(); setConfettiKey((k) => k + 1); } }
+    }
     setSessionId(null);
     setSets([]);
     setReps('');
     setEnded(true);
-    // Positiver Moment: Training mit mitgeschriebenen Saetzen abgeschlossen
-    // -> ggf. (sparsam) um eine Store-Bewertung bitten.
     if (hadSets) { registerGoodMoment(); hSuccess(); logActivity('trained'); }
   }
 
@@ -309,7 +313,7 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
         <GlassFill radius={16} />
         <Text style={styles.h2}>{t('exercise.logHeading')}</Text>
         {targetSets != null && targetReps != null && (
-          <Text style={styles.targetHint}>{t('exercise.planTarget', { sets: targetSets, reps: targetReps })}</Text>
+          <Text style={styles.targetHint}>{targetWeight != null ? t('exercise.planTargetWeight', { sets: targetSets, reps: targetReps, kg: targetWeight }) : t('exercise.planTarget', { sets: targetSets, reps: targetReps })}</Text>
         )}
         {loading ? (
           <ActivityIndicator color={c.primary} style={{ marginVertical: 12 }} />
@@ -375,6 +379,15 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
             {ended && (
               <Text style={styles.endedHint}>{t('exercise.endedHint')}</Text>
             )}
+            {progResult && progResult.type === 'weight_up' && progResult.newWeight != null && (
+              <Text style={styles.progHint}>{t('exercise.progWeight', { kg: progResult.newWeight })}</Text>
+            )}
+            {progResult && progResult.type === 'reps_up' && (
+              <Text style={styles.progHint}>{t('exercise.progReps', { reps: progResult.newReps })}</Text>
+            )}
+            {progResult && progResult.type === 'seeded' && progResult.newWeight != null && (
+              <Text style={styles.progHint}>{t('exercise.progSeeded', { kg: progResult.newWeight })}</Text>
+            )}
           </>
         )}
       </View>
@@ -427,5 +440,6 @@ function makeStyles(c: Colors) {
     endBtn: { marginTop: 14, borderRadius: 10, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: c.success },
     endText: { color: c.success, fontSize: 15, fontWeight: '700' },
     endedHint: { fontSize: 13, color: c.success, textAlign: 'center', marginTop: 12, lineHeight: 19 },
+    progHint: { fontSize: 14, color: c.primary, fontWeight: '700', textAlign: 'center', marginTop: 10, lineHeight: 20 },
   });
 }

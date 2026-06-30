@@ -58,6 +58,7 @@ Alle `.sql`-Dateien werden **manuell** im Supabase **SQL Editor** ausgeführt
 | 50 | `050_custom_exercises.sql` | Eigene Übungen (#7): exercises.created_by + RLS (global+eigene lesen, eigene schreiben) |
 | 51 | `051_streak.sql` | Streak-System (#46): profiles.streak_* + RPC touch_streak (persistent, 1 Freeze/Woche, Meilensteine) |
 | 52 | `052_user_badges.sql` | Monats-Challenges (#68): user_badges (verdiente Abzeichen je Monat) + RLS own |
+| 53 | `053_auto_progression.sql` | Auto-Progression: target_weight_kg in workout_plan_exercises |
 
 ## Hinweise
 - **Reihenfolge zählt:** Spätere Migrationen bauen auf früheren auf.
