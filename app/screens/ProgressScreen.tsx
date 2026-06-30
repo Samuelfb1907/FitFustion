@@ -25,6 +25,8 @@ import { loadMeasurements, addMeasurement, Measurement } from '../lib/measuremen
 import { loadMuscleRecovery } from '../lib/muscleRecovery';
 import { loadCareer, Career, milestones } from '../lib/career';
 import { loadChallenges, ChallengeProgress } from '../lib/challenges';
+import { loadTrophy, BadgeView } from '../lib/badges';
+import TrophyRoom from '../components/TrophyRoom';
 import Confetti from '../components/Confetti';
 import * as Haptics from 'expo-haptics';
 import MuscleHeatmap from '../components/MuscleHeatmap';
@@ -71,6 +73,7 @@ export default function ProgressScreen({ focusTick, focused = true, initialSeg }
   const [recovery, setRecovery] = useState<Record<string, number>>({}); // Muskel-Key -> Tage seit letztem Training
   const [career, setCareer] = useState<Career | null>(null);
   const [challenges, setChallenges] = useState<ChallengeProgress[]>([]);
+  const [trophies, setTrophies] = useState<BadgeView[]>([]);
   const [confettiKey, setConfettiKey] = useState(0);
   const [mInput, setMInput] = useState({ waist: '', chest: '', hips: '', arm: '', thigh: '' });
   const [savingM, setSavingM] = useState(false);
@@ -87,6 +90,19 @@ export default function ProgressScreen({ focusTick, focused = true, initialSeg }
         setConfettiKey((k) => k + 1);
         try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
         Alert.alert(t('challenges.celebrateTitle'), t('challenges.celebrateBody', { name: t(`challenges.${res.newlyEarned[0].key}.name`) }));
+      }
+    }).catch(() => {});
+  }, [session?.user?.id, focusTick]);
+  useEffect(() => {
+    const uid = session?.user?.id;
+    if (!uid) return;
+    loadTrophy(uid).then((res) => {
+      setTrophies(res.items);
+      if (res.newlyEarned.length > 0) {
+        setConfettiKey((k) => k + 1);
+        try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
+        const names = res.newlyEarned.map((b) => t(`rewards.badge.${b.key}`)).join(', ');
+        Alert.alert(t('rewards.earnedTitle', { n: res.newlyEarned.length }), t('rewards.earnedBody', { names }));
       }
     }).catch(() => {});
   }, [session?.user?.id, focusTick]);
@@ -578,6 +594,19 @@ export default function ProgressScreen({ focusTick, focused = true, initialSeg }
                   );
                 })}
               </View>
+            </View>
+          )}
+
+          {/* TROPHAEEN-RAUM (Belohnung: Abzeichen-Sammlung) */}
+          {trophies.length > 0 && (
+            <View style={styles.card}>
+              <GlassFill radius={20} />
+              <View style={styles.cardHead}>
+                <Ionicons name="trophy" size={14} color={c.textMuted} />
+                <Text style={styles.cardLabel} numberOfLines={1}>{t('rewards.trophyTitle', { earned: trophies.filter((b) => b.earned).length, total: trophies.length })}</Text>
+              </View>
+              <Text style={{ fontSize: 13, color: c.textMuted, marginTop: 4, marginBottom: 14, lineHeight: 18 }}>{t('rewards.trophySubtitle')}</Text>
+              <TrophyRoom items={trophies} />
             </View>
           )}
 

@@ -23,6 +23,8 @@ import GlassFill from '../components/GlassFill';
 import Segmented from '../components/Segmented';
 import { TAB_BAR_SPACE } from '../lib/layout';
 import { openStoreReview } from '../lib/reviewPrompt';
+import { ACCENTS, accentSwatch } from '../lib/accents';
+import { earnedBadgeCount } from '../lib/badges';
 
 // Unterer Abstand fuer Scroll-Inhalte: GROSSZUEGIG (Platz der Pille + extra), damit der
 // Abmelden-Button klar ueber der schwebenden Glas-Pille endet und man bequem dorthin scrollt.
@@ -30,7 +32,7 @@ const BOTTOM_PAD = TAB_BAR_SPACE + 72;
 
 export default function SettingsScreen({ focusTick, focused = true }: { focusTick?: number; focused?: boolean }) {
   const { session, refreshProfile, isPremium } = useAuth();
-  const { mode, setMode } = useTheme();
+  const { mode, setMode, accent, setAccent } = useTheme();
   const t = useT();
   const { lang, setLang } = useLang();
   const c = useColors();
@@ -44,6 +46,7 @@ export default function SettingsScreen({ focusTick, focused = true }: { focusTic
     return false;
   }, focused);
   const [rem, setRem] = useState<ReminderPrefs | null>(null);
+  const [badgeCount, setBadgeCount] = useState(0); // verdiente Abzeichen -> schaltet Akzentfarben frei
   const [msg, setMsg] = useState<string | null>(null);
   const [msgErr, setMsgErr] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -61,6 +64,12 @@ export default function SettingsScreen({ focusTick, focused = true }: { focusTic
   useEffect(() => {
     loadReminderPrefs().then(setRem);
   }, []);
+
+  // Verdiente Abzeichen laden (legt fest, welche Akzentfarben freigeschaltet sind).
+  useEffect(() => {
+    const uid = session?.user?.id;
+    if (uid) earnedBadgeCount(uid).then(setBadgeCount).catch(() => {});
+  }, [session?.user?.id, focusTick]);
 
   useEffect(() => {
     if (healthSupported()) hasStepsPermission().then(setStepsConnected).catch(() => {});
@@ -392,6 +401,44 @@ export default function SettingsScreen({ focusTick, focused = true }: { focusTic
               {t('settings.appearance.systemHint')}
             </Text>
           )}
+        </View>
+      </View>
+
+      {/* Akzentfarbe (Belohnung: durch Abzeichen freischaltbar) */}
+      <Text style={styles.section}>{t('settings.section.accent')}</Text>
+      <View style={styles.card}>
+        <GlassFill radius={20} />
+        <View style={{ paddingHorizontal: 16, paddingVertical: 14 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 11, marginBottom: 4 }}>
+            <Ionicons name="color-palette-outline" size={18} color={c.textMuted} />
+            <Text style={{ fontSize: 16, color: c.text, lineHeight: 22 }}>{t('settings.accent.title')}</Text>
+          </View>
+          <Text style={{ color: c.textMuted, fontSize: 12, lineHeight: 16, marginBottom: 14 }}>{t('settings.accent.hint')}</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
+            {ACCENTS.map((a) => {
+              const unlocked = badgeCount >= a.unlockAt;
+              const active = accent === a.key;
+              return (
+                <TouchableOpacity
+                  key={a.key}
+                  activeOpacity={0.8}
+                  disabled={!unlocked}
+                  onPress={() => setAccent(a.key)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t(`settings.accent.name.${a.key}`)}
+                  style={{ alignItems: 'center', width: 58 }}
+                >
+                  <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: accentSwatch(a), alignItems: 'center', justifyContent: 'center', borderWidth: active ? 3 : 1, borderColor: active ? c.heading : 'rgba(0,0,0,0.12)', opacity: unlocked ? 1 : 0.4 }}>
+                    {active && unlocked && <Ionicons name="checkmark" size={22} color="#FFFFFF" />}
+                    {!unlocked && <Ionicons name="lock-closed" size={18} color="#FFFFFF" />}
+                  </View>
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: c.textMuted, marginTop: 5, textAlign: 'center' }} numberOfLines={1}>
+                    {unlocked ? t(`settings.accent.name.${a.key}`) : t('settings.accent.lockedAt', { n: a.unlockAt })}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
       </View>
 

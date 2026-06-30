@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, useMemo, ReactNode } from 'react';
 import { Platform, useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ACCENTS, DEFAULT_ACCENT, accentByKey } from '../lib/accents';
 
 export type ThemeName = 'light' | 'dark';
 
@@ -56,36 +57,46 @@ type ThemeCtx = {
   theme: ThemeName;   // tatsaechlich angezeigtes Theme (hell/dunkel)
   mode: ThemeMode;    // Praeferenz: System folgen / fest hell / fest dunkel
   colors: Colors;
+  accent: string;     // gewaehlte Akzentfarbe (Schluessel aus lib/accents)
   toggleTheme: () => void;
   setTheme: (t: ThemeName) => void;
   setMode: (m: ThemeMode) => void;
+  setAccent: (key: string) => void;
 };
 
 const ThemeContext = createContext<ThemeCtx>({
   theme: 'light',
   mode: 'system',
   colors: LIGHT,
+  accent: DEFAULT_ACCENT,
   toggleTheme: () => {},
   setTheme: () => {},
   setMode: () => {},
+  setAccent: () => {},
 });
 
 const MODE_KEY = 'fitavo.themeMode';   // 'system' | 'light' | 'dark'
 const LEGACY_KEY = 'fitavo.theme';     // alt: nur 'light' | 'dark'
+const ACCENT_KEY = 'fitavo.accent';    // gewaehlte Akzentfarbe
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const system = useColorScheme();                 // 'light' | 'dark' | null (folgt dem Geraet, live)
   const [mode, setModeState] = useState<ThemeMode>('system');
+  const [accent, setAccentState] = useState<string>(DEFAULT_ACCENT);
 
   useEffect(() => {
     (async () => {
       try {
         const v = await AsyncStorage.getItem(MODE_KEY);
-        if (v === 'system' || v === 'light' || v === 'dark') { setModeState(v); return; }
-        // Einmalige Migration vom alten Schalter: bestehende manuelle Wahl beibehalten.
-        const legacy = await AsyncStorage.getItem(LEGACY_KEY);
-        if (legacy === 'light' || legacy === 'dark') setModeState(legacy);
-        // sonst bleibt 'system' (Standard: dem Geraet folgen)
+        if (v === 'system' || v === 'light' || v === 'dark') { setModeState(v); }
+        else {
+          // Einmalige Migration vom alten Schalter: bestehende manuelle Wahl beibehalten.
+          const legacy = await AsyncStorage.getItem(LEGACY_KEY);
+          if (legacy === 'light' || legacy === 'dark') setModeState(legacy);
+          // sonst bleibt 'system' (Standard: dem Geraet folgen)
+        }
+        const a = await AsyncStorage.getItem(ACCENT_KEY);
+        if (a && ACCENTS.some((x) => x.key === a)) setAccentState(a);
       } catch {}
     })();
   }, []);
@@ -95,6 +106,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     AsyncStorage.setItem(MODE_KEY, m).catch(() => {});
   }, []);
 
+  const setAccent = useCallback((key: string) => {
+    setAccentState(key);
+    AsyncStorage.setItem(ACCENT_KEY, key).catch(() => {});
+  }, []);
+
   // Effektives Theme: bei 'system' dem Geraet folgen, sonst die feste Wahl.
   const theme: ThemeName = mode === 'system' ? (system === 'dark' ? 'dark' : 'light') : mode;
 
@@ -102,8 +118,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const setTheme = useCallback((t: ThemeName) => setMode(t), [setMode]);
   const toggleTheme = useCallback(() => setMode(theme === 'dark' ? 'light' : 'dark'), [setMode, theme]);
 
-  const colors = theme === 'dark' ? DARK : LIGHT;
-  const value = useMemo(() => ({ theme, mode, colors, toggleTheme, setTheme, setMode }), [theme, mode, colors, toggleTheme, setTheme, setMode]);
+  // Basis-Theme + Akzent-Override (primary/onPrimary/accent/cardBorder) zusammenfuehren.
+  const colors = useMemo<Colors>(() => {
+    const base = theme === 'dark' ? DARK : LIGHT;
+    const ov = theme === 'dark' ? accentByKey(accent).dark : accentByKey(accent).light;
+    return { ...base, ...ov };
+  }, [theme, accent]);
+  const value = useMemo(() => ({ theme, mode, colors, accent, toggleTheme, setTheme, setMode, setAccent }), [theme, mode, colors, accent, toggleTheme, setTheme, setMode, setAccent]);
 
   return (
     <ThemeContext.Provider value={value}>
