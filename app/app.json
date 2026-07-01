@@ -64,14 +64,7 @@
           "motionPermission": "FitAvo nutzt deine Schrittdaten, um deine Aktivität aufs Tagesziel anzurechnen."
         }
       ],
-      "expo-apple-authentication",
-      [
-        "react-native-health",
-        {
-          "healthSharePermission": "FitAvo liest deine Schritte und aktiven Kalorien aus Apple Health – so zählen auch Daten von verbundenen Fitness-Armbändern (z. B. Fitbit, Garmin, Polar) mit.",
-          "healthUpdatePermission": "FitAvo schreibt derzeit keine Daten in Apple Health."
-        }
-      ]
+      "expo-apple-authentication"
     ],
     "ios": {
       "supportsTablet": false,
