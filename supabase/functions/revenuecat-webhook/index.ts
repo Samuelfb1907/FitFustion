@@ -47,7 +47,11 @@ Deno.serve(async (req: Request) => {
     const url = Deno.env.get('SUPABASE_URL')!;
     const service = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const admin = createClient(url, service, { auth: { persistSession: false } });
-    const { error } = await admin.from('profiles').update({ is_premium: premium }).eq('id', appUserId);
+    // Bei Aktivierung die Quelle als echten Kauf markieren (profiles.premium_source, Migration 057)
+    // -> spaeter eindeutig "gekauft" vs. "manuell" unterscheidbar. Bei Deaktivierung nicht anfassen.
+    const patch: Record<string, unknown> = { is_premium: premium };
+    if (premium) patch.premium_source = 'revenuecat';
+    const { error } = await admin.from('profiles').update(patch).eq('id', appUserId);
     if (error) {
       console.error('revenuecat-webhook update failed:', error.message);
       return new Response('db error', { status: 500 });

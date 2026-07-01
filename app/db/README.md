@@ -62,6 +62,7 @@ Alle `.sql`-Dateien werden **manuell** im Supabase **SQL Editor** ausgeführt
 | 54 | `054_league.sql` | Trainings-Liga (#76b): league_members + RPCs league_join/league_board (Wochen-Liga, Auf-/Abstieg, server-seitige Punkte, Bot-Seeding) |
 | 55 | `055_rewards.sql` | Belohnungen: RPC grant_freeze (schenkt Streak-Freezes je verdientem Abzeichen) |
 | 56 | `056_progress_photos.sql` | Fortschritts-Fotos (#76e): privater Storage-Bucket 'progress-photos' + Policies + progress_photos-Tabelle (RLS own) |
+| 57 | `057_premium_source.sql` | profiles.premium_source ('manual'/'revenuecat') zur Unterscheidung gekauft vs. manuell freigeschaltet |
 
 ## Hinweise
 - **Reihenfolge zählt:** Spätere Migrationen bauen auf früheren auf.
