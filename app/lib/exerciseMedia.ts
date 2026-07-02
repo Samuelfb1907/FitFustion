@@ -440,7 +440,10 @@ export const EXERCISE_GIF_ID: Record<string, string> = {
   "Smith Aufrechtes Rudern": "0775",
   "Smith Breites Bankdrücken": "1308",
   "Smith Breit Negativ-Bankdrücken": "1309",
-  "Trizeps Drücken": "0816"
+  "Trizeps Drücken": "0816",
+  "Wasserflaschen-Curl": "0294",
+  "Rucksack-Curl": "0313",
+  "Schulterheben ohne Gewicht": "0406"
 };
 
 export function exerciseGifId(name: string): string | null {
