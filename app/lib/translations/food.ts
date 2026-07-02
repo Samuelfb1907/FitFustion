@@ -22,6 +22,11 @@ export const de = {
   "food.unit.piece": "Stück",
   "food.unit.slice": "Scheibe",
   "food.unit.tbsp": "EL",
+  "food.unit.tsp": "TL",
+  "food.unit.glass": "Glas",
+  "food.unit.cup": "Tasse",
+  "food.unit.handful": "Handvoll",
+  "food.unit.scoop": "Kugel",
 
   // Neues Lebensmittel
   "food.newFoodTitle": "Neues Lebensmittel",
@@ -200,6 +205,11 @@ export const en = {
   "food.unit.piece": "piece",
   "food.unit.slice": "slice",
   "food.unit.tbsp": "tbsp",
+  "food.unit.tsp": "tsp",
+  "food.unit.glass": "glass",
+  "food.unit.cup": "cup",
+  "food.unit.handful": "handful",
+  "food.unit.scoop": "scoop",
 
   // New food
   "food.newFoodTitle": "New food",

@@ -226,6 +226,8 @@ function PaywallSheet({ visible, feature, onClose }: { visible: boolean; feature
                 <Text style={s.ctaText}>{ctaLabel}</Text>
               </TouchableOpacity>
 
+              <Text style={s.trust}>{t('paywall.trust')}</Text>
+
               <Text style={s.fineprint}>
                 {trialDays ? t('paywall.fineprint.trialPrefix', { n: trialDays }) : ''}
                 {activePlan ? `${activePlan.priceString} / ${periodWord}` : PREMIUM_PRICE}{t('paywall.fineprint.terms')}
@@ -307,6 +309,7 @@ function makeStyles(c: Colors) {
     ctaText: { color: c.onPrimary, fontSize: 17, fontWeight: '800' },
     later: { marginTop: 10, alignItems: 'center' },
     laterText: { color: c.textMuted, fontSize: 15, fontWeight: '600' },
+    trust: { color: c.primary, fontSize: 12, fontWeight: '700', textAlign: 'center', marginTop: 10 },
     fineprint: { color: c.textMuted, fontSize: 11, lineHeight: 15, marginTop: 12, textAlign: 'center' },
     linksRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 8, gap: 8 },
     link: { color: c.primary, fontSize: 13, fontWeight: '600', textDecorationLine: 'underline' },

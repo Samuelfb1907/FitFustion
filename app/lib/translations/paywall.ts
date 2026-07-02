@@ -19,6 +19,7 @@ export const de = {
 
   "paywall.featureHint.ki": "Schalte die KI-Mahlzeitenerkennung frei",
   "paywall.featureHint.scan": "Schalte den Barcode-Scanner frei",
+  "paywall.trust": "✓ Jederzeit kündbar · kein Risiko",
   "paywall.featureHint.search": "Durchsuche die Lebensmittel-Datenbank mit Premium",
   "paywall.featureHint.leaderboard": "Tritt mit Premium der Bestenliste bei",
   "paywall.featureHint.level": "Sammle XP, Level & Erfolge mit Premium",
@@ -92,6 +93,7 @@ export const en = {
 
   "paywall.featureHint.ki": "Unlock AI meal recognition",
   "paywall.featureHint.scan": "Unlock the barcode scanner",
+  "paywall.trust": "✓ Cancel anytime · no risk",
   "paywall.featureHint.search": "Search the food database with Premium",
   "paywall.featureHint.leaderboard": "Join the leaderboard with Premium",
   "paywall.featureHint.level": "Earn XP, levels & achievements with Premium",
