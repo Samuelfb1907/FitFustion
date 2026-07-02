@@ -1171,10 +1171,10 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
           <Ionicons name="add" size={18} color={c.onPrimary} />
           <Text style={styles.addText} numberOfLines={1}>{t('food.addAction')}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.scanBtn} onPress={() => { if (!isPremium) { openPaywall('scan'); return; } setError(null); setScannerOpen(true); }} activeOpacity={0.85}>
+        <TouchableOpacity style={styles.scanBtn} onPress={() => { setError(null); setScannerOpen(true); }} activeOpacity={0.85}>
           <GlassFill radius={15} />
-          <Ionicons name={isPremium ? 'camera' : 'lock-closed'} size={17} color={c.primary} />
-          <Text style={styles.scanText} numberOfLines={1}>{isPremium ? t('food.scan') : t('food.scanLocked')}</Text>
+          <Ionicons name="camera" size={17} color={c.primary} />
+          <Text style={styles.scanText} numberOfLines={1}>{t('food.scan')}</Text>
         </TouchableOpacity>
       </View>
 
