@@ -29,6 +29,7 @@ import { parseMeal, parseMealPhoto, ParsedItem } from '../lib/parseMeal';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { foodUnit } from '../lib/foodUnit';
+import { foodPortion } from '../lib/foodPortion';
 import { TAB_BAR_SPACE } from '../lib/layout';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FREE_FOOD_SEARCHES_PER_DAY, loadFoodSearchCount, bumpFoodSearchCount } from '../lib/foodSearchQuota';
@@ -101,6 +102,7 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
   const [search, setSearch] = useState('');
   const [selectedFood, setSelectedFood] = useState<Food | null>(null);
   const [amount, setAmount] = useState('100');
+  const [amtUnit, setAmtUnit] = useState<'base' | 'portion'>('base');
   const [mealType, setMealType] = useState<MealType>(mealByHour());
   const [saving, setSaving] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
@@ -528,29 +530,43 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
     }
   }
 
+  // Oeffnet den Mengen-Screen mit sinnvollen Defaults: hat das Lebensmittel eine
+  // Haushalts-Portion (z. B. "Stueck"), starten wir bei 1 Stueck, sonst bei 100 g.
+  function openAmount(food: Food) {
+    const p = foodPortion(food);
+    setSelectedFood(food);
+    setAmtUnit(p ? 'portion' : 'base');
+    setAmount(p ? '1' : '100');
+    setError(null);
+    setBackTarget('pick');
+    setMode('amount');
+  }
+
   async function addLog() {
     if (!userId || !selectedFood || busyRef.current) return;
-    const a = Number(amount.replace(',', '.'));
-    if (!a || a <= 0) { setError(t('food.invalidAmount')); return; }
+    const n = Number(amount.replace(',', '.'));
+    if (!n || n <= 0) { setError(t('food.invalidAmount')); return; }
+    const portion = foodPortion(selectedFood);
+    const grams = amtUnit === 'portion' && portion ? n * portion.grams : n;
     // Beim Erstellen eines Favoriten: Zutat in den Entwurf legen statt ins Tagebuch.
     if (addingTo === 'favorite') {
       const food = selectedFood;
       setFavDraft((d) => {
         const base = d ?? { name: '', items: [] };
-        return { name: base.name, items: [...base.items, { food_id: food.id, name: food.name, amount_g: a, kcal: food.kcal, protein: food.protein, carbs: food.carbs, fat: food.fat, unit: foodUnit(food) }] };
+        return { name: base.name, items: [...base.items, { food_id: food.id, name: food.name, amount_g: grams, kcal: food.kcal, protein: food.protein, carbs: food.carbs, fat: food.fat, unit: foodUnit(food) }] };
       });
-      setSelectedFood(null); setAmount('100'); setError(null); setSearch(''); setMode('favnew');
+      setSelectedFood(null); setAmount('100'); setAmtUnit('base'); setError(null); setSearch(''); setMode('favnew');
       return;
     }
     busyRef.current = true;
     setSaving(true); setError(null);
     const addedName = selectedFood.name;
-    const addedUnit = foodUnit(selectedFood);
+    const addedUnit = amtUnit === 'portion' && portion ? t(portion.unitKey) : foodUnit(selectedFood);
     try {
-      const { error: e } = await supabase.from('food_logs').insert({ user_id: userId, food_id: selectedFood.id, amount_g: a, log_date: todayStr(), meal_type: mealType });
+      const { error: e } = await supabase.from('food_logs').insert({ user_id: userId, food_id: selectedFood.id, amount_g: grams, log_date: todayStr(), meal_type: mealType });
       if (e) { setError(errorMessage(e)); return; }
-      setSelectedFood(null); setAmount('100'); setSearch(''); setMode('diary');
-      setQuickMsg(t('food.foodAdded', { name: addedName, amount: a, unit: addedUnit }));
+      setSelectedFood(null); setAmount('100'); setAmtUnit('base'); setSearch(''); setMode('diary');
+      setQuickMsg(t('food.foodAdded', { name: addedName, amount: n, unit: addedUnit }));
       setTimeout(() => setQuickMsg(null), 2500);
       await init(true);
     } finally {
@@ -684,7 +700,7 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
       return;
     }
     const food = data as Food;
-    setSelectedFood(food); setAmount('100'); setError(null); setBackTarget('pick'); setMode('amount');
+    openAmount(food);
   }
 
   function confirmDeleteFood(food: Food) {
@@ -742,8 +758,10 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
   }
 
   if (mode === 'amount' && selectedFood) {
-    const a = Number(amount.replace(',', '.')) || 0;
-    const previewKcal = Math.round((selectedFood.kcal * a) / 100);
+    const portion = foodPortion(selectedFood);
+    const n = Number(amount.replace(',', '.')) || 0;
+    const grams = amtUnit === 'portion' && portion ? n * portion.grams : n;
+    const previewKcal = Math.round((selectedFood.kcal * grams) / 100);
     const unit = foodUnit(selectedFood);
     return (
       <SwipeBack key="food-amount" onBack={() => setMode(backTarget)} c={c} behind={backTarget === 'pick' ? renderPick() : renderDiary()}>
@@ -752,9 +770,19 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
           <BackButton onPress={() => setMode(backTarget)} c={c} />
           <Text style={styles.title}>{selectedFood.name}</Text>
           <Text style={styles.subtitle}>{t('food.kcalPer100g', { n: selectedFood.kcal, unit })}</Text>
-          <Text style={styles.inputLabel}>{t('food.amountInGrams', { unit })}</Text>
-          <TextInput style={styles.input} value={amount} onChangeText={setAmount} keyboardType="numeric" inputMode="decimal" placeholder={t('food.amountPlaceholder')} placeholderTextColor={c.textMuted} returnKeyType="done" onSubmitEditing={addLog} />
-          <Text style={styles.preview}>= {previewKcal} kcal</Text>
+          {portion && (
+            <View style={[styles.mealChips, { marginBottom: 4 }]}>
+              <TouchableOpacity style={[styles.mealChip, amtUnit === 'portion' && styles.mealChipActive]} onPress={() => { if (amtUnit === 'portion') return; const g = Number(amount.replace(',', '.')) || portion.grams; setAmtUnit('portion'); setAmount(String(Math.max(1, Math.round(g / portion.grams)))); }} activeOpacity={0.8} accessibilityRole="button">
+                <Text style={[styles.mealChipText, amtUnit === 'portion' && styles.mealChipTextActive]}>{t(portion.unitKey)}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.mealChip, amtUnit === 'base' && styles.mealChipActive]} onPress={() => { if (amtUnit === 'base') return; const cnt = Number(amount.replace(',', '.')) || 1; setAmtUnit('base'); setAmount(String(Math.round(cnt * portion.grams))); }} activeOpacity={0.8} accessibilityRole="button">
+                <Text style={[styles.mealChipText, amtUnit === 'base' && styles.mealChipTextActive]}>{unit}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          <Text style={styles.inputLabel}>{amtUnit === 'portion' && portion ? t('food.amountCount') : t('food.amountInGrams', { unit })}</Text>
+          <TextInput style={styles.input} value={amount} onChangeText={setAmount} keyboardType="numeric" inputMode="decimal" placeholder={amtUnit === 'portion' && portion ? '1' : t('food.amountPlaceholder')} placeholderTextColor={c.textMuted} returnKeyType="done" onSubmitEditing={addLog} />
+          <Text style={styles.preview}>{amtUnit === 'portion' && portion ? `${t('food.approxGrams', { n: Math.round(grams) })}  ·  ${previewKcal} kcal` : `= ${previewKcal} kcal`}</Text>
           {addingTo !== 'favorite' && (
             <>
               <Text style={styles.inputLabel}>{t('food.meal')}</Text>
@@ -955,7 +983,7 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
           renderItem={({ item: f }) => {
             const own = !!userId && f.user_id === userId;
             return (
-              <TouchableOpacity style={styles.foodRow} onPress={() => { setSelectedFood(f); setAmount('100'); setError(null); setBackTarget('pick'); setMode('amount'); }} activeOpacity={0.7}>
+              <TouchableOpacity style={styles.foodRow} onPress={() => openAmount(f)} activeOpacity={0.7}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.foodName}>{f.name}</Text>
                   <Text style={styles.foodMeta}>{f.category}{own ? t('food.ownSuffix') : ''}</Text>

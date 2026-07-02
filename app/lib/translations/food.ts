@@ -17,6 +17,11 @@ export const de = {
   "food.addToFavoriteList": "Zur Favoriten-Liste hinzufügen",
   "food.addToDiary": "Zum Tagebuch hinzufügen",
   "food.invalidAmount": "Bitte gültige Menge eingeben.",
+  "food.amountCount": "Anzahl",
+  "food.approxGrams": "≈ {n} g",
+  "food.unit.piece": "Stück",
+  "food.unit.slice": "Scheibe",
+  "food.unit.tbsp": "EL",
 
   // Neues Lebensmittel
   "food.newFoodTitle": "Neues Lebensmittel",
@@ -190,6 +195,11 @@ export const en = {
   "food.addToFavoriteList": "Add to favorites list",
   "food.addToDiary": "Add to diary",
   "food.invalidAmount": "Please enter a valid amount.",
+  "food.amountCount": "Quantity",
+  "food.approxGrams": "≈ {n} g",
+  "food.unit.piece": "piece",
+  "food.unit.slice": "slice",
+  "food.unit.tbsp": "tbsp",
 
   // New food
   "food.newFoodTitle": "New food",
