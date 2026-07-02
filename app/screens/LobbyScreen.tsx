@@ -180,9 +180,10 @@ export default function LobbyScreen({ focusTick }: { focusTick?: number; focused
     return (
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE }}
+        contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE + 48 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => reload(true)} tintColor={c.primary} colors={[c.primary]} />}
         keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
       >
         <Text style={styles.tagline}>{t('lobby.tagline')}</Text>
       {!healthSupported() && <Text style={styles.testNote}>{t('lobby.testMode')}</Text>}
@@ -296,11 +297,11 @@ export default function LobbyScreen({ focusTick }: { focusTick?: number; focused
       />
       <View style={{ height: 10 }} />
       {view === 'liga' ? (
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE }} keyboardShouldPersistTaps="handled">
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
           <LeaguePanel focusTick={focusTick} />
         </ScrollView>
       ) : view === 'friends' ? (
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE }} keyboardShouldPersistTaps="handled">
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
           <FriendsPanel focusTick={focusTick} />
         </ScrollView>
       ) : (
