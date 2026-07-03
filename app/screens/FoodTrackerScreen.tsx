@@ -17,7 +17,7 @@ import { useFocusTick } from '../lib/useFocusTick';
 import ErrorRetry from '../components/ErrorRetry';
 import { errorMessage } from '../lib/errors';
 import { todayStr, daysAgoStr } from '../lib/date';
-import { todayTrainingKcal } from '../lib/trainingBonus';
+import { todayTrainingKcal, todayCardioKcal } from '../lib/trainingBonus';
 import { hasStepsPermission, getTodayActivity } from '../lib/health';
 import BackButton from '../components/BackButton';
 import SwipeBack from '../components/SwipeBack';
@@ -94,6 +94,7 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
   const [targetKcal, setTargetKcal] = useState<number | null>(null);
   const [macroTargets, setMacroTargets] = useState<{ p: number; c: number; f: number } | null>(null);
   const [trainingKcal, setTrainingKcal] = useState(0);
+  const [cardioKcal, setCardioKcal] = useState(0);
   const [steps, setSteps] = useState(0);
   const [activityKcal, setActivityKcal] = useState(0);
   const [activityMeasured, setActivityMeasured] = useState(false);
@@ -268,6 +269,7 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
       setTargetKcal(t.targetCalories);
       setMacroTargets({ p: t.proteinG, c: t.carbsG, f: t.fatG });
       setTrainingKcal(await todayTrainingKcal(userId, Number(prof.weight_kg)));
+      setCardioKcal(await todayCardioKcal(userId));
       if (await hasStepsPermission()) {
         const a = await getTodayActivity(Number(prof.weight_kg));
         setSteps(a.steps); setActivityKcal(a.kcal); setActivityMeasured(a.measured);
@@ -732,7 +734,7 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
     }
     return { totalKcal: kcal, totalP: Math.round(p), totalC: Math.round(cc), totalF: Math.round(f) };
   }, [logs]);
-  const effTarget = targetKcal != null ? targetKcal + Math.max(trainingKcal, activityKcal) : null;
+  const effTarget = targetKcal != null ? targetKcal + Math.max(trainingKcal, activityKcal) + cardioKcal : null;
   const remaining = effTarget != null ? effTarget - totalKcal : null;
 
   if (loading) {
@@ -1102,10 +1104,10 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
             <View style={[styles.kcalFill, { width: `${Math.min(100, Math.round((totalKcal / effTarget) * 100))}%`, backgroundColor: totalKcal > effTarget ? c.danger : c.primary }]} />
           </View>
         )}
-        {(trainingKcal > 0 || activityKcal > 0) && (
+        {(trainingKcal > 0 || activityKcal > 0 || cardioKcal > 0) && (
           <View style={styles.bonusPill}>
             <Ionicons name={activityKcal > 0 ? 'walk' : 'flame'} size={14} color={c.primary} />
-            <Text style={styles.bonusText} numberOfLines={1}>{t('food.kcalExtra', { n: Math.max(trainingKcal, activityKcal) })}{activityKcal > 0 && steps > 0 ? t('food.stepsSuffix', { steps: steps.toLocaleString(lang === 'en' ? 'en-US' : 'de-DE') }) : ''}</Text>
+            <Text style={styles.bonusText} numberOfLines={1}>{t('food.kcalExtra', { n: Math.max(trainingKcal, activityKcal) + cardioKcal })}{activityKcal > 0 && steps > 0 ? t('food.stepsSuffix', { steps: steps.toLocaleString(lang === 'en' ? 'en-US' : 'de-DE') }) : ''}</Text>
           </View>
         )}
         <View style={styles.macrosRow}>

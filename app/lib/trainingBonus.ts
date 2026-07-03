@@ -23,3 +23,24 @@ export async function todayTrainingKcal(userId: string, weightKg: number): Promi
   }
   return estimateWorkoutKcal(weightKg, minutes);
 }
+
+// Heute manuell eingetragenes Cardio (Summe der bereits berechneten kcal aus
+// cardio_sessions). Kommt ON TOP zum Trainings-/Schritte-Bonus, weil Cardio
+// explizit vom Nutzer eingetragen wird. Fehlertolerant: liefert 0, falls die
+// Tabelle (Migration 059) noch nicht eingespielt ist -> App bricht nie ab.
+export async function todayCardioKcal(userId: string): Promise<number> {
+  if (!userId) return 0;
+  try {
+    const { data, error } = await supabase
+      .from('cardio_sessions')
+      .select('kcal')
+      .eq('user_id', userId)
+      .gte('performed_at', startOfTodayISO());
+    if (error) return 0;
+    let sum = 0;
+    for (const r of (data ?? []) as any[]) sum += Number(r.kcal) || 0;
+    return sum;
+  } catch {
+    return 0;
+  }
+}

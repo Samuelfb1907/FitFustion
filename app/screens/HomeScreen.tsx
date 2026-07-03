@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { computeNutrition, ageFromBirthDate, NutritionResult, Gender, ActivityLevel, GoalType } from '../lib/nutrition';
 import { computeXp, levelInfo, computeStreak, ACHIEVEMENTS, GameStats } from '../lib/gamification';
 import CalorieGauge from '../components/CalorieGauge';
-import GlassFill from '../components/GlassFill';import { todayTrainingKcal } from '../lib/trainingBonus';
+import GlassFill from '../components/GlassFill';import { todayTrainingKcal, todayCardioKcal } from '../lib/trainingBonus';
 import { hasStepsPermission, getTodayActivity, getStepsLastDays, stepsKcal } from '../lib/health';
 import { dailyGoals, Goal } from '../lib/goals';
 import { todayWeekday } from '../lib/weekdays';
@@ -98,6 +98,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
   const [planToday, setPlanToday] = useState<{ has: boolean; focus: string | null } | null>(null);
   const [weightKg, setWeightKg] = useState<number | null>(null);
   const [trainingKcal, setTrainingKcal] = useState(0);
+  const [cardioKcal, setCardioKcal] = useState(0);
   const [steps, setSteps] = useState(0);
   const [activityKcal, setActivityKcal] = useState(0);
   const [activityMeasured, setActivityMeasured] = useState(false);
@@ -164,6 +165,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
         );
         setGoalLabel(GOAL_LABELS[goalType] ?? goalType);
         setTrainingKcal(await todayTrainingKcal(userId, Number(prof.weight_kg)));
+        setCardioKcal(await todayCardioKcal(userId));
         if (await hasStepsPermission()) {
           const a = await getTodayActivity(Number(prof.weight_kg));
           setSteps(a.steps); setActivityKcal(a.kcal); setActivityMeasured(a.measured);
@@ -422,12 +424,12 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
                     )}
                   </View>
                   <View style={{ alignItems: 'center', marginTop: 16 }}>
-                    <CalorieGauge target={nutrition.targetCalories + (dayOffset === 0 ? Math.max(trainingKcal, activityKcal) : curActivityKcal)} eaten={cur.kcal} />
+                    <CalorieGauge target={nutrition.targetCalories + (dayOffset === 0 ? Math.max(trainingKcal, activityKcal) + cardioKcal : curActivityKcal)} eaten={cur.kcal} />
                   </View>
-                  {dayOffset === 0 && trainingKcal > 0 && activityKcal === 0 && (
+                  {dayOffset === 0 && (trainingKcal > 0 || cardioKcal > 0) && activityKcal === 0 && (
                     <View style={styles.bonusPill}>
                       <Ionicons name="flame" size={14} color={c.primary} />
-                      <Text style={styles.bonusText} numberOfLines={1}>{t('home.bonusTraining', { n: trainingKcal })}</Text>
+                      <Text style={styles.bonusText} numberOfLines={1}>{t('home.bonusTraining', { n: trainingKcal + cardioKcal })}</Text>
                     </View>
                   )}
                   {(curSteps > 0 || curActivityKcal > 0) && (
@@ -564,7 +566,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
                     <View style={[styles.achBarFill, { width: `${Math.round((earnedCount / ACHIEVEMENTS.length) * 100)}%`, backgroundColor: amber }]} />
                   </View>
                 )}
-                {dailyGoals({ trainedToday: goalsData.trainedToday, trackedToday: goalsData.trackedToday, eatenKcal: eaten.kcal, targetKcal: nutrition.targetCalories + Math.max(trainingKcal, activityKcal), eatenProtein: eaten.p, targetProtein: nutrition.proteinG }).map((g, i, arr) => (
+                {dailyGoals({ trainedToday: goalsData.trainedToday, trackedToday: goalsData.trackedToday, eatenKcal: eaten.kcal, targetKcal: nutrition.targetCalories + Math.max(trainingKcal, activityKcal) + cardioKcal, eatenProtein: eaten.p, targetProtein: nutrition.proteinG }).map((g, i, arr) => (
                   <GoalRow key={g.key} g={g} last={i === arr.length - 1} c={c} styles={styles} t={t} />
                 ))}
               </View>

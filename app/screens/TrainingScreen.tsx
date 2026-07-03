@@ -23,6 +23,7 @@ import BackButton from '../components/BackButton';
 import SwipeBack from '../components/SwipeBack';
 import { useAndroidBack } from '../lib/useBackHandler';
 import GlassFill from '../components/GlassFill';
+import CardioTab from '../components/CardioTab';
 import { usePaywall } from '../components/Paywall';
 
 type Muscle = { id: string; key: string; name_de: string; body_region: string | null };
@@ -38,7 +39,7 @@ export default function TrainingScreen({ focusTick, focused = true }: { focusTic
   const t = useT();
   const styles = useMemo(() => makeStyles(c), [c]);
 
-  const [seg, setSeg] = useState<'free' | 'plan'>('free');
+  const [seg, setSeg] = useState<'free' | 'plan' | 'cardio'>('free');
   const [muscles, setMuscles] = useState<Muscle[]>([]);
   const [selectedMuscle, setSelectedMuscle] = useState<Muscle | null>(null);
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -175,9 +176,9 @@ export default function TrainingScreen({ focusTick, focused = true }: { focusTic
   // Scroll-Inhalts -> scrollt beim Runterscrollen mit weg; sonst fest oben.
   const segmented = (
     <Segmented
-      options={[{ key: 'free', label: t('training.segFree') }, { key: 'plan', label: t('training.segPlan') }]}
+      options={[{ key: 'free', label: t('training.segFree') }, { key: 'plan', label: t('training.segPlan') }, { key: 'cardio', label: t('training.segCardio') }]}
       value={seg}
-      onChange={(k) => { if (k === 'plan' && !isPremium) { openPaywall('plan'); return; } setSeg(k as 'free' | 'plan'); }}
+      onChange={(k) => { if (k === 'plan' && !isPremium) { openPaywall('plan'); return; } setSeg(k as 'free' | 'plan' | 'cardio'); }}
       c={c}
     />
   );
@@ -192,6 +193,13 @@ export default function TrainingScreen({ focusTick, focused = true }: { focusTic
           {segmented}
           <View style={{ flex: 1, marginTop: 14 }}>
             <PlanScreen embedded onOpenExercise={setPlanEx} refreshTick={planRefresh} />
+          </View>
+        </>
+      ) : seg === 'cardio' ? (
+        <>
+          {segmented}
+          <View style={{ flex: 1, marginTop: 18 }}>
+            <CardioTab />
           </View>
         </>
       ) : mLoading ? (
