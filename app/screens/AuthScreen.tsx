@@ -12,6 +12,11 @@ import GlassFill from '../components/GlassFill';
 import WelcomeIntro from '../components/WelcomeIntro';
 import { Ionicons } from '@expo/vector-icons';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+
+// Web-Client-ID aus Google Cloud (OAuth 2.0). Wird als Env in der EAS-Umgebung gesetzt
+// (EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID). Fehlt sie, bleibt der Google-Button ausgeblendet.
+const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
 
 function translateError(msg: string, t: (key: string, params?: Record<string, string | number>) => string): string {
   const m = msg.toLowerCase();
@@ -49,6 +54,7 @@ export default function AuthScreen() {
   const [resetMsg, setResetMsg] = useState<string | null>(null);
   const [resetErr, setResetErr] = useState(false);
   const [appleAvailable, setAppleAvailable] = useState(false);
+  const [googleAvailable, setGoogleAvailable] = useState(false);
   const [showIntro, setShowIntro] = useState<boolean | undefined>(undefined);
 
   function show(message: string, error: boolean) { setInfo(message); setIsError(error); }
@@ -105,6 +111,17 @@ export default function AuthScreen() {
     if (Platform.OS === 'ios') AppleAuthentication.isAvailableAsync().then(setAppleAvailable).catch(() => {});
   }, []);
 
+  // "Mit Google anmelden" auf Android anbieten (auf iOS uebernimmt Apple).
+  // Voraussetzung: die Web-Client-ID ist gesetzt.
+  useEffect(() => {
+    if (Platform.OS === 'android' && GOOGLE_WEB_CLIENT_ID) {
+      try {
+        GoogleSignin.configure({ webClientId: GOOGLE_WEB_CLIENT_ID });
+        setGoogleAvailable(true);
+      } catch { setGoogleAvailable(false); }
+    }
+  }, []);
+
   // Value-Intro nur fuer neue Nutzer (einmalig). Flag liegt lokal; setzt showIntro.
   useEffect(() => {
     let active = true;
@@ -139,6 +156,28 @@ export default function AuthScreen() {
       setLoading(false);
       if (e?.code === 'ERR_REQUEST_CANCELED') return; // Nutzer hat abgebrochen
       show(t('auth.apple.failed'), true);
+    }
+  }
+
+  async function signInWithGoogle() {
+    setInfo(null);
+    try {
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      const resp: any = await GoogleSignin.signIn();
+      // ID-Token je nach SDK-Version unter data.idToken (neu) oder idToken (alt).
+      const idToken: string | undefined = resp?.data?.idToken ?? resp?.idToken;
+      if (!idToken) { show(t('auth.google.failed'), true); return; }
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithIdToken({ provider: 'google', token: idToken });
+      setLoading(false);
+      if (error) { show(translateError(error.message, t), true); return; }
+      // Anmeldung via Google = Zustimmung zu den Rechtstexten dokumentieren (wie beim Signup).
+      try { await AsyncStorage.setItem('fitavo.disclaimerAccepted', JSON.stringify({ version: DISCLAIMER_VERSION, at: new Date().toISOString(), health: true, terms: true, privacy: true })); } catch {}
+      // Session ist gesetzt -> App wechselt automatisch (eingeloggt).
+    } catch (e: any) {
+      setLoading(false);
+      if (e?.code === statusCodes.SIGN_IN_CANCELLED || e?.code === statusCodes.IN_PROGRESS) return; // abgebrochen / laeuft schon
+      show(t('auth.google.failed'), true);
     }
   }
 
@@ -231,13 +270,15 @@ export default function AuthScreen() {
               {loading ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.buttonText}>{mode === 'login' ? t('auth.button.login') : t('auth.button.register')}</Text>}
             </TouchableOpacity>
 
+            {(appleAvailable || googleAvailable) && (
+              <View style={styles.dividerRow}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>{t('auth.or')}</Text>
+                <View style={styles.dividerLine} />
+              </View>
+            )}
             {appleAvailable && (
               <>
-                <View style={styles.dividerRow}>
-                  <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>{t('auth.or')}</Text>
-                  <View style={styles.dividerLine} />
-                </View>
                 <AppleAuthentication.AppleAuthenticationButton
                   buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
                   buttonStyle={theme === 'dark' ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
@@ -246,6 +287,15 @@ export default function AuthScreen() {
                   onPress={signInWithApple}
                 />
                 <Text style={styles.appleConsent}>{t('auth.apple.consent')}</Text>
+              </>
+            )}
+            {googleAvailable && (
+              <>
+                <TouchableOpacity style={styles.googleBtn} onPress={signInWithGoogle} disabled={loading} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={t('auth.google.button')}>
+                  <Ionicons name="logo-google" size={19} color="#4285F4" />
+                  <Text style={styles.googleBtnText}>{t('auth.google.button')}</Text>
+                </TouchableOpacity>
+                <Text style={styles.appleConsent}>{t('auth.google.consent')}</Text>
               </>
             )}
 
@@ -344,6 +394,9 @@ function makeStyles(c: Colors) {
     dividerText: { marginHorizontal: 12, color: c.textMuted, fontSize: 13, fontWeight: '600' },
     appleBtn: { height: 48, marginTop: 14 },
     appleConsent: { fontSize: 11, color: c.textMuted, textAlign: 'center', marginTop: 8, lineHeight: 15 },
+    // Google-Button bewusst weiss mit dunkler Schrift (Googles Branding-Vorgabe) – in beiden Themes gleich.
+    googleBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, height: 48, marginTop: 14, backgroundColor: '#FFFFFF', borderRadius: 12, borderWidth: 1, borderColor: '#DADCE0' },
+    googleBtnText: { color: '#1F1F1F', fontSize: 16, fontWeight: '600' },
 
     infoBox: { backgroundColor: c.inputBg, borderLeftWidth: 3, borderRadius: 10, paddingVertical: 12, paddingHorizontal: 14, marginTop: 18 },
     info: { fontSize: 14, lineHeight: 19 },

@@ -57,6 +57,9 @@ export const de = {
   "auth.or": "oder",
   "auth.apple.consent": "Mit der Anmeldung über Apple akzeptierst du die Nutzungsbedingungen & Datenschutzerklärung.",
   "auth.apple.failed": "Anmeldung mit Apple fehlgeschlagen. Bitte erneut versuchen.",
+  "auth.google.button": "Mit Google anmelden",
+  "auth.google.consent": "Mit der Anmeldung über Google akzeptierst du die Nutzungsbedingungen & Datenschutzerklärung.",
+  "auth.google.failed": "Anmeldung mit Google fehlgeschlagen. Bitte erneut versuchen.",
 
   // Rechtstexte-Modal
   "auth.modal.terms": "Nutzungsbedingungen",
@@ -146,6 +149,9 @@ export const en = {
   "auth.or": "or",
   "auth.apple.consent": "By signing in with Apple you accept the Terms of Use & Privacy Policy.",
   "auth.apple.failed": "Sign in with Apple failed. Please try again.",
+  "auth.google.button": "Sign in with Google",
+  "auth.google.consent": "By signing in with Google you accept the Terms of Use & Privacy Policy.",
+  "auth.google.failed": "Sign in with Google failed. Please try again.",
 
   // Legal texts modal
   "auth.modal.terms": "Terms of Use",
