@@ -181,18 +181,18 @@ export default function AuthScreen() {
       const resp: any = await GoogleSignin.signIn();
       // ID-Token je nach SDK-Version unter data.idToken (neu) oder idToken (alt).
       const idToken: string | undefined = resp?.data?.idToken ?? resp?.idToken;
-      if (!idToken) { show('Kein ID-Token von Google erhalten – Konfiguration prüfen.', true); return; }
+      if (!idToken) { show(t('auth.google.failed'), true); return; }
       setLoading(true);
       const { error } = await supabase.auth.signInWithIdToken({ provider: 'google', token: idToken });
       setLoading(false);
-      if (error) { show('Supabase lehnt Google-Token ab: ' + error.message, true); return; }
+      if (error) { show(translateError(error.message, t), true); return; }
       // Anmeldung via Google = Zustimmung zu den Rechtstexten dokumentieren (wie beim Signup).
       try { await AsyncStorage.setItem('fitavo.disclaimerAccepted', JSON.stringify({ version: DISCLAIMER_VERSION, at: new Date().toISOString(), health: true, terms: true, privacy: true })); } catch {}
       // Session ist gesetzt -> App wechselt automatisch (eingeloggt).
     } catch (e: any) {
       setLoading(false);
       if (e?.code === statusCodes?.SIGN_IN_CANCELLED || e?.code === statusCodes?.IN_PROGRESS) return; // abgebrochen / laeuft schon
-      show('Google-Login-Fehler: ' + String(e?.code ?? e?.message ?? e), true);
+      show(t('auth.google.failed'), true);
     }
   }
 
