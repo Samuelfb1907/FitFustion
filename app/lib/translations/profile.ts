@@ -55,6 +55,15 @@ export const de = {
   "profile.environment.gym": "Fitnessstudio",
   "profile.environment.home_gym": "Home-Gym",
   "profile.environment.no_equipment": "Kein Equipment",
+
+  // Realistische Ziel-Einordnung (geteilt: ProfileScreen + OnboardingScreen)
+  "goalRealism.title": "🎯 Realistisch einordnen",
+  "goalRealism.duration": "{kg} kg abnehmen dauert bei gesundem Tempo etwa {min}–{max} Wochen (0,5–1 kg/Woche).",
+  "goalRealism.tooFast": "Dein Zeitrahmen ist ambitioniert – das wären über 1 kg/Woche. Für {kg} kg empfehlen wir mindestens {min} Wochen. Weitermachen ist ok: Wir setzen dein Kalorienziel automatisch auf ein sicheres Level, du hungerst nicht.",
+  "goalRealism.good": "✓ Gutes, gesundes Tempo – so bleibt der Erfolg.",
+  "goalRealism.ambitious": "Ambitioniert! 💪 Plan dir genug Zeit ein – langsam & stetig hält länger (kein Jojo-Effekt).",
+  "goalRealism.steady": "Dranbleiben lohnt sich – so bleibt es auch weg.",
+  "goalRealism.lowBmi": "⚠️ Dein Zielgewicht liegt unter dem gesunden Bereich für deine Größe. Bitte kläre das mit einem Arzt/einer Ärztin ab.",
 };
 
 export const en = {
@@ -114,4 +123,13 @@ export const en = {
   "profile.environment.gym": "Gym",
   "profile.environment.home_gym": "Home gym",
   "profile.environment.no_equipment": "No equipment",
+
+  // Realistic goal framing (shared: ProfileScreen + OnboardingScreen)
+  "goalRealism.title": "🎯 A realistic view",
+  "goalRealism.duration": "Losing {kg} kg takes about {min}–{max} weeks at a healthy pace (0.5–1 kg/week).",
+  "goalRealism.tooFast": "Your time frame is ambitious – that would be over 1 kg/week. For {kg} kg we recommend at least {min} weeks. You can still continue: we set your calorie goal to a safe level automatically, so you won't starve.",
+  "goalRealism.good": "✓ A good, healthy pace – that's how results last.",
+  "goalRealism.ambitious": "Ambitious! 💪 Give yourself enough time – slow and steady lasts longer (no yo-yo).",
+  "goalRealism.steady": "Staying consistent pays off – that way it stays off.",
+  "goalRealism.lowBmi": "⚠️ Your target weight is below the healthy range for your height. Please check with a doctor.",
 };

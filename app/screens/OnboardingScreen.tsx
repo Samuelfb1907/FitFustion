@@ -7,6 +7,8 @@ import { useColors, Colors } from '../contexts/ThemeContext';
 import { useT } from '../contexts/LanguageContext';
 import Ambient from '../components/Ambient';
 import GlassFill from '../components/GlassFill';
+import GoalRealismCard from '../components/GoalRealismCard';
+import { goalRealism } from '../lib/goalRealism';
 import { buildBirthDate, isUnderMinAge, MIN_AGE_YEARS } from '../lib/birthdate';
 import { DISCLAIMER_VERSION } from '../lib/legal';
 import { usePaywall } from '../components/Paywall';
@@ -81,6 +83,11 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
 
   const totalSteps = 4;
   const num = (v: string) => Number(v.replace(',', '.'));
+
+  // Ehrliche Einordnung des Abnehmziels inkl. Tempo-Check (Zeitrahmen ist hier bekannt).
+  const loseRealism = goal === 'lose_weight'
+    ? goalRealism(num(weight), num(targetWeight), { weeks: Number(timeframe), heightCm: num(height) })
+    : null;
 
   function stepValid(): boolean {
     if (step === 1) return firstName.trim().length > 0 && !!buildBirthDate(birthDay, birthMonth, birthYear) && !!gender && num(weight) >= 30 && num(weight) <= 300 && num(height) >= 100 && num(height) <= 250;
@@ -248,6 +255,7 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
                 <TextInput style={styles.input} value={targetWeight} onChangeText={setTargetWeight} placeholder={t('onboarding.placeholder.targetWeight')} placeholderTextColor={c.textMuted} keyboardType="numeric" inputMode="decimal" />
                 <Text style={styles.label}>{t('onboarding.label.timeframe')}</Text>
                 <Choice options={TIMEFRAMES} value={timeframe} onChange={setTimeframe} styles={styles} t={t} />
+                {loseRealism && <GoalRealismCard realism={loseRealism} c={c} t={t} />}
               </View>
             )}
           </View>

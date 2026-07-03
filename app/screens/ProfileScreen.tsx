@@ -8,6 +8,8 @@ import { useT } from '../contexts/LanguageContext';
 import { buildBirthDate, splitBirthDate } from '../lib/birthdate';
 import BackButton from '../components/BackButton';
 import GlassFill from '../components/GlassFill';
+import GoalRealismCard from '../components/GoalRealismCard';
+import { goalRealism } from '../lib/goalRealism';
 import { TAB_BAR_SPACE } from '../lib/layout';
 
 type Opt = { label: string; value: string };
@@ -198,6 +200,9 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
     );
   }
 
+  // Ehrliche Einordnung des Abnehmziels (ohne Zeitrahmen -> zeigt die realistische Dauer).
+  const loseRealism = goal === 'lose_weight' ? goalRealism(num(weight), num(targetWeight), { heightCm: num(height) }) : null;
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE + 48 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
       {onBack && <BackButton onPress={onBack} c={c} label={t('profile.backToSettings')} />}
@@ -239,6 +244,7 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
         <>
           <Text style={styles.label}>{t('profile.targetWeight')}</Text>
           <TextInput style={styles.input} value={targetWeight} onChangeText={setTargetWeight} keyboardType="numeric" inputMode="decimal" placeholder={t('profile.targetWeightPlaceholder')} placeholderTextColor={c.textMuted} />
+          {loseRealism && <GoalRealismCard realism={loseRealism} c={c} t={t} />}
         </>
       )}
 
