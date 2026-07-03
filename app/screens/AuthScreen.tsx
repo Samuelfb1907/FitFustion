@@ -12,11 +12,22 @@ import GlassFill from '../components/GlassFill';
 import WelcomeIntro from '../components/WelcomeIntro';
 import { Ionicons } from '@expo/vector-icons';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
-
 // Web-Client-ID aus Google Cloud (OAuth 2.0). Wird als Env in der EAS-Umgebung gesetzt
 // (EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID). Fehlt sie, bleibt der Google-Button ausgeblendet.
 const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+
+// WICHTIG: Das native Google-Sign-in-Modul steckt NUR in Builds, die es eingebaut haben
+// (aktueller Android-Build). Ein STATISCHER Import wuerde auf iOS und aelteren Builds beim
+// Laden CRASHEN, weil das Modul beim Import TurboModuleRegistry.getEnforcing('RNGoogleSignin')
+// aufruft (wirft, wenn nicht vorhanden). Deshalb laden wir es lazy + fehlertolerant:
+// auf Builds ohne das Modul bleibt der Google-Login einfach aus.
+let _google: any;
+function googleSignin(): any {
+  if (_google !== undefined) return _google;
+  try { _google = require('@react-native-google-signin/google-signin'); }
+  catch { _google = null; }
+  return _google;
+}
 
 function translateError(msg: string, t: (key: string, params?: Record<string, string | number>) => string): string {
   const m = msg.toLowerCase();
@@ -111,15 +122,16 @@ export default function AuthScreen() {
     if (Platform.OS === 'ios') AppleAuthentication.isAvailableAsync().then(setAppleAvailable).catch(() => {});
   }, []);
 
-  // "Mit Google anmelden" auf Android anbieten (auf iOS uebernimmt Apple).
-  // Voraussetzung: die Web-Client-ID ist gesetzt.
+  // "Mit Google anmelden" nur auf Android (auf iOS uebernimmt Apple) UND nur, wenn das
+  // native Modul im Build vorhanden ist. Kein Modul -> kein Button (und kein Crash).
   useEffect(() => {
-    if (Platform.OS === 'android' && GOOGLE_WEB_CLIENT_ID) {
-      try {
-        GoogleSignin.configure({ webClientId: GOOGLE_WEB_CLIENT_ID });
-        setGoogleAvailable(true);
-      } catch { setGoogleAvailable(false); }
-    }
+    if (Platform.OS !== 'android' || !GOOGLE_WEB_CLIENT_ID) return;
+    const g = googleSignin();
+    if (!g?.GoogleSignin) return;
+    try {
+      g.GoogleSignin.configure({ webClientId: GOOGLE_WEB_CLIENT_ID });
+      setGoogleAvailable(true);
+    } catch { setGoogleAvailable(false); }
   }, []);
 
   // Value-Intro nur fuer neue Nutzer (einmalig). Flag liegt lokal; setzt showIntro.
@@ -161,6 +173,9 @@ export default function AuthScreen() {
 
   async function signInWithGoogle() {
     setInfo(null);
+    const g = googleSignin();
+    if (!g?.GoogleSignin) { show(t('auth.google.failed'), true); return; }
+    const { GoogleSignin, statusCodes } = g;
     try {
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
       const resp: any = await GoogleSignin.signIn();
@@ -176,7 +191,7 @@ export default function AuthScreen() {
       // Session ist gesetzt -> App wechselt automatisch (eingeloggt).
     } catch (e: any) {
       setLoading(false);
-      if (e?.code === statusCodes.SIGN_IN_CANCELLED || e?.code === statusCodes.IN_PROGRESS) return; // abgebrochen / laeuft schon
+      if (e?.code === statusCodes?.SIGN_IN_CANCELLED || e?.code === statusCodes?.IN_PROGRESS) return; // abgebrochen / laeuft schon
       show(t('auth.google.failed'), true);
     }
   }
