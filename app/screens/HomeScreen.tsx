@@ -426,21 +426,20 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
                   <View style={{ alignItems: 'center', marginTop: 16 }}>
                     <CalorieGauge target={nutrition.targetCalories + (dayOffset === 0 ? Math.max(trainingKcal, activityKcal) + cardioKcal : curActivityKcal)} eaten={cur.kcal} />
                   </View>
-                  {dayOffset === 0 && (trainingKcal > 0 || cardioKcal > 0) && activityKcal === 0 && (
-                    <View style={styles.bonusPill}>
-                      <Ionicons name="flame" size={14} color={c.primary} />
-                      <Text style={styles.bonusText} numberOfLines={1}>{t('home.bonusTraining', { n: trainingKcal + cardioKcal })}</Text>
-                    </View>
-                  )}
-                  {(curSteps > 0 || curActivityKcal > 0) && (
-                    <View style={styles.bonusPill}>
-                      <Ionicons name="walk" size={14} color={c.primary} />
-                      <Text style={styles.bonusText} numberOfLines={1}>{[
-                        curSteps > 0 ? t('home.stepsPrefix', { steps: curSteps.toLocaleString(lang === 'en' ? 'en-US' : 'de-DE') }) : null,
-                        curActivityKcal > 0 ? `+${curActivityKcal} kcal ${curActivityMeasured ? t('home.activeMeasured') : t('home.activeEstimated')}` : null,
-                      ].filter(Boolean).join(' · ')}</Text>
-                    </View>
-                  )}
+                  {/* Ein einziger Bonus-Hinweis (Training/Cardio/Schritte zusammengefasst) statt zwei gestapelter Pillen. */}
+                  {(() => {
+                    const bonusExtra = dayOffset === 0 ? Math.max(trainingKcal, activityKcal) + cardioKcal : curActivityKcal;
+                    if (bonusExtra <= 0 && curSteps <= 0) return null;
+                    return (
+                      <View style={styles.bonusPill}>
+                        <Ionicons name={curSteps > 0 ? 'walk' : 'flame'} size={14} color={c.primary} />
+                        <Text style={styles.bonusText} numberOfLines={1}>{[
+                          bonusExtra > 0 ? t('home.extraKcal', { n: bonusExtra }) : null,
+                          curSteps > 0 ? t('home.stepsPrefix', { steps: curSteps.toLocaleString(lang === 'en' ? 'en-US' : 'de-DE') }) : null,
+                        ].filter(Boolean).join(' · ')}</Text>
+                      </View>
+                    );
+                  })()}
                   {dayOffset > 0 && cur.kcal === 0 && curActivityKcal === 0 && (
                     <Text style={styles.untracked}>{t('home.day.untracked')}</Text>
                   )}
@@ -680,7 +679,7 @@ function makeStyles(c: Colors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: 'transparent' },
     scroll: { paddingTop: 60, paddingHorizontal: 18, paddingBottom: TAB_BAR_SPACE },
-    stack: { gap: 14 },
+    stack: { gap: 18 },
     row: { flexDirection: 'row', gap: 11 },
 
     // Header
