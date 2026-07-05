@@ -78,7 +78,7 @@ export const DISCLAIMER_SECTIONS: { h: string; p: string }[] = [
 export const PRIVACY_SECTIONS: { h: string; p: string }[] = [
   {
     h: 'Verantwortlicher',
-    p: 'Verantwortlich für die Datenverarbeitung in FitAvo ist: Samuel Sinemli, Wilhelmsthaler Straße 2, 34379 Calden, Deutschland. E-Mail: Info@fitavo.eu.',
+    p: 'Verantwortlich für die Datenverarbeitung in FitAvo ist: Samuel Sinemli, c/o Impressumservice Dein-Impressum, Stettiner Str. 41, 35410 Hungen, Deutschland. E-Mail: Info@fitavo.eu.',
   },
   {
     h: 'Welche Daten wir verarbeiten',
@@ -138,7 +138,7 @@ export const PRIVACY_SECTIONS: { h: string; p: string }[] = [
 export const IMPRESSUM_SECTIONS: { h: string; p: string }[] = [
   {
     h: 'Angaben gemäß § 5 DDG',
-    p: 'Samuel Sinemli\nWilhelmsthaler Straße 2\n34379 Calden\nDeutschland',
+    p: 'Samuel Sinemli\nc/o Impressumservice Dein-Impressum\nStettiner Str. 41\n35410 Hungen\nDeutschland',
   },
   {
     h: 'Kontakt',
@@ -146,7 +146,7 @@ export const IMPRESSUM_SECTIONS: { h: string; p: string }[] = [
   },
   {
     h: 'Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV',
-    p: 'Samuel Sinemli\nWilhelmsthaler Straße 2, 34379 Calden',
+    p: 'Samuel Sinemli\nc/o Impressumservice Dein-Impressum, Stettiner Str. 41, 35410 Hungen',
   },
   {
     h: 'EU-Streitschlichtung',
@@ -171,7 +171,7 @@ export const IMPRESSUM_SECTIONS: { h: string; p: string }[] = [
 export const TERMS_SECTIONS: { h: string; p: string }[] = [
   {
     h: '1. Anbieter & Geltungsbereich',
-    p: 'Anbieter der App „FitAvo" ist Samuel Sinemli, Wilhelmsthaler Straße 2, 34379 Calden, Deutschland (E-Mail: Info@fitavo.eu). Diese Nutzungsbedingungen gelten für die Nutzung der App, insbesondere für das kostenpflichtige Premium-Abo. Mit der Nutzung erkennst du sie an.',
+    p: 'Anbieter der App „FitAvo" ist Samuel Sinemli, c/o Impressumservice Dein-Impressum, Stettiner Str. 41, 35410 Hungen, Deutschland (E-Mail: Info@fitavo.eu). Diese Nutzungsbedingungen gelten für die Nutzung der App, insbesondere für das kostenpflichtige Premium-Abo. Mit der Nutzung erkennst du sie an.',
   },
   {
     h: '2. Leistungen – Gratis & Premium',
@@ -301,7 +301,7 @@ export const DISCLAIMER_SECTIONS_EN: { h: string; p: string }[] = [
 export const PRIVACY_SECTIONS_EN: { h: string; p: string }[] = [
   {
     h: 'Controller',
-    p: 'The controller responsible for data processing in FitAvo is: Samuel Sinemli, Wilhelmsthaler Straße 2, 34379 Calden, Germany. E-mail: Info@fitavo.eu.',
+    p: 'The controller responsible for data processing in FitAvo is: Samuel Sinemli, c/o Impressumservice Dein-Impressum, Stettiner Str. 41, 35410 Hungen, Germany. E-mail: Info@fitavo.eu.',
   },
   {
     h: 'What data we process',
@@ -361,7 +361,7 @@ export const PRIVACY_SECTIONS_EN: { h: string; p: string }[] = [
 export const IMPRESSUM_SECTIONS_EN: { h: string; p: string }[] = [
   {
     h: 'Information pursuant to § 5 DDG',
-    p: 'Samuel Sinemli\nWilhelmsthaler Straße 2\n34379 Calden\nGermany',
+    p: 'Samuel Sinemli\nc/o Impressumservice Dein-Impressum\nStettiner Str. 41\n35410 Hungen\nGermany',
   },
   {
     h: 'Contact',
@@ -369,7 +369,7 @@ export const IMPRESSUM_SECTIONS_EN: { h: string; p: string }[] = [
   },
   {
     h: 'Responsible for the content pursuant to § 18(2) MStV',
-    p: 'Samuel Sinemli\nWilhelmsthaler Straße 2, 34379 Calden',
+    p: 'Samuel Sinemli\nc/o Impressumservice Dein-Impressum, Stettiner Str. 41, 35410 Hungen',
   },
   {
     h: 'EU dispute resolution',
@@ -393,7 +393,7 @@ export const IMPRESSUM_SECTIONS_EN: { h: string; p: string }[] = [
 export const TERMS_SECTIONS_EN: { h: string; p: string }[] = [
   {
     h: '1. Provider & scope',
-    p: 'The provider of the “FitAvo” app is Samuel Sinemli, Wilhelmsthaler Straße 2, 34379 Calden, Germany (e-mail: Info@fitavo.eu). These terms of use apply to the use of the app, in particular to the paid premium subscription. By using the app, you accept them.',
+    p: 'The provider of the “FitAvo” app is Samuel Sinemli, c/o Impressumservice Dein-Impressum, Stettiner Str. 41, 35410 Hungen, Germany (e-mail: Info@fitavo.eu). These terms of use apply to the use of the app, in particular to the paid premium subscription. By using the app, you accept them.',
   },
   {
     h: '2. Services – Free & Premium',
