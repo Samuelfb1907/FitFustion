@@ -389,11 +389,13 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
               </View>
               {stats && (
                 <View style={styles.pillRow}>
-                  <View style={styles.pill} accessible accessibilityLabel={t('home.streakA11y', { streak: stats.streak })}>
-                    <GlassFill radius={999} />
-                    <Ionicons name="flame" size={13} color={amber} />
-                    <Text style={[styles.pillText, { color: amber }]} numberOfLines={1}>{stats.streak}</Text>
-                  </View>
+                  {stats.streak > 0 && (
+                    <View style={styles.pill} accessible accessibilityLabel={t('home.streakA11y', { streak: stats.streak })}>
+                      <GlassFill radius={999} />
+                      <Ionicons name="flame" size={13} color={amber} />
+                      <Text style={[styles.pillText, { color: amber }]} numberOfLines={1}>{stats.streak}</Text>
+                    </View>
+                  )}
                   <View style={styles.pill} accessible accessibilityLabel={t('home.levelA11y', { level: lv.level })}>
                     <GlassFill radius={999} />
                     <Ionicons name="star" size={13} color={c.primary} />

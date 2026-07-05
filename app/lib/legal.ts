@@ -9,7 +9,7 @@ export const DISCLAIMER_SHORT =
 export const NUTRITION_DISCLAIMER =
   'Kalorien & Nährwerte sind geschätzte Richtwerte – keine Ernährungsberatung. FitAvo schlägt dir keine Lebensmittel vor; du trackst nur selbst.';
 export const ALLERGY_HINT =
-  '⚠️ Achte bei Allergien & Unverträglichkeiten immer selbst auf die Zutaten und Verpackungsangaben.';
+  'Achte bei Allergien & Unverträglichkeiten immer selbst auf die Zutaten und Verpackungsangaben.';
 
 export const DISCLAIMER_SECTIONS: { h: string; p: string }[] = [
   {
@@ -232,7 +232,7 @@ export const DISCLAIMER_SHORT_EN =
 export const NUTRITION_DISCLAIMER_EN =
   'Calories & nutritional values are estimated reference figures – not nutritional advice. FitAvo does not suggest any foods to you; you only track them yourself.';
 export const ALLERGY_HINT_EN =
-  '⚠️ In case of allergies & intolerances, always check the ingredients and packaging information yourself.';
+  'In case of allergies & intolerances, always check the ingredients and packaging information yourself.';
 
 export const DISCLAIMER_SECTIONS_EN: { h: string; p: string }[] = [
   {
