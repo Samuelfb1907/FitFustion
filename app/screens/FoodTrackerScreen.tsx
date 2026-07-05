@@ -1129,55 +1129,51 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
         </View>
       </View>
 
-      {/* "Sprich's einfach": Mahlzeit in Sprache eingeben -> KI erkennt automatisch */}
+      {/* Mahlzeit hinzufuegen (aufgeraeumt): KI-Eingabe + drei kompakte Aktionen */}
       <View style={styles.nlCard}>
         <GlassFill radius={22} />
-        <View style={styles.nlHead}>
-          <View style={styles.nlChipIcon}><Ionicons name="color-wand" size={18} color={c.primary} /></View>
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={styles.nlTitle} numberOfLines={1}>{t('food.nlTitle')}</Text>
-            <Text style={styles.nlConsentHint}>{t('food.nlConsentHint')}</Text>
-          </View>
+        <View style={styles.nlInputRow}>
+          <TextInput
+            style={styles.nlInputFlex}
+            value={nlText}
+            onChangeText={setNlText}
+            placeholder={t('food.nlPlaceholder')}
+            placeholderTextColor={c.textMuted}
+            multiline
+            editable={!nlBusy}
+          />
+          <TouchableOpacity
+            style={[styles.nlSend, isPremium && (nlBusy || !nlText.trim()) && { opacity: 0.5 }]}
+            onPress={recognizeMeal}
+            disabled={isPremium && (nlBusy || !nlText.trim())}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel={isPremium ? t('food.nlRecognize') : t('food.nlRecognizePremium')}
+          >
+            {nlBusy && !nlItems ? <ActivityIndicator color={c.onPrimary} size="small" /> : <Ionicons name={isPremium ? 'arrow-up' : 'lock-closed'} size={19} color={c.onPrimary} />}
+          </TouchableOpacity>
         </View>
-        <TextInput
-          style={styles.nlInput}
-          value={nlText}
-          onChangeText={setNlText}
-          placeholder={t('food.nlPlaceholder')}
-          placeholderTextColor={c.textMuted}
-          multiline
-          editable={!nlBusy}
-        />
-        <TouchableOpacity style={[styles.nlBtn, isPremium && (nlBusy || !nlText.trim()) && { opacity: 0.5 }]} onPress={recognizeMeal} disabled={isPremium && (nlBusy || !nlText.trim())} activeOpacity={0.85}>
-          {nlBusy && !nlItems ? <ActivityIndicator color={c.onPrimary} /> : (
-            <View style={styles.btnRow}>
-              <Ionicons name={isPremium ? 'sparkles' : 'lock-closed'} size={16} color={c.onPrimary} />
-              <Text style={styles.nlBtnText} numberOfLines={1}>{isPremium ? t('food.nlRecognize') : t('food.nlRecognizePremium')}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.nlPhotoBtn} onPress={recognizeMealPhoto} disabled={nlBusy} activeOpacity={0.85}>
-          <View style={styles.btnRow}>
-            <Ionicons name={isPremium ? 'camera-outline' : 'lock-closed'} size={16} color={c.primary} />
-            <Text style={styles.nlPhotoBtnText} numberOfLines={1}>{t('food.photoBtn')}</Text>
-          </View>
-        </TouchableOpacity>
+        <Text style={styles.nlConsentHint}>{t('food.nlConsentHint')}</Text>
         {nlErr && <Text style={styles.error}>{nlErr}</Text>}
+        <View style={styles.chipRow}>
+          <TouchableOpacity style={styles.actChip} onPress={() => openPick(mealByHour())} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={t('food.searchChip')}>
+            <Ionicons name="search" size={19} color={c.primary} />
+            <Text style={styles.actChipText} numberOfLines={1}>{t('food.searchChip')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actChip} onPress={() => { setError(null); setScannerOpen(true); }} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={t('food.scan')}>
+            <Ionicons name="barcode-outline" size={19} color={c.primary} />
+            <Text style={styles.actChipText} numberOfLines={1}>{t('food.scan')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actChip} onPress={recognizeMealPhoto} disabled={nlBusy} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={t('food.photoChip')}>
+            <Ionicons name={isPremium ? 'camera-outline' : 'lock-closed'} size={19} color={c.primary} />
+            <Text style={styles.actChipText} numberOfLines={1}>{t('food.photoChip')}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      <Text style={styles.disclaimer}>{legalShort.nutritionDisclaimer}</Text>
-
-      {/* Aktionen */}
-      <View style={styles.actionRow}>
-        <TouchableOpacity style={styles.addBtnRow} onPress={() => openPick(mealByHour())} activeOpacity={0.85}>
-          <Ionicons name="add" size={18} color={c.onPrimary} />
-          <Text style={styles.addText} numberOfLines={1}>{t('food.addAction')}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.scanBtn} onPress={() => { setError(null); setScannerOpen(true); }} activeOpacity={0.85}>
-          <GlassFill radius={15} />
-          <Ionicons name="camera" size={17} color={c.primary} />
-          <Text style={styles.scanText} numberOfLines={1}>{t('food.scan')}</Text>
-        </TouchableOpacity>
+      <View style={styles.infoLine}>
+        <Ionicons name="information-circle-outline" size={14} color={c.textMuted} style={{ marginTop: 1 }} />
+        <Text style={styles.infoLineText}>{t('food.trackerHint')}</Text>
       </View>
 
       {/* "Mein üblicher Tag": die übliche Mahlzeit mit 1 Tipp hinzufügen */}
@@ -1196,8 +1192,6 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
           </TouchableOpacity>
         </View>
       )}
-
-      <View style={styles.allergyNote}><Ionicons name="warning" size={15} color="#F0B429" style={{ marginTop: 1 }} /><Text style={styles.allergyText}>{legalShort.allergyHint}</Text></View>
 
       {/* Schnellzugriff */}
       {quickFoods.length > 0 && (
@@ -1422,6 +1416,15 @@ function makeStyles(c: Colors) {
     nlPhotoBtn: { borderRadius: 14, paddingVertical: 12, alignItems: 'center', marginTop: 9, borderWidth: 1, borderColor: c.primary, backgroundColor: 'transparent' },
     nlPhotoBtnText: { color: c.primary, fontSize: 15, fontWeight: '700' },
     btnRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+    // Aufgeraeumter "Mahlzeit hinzufuegen"-Block
+    nlInputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 9 },
+    nlInputFlex: { flex: 1, borderWidth: 1, borderColor: c.border, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 15, backgroundColor: c.inputBg, color: c.text, minHeight: 44, maxHeight: 120 },
+    nlSend: { width: 44, height: 44, borderRadius: 12, backgroundColor: c.primary, alignItems: 'center', justifyContent: 'center' },
+    chipRow: { flexDirection: 'row', gap: 9, marginTop: 12 },
+    actChip: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 5, backgroundColor: c.inputBg, borderWidth: 1, borderColor: c.border, borderRadius: 14, paddingVertical: 12 },
+    actChipText: { fontSize: 12, fontWeight: '600', color: c.text },
+    infoLine: { flexDirection: 'row', alignItems: 'flex-start', gap: 7, marginTop: 10, marginBottom: 14, paddingHorizontal: 2 },
+    infoLineText: { flex: 1, fontSize: 11, color: c.textMuted, lineHeight: 15 },
     nlOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'flex-end' },
     nlSheet: { backgroundColor: c.bg, borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 22, paddingBottom: 32 },
     nlSheetTitle: { fontSize: 18, fontWeight: '800', color: c.heading, marginBottom: 10 },

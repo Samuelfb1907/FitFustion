@@ -127,6 +127,9 @@ export const de = {
   // Aktionen
   "food.addAction": "Hinzufügen",
   "food.scan": "Scannen",
+  "food.searchChip": "Suchen",
+  "food.photoChip": "Foto",
+  "food.trackerHint": "Schätzwerte, keine Ernährungsberatung – bei Allergien immer die Zutaten selbst prüfen.",
   "food.scanLocked": "Scannen",
 
   // Üblicher Tag
@@ -310,6 +313,9 @@ export const en = {
   // Actions
   "food.addAction": "Add",
   "food.scan": "Scan",
+  "food.searchChip": "Search",
+  "food.photoChip": "Photo",
+  "food.trackerHint": "Estimates, not nutritional advice – for allergies, always check the ingredients yourself.",
   "food.scanLocked": "Scan",
 
   // Usual day
