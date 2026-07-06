@@ -14,6 +14,7 @@ import { FeedItem, fetchFriendsFeed, toggleKudos } from '../lib/activity';
 import { hTap } from '../lib/haptics';
 import { useAuth } from '../contexts/AuthContext';
 import FeedComments from './FeedComments';
+import FriendProfile from './FriendProfile';
 
 // Relativer Zeitstempel fuer den Feed: gibt i18n-Key + Zahl zurueck.
 function agoKey(iso: string): { key: string; n: number } {
@@ -47,6 +48,7 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
   const [codeInput, setCodeInput] = useState('');
   const [err, setErr] = useState<string | null>(null);
   const [openComments, setOpenComments] = useState<FeedItem | null>(null);
+  const [openProfile, setOpenProfile] = useState<Friend | null>(null);
 
   useEffect(() => { load(); }, []);
   useEffect(() => { if (focusTick) load(); }, [focusTick]);
@@ -208,8 +210,10 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
           ) : (
             friends.map((f, i) => (
               <View key={f.friend_code} style={[styles.row, i > 0 && styles.rowDivider]}>
-                <View style={styles.avatar}><Text style={styles.avatarText}>{initial(f.display_name)}</Text></View>
-                <Text style={styles.name} numberOfLines={1}>{f.display_name}</Text>
+                <TouchableOpacity style={styles.friendTap} onPress={() => { hTap(); setOpenProfile(f); }} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={f.display_name}>
+                  <View style={styles.avatar}><Text style={styles.avatarText}>{initial(f.display_name)}</Text></View>
+                  <Text style={styles.name} numberOfLines={1}>{f.display_name}</Text>
+                </TouchableOpacity>
                 <TouchableOpacity onPress={() => nudge(f)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button" accessibilityLabel={t('friends.nudge')} style={{ marginLeft: 10 }}>
                   <Ionicons name="hand-left-outline" size={21} color={c.primary} />
                 </TouchableOpacity>
@@ -263,6 +267,15 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
           onCountChange={(delta) => setFeed((prev) => prev.map((it) => it.id === openComments.id ? { ...it, comment_count: Math.max(0, it.comment_count + delta) } : it))}
         />
       )}
+
+      {openProfile && (
+        <FriendProfile
+          friendCode={openProfile.friend_code}
+          initialName={openProfile.display_name}
+          visible={!!openProfile}
+          onClose={() => setOpenProfile(null)}
+        />
+      )}
     </View>
   );
 }
@@ -298,6 +311,7 @@ function makeStyles(c: Colors) {
     avatar: { width: 38, height: 38, borderRadius: 19, backgroundColor: c.inputBg, alignItems: 'center', justifyContent: 'center' },
     avatarText: { color: c.heading, fontSize: 16, fontWeight: '800' },
     name: { flex: 1, fontSize: 15, color: c.text, fontWeight: '600' },
+    friendTap: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
     feedIcon: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
     feedText: { fontSize: 14, color: c.text, fontWeight: '600', lineHeight: 19 },
     feedTime: { fontSize: 12, color: c.textMuted, marginTop: 1 },
