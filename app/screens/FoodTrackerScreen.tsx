@@ -228,9 +228,19 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
     const res = await resolveBarcodeFood(userId, code);
     setScanning(false);
     if (!res.food) {
-      setError(res.reason === 'not_found'
-        ? t('food.barcodeNotFound', { code })
-        : t('food.barcodeFetchFailed'));
+      // Klar sichtbares Pop-up statt kleiner Fehlerzeile unten (leicht zu uebersehen).
+      if (res.reason === 'not_found') {
+        Alert.alert(
+          t('food.barcodeNotFoundTitle'),
+          t('food.barcodeNotFoundBody', { code }),
+          [
+            { text: t('food.searchManually'), onPress: () => openPick(mealByHour()) },
+            { text: t('food.ok'), style: 'cancel' },
+          ],
+        );
+      } else {
+        Alert.alert(t('food.barcodeErrorTitle'), t('food.barcodeFetchFailed'), [{ text: t('food.ok') }]);
+      }
       return;
     }
     const food = res.food;

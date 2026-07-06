@@ -8,6 +8,11 @@ export const de = {
   // Barcode-Scan
   "food.barcodeNotFound": "Barcode {code} nicht gefunden. Du kannst die Zutat manuell suchen.",
   "food.barcodeFetchFailed": "Konnte das Produkt nicht abrufen. Bitte nochmal versuchen.",
+  "food.barcodeNotFoundTitle": "Produkt nicht gefunden",
+  "food.barcodeNotFoundBody": "Dieses Produkt ist noch nicht in der offenen Lebensmittel-Datenbank (Barcode {code}). Du kannst es einfach von Hand suchen und hinzufügen.",
+  "food.barcodeErrorTitle": "Abruf fehlgeschlagen",
+  "food.searchManually": "Manuell suchen",
+  "food.ok": "OK",
 
   // Mengen-Screen
   "food.kcalPer100g": "{n} kcal / 100 {unit}",
@@ -194,6 +199,11 @@ export const en = {
   // Barcode scan
   "food.barcodeNotFound": "Barcode {code} not found. You can search for the item manually.",
   "food.barcodeFetchFailed": "Couldn't fetch the product. Please try again.",
+  "food.barcodeNotFoundTitle": "Product not found",
+  "food.barcodeNotFoundBody": "This product isn't in the open food database yet (barcode {code}). You can simply search for it and add it manually.",
+  "food.barcodeErrorTitle": "Couldn't fetch",
+  "food.searchManually": "Search manually",
+  "food.ok": "OK",
 
   // Amount screen
   "food.kcalPer100g": "{n} kcal / 100 {unit}",
