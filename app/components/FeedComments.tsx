@@ -2,7 +2,7 @@
 // erlaubt Schreiben und Loeschen eigener Kommentare. Zaehler-Aenderung geht per Callback
 // zurueck an den Feed (FriendsPanel).
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Keyboard, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Keyboard, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { useT } from '../contexts/LanguageContext';
@@ -73,6 +73,8 @@ export default function FeedComments({ eventId, headerText, myUserId, visible, o
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.overlay}>
+        {/* Tippen neben dem Sheet (abgedunkelter Bereich) schliesst es. */}
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityRole="button" accessibilityLabel={t('friends.comments.close')} />
         <View style={[styles.sheet, { paddingBottom: 22 + kb }]}>
           <View style={styles.head}>
             <Text style={styles.title}>{t('friends.comments.title')}</Text>
