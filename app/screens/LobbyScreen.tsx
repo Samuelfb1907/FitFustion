@@ -18,6 +18,7 @@ import { TAB_BAR_SPACE } from '../lib/layout';
 import { Ionicons } from '@expo/vector-icons';
 import { healthSupported } from '../lib/health';
 import { Lobby, LobbyRow, LobbyWeekRow, HallEntry, fetchMyLobbies, fetchLobbyBoard, fetchLobbyWeekBoard, fetchLobbyHallOfFame, createLobby, joinLobby, leaveLobby, lobbyInviteLink, syncTodaySteps } from '../lib/lobby';
+import { fetchUnreadSocialCount } from '../lib/activity';
 
 const MEDAL_COLORS = ['#F0B429', '#C0C7CF', '#CD7F32']; // Gold, Silber, Bronze
 const NAME_KEY = 'fitavo.lobbyName';
@@ -53,10 +54,16 @@ export default function LobbyScreen({ focusTick }: { focusTick?: number; focused
   const [codeInput, setCodeInput] = useState('');
   const [showForms, setShowForms] = useState(false);
   const [view, setView] = useState<'liga' | 'lobby' | 'friends'>('liga'); // Reiter: Liga, Schritte-Lobby oder Freunde
+  const [friendsDot, setFriendsDot] = useState(false); // roter Punkt am Freunde-Reiter: neue Reaktionen bei mir
 
   useEffect(() => { init(); }, []);
   // Tab-Fokus: Schritte hochladen + Rangliste auffrischen (focusTick steigt bei jedem Tippen).
   useEffect(() => { if (focusTick) reload(); }, [focusTick]);
+  // Punkt am Freunde-Reiter: zeigen, wenn neue Reaktionen offen sind - ausser man schaut gerade hin.
+  useEffect(() => {
+    if (view === 'friends') { setFriendsDot(false); return; }
+    fetchUnreadSocialCount().then((n) => setFriendsDot(n > 0)).catch(() => {});
+  }, [focusTick, view]);
 
   async function load(silent: boolean) {
     if (!silent) setLoading(true);
@@ -290,9 +297,9 @@ export default function LobbyScreen({ focusTick }: { focusTick?: number; focused
     <View style={styles.container}>
       <Text style={styles.title}>{t('lobby.hubTitle')}</Text>
       <Segmented
-        options={[{ key: 'liga', label: t('league.tab') }, { key: 'lobby', label: t('lobby.segLobby') }, { key: 'friends', label: t('lobby.segFriends') }]}
+        options={[{ key: 'liga', label: t('league.tab') }, { key: 'lobby', label: t('lobby.segLobby') }, { key: 'friends', label: t('lobby.segFriends'), dot: friendsDot }]}
         value={view}
-        onChange={(k) => setView(k as 'liga' | 'lobby' | 'friends')}
+        onChange={(k) => { setView(k as 'liga' | 'lobby' | 'friends'); if (k === 'friends') setFriendsDot(false); }}
         c={c}
       />
       <View style={{ height: 10 }} />

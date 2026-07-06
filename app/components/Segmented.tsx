@@ -3,7 +3,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Colors } from '../contexts/ThemeContext';
 import Glass from './Glass';
 
-export type SegOption = { key: string; label: string };
+export type SegOption = { key: string; label: string; dot?: boolean };
 
 export default function Segmented({
   options,
@@ -31,9 +31,12 @@ export default function Segmented({
               accessibilityLabel={o.label}
               style={[styles.seg, active && { backgroundColor: c.primary }]}
             >
-              <Text numberOfLines={1} style={[styles.label, { color: active ? c.onPrimary : c.textMuted, fontWeight: active ? '800' : '600' }]}>
-                {o.label}
-              </Text>
+              <View style={styles.segInner}>
+                <Text numberOfLines={1} style={[styles.label, { color: active ? c.onPrimary : c.textMuted, fontWeight: active ? '800' : '600' }]}>
+                  {o.label}
+                </Text>
+                {o.dot && <View style={styles.dot} />}
+              </View>
             </TouchableOpacity>
           );
         })}
@@ -46,5 +49,7 @@ const styles = StyleSheet.create({
   wrap: { padding: 5 },
   row: { flexDirection: 'row', gap: 4 },
   seg: { flex: 1, minHeight: 40, paddingVertical: 9, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  segInner: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   label: { fontSize: 13, fontWeight: '700' },
+  dot: { width: 7, height: 7, borderRadius: 3.5, backgroundColor: '#F0574B' },
 });
