@@ -5,7 +5,7 @@ import { supabase } from './supabase';
 export type FeedItem = {
   id: string;
   display_name: string;
-  type: 'trained' | 'record';
+  type: 'trained' | 'record' | 'cardio';
   detail: string | null;
   created_at: string;
   kudos_count: number;
@@ -16,7 +16,7 @@ export type FeedItem = {
 export type CommentItem = { id: string; user_id: string; display_name: string; body: string; created_at: string };
 
 // Ereignis protokollieren - fire-and-forget (darf nie den Trainingsfluss stoeren).
-export async function logActivity(type: 'trained' | 'record', detail?: string): Promise<void> {
+export async function logActivity(type: 'trained' | 'record' | 'cardio', detail?: string): Promise<void> {
   try { await supabase.rpc('log_activity', { p_type: type, p_detail: detail ?? null }); } catch {}
 }
 

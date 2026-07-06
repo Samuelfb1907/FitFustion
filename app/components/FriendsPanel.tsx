@@ -25,6 +25,13 @@ function agoKey(iso: string): { key: string; n: number } {
   return { key: 'friends.feed.dAgo', n: Math.floor(h / 24) };
 }
 
+// Feed-Zeile in Text uebersetzen (auch fuer die Kommentar-Kopfzeile genutzt).
+function feedText(item: FeedItem, t: (k: string, p?: Record<string, string | number>) => string): string {
+  if (item.type === 'record') return item.detail ? t('friends.feed.recordEx', { name: item.display_name, ex: item.detail }) : t('friends.feed.record', { name: item.display_name });
+  if (item.type === 'cardio') return item.detail ? t('friends.feed.cardioEx', { name: item.display_name, ex: item.detail }) : t('friends.feed.cardio', { name: item.display_name });
+  return t('friends.feed.trained', { name: item.display_name });
+}
+
 export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
   const c = useColors();
   const t = useT();
@@ -222,14 +229,12 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
           <SectionHead icon="pulse" title={t('friends.feed.label')} />
           {feed.map((item, i) => {
             const a = agoKey(item.created_at);
-            const isRec = item.type === 'record';
-            const tint = isRec ? '#F0B429' : c.primary;
-            const text = isRec
-              ? (item.detail ? t('friends.feed.recordEx', { name: item.display_name, ex: item.detail }) : t('friends.feed.record', { name: item.display_name }))
-              : t('friends.feed.trained', { name: item.display_name });
+            const tint = item.type === 'record' ? '#F0B429' : item.type === 'cardio' ? '#38B6FF' : c.primary;
+            const icon = item.type === 'record' ? 'trophy' : item.type === 'cardio' ? 'walk' : 'barbell';
+            const text = feedText(item, t);
             return (
               <View key={item.id} style={[styles.row, i > 0 && styles.rowDivider]}>
-                <View style={[styles.feedIcon, { backgroundColor: tint + '22' }]}><Ionicons name={isRec ? 'trophy' : 'barbell'} size={17} color={tint} /></View>
+                <View style={[styles.feedIcon, { backgroundColor: tint + '22' }]}><Ionicons name={icon as any} size={17} color={tint} /></View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.feedText} numberOfLines={2}>{text}</Text>
                   <Text style={styles.feedTime}>{t(a.key, { n: a.n })}</Text>
@@ -251,9 +256,7 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
       {openComments && (
         <FeedComments
           eventId={openComments.id}
-          headerText={openComments.type === 'record'
-            ? (openComments.detail ? t('friends.feed.recordEx', { name: openComments.display_name, ex: openComments.detail }) : t('friends.feed.record', { name: openComments.display_name }))
-            : t('friends.feed.trained', { name: openComments.display_name })}
+          headerText={feedText(openComments, t)}
           myUserId={session?.user?.id ?? null}
           visible={!!openComments}
           onClose={() => setOpenComments(null)}

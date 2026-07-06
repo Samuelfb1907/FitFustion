@@ -10,6 +10,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { useT } from '../contexts/LanguageContext';
 import { CARDIO_TYPES, CardioType, cardioKcal, cardioTypeByKey } from '../lib/cardio';
+import { logActivity } from '../lib/activity';
 import { startOfTodayISO } from '../lib/date';
 import { errorMessage } from '../lib/errors';
 import { TAB_BAR_SPACE } from '../lib/layout';
@@ -76,6 +77,7 @@ export default function CardioTab({ onChanged }: { onChanged?: () => void }) {
     setSaving(false);
     if (error) { Alert.alert(errorMessage(error)); return; }
     hSuccess();
+    logActivity('cardio', t(`cardio.type.${picked.key}`)); // Freunde-Feed (fire-and-forget)
     setPicked(null);
     await load();
     onChanged?.();
