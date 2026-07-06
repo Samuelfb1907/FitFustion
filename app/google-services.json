@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "17347706865",
+    "project_id": "fitav-o",
+    "storage_bucket": "fitav-o.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:17347706865:android:77201e7348a9fcc4508e50",
+        "android_client_info": {
+          "package_name": "com.samuelfb1907.fitavo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBAkOE2CTd-6wueoPLMF5pw9OjILCnAT-w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

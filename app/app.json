@@ -82,6 +82,7 @@
     },
     "android": {
       "package": "com.samuelfb1907.fitavo",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#EAF7F0",
         "foregroundImage": "./assets/android-icon-foreground.png",

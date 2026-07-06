@@ -18,6 +18,11 @@ expo-env.d.ts
 *.key
 *.mobileprovision
 
+# Firebase Admin-/Service-Account-Schluessel (GEHEIM - niemals committen!)
+# (google-services.json ist NICHT geheim und wird bewusst committet)
+*-firebase-adminsdk-*.json
+*service-account*.json
+
 # Metro
 .metro-health-check*
 
