@@ -62,6 +62,17 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
   useEffect(() => { load(); }, []);
   useEffect(() => { if (focusTick) load(); }, [focusTick]);
 
+  // Die "neu"-Markierung (rote Pille + Punkte) verblasst kurz, nachdem man sie gesehen hat.
+  // Serverseitig ist in load() bereits als gesehen markiert; das hier raeumt nur die Anzeige auf,
+  // ohne dass man erst den Tab verlassen und neu betreten muss.
+  useEffect(() => {
+    if (!notifs.some((n) => n.is_new)) return;
+    const id = setTimeout(() => {
+      setNotifs((cur) => cur.map((n) => (n.is_new ? { ...n, is_new: false } : n)));
+    }, 3500);
+    return () => clearTimeout(id);
+  }, [notifs]);
+
   async function load() {
     try {
       const [code, list, reqs, fd, nt] = await Promise.all([
