@@ -12,6 +12,8 @@ import { errorMessage } from '../lib/errors';
 import { Friend, FriendRequest, getMyFriendCode, fetchFriends, addFriendByCode, removeFriendByCode, sendNudge, incomingRequests, acceptRequest, declineRequest } from '../lib/friends';
 import { FeedItem, fetchFriendsFeed, toggleKudos } from '../lib/activity';
 import { hTap } from '../lib/haptics';
+import { useAuth } from '../contexts/AuthContext';
+import FeedComments from './FeedComments';
 
 // Relativer Zeitstempel fuer den Feed: gibt i18n-Key + Zahl zurueck.
 function agoKey(iso: string): { key: string; n: number } {
@@ -26,6 +28,7 @@ function agoKey(iso: string): { key: string; n: number } {
 export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
   const c = useColors();
   const t = useT();
+  const { session } = useAuth();
   const styles = useMemo(() => makeStyles(c), [c]);
 
   const [myCode, setMyCode] = useState<string | null>(null);
@@ -36,6 +39,7 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
   const [busy, setBusy] = useState(false);
   const [codeInput, setCodeInput] = useState('');
   const [err, setErr] = useState<string | null>(null);
+  const [openComments, setOpenComments] = useState<FeedItem | null>(null);
 
   useEffect(() => { load(); }, []);
   useEffect(() => { if (focusTick) load(); }, [focusTick]);
@@ -230,6 +234,10 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
                   <Text style={styles.feedText} numberOfLines={2}>{text}</Text>
                   <Text style={styles.feedTime}>{t(a.key, { n: a.n })}</Text>
                 </View>
+                <TouchableOpacity style={styles.kudosBtn} onPress={() => setOpenComments(item)} hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('friends.comments.title')}>
+                  <Ionicons name="chatbubble-outline" size={19} color={c.textMuted} />
+                  {item.comment_count > 0 && <Text style={styles.kudosCount}>{item.comment_count}</Text>}
+                </TouchableOpacity>
                 <TouchableOpacity style={styles.kudosBtn} onPress={() => onKudos(item)} hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('friends.feed.kudosA11y')}>
                   <Ionicons name={item.i_kudosed ? 'flame' : 'flame-outline'} size={22} color={item.i_kudosed ? '#F0574B' : c.textMuted} />
                   {item.kudos_count > 0 && <Text style={[styles.kudosCount, item.i_kudosed && { color: '#F0574B' }]}>{item.kudos_count}</Text>}
@@ -238,6 +246,19 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
             );
           })}
         </View>
+      )}
+
+      {openComments && (
+        <FeedComments
+          eventId={openComments.id}
+          headerText={openComments.type === 'record'
+            ? (openComments.detail ? t('friends.feed.recordEx', { name: openComments.display_name, ex: openComments.detail }) : t('friends.feed.record', { name: openComments.display_name }))
+            : t('friends.feed.trained', { name: openComments.display_name })}
+          myUserId={session?.user?.id ?? null}
+          visible={!!openComments}
+          onClose={() => setOpenComments(null)}
+          onCountChange={(delta) => setFeed((prev) => prev.map((it) => it.id === openComments.id ? { ...it, comment_count: Math.max(0, it.comment_count + delta) } : it))}
+        />
       )}
     </View>
   );

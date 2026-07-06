@@ -10,7 +10,10 @@ export type FeedItem = {
   created_at: string;
   kudos_count: number;
   i_kudosed: boolean;
+  comment_count: number;
 };
+
+export type CommentItem = { id: string; user_id: string; display_name: string; body: string; created_at: string };
 
 // Ereignis protokollieren - fire-and-forget (darf nie den Trainingsfluss stoeren).
 export async function logActivity(type: 'trained' | 'record', detail?: string): Promise<void> {
@@ -29,4 +32,24 @@ export async function toggleKudos(eventId: string): Promise<boolean | null> {
   const { data, error } = await supabase.rpc('toggle_kudos', { p_event_id: eventId });
   if (error) return null;
   return data as boolean;
+}
+
+// Kommentare eines Ereignisses laden (aelteste zuerst).
+export async function fetchComments(eventId: string): Promise<CommentItem[]> {
+  const { data, error } = await supabase.rpc('event_comments', { p_event_id: eventId });
+  if (error) return [];
+  return (data ?? []) as CommentItem[];
+}
+
+// Kommentar hinzufuegen -> gibt den neuen Kommentar zurueck (oder null bei Fehler/leer).
+export async function addComment(eventId: string, body: string): Promise<CommentItem | null> {
+  const { data, error } = await supabase.rpc('add_comment', { p_event_id: eventId, p_body: body });
+  if (error) return null;
+  const rows = (data ?? []) as CommentItem[];
+  return rows[0] ?? null;
+}
+
+// Eigenen Kommentar loeschen.
+export async function deleteComment(commentId: string): Promise<void> {
+  try { await supabase.rpc('delete_comment', { p_comment_id: commentId }); } catch {}
 }
