@@ -15,6 +15,7 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": false,
+    "platforms": ["ios", "android"],
     "locales": {
       "de": "./locales/de.json",
       "en": "./locales/en.json"
