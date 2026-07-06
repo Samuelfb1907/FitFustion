@@ -50,6 +50,7 @@
       ],
       "./plugins/withHealthConnect",
       "./plugins/withAndroidLintFix",
+      "./plugins/withModularHeaders",
       "expo-secure-store",
       [
         "expo-splash-screen",
