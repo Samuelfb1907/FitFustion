@@ -7,7 +7,7 @@ import * as Sharing from 'expo-sharing';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { useT, useLang } from '../contexts/LanguageContext';
-import { GpsPoint, paceSecPerKm, formatPace, formatDuration, formatDistance, shareRegion, relativeInRegion } from '../lib/gps';
+import { GpsPoint, speedKmh, formatSpeed, formatDuration, formatDistance, shareRegion, simplifyRoute } from '../lib/gps';
 import { getMapView, getPolyline, getMarker } from '../lib/gpsNative';
 import { buildRunCardFile, writeSnapshotFile, runCardDate } from '../lib/runShareCard';
 
@@ -38,48 +38,44 @@ export default function RunDetail({ visible, onClose, activityKey, route, distan
   const Marker = getMarker();
   const mapRef = useRef<any>(null);
   const [sharing, setSharing] = useState(false);
-  const [snapshotting, setSnapshotting] = useState(false); // Marker kurz ausblenden (schwarze Kaesten im Schnappschuss)
 
-  const pts = route ?? [];
+  // Geglaettete Route (GPS-Zittern raus) - auch fuer schon gespeicherte alte Laeufe.
+  const pts = useMemo(() => simplifyRoute(route ?? [], 6), [route]);
   const coords: LatLng[] = pts.map((p) => ({ latitude: p.lat, longitude: p.lng }));
   const durationS = pts.length > 1 ? Math.round((pts[pts.length - 1].t - pts[0].t) / 1000) : minutes * 60;
-  const pace = paceSecPerKm(distanceM, durationS);
+  const kmh = speedKmh(distanceM, durationS);
 
-  // Teilen: Karten-Schnappschuss + Server baut das Strava-Style-Bild (Werte fest im Bild).
-  // Faellt der Server aus -> roher Schnappschuss als Fallback.
+  // Teilen: Der Server baut das komplette Strava-Style-Bild selbst (saubere Karte ohne
+  // Laeden-Namen, glatte Route, Werte fest im Bild) - wir schicken nur Ausschnitt + Strecke.
+  // Faellt der Server aus -> Apple-Karten-Schnappschuss als Notloesung.
   async function shareRun() {
     if (sharing) return;
     setSharing(true);
-    setSnapshotting(true); // native Marker raus aus dem Schnappschuss (schwarze Kaesten)
     try {
-      await new Promise((r) => setTimeout(r, 350)); // Karte ohne Marker rendern lassen
       const sr = shareRegion(pts);
-      const snap = await mapRef.current?.takeSnapshot?.({
-        width: 360, height: 300, region: sr ?? undefined, format: 'png', quality: 1, result: 'base64',
-      });
-      if (!snap) return;
-      // Start-/Ziel-Punkt malt der Server ins Bild (Position relativ zum Ausschnitt).
-      const dots = sr && pts.length > 1 ? [
-        { ...relativeInRegion(pts[0], sr), kind: 'start' as const },
-        { ...relativeInRegion(pts[pts.length - 1], sr), kind: 'end' as const },
-      ] : [];
-      const uri = (await buildRunCardFile({
-        mapBase64: snap,
+      if (!sr) return;
+      const caption = `${t('gps.type.' + activityKey)} · ${formatDistance(distanceM)} · ${formatDuration(durationS)} · ${formatSpeed(kmh)} ${t('gps.speedUnit')} 🏃 — FitAvo`;
+      let uri = await buildRunCardFile({
+        region: sr,
+        route: pts,
         title: t('gps.type.' + activityKey),
         date: runCardDate(pts[0]?.t ?? Date.now(), lang),
         stats: [
           { label: t('gps.stat.distance'), value: formatDistance(distanceM) },
           { label: t('gps.stat.time'), value: formatDuration(durationS) },
-          { label: t('gps.stat.pace'), value: `${formatPace(pace)} ${t('gps.paceUnit')}` },
+          { label: t('gps.stat.speed'), value: `${formatSpeed(kmh)} ${t('gps.speedUnit')}` },
         ],
         kcalText: kcal > 0 ? `${kcal} kcal` : '',
-        dots,
-      })) ?? (await writeSnapshotFile(snap));
+      });
+      if (!uri) {
+        // Notloesung: roher Karten-Schnappschuss (z. B. offline).
+        const snap = await mapRef.current?.takeSnapshot?.({ width: 360, height: 300, region: sr, format: 'png', quality: 1, result: 'base64' });
+        uri = snap ? await writeSnapshotFile(snap) : null;
+      }
       if (!uri) return;
-      const caption = `${t('gps.type.' + activityKey)} · ${formatDistance(distanceM)} · ${formatDuration(durationS)} · ${formatPace(pace)} ${t('gps.paceUnit')} 🏃 — FitAvo`;
       if (Platform.OS === 'ios') await Share.share({ url: uri, message: caption });
       else if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: caption });
-    } catch {} finally { setSharing(false); setSnapshotting(false); }
+    } catch {} finally { setSharing(false); }
   }
 
   const Stat = ({ label, value }: { label: string; value: string }) => (
@@ -102,14 +98,13 @@ export default function RunDetail({ visible, onClose, activityKey, route, distan
         {MapView && coords.length > 1 ? (
           <MapView ref={mapRef} style={styles.map} region={boundsRegion(coords)} scrollEnabled showsPointsOfInterest={false} pitchEnabled={false} rotateEnabled={false} toolbarEnabled={false}>
             {Polyline && <Polyline coordinates={coords} strokeColor={c.primary} strokeWidth={6} lineCap="round" lineJoin="round" />}
-            {/* Start/Ziel als dezente Punkte - beim Schnappschuss ausgeblendet (der Server malt
-                sie dann sauber ins Teilen-Bild; native Marker bekommen dort schwarze Kaesten) */}
-            {Marker && !snapshotting && (
+            {/* Start/Ziel als dezente Punkte (das Teilen-Bild malt der Server komplett selbst) */}
+            {Marker && (
               <Marker coordinate={coords[0]} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}>
                 <View style={styles.routeDotStart} />
               </Marker>
             )}
-            {Marker && !snapshotting && (
+            {Marker && (
               <Marker coordinate={coords[coords.length - 1]} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}>
                 <View style={styles.routeDotEnd} />
               </Marker>
@@ -125,7 +120,7 @@ export default function RunDetail({ visible, onClose, activityKey, route, distan
             <Stat label={t('gps.stat.time')} value={formatDuration(durationS)} />
           </View>
           <View style={styles.statsRow}>
-            <Stat label={t('gps.stat.pace')} value={`${formatPace(pace)} ${t('gps.paceUnit')}`} />
+            <Stat label={t('gps.stat.speed')} value={`${formatSpeed(kmh)} ${t('gps.speedUnit')}`} />
             <Stat label={t('gps.stat.kcal')} value={`${kcal}`} />
           </View>
         </View>

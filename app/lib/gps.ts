@@ -50,6 +50,51 @@ export function formatPace(secPerKm: number): string {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
+// Durchschnitts-Geschwindigkeit in km/h (0, wenn keine sinnvolle Strecke).
+export function speedKmh(distanceM: number, durationS: number): number {
+  if (distanceM < 1 || durationS <= 0) return 0;
+  return (distanceM / 1000) / (durationS / 3600);
+}
+
+// Geschwindigkeit als "5,2" (eine Nachkommastelle, deutsches Komma). 0/ungueltig -> "–".
+export function formatSpeed(kmh: number): string {
+  if (!kmh || !isFinite(kmh)) return '–';
+  return kmh.toFixed(1).replace('.', ',');
+}
+
+// Route vereinfachen (Ramer-Douglas-Peucker): entfernt GPS-Zittern, behaelt die Form.
+// toleranceM = maximale Abweichung in Metern -> gerade, aufgeraeumte Linien.
+export function simplifyRoute(points: GpsPoint[], toleranceM = 6): GpsPoint[] {
+  if (points.length <= 2) return points.slice();
+  const cosLat = Math.cos(rad(points[0].lat));
+  const X = (p: GpsPoint) => p.lng * cosLat * 111320; // Grad -> Meter (Ebene)
+  const Y = (p: GpsPoint) => p.lat * 110540;
+  const keep = new Array(points.length).fill(false);
+  keep[0] = keep[points.length - 1] = true;
+  const stack: Array<[number, number]> = [[0, points.length - 1]];
+  while (stack.length) {
+    const seg = stack.pop()!;
+    const a = seg[0], b = seg[1];
+    if (b - a < 2) continue;
+    const ax = X(points[a]), ay = Y(points[a]);
+    const dx = X(points[b]) - ax, dy = Y(points[b]) - ay;
+    const len2 = dx * dx + dy * dy;
+    let maxD = -1, maxI = -1;
+    for (let i = a + 1; i < b; i++) {
+      const px = X(points[i]) - ax, py = Y(points[i]) - ay;
+      const t = len2 > 0 ? Math.max(0, Math.min(1, (px * dx + py * dy) / len2)) : 0;
+      const ddx = px - t * dx, ddy = py - t * dy;
+      const d = ddx * ddx + ddy * ddy;
+      if (d > maxD) { maxD = d; maxI = i; }
+    }
+    if (maxD > toleranceM * toleranceM) {
+      keep[maxI] = true;
+      stack.push([a, maxI], [maxI, b]);
+    }
+  }
+  return points.filter((_, i) => keep[i]);
+}
+
 // Dauer als "MM:SS" oder "H:MM:SS".
 export function formatDuration(totalS: number): string {
   const s = Math.max(0, Math.floor(totalS));
@@ -95,13 +140,3 @@ export function shareRegion(points: GpsPoint[], aspectWoverH = 360 / 300) {
   return { latitude: midLat, longitude: (minLng + maxLng) / 2, latitudeDelta: latDelta, longitudeDelta: lngDelta };
 }
 
-// Relative Position (0..1) eines Punkts innerhalb einer Region - fuer die Start-/Ziel-Punkte,
-// die der Server ins Teilen-Bild malt (native Marker haben im Schnappschuss schwarze Kaesten).
-export function relativeInRegion(
-  p: { lat: number; lng: number },
-  region: { latitude: number; longitude: number; latitudeDelta: number; longitudeDelta: number },
-): { fx: number; fy: number } {
-  const fx = (p.lng - (region.longitude - region.longitudeDelta / 2)) / region.longitudeDelta;
-  const fy = ((region.latitude + region.latitudeDelta / 2) - p.lat) / region.latitudeDelta;
-  return { fx, fy };
-}

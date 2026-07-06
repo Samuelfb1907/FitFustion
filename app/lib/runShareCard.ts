@@ -7,7 +7,7 @@ import { Asset } from 'expo-asset';
 import { supabase } from './supabase';
 
 export type RunCardStat = { label: string; value: string };
-export type RunCardDot = { fx: number; fy: number; kind: 'start' | 'end' }; // relativ (0..1) im Ausschnitt
+export type RunCardRegion = { latitude: number; longitude: number; latitudeDelta: number; longitudeDelta: number };
 
 // FitAvo-Maskottchen (transparentes PNG) als Base64 - kommt mit ins Teilen-Bild.
 // Einmal pro App-Lauf laden und merken; bei Fehlern einfach ohne Logo weitermachen.
@@ -25,18 +25,22 @@ async function loadLogoB64(): Promise<string | null> {
 }
 
 // Liefert die Datei-URI des fertigen Bilds oder null (dann Fallback beim Aufrufer).
+// Der Server baut die Karte selbst (saubere Kacheln ohne Laeden-Namen) und zeichnet
+// die Route als glatte Linie - deshalb reichen Region + Streckenpunkte.
 export async function buildRunCardFile(params: {
-  mapBase64: string;        // Karten-Schnappschuss (PNG-Base64, ohne data:-Prefix)
+  region: RunCardRegion;    // Karten-Ausschnitt (6:5, aus shareRegion)
+  route: { lat: number; lng: number }[]; // vereinfachte Strecke (simplifyRoute)
   title: string;            // z. B. "Laufen"
   date: string;             // z. B. "7. Juli 2026"
-  stats: RunCardStat[];     // Distanz/Zeit/Ø-Tempo (fertig formatiert)
+  stats: RunCardStat[];     // Distanz/Zeit/Ø-Geschwindigkeit (fertig formatiert)
   kcalText: string;         // z. B. "461 kcal"
-  dots?: RunCardDot[];      // Start-/Ziel-Punkt (malt der Server ins Bild)
 }): Promise<string | null> {
   try {
     const logo = await loadLogoB64();
+    // Koordinaten auf ~1 m runden - mehr Genauigkeit braucht das Bild nicht.
+    const route = params.route.slice(0, 800).map((p) => ({ lat: Number(p.lat.toFixed(5)), lng: Number(p.lng.toFixed(5)) }));
     const { data, error } = await supabase.functions.invoke('render-run-card', {
-      body: { map: params.mapBase64, title: params.title, date: params.date, stats: params.stats, kcalText: params.kcalText, dots: params.dots ?? [], logo: logo ?? '' },
+      body: { region: params.region, route, title: params.title, date: params.date, stats: params.stats, kcalText: params.kcalText, logo: logo ?? '' },
     });
     const b64 = (data as any)?.image;
     if (error || typeof b64 !== 'string' || b64.length < 100) return null;

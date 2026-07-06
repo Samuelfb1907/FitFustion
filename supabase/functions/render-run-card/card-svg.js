@@ -27,11 +27,12 @@ function esc(v, max = 40) {
     .replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[ch]));
 }
 
-// mapBase64: PNG/JPEG-Base64 OHNE "data:"-Prefix. stats: [{label, value}] (max 3 genutzt).
-// dots: [{fx, fy, kind:'start'|'end'}] - relative Position (0..1) im Karten-Ausschnitt;
-// werden hier als saubere Kreise gemalt (native Marker haben im Schnappschuss schwarze Kaesten).
+// Karte: ENTWEDER mapLayerSvg (serverseitig aus Kacheln + Route gebaut, map-tiles.js)
+// ODER legacy mapBase64/mapMime (Karten-Schnappschuss vom Client) + dots
+// ({fx, fy, kind:'start'|'end'}, relative 0..1-Position im Ausschnitt).
+// stats: [{label, value}] (max 3 genutzt).
 // logoB64: transparentes FitAvo-Maskottchen (PNG-Base64, schickt der Client mit) - optional.
-export function buildCardSvg({ mapBase64, mapMime, title, date, stats, kcalText, dots, logoB64 }) {
+export function buildCardSvg({ mapLayerSvg, mapBase64, mapMime, title, date, stats, kcalText, dots, logoB64 }) {
   const cols = [180, 540, 900]; // zentrierte Spalten fuer bis zu 3 Werte
   const statSvg = (stats || []).slice(0, 3).map((s, i) => `
   <text x="${cols[i]}" y="1146" text-anchor="middle" font-family="Inter" font-size="62" font-weight="800" fill="#FFFFFF">${esc(s.value, 16)}</text>
@@ -59,8 +60,13 @@ export function buildCardSvg({ mapBase64, mapMime, title, date, stats, kcalText,
   <image x="64" y="1240" width="59" height="64" xlink:href="data:image/png;base64,${logoB64}"/>` : '';
   const wordmarkX = logoB64 ? 139 : 64;
 
+  // Karten-Ebene: serverseitig gebaute Kachel-Karte ODER legacy Client-Schnappschuss.
+  const mapArea = mapLayerSvg ? mapLayerSvg : `<image x="0" y="0" width="${CARD_W}" height="${MAP_H}" preserveAspectRatio="xMidYMid slice" xlink:href="data:${mapMime};base64,${mapBase64}"/>
+  ${dotSvg}`;
+
   return `<svg width="${CARD_W}" height="${CARD_H}" viewBox="0 0 ${CARD_W} ${CARD_H}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   <defs>
+    <clipPath id="mapclip"><rect x="0" y="0" width="${CARD_W}" height="${MAP_H}"/></clipPath>
     <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="${PANEL_TOP}"/><stop offset="1" stop-color="${PANEL_BOT}"/>
     </linearGradient>
@@ -72,8 +78,7 @@ export function buildCardSvg({ mapBase64, mapMime, title, date, stats, kcalText,
     </linearGradient>
   </defs>
   <rect width="${CARD_W}" height="${CARD_H}" fill="${PANEL}"/>
-  <image x="0" y="0" width="${CARD_W}" height="${MAP_H}" preserveAspectRatio="xMidYMid slice" xlink:href="data:${mapMime};base64,${mapBase64}"/>
-  ${dotSvg}
+  ${mapArea}
   <rect x="0" y="${MAP_H - 130}" width="${CARD_W}" height="130" fill="url(#scrim)"/>
   <rect x="0" y="${MAP_H - 6}" width="${CARD_W}" height="6" fill="url(#accent)"/>
   <rect x="0" y="${MAP_H}" width="${CARD_W}" height="${CARD_H - MAP_H}" fill="url(#panel)"/>

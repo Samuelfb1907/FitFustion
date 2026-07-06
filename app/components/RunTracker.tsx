@@ -13,7 +13,7 @@ import { useColors, Colors } from '../contexts/ThemeContext';
 import { useT } from '../contexts/LanguageContext';
 import {
   GPS_ACTIVITIES, GpsActivityKey, GpsPoint, gpsActivityByKey, gpsKcal,
-  haversineM, paceSecPerKm, formatPace, formatDuration, formatDistance, shareRegion, relativeInRegion,
+  haversineM, speedKmh, formatSpeed, formatDuration, formatDistance, shareRegion, simplifyRoute,
 } from '../lib/gps';
 import { getLocation, getMapView, getPolyline, getMarker, keepAwake } from '../lib/gpsNative';
 import { buildRunCardFile, writeSnapshotFile, runCardDate } from '../lib/runShareCard';
@@ -58,7 +58,6 @@ export default function RunTracker({ visible, onClose, onSaved }: { visible: boo
   const [weightKg, setWeightKg] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [sharing, setSharing] = useState(false);
-  const [snapshotting, setSnapshotting] = useState(false); // Marker kurz ausblenden (schwarze Kaesten im Schnappschuss)
   const [gpsReady, setGpsReady] = useState(false);
   const [region, setRegion] = useState<any>(null);
 
@@ -110,6 +109,8 @@ export default function RunTracker({ visible, onClose, onSaved }: { visible: boo
       watchRef.current = await Location.watchPositionAsync(
         { accuracy: Location.Accuracy?.High ?? 4, distanceInterval: 4, timeInterval: 2000 },
         (loc: any) => {
+          // Ungenaue Fixe (>30 m) verwerfen - sie erzeugen Zickzack in der Route.
+          if (loc.coords.accuracy != null && loc.coords.accuracy > 30) return;
           const p: GpsPoint = { lat: loc.coords.latitude, lng: loc.coords.longitude, t: loc.timestamp ?? Date.now() };
           setRegion({ latitude: p.lat, longitude: p.lng, latitudeDelta: 0.004, longitudeDelta: 0.004 });
           setGpsReady(true);
@@ -148,7 +149,8 @@ export default function RunTracker({ visible, onClose, onSaved }: { visible: boo
     const { error } = await supabase.from('cardio_sessions').insert({
       user_id: uid, activity_key: activityKey, minutes: Math.max(1, Math.round(durationS / 60)),
       kcal, performed_at: new Date(startedAtRef.current).toISOString(),
-      route: pointsRef.current, distance_m: Math.round(distRef.current),
+      // Geglaettet speichern: GPS-Zittern raus, gerade Linien, kleinere Datenmenge.
+      route: simplifyRoute(pointsRef.current, 6), distance_m: Math.round(distRef.current),
     });
     setSaving(false);
     if (error) { Alert.alert(error.message); return; }
@@ -164,43 +166,39 @@ export default function RunTracker({ visible, onClose, onSaved }: { visible: boo
     setDistanceM(0); distRef.current = 0; setElapsedS(0); setRegion(null);
   }
 
-  // Teilen: Karten-Schnappschuss (Route mittig, 6:5) + Server setzt das Strava-Style-Bild
-  // zusammen (Werte fest IM Bild). Faellt der Server aus -> roher Schnappschuss als Fallback.
+  // Teilen: Der Server baut das komplette Strava-Style-Bild selbst (saubere Karte ohne
+  // Laeden-Namen, glatte Route, Werte fest im Bild) - wir schicken nur Ausschnitt + Strecke.
+  // Faellt der Server aus -> Apple-Karten-Schnappschuss als Notloesung.
   async function shareRun() {
     if (sharing) return;
     setSharing(true);
-    setSnapshotting(true); // native Marker raus aus dem Schnappschuss (schwarze Kaesten)
     try {
-      await new Promise((r) => setTimeout(r, 350)); // Karte ohne Marker rendern lassen
-      const pts = pointsRef.current;
+      const pts = simplifyRoute(pointsRef.current, 8);
       const sr = shareRegion(pts);
-      const snap = await mapRef.current?.takeSnapshot?.({
-        width: 360, height: 300, region: sr ?? summaryRegion ?? undefined, format: 'png', quality: 1, result: 'base64',
-      });
-      if (!snap) return;
-      // Start-/Ziel-Punkt malt der Server ins Bild (Position relativ zum Ausschnitt).
-      const dots = sr && pts.length > 1 ? [
-        { ...relativeInRegion(pts[0], sr), kind: 'start' as const },
-        { ...relativeInRegion(pts[pts.length - 1], sr), kind: 'end' as const },
-      ] : [];
+      if (!sr) return;
       const kcal = weightKg && act ? gpsKcal(act.met, weightKg, elapsedS) : 0;
-      const uri = (await buildRunCardFile({
-        mapBase64: snap,
+      const caption = `${t('gps.type.' + activityKey)} · ${formatDistance(distanceM)} · ${formatDuration(elapsedS)} · ${formatSpeed(speedKmh(distanceM, elapsedS))} ${t('gps.speedUnit')} 🏃 — FitAvo`;
+      let uri = await buildRunCardFile({
+        region: sr,
+        route: pts,
         title: t('gps.type.' + activityKey),
         date: runCardDate(startedAtRef.current || Date.now(), lang),
         stats: [
           { label: t('gps.stat.distance'), value: formatDistance(distanceM) },
           { label: t('gps.stat.time'), value: formatDuration(elapsedS) },
-          { label: t('gps.stat.pace'), value: `${formatPace(paceSecPerKm(distanceM, elapsedS))} ${t('gps.paceUnit')}` },
+          { label: t('gps.stat.speed'), value: `${formatSpeed(speedKmh(distanceM, elapsedS))} ${t('gps.speedUnit')}` },
         ],
         kcalText: kcal > 0 ? `${kcal} kcal` : '',
-        dots,
-      })) ?? (await writeSnapshotFile(snap));
+      });
+      if (!uri) {
+        // Notloesung: roher Karten-Schnappschuss (z. B. offline).
+        const snap = await mapRef.current?.takeSnapshot?.({ width: 360, height: 300, region: sr, format: 'png', quality: 1, result: 'base64' });
+        uri = snap ? await writeSnapshotFile(snap) : null;
+      }
       if (!uri) return;
-      const caption = `${t('gps.type.' + activityKey)} · ${formatDistance(distanceM)} · ${formatDuration(elapsedS)} · ${formatPace(paceSecPerKm(distanceM, elapsedS))} ${t('gps.paceUnit')} 🏃 — FitAvo`;
       if (Platform.OS === 'ios') await Share.share({ url: uri, message: caption });
       else if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: caption });
-    } catch {} finally { setSharing(false); setSnapshotting(false); }
+    } catch {} finally { setSharing(false); }
   }
 
   function requestClose() {
@@ -214,10 +212,14 @@ export default function RunTracker({ visible, onClose, onSaved }: { visible: boo
     reset(); onClose();
   }
 
-  const pace = paceSecPerKm(distanceM, elapsedS);
+  const kmh = speedKmh(distanceM, elapsedS);
   const act = gpsActivityByKey(activityKey);
   const kcalLive = weightKg && act ? gpsKcal(act.met, weightKg, elapsedS) : 0;
-  const coords: LatLng[] = points.map((p) => ({ latitude: p.lat, longitude: p.lng }));
+  // Geglaettete Linie anzeigen (GPS-Zittern raus -> gerade, aufgeraeumte Route).
+  const coords: LatLng[] = useMemo(
+    () => simplifyRoute(points, 6).map((p) => ({ latitude: p.lat, longitude: p.lng })),
+    [points],
+  );
   const summaryRegion = phase === 'summary' ? boundsRegion(coords) : region;
 
   const Stat = ({ label, value }: { label: string; value: string }) => (
@@ -238,14 +240,13 @@ export default function RunTracker({ visible, onClose, onSaved }: { visible: boo
         pitchEnabled={false} rotateEnabled={false} toolbarEnabled={false}
       >
         {Polyline && coords.length > 1 && <Polyline coordinates={coords} strokeColor={c.primary} strokeWidth={6} lineCap="round" lineJoin="round" />}
-        {/* Start/Ziel als dezente Punkte - beim Schnappschuss ausgeblendet (der Server malt
-            sie dann sauber ins Teilen-Bild; native Marker bekommen dort schwarze Kaesten) */}
-        {Marker && coords.length > 1 && phase === 'summary' && !snapshotting && (
+        {/* Start/Ziel als dezente Punkte (das Teilen-Bild malt der Server komplett selbst) */}
+        {Marker && coords.length > 1 && phase === 'summary' && (
           <Marker coordinate={coords[0]} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}>
             <View style={styles.routeDotStart} />
           </Marker>
         )}
-        {Marker && coords.length > 1 && phase === 'summary' && !snapshotting && (
+        {Marker && coords.length > 1 && phase === 'summary' && (
           <Marker coordinate={coords[coords.length - 1]} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}>
             <View style={styles.routeDotEnd} />
           </Marker>
@@ -302,7 +303,7 @@ export default function RunTracker({ visible, onClose, onSaved }: { visible: boo
                 <Stat label={t('gps.stat.time')} value={formatDuration(elapsedS)} />
               </View>
               <View style={styles.statsRow}>
-                <Stat label={t('gps.stat.pace')} value={`${formatPace(pace)} ${t('gps.paceUnit')}`} />
+                <Stat label={t('gps.stat.speed')} value={`${formatSpeed(kmh)} ${t('gps.speedUnit')}`} />
                 <Stat label={t('gps.stat.kcal')} value={`${kcalLive}`} />
               </View>
 
