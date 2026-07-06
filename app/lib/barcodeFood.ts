@@ -19,10 +19,12 @@ export async function resolveBarcodeFood(userId: string, barcode: string, catego
   const off = await fetchOpenFoodFacts(barcode);
   if (!off) return { food: null, reason: 'not_found' };
 
-  // 3) Neu anlegen (mit Barcode + Besitzer)
+  // 3) Neu anlegen (mit Barcode + Besitzer). Getraenke kommen in die Kategorie "Getränke",
+  //    damit sie in ml statt Gramm getrackt werden (z. B. Red Bull, Cola, Saft).
+  const cat = off.isLiquid ? 'Getränke' : category;
   const { data: created, error } = await supabase
     .from('foods')
-    .insert({ name: off.name, category, kcal: off.kcal, protein: off.protein, carbs: off.carbs, fat: off.fat, barcode, user_id: userId })
+    .insert({ name: off.name, category: cat, kcal: off.kcal, protein: off.protein, carbs: off.carbs, fat: off.fat, barcode, user_id: userId })
     .select(COLS)
     .single();
   if (!error && created) return { food: created as FoodRow, created: true };

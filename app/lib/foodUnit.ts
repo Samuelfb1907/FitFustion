@@ -4,7 +4,7 @@
 // der gespeicherte Mengenwert gleich; wir zeigen ihn fuer Getraenke nur als ml an.
 
 // Klare Getraenke-Woerter (DE + EN, fuer KI-/Barcode-/eigene Eintraege ohne Kategorie).
-const NAME_LIQUID = /(milch|buttermilch|kefir|saft|cola|limo|limonade|brause|wasser|tee|kaffee|bier|wein|smoothie|schorle|nektar|sekt|prosecco|latte|cappuccino|espresso|kakao|energydrink|energy.?drink|softdrink|\bdrink\b|shake|cocktail|juice|\bmilk\b|\bwater\b|\btea\b|coffee|\bbeer\b|\bwine\b|\bsoda\b|lemonade)/i;
+const NAME_LIQUID = /(milch|buttermilch|kefir|saft|cola|limo|limonade|brause|wasser|tee|kaffee|bier|wein|smoothie|schorle|nektar|sekt|prosecco|latte|cappuccino|espresso|kakao|energydrink|energy.?drink|softdrink|\bdrink\b|shake|cocktail|juice|\bmilk\b|\bwater\b|\btea\b|coffee|\bbeer\b|\bwine\b|\bsoda\b|lemonade|red.?bull|monster|rockstar|relentless)/i;
 // Feste Lebensmittel, die zufaellig ein Getraenke-Wort enthalten -> bleiben Gramm.
 const NAME_SOLID = /(schoko|reis|\bbrot\b|brötchen|broetchen|riegel|schnitte|pudding|creme|crème|quark|joghurt|yogurt|skyr|käse|kaese|cheese|pulver|powder|müsli|muesli|kuchen|keks|cookie)/i;
 

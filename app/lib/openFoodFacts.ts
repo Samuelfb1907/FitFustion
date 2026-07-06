@@ -1,6 +1,18 @@
 // Open Food Facts: kostenlose, offene Lebensmittel-Datenbank (kein API-Key noetig).
 // Wir holen die Naehrwerte pro 100 g zu einem Barcode (EAN/UPC).
-export type OffProduct = { name: string; kcal: number; protein: number; carbs: number; fat: number };
+import { isLiquidFood } from './foodUnit';
+
+export type OffProduct = { name: string; kcal: number; protein: number; carbs: number; fat: number; isLiquid: boolean };
+
+// Getraenk erkennen: zuerst ueber die Open-Food-Facts-Kategorien (z. B. "en:energy-drinks",
+// "en:beverages", "en:sodas") – zuverlaessiger als der Name (ein "Red Bull" hat kein Fluessig-Wort).
+// "waters" trifft alle Wasser-Tags, aber NICHT "watercress" (Kresse). Milch/Tee/Kaffee/Cola faengt
+// der Namens-Check (isLiquidFood) ab.
+const OFF_BEVERAGE_TAG = /(drink|beverage|juice|soda|lemonade|smoothie|nectar|waters|iced-tea)/;
+function offIsLiquid(categoriesTags: any, name: string): boolean {
+  const joined = (Array.isArray(categoriesTags) ? categoriesTags.join(' ') : '').toLowerCase();
+  return OFF_BEVERAGE_TAG.test(joined) || isLiquidFood({ name });
+}
 
 function num(v: any): number | null {
   const x = Number(v);
@@ -16,7 +28,7 @@ export async function fetchOpenFoodFacts(barcode: string): Promise<OffProduct | 
   try {
     const url =
       `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}.json` +
-      `?fields=product_name,product_name_de,brands,nutriments`;
+      `?fields=product_name,product_name_de,brands,nutriments,categories_tags`;
     const res = await fetch(url, { headers: { 'User-Agent': 'FitAvo/1.0 (Expo Fitness App)' }, signal: controller.signal });
     if (!res.ok) return null;
     const json: any = await res.json();
@@ -41,6 +53,7 @@ export async function fetchOpenFoodFacts(barcode: string): Promise<OffProduct | 
       protein: clamp(round1(num(n['proteins_100g']) ?? 0), 100),
       carbs: clamp(round1(num(n['carbohydrates_100g']) ?? 0), 100),
       fat: clamp(round1(num(n['fat_100g']) ?? 0), 100),
+      isLiquid: offIsLiquid(p.categories_tags, name),
     };
   } catch {
     return null;
