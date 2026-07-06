@@ -135,16 +135,19 @@ export default function MainTabs() {
           {tabs}
         </View>
       )}
-      {/* Schwebender KI-Coach-Knopf (ueber allen Tabs, knapp ueber der Tab-Leiste). */}
-      <TouchableOpacity
-        style={[styles.fab, { bottom: isAndroid ? Math.max(insets.bottom, 8) + 64 : Math.max(insets.bottom, 12) + 76, backgroundColor: c.primary }]}
-        onPress={() => { if (!isPremium) openPaywall('ki'); else setShowCoach(true); }}
-        activeOpacity={0.85}
-        accessibilityRole="button"
-        accessibilityLabel={t('coach.title')}
-      >
-        <Ionicons name="chatbubble-ellipses" size={24} color={c.onPrimary} />
-      </TouchableOpacity>
+      {/* Schwebender KI-Coach-Knopf. Auf dem Lobby-Tab ausgeblendet, weil er dort die
+          Kudos-/Kommentar-Knoepfe im Freunde-Feed verdecken wuerde. */}
+      {tab !== 'lobby' && (
+        <TouchableOpacity
+          style={[styles.fab, { bottom: isAndroid ? Math.max(insets.bottom, 8) + 64 : Math.max(insets.bottom, 12) + 76, backgroundColor: c.primary }]}
+          onPress={() => { if (!isPremium) openPaywall('ki'); else setShowCoach(true); }}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel={t('coach.title')}
+        >
+          <Ionicons name="chatbubble-ellipses" size={24} color={c.onPrimary} />
+        </TouchableOpacity>
+      )}
 
       <Modal visible={showCoach} animationType="slide" onRequestClose={() => setShowCoach(false)} presentationStyle="fullScreen">
         <CoachChat onClose={() => setShowCoach(false)} />
