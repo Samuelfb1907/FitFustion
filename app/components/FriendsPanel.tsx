@@ -10,7 +10,8 @@ import SectionHead from './SectionHead';
 import { CARD_SHADOW as shadow } from '../lib/ui';
 import { errorMessage } from '../lib/errors';
 import { Friend, FriendRequest, getMyFriendCode, fetchFriends, addFriendByCode, removeFriendByCode, sendNudge, incomingRequests, acceptRequest, declineRequest } from '../lib/friends';
-import { FeedItem, fetchFriendsFeed } from '../lib/activity';
+import { FeedItem, fetchFriendsFeed, toggleKudos } from '../lib/activity';
+import { hTap } from '../lib/haptics';
 
 // Relativer Zeitstempel fuer den Feed: gibt i18n-Key + Zahl zurueck.
 function agoKey(iso: string): { key: string; n: number } {
@@ -112,6 +113,20 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
     setBusy(false);
   }
 
+  // Kudos (Feuer) auf eine Freundes-Aktivitaet: optimistisch umschalten, bei Fehler zuruecksetzen.
+  async function onKudos(item: FeedItem) {
+    hTap();
+    setFeed((prev) => prev.map((it) => it.id === item.id
+      ? { ...it, i_kudosed: !it.i_kudosed, kudos_count: it.kudos_count + (it.i_kudosed ? -1 : 1) }
+      : it));
+    const res = await toggleKudos(item.id);
+    if (res === null) {
+      setFeed((prev) => prev.map((it) => it.id === item.id
+        ? { ...it, i_kudosed: item.i_kudosed, kudos_count: item.kudos_count }
+        : it));
+    }
+  }
+
   if (loading) return <ActivityIndicator size="large" color={c.primary} style={{ marginTop: 30 }} />;
 
   const initial = (n: string) => (n.charAt(0) || '?').toUpperCase();
@@ -209,12 +224,16 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
               ? (item.detail ? t('friends.feed.recordEx', { name: item.display_name, ex: item.detail }) : t('friends.feed.record', { name: item.display_name }))
               : t('friends.feed.trained', { name: item.display_name });
             return (
-              <View key={i} style={[styles.row, i > 0 && styles.rowDivider]}>
+              <View key={item.id} style={[styles.row, i > 0 && styles.rowDivider]}>
                 <View style={[styles.feedIcon, { backgroundColor: tint + '22' }]}><Ionicons name={isRec ? 'trophy' : 'barbell'} size={17} color={tint} /></View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.feedText} numberOfLines={2}>{text}</Text>
                   <Text style={styles.feedTime}>{t(a.key, { n: a.n })}</Text>
                 </View>
+                <TouchableOpacity style={styles.kudosBtn} onPress={() => onKudos(item)} hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('friends.feed.kudosA11y')}>
+                  <Ionicons name={item.i_kudosed ? 'flame' : 'flame-outline'} size={22} color={item.i_kudosed ? '#F0574B' : c.textMuted} />
+                  {item.kudos_count > 0 && <Text style={[styles.kudosCount, item.i_kudosed && { color: '#F0574B' }]}>{item.kudos_count}</Text>}
+                </TouchableOpacity>
               </View>
             );
           })}
@@ -258,5 +277,7 @@ function makeStyles(c: Colors) {
     feedIcon: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
     feedText: { fontSize: 14, color: c.text, fontWeight: '600', lineHeight: 19 },
     feedTime: { fontSize: 12, color: c.textMuted, marginTop: 1 },
+    kudosBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingLeft: 6 },
+    kudosCount: { fontSize: 13, fontWeight: '800', color: c.textMuted },
   });
 }
