@@ -86,3 +86,9 @@ export async function fetchMySocialNotifications(): Promise<SocialNotification[]
 export async function markSocialSeen(): Promise<void> {
   try { await supabase.rpc('mark_social_seen'); } catch {}
 }
+
+// Anzahl NEUER (ungesehener) Reaktionen auf meine Aktivitaeten - fuer den Punkt am Lobby-Tab.
+export async function fetchUnreadSocialCount(): Promise<number> {
+  const list = await fetchMySocialNotifications();
+  return list.reduce((n, x) => n + (x.is_new ? 1 : 0), 0);
+}

@@ -3,8 +3,8 @@
 // bis ganz unten durch und scrollt hinter der Pille durch. Damit nichts verdeckt wird, lassen die
 // Seiten unten TAB_BAR_SPACE Platz (siehe lib/layout). Pille = abgerundet + durchscheinend
 // (BlurView) + zarte Lichtkante. Aktiver Reiter GRUEN, Rest grau. Wechsel NUR per Tippen.
-import { useState, ReactNode } from 'react';
-import { Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useState, useEffect, ReactNode } from 'react';
+import { AppState, Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,6 +22,7 @@ import { useAndroidBack } from '../lib/useBackHandler';
 import { useAuth } from '../contexts/AuthContext';
 import { usePaywall } from '../components/Paywall';
 import CoachChat from '../components/CoachChat';
+import { fetchUnreadSocialCount } from '../lib/activity';
 
 type Tab = 'home' | 'training' | 'essen' | 'progress' | 'lobby' | 'settings';
 const TAB_ORDER: Tab[] = ['home', 'training', 'essen', 'progress', 'lobby', 'settings'];
@@ -45,6 +46,15 @@ export default function MainTabs() {
   const { isPremium } = useAuth();
   const { openPaywall } = usePaywall();
   const [showCoach, setShowCoach] = useState(false);
+  const [lobbyDot, setLobbyDot] = useState(false); // roter Punkt am Lobby-Tab: neue Reaktionen bei mir
+
+  // Punkt aktualisieren: beim Start + jedes Mal, wenn die App in den Vordergrund kommt.
+  useEffect(() => {
+    const refresh = () => { fetchUnreadSocialCount().then((n) => setLobbyDot(n > 0)).catch(() => {}); };
+    refresh();
+    const sub = AppState.addEventListener('change', (s) => { if (s === 'active') refresh(); });
+    return () => sub.remove();
+  }, []);
 
   const TAB_LABEL: Record<Tab, string> = {
     home: t('tabs.start'), training: t('tabs.training'), essen: t('tabs.food'), progress: t('tabs.progress'), lobby: t('tabs.lobby'), settings: t('tabs.settings'),
@@ -55,7 +65,11 @@ export default function MainTabs() {
     if (target === 'essen') setEssenSeg((seg as EssenSeg) ?? 'tracker');
     if (target === 'progress') setProgressSeg(seg === 'board' ? 'board' : 'me');
     setTicks((k) => ({ ...k, [target]: k[target] + 1 }));
+    const leavingLobby = tab === 'lobby' && target !== 'lobby';
     setTab(target);
+    // Lobby oeffnen -> Punkt weg (wird dort als gesehen markiert). Lobby verlassen -> neu pruefen.
+    if (target === 'lobby') setLobbyDot(false);
+    else if (leavingLobby) fetchUnreadSocialCount().then((n) => setLobbyDot(n > 0)).catch(() => {});
   };
 
   // Android-System-Zurueck als unterste Ebene (wird zuerst registriert -> kommt zuletzt
@@ -88,7 +102,10 @@ export default function MainTabs() {
         accessibilityState={{ selected: active }}
         accessibilityLabel={TAB_LABEL[k]}
       >
-        <Ionicons name={(active ? TAB_ICON[k] : `${TAB_ICON[k]}-outline`) as any} size={23} color={color} />
+        <View>
+          <Ionicons name={(active ? TAB_ICON[k] : `${TAB_ICON[k]}-outline`) as any} size={23} color={color} />
+          {k === 'lobby' && lobbyDot && <View style={[styles.tabDot, { borderColor: c.bg }]} />}
+        </View>
         <Text style={[styles.label, { color, fontWeight: active ? '700' : '600' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{TAB_LABEL[k]}</Text>
       </TouchableOpacity>
     );
@@ -146,6 +163,7 @@ const styles = StyleSheet.create({
   // Android: durchgehende, deckende Leiste am unteren Rand (full-width), abgerundete Oberkante, flach.
   barAndroid: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', paddingTop: 8, borderTopLeftRadius: 22, borderTopRightRadius: 22, borderTopWidth: StyleSheet.hairlineWidth },
   tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, paddingHorizontal: 4 },
+  tabDot: { position: 'absolute', top: -3, right: -6, width: 10, height: 10, borderRadius: 5, backgroundColor: '#F0574B', borderWidth: 1.5 },
   fab: { position: 'absolute', right: 18, width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 8 },
   label: { fontSize: 11, letterSpacing: 0.1 },
 });
