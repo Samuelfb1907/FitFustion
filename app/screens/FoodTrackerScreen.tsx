@@ -1,6 +1,7 @@
 // Kalorien-Tracker / Tagebuch (themed): eigene Zutaten auswählen, Menge angeben, Tag tracken.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Modal, Platform, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Modal, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useKeyboardHeight } from '../lib/useKeyboardHeight';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
@@ -79,6 +80,7 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
   const legalShort = getLegalShort(lang);
   const mealLabel = (k: MealType) => t(`food.meal.${k}`);
   const styles = useMemo(() => makeStyles(c), [c]);
+  const kb = useKeyboardHeight();
 
   const [loading, setLoading] = useState(true);
   const [searchResults, setSearchResults] = useState<Food[]>([]);
@@ -1262,8 +1264,7 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
     </ScrollView>
     <BarcodeScanner visible={scannerOpen} c={c} onClose={() => setScannerOpen(false)} onScanned={handleScanned} />
     <Modal visible={!!nlItems} transparent animationType="slide" onRequestClose={() => setNlItems(null)}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
-      <View style={styles.nlOverlay}>
+      <View style={[styles.nlOverlay, { paddingBottom: kb }]}>
         <View style={styles.nlSheet}>
           <Text style={styles.nlSheetTitle}>{t('food.nlSheetTitle')}</Text>
           <Text style={styles.nlMealLabel}>{t('food.nlWhichMeal')}</Text>
@@ -1318,7 +1319,6 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
           </TouchableOpacity>
         </View>
       </View>
-      </KeyboardAvoidingView>
     </Modal>
     <Modal visible={aiConsentAsk} transparent animationType="fade" onRequestClose={() => setAiConsentAsk(false)}>
       <View style={styles.nlOverlay}>

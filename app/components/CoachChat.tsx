@@ -1,7 +1,8 @@
 // "Frag den Coach" (#1) - Vollbild-Chat (in einem Modal). Premium wird vom Aufrufer (Home)
 // gegatet; Einwilligung (DSGVO/KI) + Tageslimit prueft die Edge Function serverseitig.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useKeyboardHeight } from '../lib/useKeyboardHeight';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
@@ -26,6 +27,7 @@ export default function CoachChat({ onClose }: { onClose: () => void }) {
   const [askConsent, setAskConsent] = useState(false);
   const [w7, setW7] = useState<number | null>(null);
   const scrollRef = useRef<ScrollView>(null);
+  const kb = useKeyboardHeight();
 
   useEffect(() => {
     const uid = session?.user?.id;
@@ -104,7 +106,7 @@ export default function CoachChat({ onClose }: { onClose: () => void }) {
         </TouchableOpacity>
       </View>
 
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={8}>
+      <View style={{ flex: 1, paddingBottom: kb }}>
         <ScrollView ref={scrollRef} style={{ flex: 1 }} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {messages.length === 0 && !askConsent && (
             <View style={styles.empty}>
@@ -169,7 +171,7 @@ export default function CoachChat({ onClose }: { onClose: () => void }) {
             <Ionicons name="arrow-up" size={22} color={c.onPrimary} />
           </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
+      </View>
     </View>
   );
 }

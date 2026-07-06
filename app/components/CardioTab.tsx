@@ -11,6 +11,7 @@ import { useColors, Colors } from '../contexts/ThemeContext';
 import { useT } from '../contexts/LanguageContext';
 import { CARDIO_TYPES, CardioType, cardioKcal, cardioTypeByKey } from '../lib/cardio';
 import { logActivity } from '../lib/activity';
+import { useKeyboardHeight } from '../lib/useKeyboardHeight';
 import { startOfTodayISO } from '../lib/date';
 import { errorMessage } from '../lib/errors';
 import { TAB_BAR_SPACE } from '../lib/layout';
@@ -26,6 +27,7 @@ export default function CardioTab({ onChanged }: { onChanged?: () => void }) {
   const t = useT();
   const styles = useMemo(() => makeStyles(c), [c]);
   const uid = session?.user?.id;
+  const kb = useKeyboardHeight();
 
   const [weightKg, setWeightKg] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -173,7 +175,7 @@ export default function CardioTab({ onChanged }: { onChanged?: () => void }) {
 
       {/* Eingabe-Dialog: Dauer waehlen, Live-Vorschau der Kalorien, eintragen. */}
       <Modal visible={!!picked} transparent animationType="fade" onRequestClose={() => setPicked(null)}>
-        <View style={styles.overlay}>
+        <View style={[styles.overlay, { paddingBottom: kb }]}>
           <View style={styles.modalCard}>
             <View style={styles.modalHead}>
               <View style={styles.modalIcon}><Ionicons name={(picked?.icon ?? 'flame') as any} size={24} color={c.primary} /></View>
