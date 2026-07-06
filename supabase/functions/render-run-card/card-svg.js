@@ -32,7 +32,8 @@ function esc(v, max = 40) {
 // ({fx, fy, kind:'start'|'end'}, relative 0..1-Position im Ausschnitt).
 // stats: [{label, value}] (max 3 genutzt).
 // logoB64: transparentes FitAvo-Maskottchen (PNG-Base64, schickt der Client mit) - optional.
-export function buildCardSvg({ mapLayerSvg, mapBase64, mapMime, title, date, stats, kcalText, dots, logoB64 }) {
+// scrim: dunkler Verlauf am Karten-Ende - nur fuer dunkle Karten (auf hellen wirkt er schmutzig).
+export function buildCardSvg({ mapLayerSvg, mapBase64, mapMime, title, date, stats, kcalText, dots, logoB64, scrim = true }) {
   const cols = [180, 540, 900]; // zentrierte Spalten fuer bis zu 3 Werte
   const statSvg = (stats || []).slice(0, 3).map((s, i) => `
   <text x="${cols[i]}" y="1146" text-anchor="middle" font-family="Inter" font-size="62" font-weight="800" fill="#FFFFFF">${esc(s.value, 16)}</text>
@@ -79,7 +80,7 @@ export function buildCardSvg({ mapLayerSvg, mapBase64, mapMime, title, date, sta
   </defs>
   <rect width="${CARD_W}" height="${CARD_H}" fill="${PANEL}"/>
   ${mapArea}
-  <rect x="0" y="${MAP_H - 130}" width="${CARD_W}" height="130" fill="url(#scrim)"/>
+  ${scrim ? `<rect x="0" y="${MAP_H - 130}" width="${CARD_W}" height="130" fill="url(#scrim)"/>` : ''}
   <rect x="0" y="${MAP_H - 6}" width="${CARD_W}" height="6" fill="url(#accent)"/>
   <rect x="0" y="${MAP_H}" width="${CARD_W}" height="${CARD_H - MAP_H}" fill="url(#panel)"/>
   <text x="64" y="1000" font-family="Inter" font-size="46" font-weight="800" fill="${TXT}">${esc(title, 24)}</text>

@@ -6,7 +6,9 @@
 // dieselbe Quelle nutzt.
 
 const TILE_WORLD = 256; // Weltgroesse einer Kachel in Mercator-Pixeln (Zoom z)
-const TILE_URL = (z, x, y) => `https://basemaps.cartocdn.com/rastertiles/dark_all/${z}/${x}/${y}@2x.png`;
+// Kartenstil: "voyager" = hell/freundlich mit dezenten Farben (Parks, Wasser),
+// "light_all" = minimal hellgrau, "dark_all" = dunkel. Alle OHNE Laeden/POIs.
+const TILE_URL = (style, z, x, y) => `https://basemaps.cartocdn.com/rastertiles/${style}/${z}/${x}/${y}@2x.png`;
 
 function mercX(lng, z) { return ((lng + 180) / 360) * TILE_WORLD * 2 ** z; }
 function mercY(lat, z) {
@@ -26,7 +28,8 @@ function b64FromBuffer(buf) {
 // region: {latitude, longitude, latitudeDelta, longitudeDelta} (Ausschnitt, Seitenverhaeltnis W:H)
 // route: [{lat, lng}, ...] (vereinfacht, in Reihenfolge)
 // Liefert ein SVG-Fragment (Kacheln + Route + Punkte + Attribution), geclippt auf W x H.
-export async function buildMapLayer({ region, route, width, height, accent = '#19C98F', endColor = '#F0574B' }) {
+export async function buildMapLayer({ region, route, width, height, accent = '#19C98F', endColor = '#F0574B', style = 'voyager' }) {
+  const isDark = style === 'dark_all';
   // Zoom so waehlen, dass der Ausschnitt die Breite fuellt (Skalierung s in [1, 2) ->
   // @2x-Kacheln bleiben scharf und es sind hoechstens ~6x5 Kacheln zu laden).
   const zf = Math.log2((width * 360) / (TILE_WORLD * region.longitudeDelta));
@@ -50,7 +53,7 @@ export async function buildMapLayer({ region, route, width, height, accent = '#1
     for (let ty = tyMin; ty <= tyMax; ty++) {
       const wx = ((tx % maxTile) + maxTile) % maxTile;
       jobs.push((async () => {
-        const res = await fetch(TILE_URL(z, wx, ty), { headers: { 'User-Agent': 'FitAvo/1.2 (Fitness-App; Lauf-Teilen-Bild)' } });
+        const res = await fetch(TILE_URL(style, z, wx, ty), { headers: { 'User-Agent': 'FitAvo/1.2 (Fitness-App; Lauf-Teilen-Bild)' } });
         if (!res.ok) throw new Error(`tile ${z}/${wx}/${ty}: ${res.status}`);
         const b64 = b64FromBuffer(await res.arrayBuffer());
         const px = (tx * TILE_WORLD - viewLeft) * s;
@@ -72,15 +75,17 @@ export async function buildMapLayer({ region, route, width, height, accent = '#1
   let routeSvg = '';
   if (pts.length > 1) {
     const first = pts[0].split(','), last = pts[pts.length - 1].split(',');
+    const casing = isDark ? '#06251B' : '#0A5C41'; // dunkle Kontur, damit die Linie auf der Karte "sitzt"
     routeSvg = `
-  <polyline points="${pts.join(' ')}" fill="none" stroke="#06251B" stroke-opacity="0.55" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="${pts.join(' ')}" fill="none" stroke="${casing}" stroke-opacity="0.45" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
   <polyline points="${pts.join(' ')}" fill="none" stroke="${accent}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
   <circle cx="${first[0]}" cy="${first[1]}" r="13" fill="${accent}" stroke="#FFFFFF" stroke-width="5"/>
   <circle cx="${last[0]}" cy="${last[1]}" r="13" fill="${endColor}" stroke="#FFFFFF" stroke-width="5"/>`;
   }
 
   // Pflicht-Attribution fuer OSM/CARTO-Kartenmaterial, dezent unten links.
-  const attribution = `<text x="18" y="${height - 16}" font-family="Inter" font-size="17" font-weight="500" fill="#FFFFFF" fill-opacity="0.55">© OpenStreetMap · © CARTO</text>`;
+  const attrFill = isDark ? '#FFFFFF' : '#3E4A55';
+  const attribution = `<text x="18" y="${height - 16}" font-family="Inter" font-size="17" font-weight="500" fill="${attrFill}" fill-opacity="0.6">© OpenStreetMap · © CARTO</text>`;
 
   return `<g clip-path="url(#mapclip)">
   ${tileSvg}

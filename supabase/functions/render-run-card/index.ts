@@ -96,6 +96,7 @@ Deno.serve(async (req) => {
       mapLayerSvg, mapBase64: map, mapMime,
       title: String(body?.title ?? ''), date: String(body?.date ?? ''),
       stats, kcalText: String(body?.kcalText ?? ''), dots, logoB64,
+      scrim: !mapLayerSvg, // helle Kachel-Karte ohne dunklen Verlauf; nur legacy Schnappschuss behaelt ihn
     });
     const resvg = new Resvg(svg, { font: { fontBuffers: fonts, defaultFontFamily: 'Inter', loadSystemFonts: false } });
     const png = resvg.render().asPng();
