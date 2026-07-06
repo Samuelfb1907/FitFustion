@@ -100,7 +100,7 @@ export default function RunDetail({ visible, onClose, activityKey, route, distan
         </View>
 
         {MapView && coords.length > 1 ? (
-          <MapView ref={mapRef} style={styles.map} region={boundsRegion(coords)} scrollEnabled pitchEnabled={false} rotateEnabled={false} toolbarEnabled={false}>
+          <MapView ref={mapRef} style={styles.map} region={boundsRegion(coords)} scrollEnabled showsPointsOfInterest={false} pitchEnabled={false} rotateEnabled={false} toolbarEnabled={false}>
             {Polyline && <Polyline coordinates={coords} strokeColor={c.primary} strokeWidth={6} lineCap="round" lineJoin="round" />}
             {/* Start/Ziel als dezente Punkte - beim Schnappschuss ausgeblendet (der Server malt
                 sie dann sauber ins Teilen-Bild; native Marker bekommen dort schwarze Kaesten) */}

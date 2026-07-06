@@ -15,7 +15,10 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": false,
-    "platforms": ["ios", "android"],
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "locales": {
       "de": "./locales/de.json",
       "en": "./locales/en.json"
@@ -78,7 +81,8 @@
         {
           "iosUrlScheme": "com.googleusercontent.apps.PLATZHALTER"
         }
-      ]
+      ],
+      "expo-asset"
     ],
     "ios": {
       "supportsTablet": false,

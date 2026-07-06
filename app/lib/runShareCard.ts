@@ -3,10 +3,26 @@
 // weil der aktuelle Build kein natives View-Screenshot-Modul hat - so bleibt alles OTA-faehig.
 // Faellt der Server aus, teilt der Aufrufer einfach den rohen Schnappschuss (Fallback dort).
 import * as FileSystem from 'expo-file-system/legacy';
+import { Asset } from 'expo-asset';
 import { supabase } from './supabase';
 
 export type RunCardStat = { label: string; value: string };
 export type RunCardDot = { fx: number; fy: number; kind: 'start' | 'end' }; // relativ (0..1) im Ausschnitt
+
+// FitAvo-Maskottchen (transparentes PNG) als Base64 - kommt mit ins Teilen-Bild.
+// Einmal pro App-Lauf laden und merken; bei Fehlern einfach ohne Logo weitermachen.
+let avoB64: string | null | undefined;
+async function loadLogoB64(): Promise<string | null> {
+  if (avoB64 !== undefined) return avoB64;
+  try {
+    const a = Asset.fromModule(require('../assets/share-avocado.png'));
+    if (!a.localUri) await a.downloadAsync();
+    avoB64 = a.localUri ? await FileSystem.readAsStringAsync(a.localUri, { encoding: FileSystem.EncodingType.Base64 }) : null;
+  } catch {
+    avoB64 = null;
+  }
+  return avoB64;
+}
 
 // Liefert die Datei-URI des fertigen Bilds oder null (dann Fallback beim Aufrufer).
 export async function buildRunCardFile(params: {
@@ -18,8 +34,9 @@ export async function buildRunCardFile(params: {
   dots?: RunCardDot[];      // Start-/Ziel-Punkt (malt der Server ins Bild)
 }): Promise<string | null> {
   try {
+    const logo = await loadLogoB64();
     const { data, error } = await supabase.functions.invoke('render-run-card', {
-      body: { map: params.mapBase64, title: params.title, date: params.date, stats: params.stats, kcalText: params.kcalText, dots: params.dots ?? [] },
+      body: { map: params.mapBase64, title: params.title, date: params.date, stats: params.stats, kcalText: params.kcalText, dots: params.dots ?? [], logo: logo ?? '' },
     });
     const b64 = (data as any)?.image;
     if (error || typeof b64 !== 'string' || b64.length < 100) return null;

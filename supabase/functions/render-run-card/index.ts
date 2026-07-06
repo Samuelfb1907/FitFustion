@@ -66,12 +66,16 @@ Deno.serve(async (req) => {
     const dots = Array.isArray(body?.dots) ? body.dots.slice(0, 2).map((d: any) => ({
       fx: Number(d?.fx), fy: Number(d?.fy), kind: d?.kind === 'end' ? 'end' : 'start',
     })).filter((d: any) => isFinite(d.fx) && isFinite(d.fy)) : [];
+    // FitAvo-Maskottchen (transparentes PNG, optional vom Client mitgeschickt).
+    const logoRaw = String(body?.logo ?? '');
+    const logoB64 = logoRaw.length > 100 && logoRaw.length <= 120_000 && logoRaw.startsWith('iVBOR') && /^[A-Za-z0-9+/=]+$/.test(logoRaw)
+      ? logoRaw : '';
 
     await ensureReady();
     const svg = buildCardSvg({
       mapBase64: map, mapMime,
       title: String(body?.title ?? ''), date: String(body?.date ?? ''),
-      stats, kcalText: String(body?.kcalText ?? ''), dots,
+      stats, kcalText: String(body?.kcalText ?? ''), dots, logoB64,
     });
     const resvg = new Resvg(svg, { font: { fontBuffers: fonts, defaultFontFamily: 'Inter', loadSystemFonts: false } });
     const png = resvg.render().asPng();

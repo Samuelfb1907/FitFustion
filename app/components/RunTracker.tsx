@@ -234,6 +234,7 @@ export default function RunTracker({ visible, onClose, onSaved }: { visible: boo
         showsUserLocation={interactive}
         followsUserLocation={interactive && phase === 'tracking'}
         scrollEnabled={!interactive}
+        showsPointsOfInterest={false}
         pitchEnabled={false} rotateEnabled={false} toolbarEnabled={false}
       >
         {Polyline && coords.length > 1 && <Polyline coordinates={coords} strokeColor={c.primary} strokeWidth={6} lineCap="round" lineJoin="round" />}
