@@ -777,8 +777,7 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
     const unit = foodUnit(selectedFood);
     return (
       <SwipeBack key="food-amount" onBack={() => setMode(backTarget)} c={c} behind={backTarget === 'pick' ? renderPick() : renderDiary()}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
-        <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: embedded ? TAB_BAR_SPACE : 24 }} keyboardShouldPersistTaps="handled">
+        <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: embedded ? TAB_BAR_SPACE : 24 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
           <BackButton onPress={() => setMode(backTarget)} c={c} />
           <Text style={styles.title}>{selectedFood.name}</Text>
           <Text style={styles.subtitle}>{t('food.kcalPer100g', { n: selectedFood.kcal, unit })}</Text>
@@ -812,7 +811,6 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
           </TouchableOpacity>
           {error && <Text style={styles.error}>{error}</Text>}
         </ScrollView>
-      </KeyboardAvoidingView>
       </SwipeBack>
     );
   }
@@ -820,7 +818,7 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
   if (mode === 'newfood') {
     return (
       <SwipeBack key="food-newfood" onBack={() => setMode('pick')} c={c} behind={renderPick()}>
-      <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: embedded ? TAB_BAR_SPACE : 24 }} keyboardShouldPersistTaps="handled">
+      <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: embedded ? TAB_BAR_SPACE : 24 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
         <BackButton onPress={() => setMode('pick')} c={c} />
         <Text style={styles.title}>{t('food.newFoodTitle')}</Text>
         <Text style={styles.subtitle}>{t('food.nutritionPer100g', { unit: nf.unit })}</Text>
@@ -1045,8 +1043,7 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
     const draft = favDraft ?? { name: '', items: [] };
     const totalKcal = draft.items.reduce((s, it) => s + Math.round((it.kcal * it.amount_g) / 100), 0);
     return (
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
-        <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: embedded ? TAB_BAR_SPACE : 24 }} keyboardShouldPersistTaps="handled">
+        <ScrollView style={[styles.container, embedded && styles.embedded]} contentContainerStyle={{ paddingBottom: embedded ? TAB_BAR_SPACE : 24 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
           <BackButton onPress={cancelFavNew} c={c} />
           <Text style={styles.title}>{t('food.createFavoriteTitle')}</Text>
           <Text style={styles.subtitle}>{t('food.createFavoriteSubtitle')}</Text>
@@ -1078,7 +1075,6 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
           </TouchableOpacity>
           {favErr && <Text style={styles.error}>{favErr}</Text>}
         </ScrollView>
-      </KeyboardAvoidingView>
     );
   }
 

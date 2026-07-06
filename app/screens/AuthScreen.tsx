@@ -1,6 +1,6 @@
 // Login-/Registrierungs-Screen – Clean-Light, mit dezentem Smaragd-Hintergrund (Ambient).
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Image, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { useColors, useTheme, Colors } from '../contexts/ThemeContext';
@@ -202,8 +202,7 @@ export default function AuthScreen() {
     <View style={styles.root}>
       <Ambient c={c} />
       {showIntro === true && <WelcomeIntro onDone={dismissIntro} />}
-      <KeyboardAvoidingView style={styles.flex} behavior="padding">
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.flex} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} automaticallyAdjustKeyboardInsets>
           <View style={styles.brand}>
             <Image source={require('../assets/avocado.png')} style={styles.logoImg} resizeMode="contain" />
             <Text style={styles.wordmark}>FitAvo</Text>
@@ -322,7 +321,6 @@ export default function AuthScreen() {
             </TouchableOpacity>
           </View>
         </ScrollView>
-      </KeyboardAvoidingView>
 
       <Modal visible={!!showLegal} animationType="slide" onRequestClose={() => setShowLegal(null)}>
         <View style={styles.modalRoot}>

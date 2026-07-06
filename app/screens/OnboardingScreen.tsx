@@ -1,6 +1,6 @@
 // Onboarding (themed): 4 Schritte (persönliche Daten, Erfahrung, Umgebung, Ziel).
 import { useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, PanResponder, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, PanResponder, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
@@ -214,14 +214,14 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
   }
 
   return (
-    <KeyboardAvoidingView style={styles.container} {...swipe.panHandlers} behavior="padding">
+    <View style={styles.container} {...swipe.panHandlers}>
       <Ambient c={c} />
       <View style={styles.progress}>
         {[1, 2, 3, 4].map((s) => (<View key={s} style={[styles.progressBar, s <= step && styles.progressBarActive]} />))}
       </View>
       <Text style={styles.stepLabel}>{t('onboarding.stepLabel', { current: step, total: totalSteps })}</Text>
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 24 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
         {step === 1 && (
           <View>
             <Text style={styles.title}>{t('onboarding.step1.title')}</Text>
@@ -271,7 +271,7 @@ export default function OnboardingScreen({ onDone }: { onDone: () => Promise<voi
           {saving ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.navNextText}>{step < totalSteps ? t('onboarding.nav.next') : t('onboarding.nav.finish')}</Text>}
         </TouchableOpacity>
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
