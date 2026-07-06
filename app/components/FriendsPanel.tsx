@@ -62,17 +62,11 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
   useEffect(() => { load(); }, []);
   useEffect(() => { if (focusTick) load(); }, [focusTick]);
 
-  // Die "neu"-Markierung (rote Pille + Punkte) verblasst kurz, nachdem man sie gesehen hat.
-  // Serverseitig ist in load() bereits als gesehen markiert; das hier raeumt nur die Anzeige auf,
-  // ohne dass man erst den Tab verlassen und neu betreten muss.
-  useEffect(() => {
-    if (!notifs.some((n) => n.is_new)) return;
-    const id = setTimeout(() => {
-      setNotifs((cur) => cur.map((n) => (n.is_new ? { ...n, is_new: false } : n)));
-    }, 3500);
-    return () => clearTimeout(id);
-  }, [notifs]);
-
+  // "Aktivitaet bei dir" zeigt NUR neue (ungesehene) Reaktionen und raeumt sich nach dem Ansehen
+  // selbst auf: load() markiert serverseitig als gesehen (social_seen_at = now). Beim naechsten
+  // Betreten der Lobby sind die alten dann is_new=false und fallen aus der Liste -> immer kurz.
+  // Wichtig: nicht mehr lokal auf is_new=false setzen, sonst wuerde die Liste noch waehrend des
+  // Ansehens leer werden. Sie verschwindet erst beim naechsten Laden (Tab neu oeffnen).
   async function load() {
     try {
       const [code, list, reqs, fd, nt] = await Promise.all([
@@ -167,21 +161,21 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
   if (loading) return <ActivityIndicator size="large" color={c.primary} style={{ marginTop: 30 }} />;
 
   const initial = (n: string) => (n.charAt(0) || '?').toUpperCase();
-  const newCount = notifs.filter((n) => n.is_new).length;
+  const newNotifs = notifs.filter((n) => n.is_new); // nur neue Reaktionen zeigen; kurz halten
 
   return (
     <View>
       {err && <Text style={styles.err}>{err}</Text>}
 
       {/* Aktivitaet bei dir: wer hat auf meine Aktivitaeten reagiert (Kudos/Kommentare) */}
-      {notifs.length > 0 && (
+      {newNotifs.length > 0 && (
         <View style={[styles.card, { marginTop: 14 }]}>
           <GlassFill radius={20} />
           <View style={styles.notifHead}>
             <SectionHead icon="notifications" title={t('friends.notif.title')} />
-            {newCount > 0 && <View style={styles.newPill}><Text style={styles.newPillText}>{t('friends.notif.newCount', { n: newCount })}</Text></View>}
+            <View style={styles.newPill}><Text style={styles.newPillText}>{t('friends.notif.newCount', { n: newNotifs.length })}</Text></View>
           </View>
-          {notifs.slice(0, 8).map((n, i) => {
+          {newNotifs.slice(0, 5).map((n, i) => {
             const isKudos = n.kind === 'kudos';
             const a = agoKey(n.created_at);
             return (
@@ -202,7 +196,6 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
                   {!isKudos && !!n.body && <Text style={styles.notifBody} numberOfLines={2}>«{n.body}»</Text>}
                   <Text style={styles.feedTime}>{t(a.key, { n: a.n })}</Text>
                 </View>
-                {n.is_new && <View style={styles.newDot} />}
               </TouchableOpacity>
             );
           })}
@@ -395,6 +388,5 @@ function makeStyles(c: Colors) {
     newPill: { backgroundColor: '#F0574B', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3 },
     newPillText: { color: '#fff', fontSize: 11, fontWeight: '800' },
     notifBody: { fontSize: 13, color: c.textMuted, fontStyle: 'italic', marginTop: 1 },
-    newDot: { width: 9, height: 9, borderRadius: 5, backgroundColor: '#F0574B', marginLeft: 6 },
   });
 }
