@@ -4,7 +4,8 @@
 // werden nur GESCHUETZT geladen (lib/gpsNative) - im aktuellen Build ohne sie oeffnet sich dieser
 // Screen gar nicht erst. Bildschirm bleibt via keep-awake an.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Modal, Platform, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import * as Sharing from 'expo-sharing';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -57,6 +58,7 @@ export default function RunTracker({ visible, onClose, onSaved }: { visible: boo
   const [region, setRegion] = useState<any>(null);
 
   const watchRef = useRef<any>(null);
+  const mapRef = useRef<any>(null);
   const startedAtRef = useRef<number>(0);
   const pausedMsRef = useRef<number>(0);
   const pauseStartRef = useRef<number>(0);
@@ -157,6 +159,17 @@ export default function RunTracker({ visible, onClose, onSaved }: { visible: boo
     setDistanceM(0); distRef.current = 0; setElapsedS(0); setRegion(null);
   }
 
+  // Karte als Bild aufnehmen (react-native-maps takeSnapshot) + teilen (Insta/WhatsApp/...).
+  async function shareRun() {
+    try {
+      const uri = await mapRef.current?.takeSnapshot?.({ format: 'png', quality: 0.9, result: 'file' });
+      if (!uri) return;
+      const caption = `${t('gps.type.' + activityKey)} · ${formatDistance(distanceM)} · ${formatDuration(elapsedS)} · ${formatPace(paceSecPerKm(distanceM, elapsedS))} ${t('gps.paceUnit')} 🏃 — FitAvo`;
+      if (Platform.OS === 'ios') await Share.share({ url: uri, message: caption });
+      else if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: caption });
+    } catch {}
+  }
+
   function requestClose() {
     if (phase === 'tracking' || phase === 'paused') {
       Alert.alert(t('gps.discardTitle'), t('gps.discardBody'), [
@@ -182,6 +195,7 @@ export default function RunTracker({ visible, onClose, onSaved }: { visible: boo
     if (!MapView) return <View style={[styles.map, styles.mapFallback]}><Text style={styles.mapFallbackText}>🗺️</Text></View>;
     return (
       <MapView
+        ref={mapRef}
         style={styles.map}
         region={summaryRegion ?? undefined}
         showsUserLocation={interactive}
@@ -206,7 +220,11 @@ export default function RunTracker({ visible, onClose, onSaved }: { visible: boo
             <Ionicons name="chevron-down" size={28} color={c.textMuted} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{phase === 'summary' ? t('gps.summaryTitle') : t('gps.title')}</Text>
-          <View style={{ width: 28 }} />
+          {phase === 'summary' ? (
+            <TouchableOpacity onPress={shareRun} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button" accessibilityLabel={t('gps.share')}>
+              <Ionicons name="share-outline" size={26} color={c.primary} />
+            </TouchableOpacity>
+          ) : <View style={{ width: 28 }} />}
         </View>
 
         {phase === 'select' ? (

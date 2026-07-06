@@ -1,8 +1,9 @@
 // Gespeicherten GPS-Lauf ansehen: Karte mit Strecke + Distanz/Zeit/Tempo/kcal. Read-only.
 // Native Karte nur geschuetzt geladen (lib/gpsNative). Dauer wird aus den Route-Zeitstempeln
 // berechnet (genauer als die auf Minuten gerundete Speicherung).
-import { useMemo } from 'react';
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useMemo, useRef } from 'react';
+import { Modal, Platform, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import * as Sharing from 'expo-sharing';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { useT } from '../contexts/LanguageContext';
@@ -33,11 +34,22 @@ export default function RunDetail({ visible, onClose, activityKey, route, distan
   const MapView = getMapView();
   const Polyline = getPolyline();
   const Marker = getMarker();
+  const mapRef = useRef<any>(null);
 
   const pts = route ?? [];
   const coords: LatLng[] = pts.map((p) => ({ latitude: p.lat, longitude: p.lng }));
   const durationS = pts.length > 1 ? Math.round((pts[pts.length - 1].t - pts[0].t) / 1000) : minutes * 60;
   const pace = paceSecPerKm(distanceM, durationS);
+
+  async function shareRun() {
+    try {
+      const uri = await mapRef.current?.takeSnapshot?.({ format: 'png', quality: 0.9, result: 'file' });
+      if (!uri) return;
+      const caption = `${t('gps.type.' + activityKey)} · ${formatDistance(distanceM)} · ${formatDuration(durationS)} · ${formatPace(pace)} ${t('gps.paceUnit')} 🏃 — FitAvo`;
+      if (Platform.OS === 'ios') await Share.share({ url: uri, message: caption });
+      else if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: caption });
+    } catch {}
+  }
 
   const Stat = ({ label, value }: { label: string; value: string }) => (
     <View style={styles.stat}><Text style={styles.statVal}>{value}</Text><Text style={styles.statLabel}>{label}</Text></View>
@@ -51,11 +63,13 @@ export default function RunDetail({ visible, onClose, activityKey, route, distan
             <Ionicons name="chevron-down" size={28} color={c.textMuted} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t(`gps.type.${activityKey}`)}</Text>
-          <View style={{ width: 28 }} />
+          <TouchableOpacity onPress={shareRun} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button" accessibilityLabel={t('gps.share')}>
+            <Ionicons name="share-outline" size={26} color={c.primary} />
+          </TouchableOpacity>
         </View>
 
         {MapView && coords.length > 1 ? (
-          <MapView style={styles.map} region={boundsRegion(coords)} scrollEnabled pitchEnabled={false} rotateEnabled={false} toolbarEnabled={false}>
+          <MapView ref={mapRef} style={styles.map} region={boundsRegion(coords)} scrollEnabled pitchEnabled={false} rotateEnabled={false} toolbarEnabled={false}>
             {Polyline && <Polyline coordinates={coords} strokeColor={c.primary} strokeWidth={5} />}
             {Marker && <Marker coordinate={coords[0]} pinColor="green" />}
             {Marker && <Marker coordinate={coords[coords.length - 1]} pinColor="red" />}
