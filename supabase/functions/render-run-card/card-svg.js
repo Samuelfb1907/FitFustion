@@ -6,8 +6,13 @@
 
 export const CARD_W = 1080;
 export const CARD_H = 1350;
-const MAP_H = 894;
+// Karten-Slot exakt 6:5 (1080x900) wie der angeforderte Schnappschuss-Ausschnitt ->
+// keine Skalierung/kein Beschnitt -> Start-/Ziel-Punkte (dots, relative 0..1-Koordinaten)
+// landen pixelgenau auf der Route. Die Akzent-Linie ueberlappt die untersten 6 px der Karte.
+const MAP_H = 900;
 const ACCENT = '#19C98F';   // FitAvo-Gruen (Dark-Theme primary)
+const START = '#19C98F';
+const END = '#F0574B';
 const PANEL = '#0C1116';    // Panel-Hintergrund (dunkel, wie App-Dark-bg)
 const TXT = '#F3F6F8';
 const MUTED = '#8A94A0';
@@ -20,17 +25,28 @@ function esc(v, max = 40) {
 }
 
 // mapBase64: PNG/JPEG-Base64 OHNE "data:"-Prefix. stats: [{label, value}] (max 3 genutzt).
-export function buildCardSvg({ mapBase64, mapMime, title, date, stats, kcalText }) {
+// dots: [{fx, fy, kind:'start'|'end'}] - relative Position (0..1) im Karten-Ausschnitt;
+// werden hier als saubere Kreise gemalt (native Marker haben im Schnappschuss schwarze Kaesten).
+export function buildCardSvg({ mapBase64, mapMime, title, date, stats, kcalText, dots }) {
   const cols = [180, 540, 900]; // zentrierte Spalten fuer bis zu 3 Werte
   const statSvg = (stats || []).slice(0, 3).map((s, i) => `
   <text x="${cols[i]}" y="1146" text-anchor="middle" font-family="Inter" font-size="62" font-weight="800" fill="#FFFFFF">${esc(s.value, 16)}</text>
   <text x="${cols[i]}" y="1198" text-anchor="middle" font-family="Inter" font-size="25" font-weight="500" letter-spacing="3" fill="${LABEL}">${esc(s.label, 20).toUpperCase()}</text>`).join('');
 
+  const clamp01 = (n) => Math.max(0, Math.min(1, Number(n) || 0));
+  const dotSvg = (dots || []).slice(0, 2).map((d) => {
+    const cx = Math.round(clamp01(d.fx) * CARD_W);
+    const cy = Math.round(clamp01(d.fy) * MAP_H);
+    return `
+  <circle cx="${cx}" cy="${cy}" r="14" fill="${d.kind === 'end' ? END : START}" stroke="#FFFFFF" stroke-width="5"/>`;
+  }).join('');
+
   return `<svg width="${CARD_W}" height="${CARD_H}" viewBox="0 0 ${CARD_W} ${CARD_H}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   <rect width="${CARD_W}" height="${CARD_H}" fill="${PANEL}"/>
   <image x="0" y="0" width="${CARD_W}" height="${MAP_H}" preserveAspectRatio="xMidYMid slice" xlink:href="data:${mapMime};base64,${mapBase64}"/>
-  <rect x="0" y="${MAP_H}" width="${CARD_W}" height="6" fill="${ACCENT}"/>
-  <rect x="0" y="${MAP_H + 6}" width="${CARD_W}" height="${CARD_H - MAP_H - 6}" fill="${PANEL}"/>
+  ${dotSvg}
+  <rect x="0" y="${MAP_H - 6}" width="${CARD_W}" height="6" fill="${ACCENT}"/>
+  <rect x="0" y="${MAP_H}" width="${CARD_W}" height="${CARD_H - MAP_H}" fill="${PANEL}"/>
   <text x="64" y="1000" font-family="Inter" font-size="46" font-weight="800" fill="${TXT}">${esc(title, 24)}</text>
   <text x="1016" y="998" text-anchor="end" font-family="Inter" font-size="28" font-weight="500" fill="${MUTED}">${esc(date, 28)}</text>
   ${statSvg}

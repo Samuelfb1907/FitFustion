@@ -6,6 +6,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from './supabase';
 
 export type RunCardStat = { label: string; value: string };
+export type RunCardDot = { fx: number; fy: number; kind: 'start' | 'end' }; // relativ (0..1) im Ausschnitt
 
 // Liefert die Datei-URI des fertigen Bilds oder null (dann Fallback beim Aufrufer).
 export async function buildRunCardFile(params: {
@@ -14,10 +15,11 @@ export async function buildRunCardFile(params: {
   date: string;             // z. B. "7. Juli 2026"
   stats: RunCardStat[];     // Distanz/Zeit/Ø-Tempo (fertig formatiert)
   kcalText: string;         // z. B. "461 kcal"
+  dots?: RunCardDot[];      // Start-/Ziel-Punkt (malt der Server ins Bild)
 }): Promise<string | null> {
   try {
     const { data, error } = await supabase.functions.invoke('render-run-card', {
-      body: { map: params.mapBase64, title: params.title, date: params.date, stats: params.stats, kcalText: params.kcalText },
+      body: { map: params.mapBase64, title: params.title, date: params.date, stats: params.stats, kcalText: params.kcalText, dots: params.dots ?? [] },
     });
     const b64 = (data as any)?.image;
     if (error || typeof b64 !== 'string' || b64.length < 100) return null;

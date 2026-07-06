@@ -7,7 +7,7 @@ import * as Sharing from 'expo-sharing';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { useT, useLang } from '../contexts/LanguageContext';
-import { GpsPoint, paceSecPerKm, formatPace, formatDuration, formatDistance, shareRegion } from '../lib/gps';
+import { GpsPoint, paceSecPerKm, formatPace, formatDuration, formatDistance, shareRegion, relativeInRegion } from '../lib/gps';
 import { getMapView, getPolyline, getMarker } from '../lib/gpsNative';
 import { buildRunCardFile, writeSnapshotFile, runCardDate } from '../lib/runShareCard';
 
@@ -38,6 +38,7 @@ export default function RunDetail({ visible, onClose, activityKey, route, distan
   const Marker = getMarker();
   const mapRef = useRef<any>(null);
   const [sharing, setSharing] = useState(false);
+  const [snapshotting, setSnapshotting] = useState(false); // Marker kurz ausblenden (schwarze Kaesten im Schnappschuss)
 
   const pts = route ?? [];
   const coords: LatLng[] = pts.map((p) => ({ latitude: p.lat, longitude: p.lng }));
@@ -49,11 +50,19 @@ export default function RunDetail({ visible, onClose, activityKey, route, distan
   async function shareRun() {
     if (sharing) return;
     setSharing(true);
+    setSnapshotting(true); // native Marker raus aus dem Schnappschuss (schwarze Kaesten)
     try {
+      await new Promise((r) => setTimeout(r, 350)); // Karte ohne Marker rendern lassen
+      const sr = shareRegion(pts);
       const snap = await mapRef.current?.takeSnapshot?.({
-        width: 360, height: 300, region: shareRegion(pts) ?? undefined, format: 'png', quality: 1, result: 'base64',
+        width: 360, height: 300, region: sr ?? undefined, format: 'png', quality: 1, result: 'base64',
       });
       if (!snap) return;
+      // Start-/Ziel-Punkt malt der Server ins Bild (Position relativ zum Ausschnitt).
+      const dots = sr && pts.length > 1 ? [
+        { ...relativeInRegion(pts[0], sr), kind: 'start' as const },
+        { ...relativeInRegion(pts[pts.length - 1], sr), kind: 'end' as const },
+      ] : [];
       const uri = (await buildRunCardFile({
         mapBase64: snap,
         title: t('gps.type.' + activityKey),
@@ -64,12 +73,13 @@ export default function RunDetail({ visible, onClose, activityKey, route, distan
           { label: t('gps.stat.pace'), value: `${formatPace(pace)} ${t('gps.paceUnit')}` },
         ],
         kcalText: kcal > 0 ? `${kcal} kcal` : '',
+        dots,
       })) ?? (await writeSnapshotFile(snap));
       if (!uri) return;
       const caption = `${t('gps.type.' + activityKey)} · ${formatDistance(distanceM)} · ${formatDuration(durationS)} · ${formatPace(pace)} ${t('gps.paceUnit')} 🏃 — FitAvo`;
       if (Platform.OS === 'ios') await Share.share({ url: uri, message: caption });
       else if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: caption });
-    } catch {} finally { setSharing(false); }
+    } catch {} finally { setSharing(false); setSnapshotting(false); }
   }
 
   const Stat = ({ label, value }: { label: string; value: string }) => (
@@ -92,13 +102,14 @@ export default function RunDetail({ visible, onClose, activityKey, route, distan
         {MapView && coords.length > 1 ? (
           <MapView ref={mapRef} style={styles.map} region={boundsRegion(coords)} scrollEnabled pitchEnabled={false} rotateEnabled={false} toolbarEnabled={false}>
             {Polyline && <Polyline coordinates={coords} strokeColor={c.primary} strokeWidth={6} lineCap="round" lineJoin="round" />}
-            {/* Start/Ziel als dezente Punkte (Standard-Pins sehen im Schnappschuss haesslich aus) */}
-            {Marker && (
+            {/* Start/Ziel als dezente Punkte - beim Schnappschuss ausgeblendet (der Server malt
+                sie dann sauber ins Teilen-Bild; native Marker bekommen dort schwarze Kaesten) */}
+            {Marker && !snapshotting && (
               <Marker coordinate={coords[0]} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}>
                 <View style={styles.routeDotStart} />
               </Marker>
             )}
-            {Marker && (
+            {Marker && !snapshotting && (
               <Marker coordinate={coords[coords.length - 1]} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}>
                 <View style={styles.routeDotEnd} />
               </Marker>

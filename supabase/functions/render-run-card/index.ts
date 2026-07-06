@@ -62,12 +62,16 @@ Deno.serve(async (req) => {
     const stats = Array.isArray(body?.stats) ? body.stats.slice(0, 3).map((s: any) => ({
       label: String(s?.label ?? ''), value: String(s?.value ?? ''),
     })) : [];
+    // Start-/Ziel-Punkte: relative Koordinaten (0..1) im Karten-Ausschnitt.
+    const dots = Array.isArray(body?.dots) ? body.dots.slice(0, 2).map((d: any) => ({
+      fx: Number(d?.fx), fy: Number(d?.fy), kind: d?.kind === 'end' ? 'end' : 'start',
+    })).filter((d: any) => isFinite(d.fx) && isFinite(d.fy)) : [];
 
     await ensureReady();
     const svg = buildCardSvg({
       mapBase64: map, mapMime,
       title: String(body?.title ?? ''), date: String(body?.date ?? ''),
-      stats, kcalText: String(body?.kcalText ?? ''),
+      stats, kcalText: String(body?.kcalText ?? ''), dots,
     });
     const resvg = new Resvg(svg, { font: { fontBuffers: fonts, defaultFontFamily: 'Inter', loadSystemFonts: false } });
     const png = resvg.render().asPng();

@@ -94,3 +94,14 @@ export function shareRegion(points: GpsPoint[], aspectWoverH = 360 / 300) {
   if (lngDelta < dLng) { lngDelta = dLng; latDelta = lngDelta * cos / aspectWoverH; }
   return { latitude: midLat, longitude: (minLng + maxLng) / 2, latitudeDelta: latDelta, longitudeDelta: lngDelta };
 }
+
+// Relative Position (0..1) eines Punkts innerhalb einer Region - fuer die Start-/Ziel-Punkte,
+// die der Server ins Teilen-Bild malt (native Marker haben im Schnappschuss schwarze Kaesten).
+export function relativeInRegion(
+  p: { lat: number; lng: number },
+  region: { latitude: number; longitude: number; latitudeDelta: number; longitudeDelta: number },
+): { fx: number; fy: number } {
+  const fx = (p.lng - (region.longitude - region.longitudeDelta / 2)) / region.longitudeDelta;
+  const fy = ((region.latitude + region.latitudeDelta / 2) - p.lat) / region.latitudeDelta;
+  return { fx, fy };
+}
