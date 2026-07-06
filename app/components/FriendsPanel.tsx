@@ -10,7 +10,7 @@ import SectionHead from './SectionHead';
 import { CARD_SHADOW as shadow } from '../lib/ui';
 import { errorMessage } from '../lib/errors';
 import { Friend, FriendRequest, getMyFriendCode, fetchFriends, addFriendByCode, removeFriendByCode, sendNudge, incomingRequests, acceptRequest, declineRequest } from '../lib/friends';
-import { FeedItem, fetchFriendsFeed, toggleKudos } from '../lib/activity';
+import { FeedItem, fetchFriendsFeed, toggleKudos, SocialNotification, fetchMySocialNotifications, markSocialSeen } from '../lib/activity';
 import { hTap } from '../lib/haptics';
 import { useAuth } from '../contexts/AuthContext';
 import FeedComments from './FeedComments';
@@ -33,6 +33,13 @@ function feedText(item: FeedItem, t: (k: string, p?: Record<string, string | num
   return t('friends.feed.trained', { name: item.display_name });
 }
 
+// Kopfzeile fuer die Kommentar-Ansicht einer EIGENEN Aktivitaet (aus einer Benachrichtigung).
+function notifCtxText(n: SocialNotification, t: (k: string, p?: Record<string, string | number>) => string): string {
+  if (n.event_type === 'record') return n.event_detail ? t('friends.notif.ctxRecordEx', { ex: n.event_detail }) : t('friends.notif.ctxRecord');
+  if (n.event_type === 'cardio') return n.event_detail ? t('friends.notif.ctxCardioEx', { ex: n.event_detail }) : t('friends.notif.ctxCardio');
+  return t('friends.notif.ctxTrained');
+}
+
 export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
   const c = useColors();
   const t = useT();
@@ -43,29 +50,35 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
   const [friends, setFriends] = useState<Friend[]>([]);
   const [requests, setRequests] = useState<FriendRequest[]>([]);
   const [feed, setFeed] = useState<FeedItem[]>([]);
+  const [notifs, setNotifs] = useState<SocialNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [codeInput, setCodeInput] = useState('');
   const [err, setErr] = useState<string | null>(null);
   const [openComments, setOpenComments] = useState<FeedItem | null>(null);
   const [openProfile, setOpenProfile] = useState<Friend | null>(null);
+  const [openThread, setOpenThread] = useState<{ eventId: string; headerText: string } | null>(null);
 
   useEffect(() => { load(); }, []);
   useEffect(() => { if (focusTick) load(); }, [focusTick]);
 
   async function load() {
     try {
-      const [code, list, reqs, fd] = await Promise.all([
+      const [code, list, reqs, fd, nt] = await Promise.all([
         getMyFriendCode(),
         fetchFriends(),
         incomingRequests().catch(() => [] as FriendRequest[]),
         fetchFriendsFeed().catch(() => [] as FeedItem[]),
+        fetchMySocialNotifications().catch(() => [] as SocialNotification[]),
       ]);
       setMyCode(code);
       setFriends(list);
       setRequests(reqs);
       setFeed(fd);
+      setNotifs(nt);
       setErr(null);
+      if (nt.some((n) => n.is_new)) markSocialSeen(); // "Neu"-Markierung bis zum naechsten Laden
+
     } catch (e) {
       setErr(errorMessage(e));
     } finally {
@@ -143,10 +156,47 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
   if (loading) return <ActivityIndicator size="large" color={c.primary} style={{ marginTop: 30 }} />;
 
   const initial = (n: string) => (n.charAt(0) || '?').toUpperCase();
+  const newCount = notifs.filter((n) => n.is_new).length;
 
   return (
     <View>
       {err && <Text style={styles.err}>{err}</Text>}
+
+      {/* Aktivitaet bei dir: wer hat auf meine Aktivitaeten reagiert (Kudos/Kommentare) */}
+      {notifs.length > 0 && (
+        <View style={[styles.card, { marginTop: 14 }]}>
+          <GlassFill radius={20} />
+          <View style={styles.notifHead}>
+            <SectionHead icon="notifications" title={t('friends.notif.title')} />
+            {newCount > 0 && <View style={styles.newPill}><Text style={styles.newPillText}>{t('friends.notif.newCount', { n: newCount })}</Text></View>}
+          </View>
+          {notifs.slice(0, 8).map((n, i) => {
+            const isKudos = n.kind === 'kudos';
+            const a = agoKey(n.created_at);
+            return (
+              <TouchableOpacity
+                key={`${n.kind}-${n.event_id}-${n.created_at}-${i}`}
+                style={[styles.row, i > 0 && styles.rowDivider]}
+                activeOpacity={0.7}
+                onPress={() => { hTap(); setOpenThread({ eventId: n.event_id, headerText: notifCtxText(n, t) }); }}
+                accessibilityRole="button"
+              >
+                <View style={[styles.feedIcon, { backgroundColor: (isKudos ? '#F0574B' : c.primary) + '22' }]}>
+                  <Ionicons name={isKudos ? 'flame' : 'chatbubble'} size={16} color={isKudos ? '#F0574B' : c.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.feedText} numberOfLines={2}>
+                    {isKudos ? t('friends.notif.kudos', { name: n.actor_name }) : t('friends.notif.comment', { name: n.actor_name })}
+                  </Text>
+                  {!isKudos && !!n.body && <Text style={styles.notifBody} numberOfLines={2}>«{n.body}»</Text>}
+                  <Text style={styles.feedTime}>{t(a.key, { n: a.n })}</Text>
+                </View>
+                {n.is_new && <View style={styles.newDot} />}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      )}
 
       {/* Kompakter eigener Code */}
       <View style={styles.codeStrip}>
@@ -276,6 +326,17 @@ export default function FriendsPanel({ focusTick }: { focusTick?: number }) {
           onClose={() => setOpenProfile(null)}
         />
       )}
+
+      {openThread && (
+        <FeedComments
+          eventId={openThread.eventId}
+          headerText={openThread.headerText}
+          myUserId={session?.user?.id ?? null}
+          visible={!!openThread}
+          onClose={() => setOpenThread(null)}
+          onCountChange={() => {}}
+        />
+      )}
     </View>
   );
 }
@@ -317,5 +378,12 @@ function makeStyles(c: Colors) {
     feedTime: { fontSize: 12, color: c.textMuted, marginTop: 1 },
     kudosBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingLeft: 6 },
     kudosCount: { fontSize: 13, fontWeight: '800', color: c.textMuted },
+
+    // "Aktivitaet bei dir" (Benachrichtigungen)
+    notifHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    newPill: { backgroundColor: '#F0574B', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3 },
+    newPillText: { color: '#fff', fontSize: 11, fontWeight: '800' },
+    notifBody: { fontSize: 13, color: c.textMuted, fontStyle: 'italic', marginTop: 1 },
+    newDot: { width: 9, height: 9, borderRadius: 5, backgroundColor: '#F0574B', marginLeft: 6 },
   });
 }

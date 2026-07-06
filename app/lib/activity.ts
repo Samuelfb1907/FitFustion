@@ -53,3 +53,26 @@ export async function addComment(eventId: string, body: string): Promise<Comment
 export async function deleteComment(commentId: string): Promise<void> {
   try { await supabase.rpc('delete_comment', { p_comment_id: commentId }); } catch {}
 }
+
+// --- "Aktivitaet bei dir": wer auf MEINE Ereignisse reagiert hat (Migration 066) ---
+export type SocialNotification = {
+  kind: 'kudos' | 'comment';
+  actor_name: string;
+  event_id: string;
+  event_type: 'trained' | 'record' | 'cardio';
+  event_detail: string | null;
+  body: string | null;       // Kommentartext (nur bei kind='comment')
+  created_at: string;
+  is_new: boolean;           // seit letztem Ansehen
+};
+
+export async function fetchMySocialNotifications(): Promise<SocialNotification[]> {
+  const { data, error } = await supabase.rpc('my_social_notifications');
+  if (error) return [];
+  return (data ?? []) as SocialNotification[];
+}
+
+// Alles als gesehen markieren (setzt profiles.social_seen_at = now()).
+export async function markSocialSeen(): Promise<void> {
+  try { await supabase.rpc('mark_social_seen'); } catch {}
+}
