@@ -2,7 +2,7 @@
 // erlaubt Schreiben und Loeschen eigener Kommentare. Zaehler-Aenderung geht per Callback
 // zurueck an den Feed (FriendsPanel).
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Keyboard, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors, Colors } from '../contexts/ThemeContext';
 import { useT } from '../contexts/LanguageContext';
@@ -27,6 +27,17 @@ export default function FeedComments({ eventId, headerText, myUserId, visible, o
   const [loading, setLoading] = useState(true);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
+  const [kb, setKb] = useState(0);
+
+  // Tastaturhoehe verfolgen und das Sheet genau darum anheben. RN-Modal ignoriert das
+  // Android-adjustResize, darum loesen wir es selbst (funktioniert iOS + Android gleich).
+  useEffect(() => {
+    const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvt = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const s = Keyboard.addListener(showEvt, (e) => setKb(e.endCoordinates?.height ?? 0));
+    const h = Keyboard.addListener(hideEvt, () => setKb(0));
+    return () => { s.remove(); h.remove(); };
+  }, []);
 
   useEffect(() => {
     if (!visible) return;
@@ -62,7 +73,7 @@ export default function FeedComments({ eventId, headerText, myUserId, visible, o
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.overlay}>
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, { paddingBottom: 22 + kb }]}>
           <View style={styles.head}>
             <Text style={styles.title}>{t('friends.comments.title')}</Text>
             <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button" accessibilityLabel={t('friends.comments.close')}>
@@ -73,7 +84,7 @@ export default function FeedComments({ eventId, headerText, myUserId, visible, o
           {loading ? (
             <ActivityIndicator color={c.primary} style={{ marginVertical: 30 }} />
           ) : (
-            <ScrollView style={{ maxHeight: 320 }} contentContainerStyle={{ paddingVertical: 4 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+            <ScrollView style={{ maxHeight: kb > 0 ? 220 : 320 }} contentContainerStyle={{ paddingVertical: 4 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
               {items.length === 0 ? (
                 <Text style={styles.empty}>{t('friends.comments.empty')}</Text>
               ) : items.map((cm) => (
@@ -87,14 +98,12 @@ export default function FeedComments({ eventId, headerText, myUserId, visible, o
               ))}
             </ScrollView>
           )}
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-            <View style={styles.inputRow}>
-              <TextInput style={styles.input} value={text} onChangeText={setText} placeholder={t('friends.comments.placeholder')} placeholderTextColor={c.textMuted} maxLength={300} multiline underlineColorAndroid="transparent" />
-              <TouchableOpacity style={[styles.sendBtn, (!text.trim() || sending) && { opacity: 0.5 }]} onPress={send} disabled={!text.trim() || sending} accessibilityRole="button" accessibilityLabel={t('friends.comments.sendA11y')}>
-                {sending ? <ActivityIndicator color={c.onPrimary} size="small" /> : <Ionicons name="arrow-up" size={20} color={c.onPrimary} />}
-              </TouchableOpacity>
-            </View>
-          </KeyboardAvoidingView>
+          <View style={styles.inputRow}>
+            <TextInput style={styles.input} value={text} onChangeText={setText} placeholder={t('friends.comments.placeholder')} placeholderTextColor={c.textMuted} maxLength={300} multiline underlineColorAndroid="transparent" />
+            <TouchableOpacity style={[styles.sendBtn, (!text.trim() || sending) && { opacity: 0.5 }]} onPress={send} disabled={!text.trim() || sending} accessibilityRole="button" accessibilityLabel={t('friends.comments.sendA11y')}>
+              {sending ? <ActivityIndicator color={c.onPrimary} size="small" /> : <Ionicons name="arrow-up" size={20} color={c.onPrimary} />}
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </Modal>
