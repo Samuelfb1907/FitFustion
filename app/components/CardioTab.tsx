@@ -17,8 +17,12 @@ import { errorMessage } from '../lib/errors';
 import { TAB_BAR_SPACE } from '../lib/layout';
 import { hSuccess, hTap } from '../lib/haptics';
 import GlassFill from './GlassFill';
+import RunTracker from './RunTracker';
+import RunDetail from './RunDetail';
+import { gpsAvailable } from '../lib/gpsNative';
+import { GpsPoint, formatDistance } from '../lib/gps';
 
-type Session = { id: string; activity_key: string; minutes: number; kcal: number; performed_at: string };
+type Session = { id: string; activity_key: string; minutes: number; kcal: number; performed_at: string; route: GpsPoint[] | null; distance_m: number | null };
 const QUICK_MINS = [10, 20, 30, 45, 60];
 
 export default function CardioTab({ onChanged }: { onChanged?: () => void }) {
@@ -35,13 +39,15 @@ export default function CardioTab({ onChanged }: { onChanged?: () => void }) {
   const [picked, setPicked] = useState<CardioType | null>(null);
   const [mins, setMins] = useState('30');
   const [saving, setSaving] = useState(false);
+  const [showRun, setShowRun] = useState(false);
+  const [detail, setDetail] = useState<Session | null>(null);
 
   const load = useCallback(async () => {
     if (!uid) { setLoading(false); return; }
     try {
       const [{ data: prof }, { data: sess }] = await Promise.all([
         supabase.from('profiles').select('weight_kg').eq('id', uid).maybeSingle(),
-        supabase.from('cardio_sessions').select('id, activity_key, minutes, kcal, performed_at')
+        supabase.from('cardio_sessions').select('id, activity_key, minutes, kcal, performed_at, route, distance_m')
           .eq('user_id', uid).gte('performed_at', startOfTodayISO()).order('performed_at', { ascending: false }),
       ]);
       setWeightKg(prof?.weight_kg != null ? Number(prof.weight_kg) : null);
@@ -106,6 +112,17 @@ export default function CardioTab({ onChanged }: { onChanged?: () => void }) {
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE }}>
       <Text style={styles.intro}>{t('cardio.intro')}</Text>
 
+      {gpsAvailable() && (
+        <TouchableOpacity style={styles.gpsBtn} onPress={() => setShowRun(true)} activeOpacity={0.9}>
+          <View style={styles.gpsIcon}><Ionicons name="location" size={22} color={c.onPrimary} /></View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.gpsBtnTitle}>{t('gps.entryButton')}</Text>
+            <Text style={styles.gpsBtnSub}>{t('gps.entrySub')}</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={c.onPrimary} />
+        </TouchableOpacity>
+      )}
+
       {todayBurned > 0 && (
         <View style={styles.summary}>
           <GlassFill radius={20} />
@@ -159,11 +176,13 @@ export default function CardioTab({ onChanged }: { onChanged?: () => void }) {
             const ct = cardioTypeByKey(s.activity_key);
             return (
               <View key={s.id} style={[styles.row, idx > 0 && styles.rowDivider]}>
-                <View style={styles.rowIcon}><Ionicons name={(ct?.icon ?? 'flame') as any} size={18} color={c.primary} /></View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.rowName}>{t(`cardio.type.${s.activity_key}`)}</Text>
-                  <Text style={styles.rowMeta}>{Math.round(Number(s.minutes))} {t('cardio.minUnit')} · {s.kcal} kcal</Text>
-                </View>
+                <TouchableOpacity style={styles.rowMain} activeOpacity={s.route ? 0.6 : 1} onPress={s.route ? () => setDetail(s) : undefined} disabled={!s.route}>
+                  <View style={styles.rowIcon}><Ionicons name={(ct?.icon ?? 'flame') as any} size={18} color={c.primary} /></View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.rowName}>{t(`cardio.type.${s.activity_key}`)}{s.route ? '  🗺️' : ''}</Text>
+                    <Text style={styles.rowMeta}>{s.distance_m ? `${formatDistance(s.distance_m)} · ` : ''}{Math.round(Number(s.minutes))} {t('cardio.minUnit')} · {s.kcal} kcal</Text>
+                  </View>
+                </TouchableOpacity>
                 <TouchableOpacity onPress={() => confirmDelete(s)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button" accessibilityLabel={t('cardio.deleteTitle')}>
                   <Ionicons name="trash-outline" size={20} color={c.textMuted} />
                 </TouchableOpacity>
@@ -219,6 +238,12 @@ export default function CardioTab({ onChanged }: { onChanged?: () => void }) {
           </View>
         </View>
       </Modal>
+
+      {showRun && <RunTracker visible={showRun} onClose={() => setShowRun(false)} onSaved={load} />}
+      {detail && (
+        <RunDetail visible={!!detail} onClose={() => setDetail(null)} activityKey={detail.activity_key}
+          route={detail.route ?? []} distanceM={detail.distance_m ?? 0} minutes={detail.minutes} kcal={detail.kcal} />
+      )}
     </ScrollView>
   );
 }
@@ -248,6 +273,11 @@ function makeStyles(c: Colors) {
     rowIcon: { width: 34, height: 34, borderRadius: 10, backgroundColor: 'rgba(25,201,143,0.12)', alignItems: 'center', justifyContent: 'center' },
     rowName: { fontSize: 15, fontWeight: '600', color: c.text },
     rowMeta: { fontSize: 12, color: c.textMuted, marginTop: 2 },
+    rowMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
+    gpsBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: c.primary, borderRadius: 18, padding: 16, marginBottom: 18 },
+    gpsIcon: { width: 42, height: 42, borderRadius: 13, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
+    gpsBtnTitle: { color: c.onPrimary, fontSize: 16, fontWeight: '800' },
+    gpsBtnSub: { color: c.onPrimary, fontSize: 12, fontWeight: '600', opacity: 0.9, marginTop: 1 },
 
     overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', paddingHorizontal: 24 },
     modalCard: { backgroundColor: c.bg, borderRadius: 22, padding: 22, borderWidth: 1, borderColor: c.cardBorder },
