@@ -26,12 +26,20 @@ export async function fetchFriendsFeed(): Promise<FeedItem[]> {
   return (data ?? []) as FeedItem[];
 }
 
+// Push an den Ersteller ausloesen, wenn man reagiert (best effort, stoert nie den Flow).
+// Serverseitig verifiziert; ohne Push-Token greift die In-App-Ansicht "Aktivitaet bei dir".
+async function notifySocial(eventId: string, kind: 'kudos' | 'comment'): Promise<void> {
+  try { await supabase.functions.invoke('notify-social', { body: { eventId, kind } }); } catch {}
+}
+
 // Kudos umschalten (nur fuer Freunde-Ereignisse; serverseitig geprueft).
 // Gibt den neuen Zustand zurueck (true = jetzt gekudost) oder null bei Fehler.
 export async function toggleKudos(eventId: string): Promise<boolean | null> {
   const { data, error } = await supabase.rpc('toggle_kudos', { p_event_id: eventId });
   if (error) return null;
-  return data as boolean;
+  const now = data as boolean;
+  if (now) notifySocial(eventId, 'kudos'); // nur beim Setzen, nicht beim Entfernen
+  return now;
 }
 
 // Kommentare eines Ereignisses laden (aelteste zuerst).
@@ -46,7 +54,9 @@ export async function addComment(eventId: string, body: string): Promise<Comment
   const { data, error } = await supabase.rpc('add_comment', { p_event_id: eventId, p_body: body });
   if (error) return null;
   const rows = (data ?? []) as CommentItem[];
-  return rows[0] ?? null;
+  const nc = rows[0] ?? null;
+  if (nc) notifySocial(eventId, 'comment'); // Push an den Ersteller (best effort)
+  return nc;
 }
 
 // Eigenen Kommentar loeschen.
