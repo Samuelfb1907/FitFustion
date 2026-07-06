@@ -28,8 +28,10 @@ function b64FromBuffer(buf) {
 // region: {latitude, longitude, latitudeDelta, longitudeDelta} (Ausschnitt, Seitenverhaeltnis W:H)
 // route: [{lat, lng}, ...] (vereinfacht, in Reihenfolge)
 // Liefert ein SVG-Fragment (Kacheln + Route + Punkte + Attribution), geclippt auf W x H.
-export async function buildMapLayer({ region, route, width, height, accent = '#19C98F', endColor = '#F0574B', style = 'voyager' }) {
-  const isDark = style === 'dark_all';
+// Stil-Standard "voyager_nolabels": freundliche Farben, aber KEINE Beschriftungen -
+// auf hoechster Zoom-Stufe (kurze Strecken) zeigten Labels sonst Hausnummern-Wirrwarr.
+export async function buildMapLayer({ region, route, width, height, accent = '#19C98F', endColor = '#F0574B', style = 'voyager_nolabels' }) {
+  const isDark = style === 'dark_all' || style === 'dark_nolabels';
   // Zoom so waehlen, dass der Ausschnitt die Breite fuellt (Skalierung s in [1, 2) ->
   // @2x-Kacheln bleiben scharf und es sind hoechstens ~6x5 Kacheln zu laden).
   const zf = Math.log2((width * 360) / (TILE_WORLD * region.longitudeDelta));
@@ -56,10 +58,12 @@ export async function buildMapLayer({ region, route, width, height, accent = '#1
         const res = await fetch(TILE_URL(style, z, wx, ty), { headers: { 'User-Agent': 'FitAvo/1.2 (Fitness-App; Lauf-Teilen-Bild)' } });
         if (!res.ok) throw new Error(`tile ${z}/${wx}/${ty}: ${res.status}`);
         const b64 = b64FromBuffer(await res.arrayBuffer());
+        // Kacheln 1 px ueberlappen lassen - sonst entstehen an den Kachel-Grenzen
+        // sichtbare helle Naehte (Anti-Aliasing der Bildraender auf Bruchteil-Pixeln).
         const px = (tx * TILE_WORLD - viewLeft) * s;
         const py = (ty * TILE_WORLD - viewTop) * s;
-        const size = TILE_WORLD * s;
-        return `<image x="${px.toFixed(2)}" y="${py.toFixed(2)}" width="${size.toFixed(2)}" height="${size.toFixed(2)}" xlink:href="data:image/png;base64,${b64}"/>`;
+        const size = TILE_WORLD * s + 1;
+        return `<image x="${px.toFixed(2)}" y="${py.toFixed(2)}" width="${size.toFixed(2)}" height="${size.toFixed(2)}" preserveAspectRatio="none" xlink:href="data:image/png;base64,${b64}"/>`;
       })());
     }
   }
@@ -75,9 +79,11 @@ export async function buildMapLayer({ region, route, width, height, accent = '#1
   let routeSvg = '';
   if (pts.length > 1) {
     const first = pts[0].split(','), last = pts[pts.length - 1].split(',');
-    const casing = isDark ? '#06251B' : '#0A5C41'; // dunkle Kontur, damit die Linie auf der Karte "sitzt"
+    // Kontur um die Route: auf hellen Karten WEISS (Sticker-Look), auf dunklen dunkelgruen.
+    const casing = isDark ? '#06251B' : '#FFFFFF';
+    const casingOpacity = isDark ? '0.45' : '0.9';
     routeSvg = `
-  <polyline points="${pts.join(' ')}" fill="none" stroke="${casing}" stroke-opacity="0.45" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="${pts.join(' ')}" fill="none" stroke="${casing}" stroke-opacity="${casingOpacity}" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
   <polyline points="${pts.join(' ')}" fill="none" stroke="${accent}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
   <circle cx="${first[0]}" cy="${first[1]}" r="13" fill="${accent}" stroke="#FFFFFF" stroke-width="5"/>
   <circle cx="${last[0]}" cy="${last[1]}" r="13" fill="${endColor}" stroke="#FFFFFF" stroke-width="5"/>`;
