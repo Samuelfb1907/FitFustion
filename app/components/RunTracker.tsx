@@ -13,9 +13,11 @@ import { useColors, Colors } from '../contexts/ThemeContext';
 import { useT } from '../contexts/LanguageContext';
 import {
   GPS_ACTIVITIES, GpsActivityKey, GpsPoint, gpsActivityByKey, gpsKcal,
-  haversineM, paceSecPerKm, formatPace, formatDuration, formatDistance,
+  haversineM, paceSecPerKm, formatPace, formatDuration, formatDistance, shareRegion,
 } from '../lib/gps';
 import { getLocation, getMapView, getPolyline, getMarker, keepAwake } from '../lib/gpsNative';
+import { buildRunCardFile, writeSnapshotFile, runCardDate } from '../lib/runShareCard';
+import { useLang } from '../contexts/LanguageContext';
 import { logActivity } from '../lib/activity';
 import { hSuccess, hTap } from '../lib/haptics';
 
@@ -39,6 +41,7 @@ export default function RunTracker({ visible, onClose, onSaved }: { visible: boo
   const { session } = useAuth();
   const c = useColors();
   const t = useT();
+  const { lang } = useLang();
   const styles = useMemo(() => makeStyles(c), [c]);
   const uid = session?.user?.id;
 
@@ -54,6 +57,7 @@ export default function RunTracker({ visible, onClose, onSaved }: { visible: boo
   const [elapsedS, setElapsedS] = useState(0);
   const [weightKg, setWeightKg] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const [gpsReady, setGpsReady] = useState(false);
   const [region, setRegion] = useState<any>(null);
 
@@ -159,15 +163,34 @@ export default function RunTracker({ visible, onClose, onSaved }: { visible: boo
     setDistanceM(0); distRef.current = 0; setElapsedS(0); setRegion(null);
   }
 
-  // Karte als Bild aufnehmen (react-native-maps takeSnapshot) + teilen (Insta/WhatsApp/...).
+  // Teilen: Karten-Schnappschuss (Route mittig, 6:5) + Server setzt das Strava-Style-Bild
+  // zusammen (Werte fest IM Bild). Faellt der Server aus -> roher Schnappschuss als Fallback.
   async function shareRun() {
+    if (sharing) return;
+    setSharing(true);
     try {
-      const uri = await mapRef.current?.takeSnapshot?.({ format: 'png', quality: 0.9, result: 'file' });
+      const snapRegion = shareRegion(pointsRef.current) ?? summaryRegion ?? undefined;
+      const snap = await mapRef.current?.takeSnapshot?.({
+        width: 360, height: 300, region: snapRegion, format: 'png', quality: 1, result: 'base64',
+      });
+      if (!snap) return;
+      const kcal = weightKg && act ? gpsKcal(act.met, weightKg, elapsedS) : 0;
+      const uri = (await buildRunCardFile({
+        mapBase64: snap,
+        title: t('gps.type.' + activityKey),
+        date: runCardDate(startedAtRef.current || Date.now(), lang),
+        stats: [
+          { label: t('gps.stat.distance'), value: formatDistance(distanceM) },
+          { label: t('gps.stat.time'), value: formatDuration(elapsedS) },
+          { label: t('gps.stat.pace'), value: `${formatPace(paceSecPerKm(distanceM, elapsedS))} ${t('gps.paceUnit')}` },
+        ],
+        kcalText: kcal > 0 ? `${kcal} kcal` : '',
+      })) ?? (await writeSnapshotFile(snap));
       if (!uri) return;
       const caption = `${t('gps.type.' + activityKey)} · ${formatDistance(distanceM)} · ${formatDuration(elapsedS)} · ${formatPace(paceSecPerKm(distanceM, elapsedS))} ${t('gps.paceUnit')} 🏃 — FitAvo`;
       if (Platform.OS === 'ios') await Share.share({ url: uri, message: caption });
       else if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: caption });
-    } catch {}
+    } catch {} finally { setSharing(false); }
   }
 
   function requestClose() {
@@ -203,9 +226,17 @@ export default function RunTracker({ visible, onClose, onSaved }: { visible: boo
         scrollEnabled={!interactive}
         pitchEnabled={false} rotateEnabled={false} toolbarEnabled={false}
       >
-        {Polyline && coords.length > 1 && <Polyline coordinates={coords} strokeColor={c.primary} strokeWidth={5} />}
-        {Marker && coords.length > 0 && phase === 'summary' && (
-          <Marker coordinate={coords[0]} pinColor="green" />
+        {Polyline && coords.length > 1 && <Polyline coordinates={coords} strokeColor={c.primary} strokeWidth={6} lineCap="round" lineJoin="round" />}
+        {/* Start/Ziel als dezente Punkte (die Standard-Pins sehen im Karten-Schnappschuss haesslich aus) */}
+        {Marker && coords.length > 1 && phase === 'summary' && (
+          <Marker coordinate={coords[0]} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}>
+            <View style={styles.routeDotStart} />
+          </Marker>
+        )}
+        {Marker && coords.length > 1 && phase === 'summary' && (
+          <Marker coordinate={coords[coords.length - 1]} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}>
+            <View style={styles.routeDotEnd} />
+          </Marker>
         )}
       </MapView>
     );
@@ -221,8 +252,8 @@ export default function RunTracker({ visible, onClose, onSaved }: { visible: boo
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{phase === 'summary' ? t('gps.summaryTitle') : t('gps.title')}</Text>
           {phase === 'summary' ? (
-            <TouchableOpacity onPress={shareRun} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button" accessibilityLabel={t('gps.share')}>
-              <Ionicons name="share-outline" size={26} color={c.primary} />
+            <TouchableOpacity onPress={shareRun} disabled={sharing} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button" accessibilityLabel={t('gps.share')}>
+              {sharing ? <ActivityIndicator size="small" color={c.primary} /> : <Ionicons name="share-outline" size={26} color={c.primary} />}
             </TouchableOpacity>
           ) : <View style={{ width: 28 }} />}
         </View>
@@ -315,6 +346,8 @@ function makeStyles(c: Colors) {
     map: { flex: 1 },
     mapFallback: { alignItems: 'center', justifyContent: 'center', backgroundColor: c.card },
     mapFallbackText: { fontSize: 44 },
+    routeDotStart: { width: 16, height: 16, borderRadius: 8, backgroundColor: '#19C98F', borderWidth: 3, borderColor: '#FFFFFF' },
+    routeDotEnd: { width: 16, height: 16, borderRadius: 8, backgroundColor: '#F0574B', borderWidth: 3, borderColor: '#FFFFFF' },
     gpsBadge: { position: 'absolute', top: 108, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20 },
     gpsBadgeText: { color: '#fff', fontSize: 13, fontWeight: '700' },
 

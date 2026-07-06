@@ -94,7 +94,7 @@ export const PRIVACY_SECTIONS: { h: string; p: string }[] = [
   },
   {
     h: 'Standort bei GPS-Aktivitäten (Laufen/Rad/Gehen)',
-    p: 'Nur wenn du eine GPS-Aktivität startest und den Zugriff erlaubst, erfasst FitAvo während der Aufzeichnung deinen Standort, um Strecke, Distanz, Tempo und verbrannte Kalorien zu berechnen. Die aufgezeichnete Route wird zusammen mit der Aktivität in deinem Konto gespeichert und nur dir angezeigt; deinen bestätigten Freunden wird im Aktivitäts-Feed lediglich die Aktivität selbst (z. B. Distanz) angezeigt, NICHT die genaue Route. Außerhalb einer laufenden Aufzeichnung wird dein Standort nicht erfasst. Du kannst die Standort-Berechtigung jederzeit in den Geräte-Einstellungen widerrufen.',
+    p: 'Nur wenn du eine GPS-Aktivität startest und den Zugriff erlaubst, erfasst FitAvo während der Aufzeichnung deinen Standort, um Strecke, Distanz, Tempo und verbrannte Kalorien zu berechnen. Die aufgezeichnete Route wird zusammen mit der Aktivität in deinem Konto gespeichert und nur dir angezeigt; deinen bestätigten Freunden wird im Aktivitäts-Feed lediglich die Aktivität selbst (z. B. Distanz) angezeigt, NICHT die genaue Route. Außerhalb einer laufenden Aufzeichnung wird dein Standort nicht erfasst. Wenn du eine Aktivität als Bild teilst, wird der Kartenausschnitt zum Zusammensetzen des Bildes kurzzeitig an unseren Server (Supabase) übertragen und dort weder gespeichert noch weitergegeben. Du kannst die Standort-Berechtigung jederzeit in den Geräte-Einstellungen widerrufen.',
   },
   {
     h: 'Zwecke & Rechtsgrundlage',
@@ -134,7 +134,7 @@ export const PRIVACY_SECTIONS: { h: string; p: string }[] = [
   },
   {
     h: 'Stand & Änderungen',
-    p: 'Stand dieser Datenschutzerklärung: 6. Juli 2026. Wir können diese Erklärung anpassen, z. B. bei neuen Funktionen oder geänderter Rechtslage; es gilt die jeweils aktuelle, in der App abrufbare Fassung.',
+    p: 'Stand dieser Datenschutzerklärung: 7. Juli 2026. Wir können diese Erklärung anpassen, z. B. bei neuen Funktionen oder geänderter Rechtslage; es gilt die jeweils aktuelle, in der App abrufbare Fassung.',
   },
 ];
 

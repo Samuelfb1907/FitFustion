@@ -72,3 +72,25 @@ export function gpsKcal(met: number, weightKg: number, durationS: number): numbe
   if (!met || !weightKg || durationS <= 0) return 0;
   return Math.round(met * weightKg * (durationS / 3600));
 }
+
+// Karten-Region fuer den Teilen-Schnappschuss: umschliesst die Route mit Rand und ist auf das
+// Seitenverhaeltnis des Bild-Ausschnitts (Breite/Hoehe, z. B. 360/300) korrigiert. So passt der
+// Snapshotter nichts mehr an -> die Route liegt mittig und komplett im Bild.
+export function shareRegion(points: GpsPoint[], aspectWoverH = 360 / 300) {
+  if (points.length === 0) return null;
+  let minLat = points[0].lat, maxLat = points[0].lat, minLng = points[0].lng, maxLng = points[0].lng;
+  for (const p of points) {
+    minLat = Math.min(minLat, p.lat); maxLat = Math.max(maxLat, p.lat);
+    minLng = Math.min(minLng, p.lng); maxLng = Math.max(maxLng, p.lng);
+  }
+  const midLat = (minLat + maxLat) / 2;
+  const cos = Math.max(0.2, Math.cos(rad(midLat))); // Laengengrade sind um cos(Breite) gestaucht
+  // 45 % Rand um die Route; Mindestgroesse ~250 m, damit Mini-Strecken nicht extrem gezoomt sind.
+  const dLat = Math.max(0.0022, (maxLat - minLat) * 1.45);
+  const dLng = Math.max(0.0022, (maxLng - minLng) * 1.45);
+  // Auf das Ziel-Seitenverhaeltnis aufweiten (nie beschneiden, nur vergroessern).
+  let latDelta = dLat;
+  let lngDelta = latDelta * aspectWoverH / cos;
+  if (lngDelta < dLng) { lngDelta = dLng; latDelta = lngDelta * cos / aspectWoverH; }
+  return { latitude: midLat, longitude: (minLng + maxLng) / 2, latitudeDelta: latDelta, longitudeDelta: lngDelta };
+}

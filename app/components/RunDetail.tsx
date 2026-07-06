@@ -1,14 +1,15 @@
 // Gespeicherten GPS-Lauf ansehen: Karte mit Strecke + Distanz/Zeit/Tempo/kcal. Read-only.
 // Native Karte nur geschuetzt geladen (lib/gpsNative). Dauer wird aus den Route-Zeitstempeln
 // berechnet (genauer als die auf Minuten gerundete Speicherung).
-import { useMemo, useRef } from 'react';
-import { Modal, Platform, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Modal, Platform, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import * as Sharing from 'expo-sharing';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors, Colors } from '../contexts/ThemeContext';
-import { useT } from '../contexts/LanguageContext';
-import { GpsPoint, paceSecPerKm, formatPace, formatDuration, formatDistance } from '../lib/gps';
+import { useT, useLang } from '../contexts/LanguageContext';
+import { GpsPoint, paceSecPerKm, formatPace, formatDuration, formatDistance, shareRegion } from '../lib/gps';
 import { getMapView, getPolyline, getMarker } from '../lib/gpsNative';
+import { buildRunCardFile, writeSnapshotFile, runCardDate } from '../lib/runShareCard';
 
 type LatLng = { latitude: number; longitude: number };
 
@@ -30,25 +31,45 @@ export default function RunDetail({ visible, onClose, activityKey, route, distan
 }) {
   const c = useColors();
   const t = useT();
+  const { lang } = useLang();
   const styles = useMemo(() => makeStyles(c), [c]);
   const MapView = getMapView();
   const Polyline = getPolyline();
   const Marker = getMarker();
   const mapRef = useRef<any>(null);
+  const [sharing, setSharing] = useState(false);
 
   const pts = route ?? [];
   const coords: LatLng[] = pts.map((p) => ({ latitude: p.lat, longitude: p.lng }));
   const durationS = pts.length > 1 ? Math.round((pts[pts.length - 1].t - pts[0].t) / 1000) : minutes * 60;
   const pace = paceSecPerKm(distanceM, durationS);
 
+  // Teilen: Karten-Schnappschuss + Server baut das Strava-Style-Bild (Werte fest im Bild).
+  // Faellt der Server aus -> roher Schnappschuss als Fallback.
   async function shareRun() {
+    if (sharing) return;
+    setSharing(true);
     try {
-      const uri = await mapRef.current?.takeSnapshot?.({ format: 'png', quality: 0.9, result: 'file' });
+      const snap = await mapRef.current?.takeSnapshot?.({
+        width: 360, height: 300, region: shareRegion(pts) ?? undefined, format: 'png', quality: 1, result: 'base64',
+      });
+      if (!snap) return;
+      const uri = (await buildRunCardFile({
+        mapBase64: snap,
+        title: t('gps.type.' + activityKey),
+        date: runCardDate(pts[0]?.t ?? Date.now(), lang),
+        stats: [
+          { label: t('gps.stat.distance'), value: formatDistance(distanceM) },
+          { label: t('gps.stat.time'), value: formatDuration(durationS) },
+          { label: t('gps.stat.pace'), value: `${formatPace(pace)} ${t('gps.paceUnit')}` },
+        ],
+        kcalText: kcal > 0 ? `${kcal} kcal` : '',
+      })) ?? (await writeSnapshotFile(snap));
       if (!uri) return;
       const caption = `${t('gps.type.' + activityKey)} · ${formatDistance(distanceM)} · ${formatDuration(durationS)} · ${formatPace(pace)} ${t('gps.paceUnit')} 🏃 — FitAvo`;
       if (Platform.OS === 'ios') await Share.share({ url: uri, message: caption });
       else if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: caption });
-    } catch {}
+    } catch {} finally { setSharing(false); }
   }
 
   const Stat = ({ label, value }: { label: string; value: string }) => (
@@ -63,16 +84,25 @@ export default function RunDetail({ visible, onClose, activityKey, route, distan
             <Ionicons name="chevron-down" size={28} color={c.textMuted} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t(`gps.type.${activityKey}`)}</Text>
-          <TouchableOpacity onPress={shareRun} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button" accessibilityLabel={t('gps.share')}>
-            <Ionicons name="share-outline" size={26} color={c.primary} />
+          <TouchableOpacity onPress={shareRun} disabled={sharing} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button" accessibilityLabel={t('gps.share')}>
+            {sharing ? <ActivityIndicator size="small" color={c.primary} /> : <Ionicons name="share-outline" size={26} color={c.primary} />}
           </TouchableOpacity>
         </View>
 
         {MapView && coords.length > 1 ? (
           <MapView ref={mapRef} style={styles.map} region={boundsRegion(coords)} scrollEnabled pitchEnabled={false} rotateEnabled={false} toolbarEnabled={false}>
-            {Polyline && <Polyline coordinates={coords} strokeColor={c.primary} strokeWidth={5} />}
-            {Marker && <Marker coordinate={coords[0]} pinColor="green" />}
-            {Marker && <Marker coordinate={coords[coords.length - 1]} pinColor="red" />}
+            {Polyline && <Polyline coordinates={coords} strokeColor={c.primary} strokeWidth={6} lineCap="round" lineJoin="round" />}
+            {/* Start/Ziel als dezente Punkte (Standard-Pins sehen im Schnappschuss haesslich aus) */}
+            {Marker && (
+              <Marker coordinate={coords[0]} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}>
+                <View style={styles.routeDotStart} />
+              </Marker>
+            )}
+            {Marker && (
+              <Marker coordinate={coords[coords.length - 1]} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}>
+                <View style={styles.routeDotEnd} />
+              </Marker>
+            )}
           </MapView>
         ) : (
           <View style={[styles.map, styles.mapFallback]}><Text style={{ fontSize: 44 }}>🗺️</Text></View>
@@ -100,6 +130,8 @@ function makeStyles(c: Colors) {
     headerTitle: { fontSize: 17, fontWeight: '800', color: c.heading },
     map: { flex: 1 },
     mapFallback: { alignItems: 'center', justifyContent: 'center', backgroundColor: c.card },
+    routeDotStart: { width: 16, height: 16, borderRadius: 8, backgroundColor: '#19C98F', borderWidth: 3, borderColor: '#FFFFFF' },
+    routeDotEnd: { width: 16, height: 16, borderRadius: 8, backgroundColor: '#F0574B', borderWidth: 3, borderColor: '#FFFFFF' },
     statsBar: { backgroundColor: c.bg, paddingHorizontal: 20, paddingTop: 14, paddingBottom: 34, borderTopLeftRadius: 24, borderTopRightRadius: 24, marginTop: -20 },
     statsRow: { flexDirection: 'row' },
     stat: { flex: 1, alignItems: 'center', paddingVertical: 8 },
