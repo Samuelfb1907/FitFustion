@@ -6,9 +6,44 @@
 // dieselbe Quelle nutzt.
 
 const TILE_WORLD = 256; // Weltgroesse einer Kachel in Mercator-Pixeln (Zoom z)
-// Kartenstil: "voyager" = hell/freundlich mit dezenten Farben (Parks, Wasser),
-// "light_all" = minimal hellgrau, "dark_all" = dunkel. Alle OHNE Laeden/POIs.
-const TILE_URL = (style, z, x, y) => `https://basemaps.cartocdn.com/rastertiles/${style}/${z}/${x}/${y}@2x.png`;
+// Kartenstile:
+//  - "satellite": echtes Luftbild (Esri World Imagery) - der "realistische" Strava-Look.
+//  - CARTO-Stile ("voyager", "voyager_nolabels", "light_all", "dark_all"): gezeichnete
+//    Karten ohne Laeden/POIs.
+const STYLES = {
+  satellite: {
+    url: (z, x, y) => `https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`,
+    attribution: '© Esri · Maxar · Earthstar Geographics',
+    maxZoom: 19,
+    mime: 'image/jpeg',
+    darkGround: true, // Luftbild ist meist eher dunkel -> weisse Route-Kontur, helle Attribution
+  },
+};
+const cartoStyle = (name, dark) => ({
+  url: (z, x, y) => `https://basemaps.cartocdn.com/rastertiles/${name}/${z}/${x}/${y}@2x.png`,
+  attribution: '© OpenStreetMap · © CARTO',
+  maxZoom: 18,
+  mime: 'image/png',
+  darkGround: dark,
+});
+STYLES.voyager = cartoStyle('voyager', false);
+STYLES.voyager_nolabels = cartoStyle('voyager_nolabels', false);
+STYLES.light_all = cartoStyle('light_all', false);
+STYLES.dark_all = cartoStyle('dark_all', true);
+
+// Kachel mit Wiederholversuchen laden (einzelne Kacheln haengen gelegentlich).
+async function fetchTile(url) {
+  let lastErr;
+  for (let i = 0; i < 3; i++) {
+    try {
+      const res = await fetch(url, { headers: { 'User-Agent': 'FitAvo/1.2 (Fitness-App; Lauf-Teilen-Bild)' } });
+      if (res.ok) return await res.arrayBuffer();
+      lastErr = new Error(`HTTP ${res.status}`);
+    } catch (e) { lastErr = e; }
+    await new Promise((r) => setTimeout(r, 150 * (i + 1)));
+  }
+  throw lastErr;
+}
 
 function mercX(lng, z) { return ((lng + 180) / 360) * TILE_WORLD * 2 ** z; }
 function mercY(lat, z) {
@@ -28,14 +63,13 @@ function b64FromBuffer(buf) {
 // region: {latitude, longitude, latitudeDelta, longitudeDelta} (Ausschnitt, Seitenverhaeltnis W:H)
 // route: [{lat, lng}, ...] (vereinfacht, in Reihenfolge)
 // Liefert ein SVG-Fragment (Kacheln + Route + Punkte + Attribution), geclippt auf W x H.
-// Stil-Standard "voyager_nolabels": freundliche Farben, aber KEINE Beschriftungen -
-// auf hoechster Zoom-Stufe (kurze Strecken) zeigten Labels sonst Hausnummern-Wirrwarr.
-export async function buildMapLayer({ region, route, width, height, accent = '#19C98F', endColor = '#F0574B', style = 'voyager_nolabels' }) {
-  const isDark = style === 'dark_all' || style === 'dark_nolabels';
+// Standard "satellite": echtes Luftbild (realistischer Strava-Look), ohne jegliche Labels.
+export async function buildMapLayer({ region, route, width, height, accent = '#19C98F', endColor = '#F0574B', style = 'satellite' }) {
+  const st = STYLES[style] ?? STYLES.satellite;
   // Zoom so waehlen, dass der Ausschnitt die Breite fuellt (Skalierung s in [1, 2) ->
-  // @2x-Kacheln bleiben scharf und es sind hoechstens ~6x5 Kacheln zu laden).
+  // Kacheln bleiben scharf und es sind hoechstens ~6x5 Kacheln zu laden).
   const zf = Math.log2((width * 360) / (TILE_WORLD * region.longitudeDelta));
-  const z = Math.max(3, Math.min(18, Math.floor(zf)));
+  const z = Math.max(3, Math.min(st.maxZoom, Math.floor(zf)));
   const s = width / ((region.longitudeDelta / 360) * TILE_WORLD * 2 ** z);
 
   const cx = mercX(region.longitude, z);
@@ -55,15 +89,13 @@ export async function buildMapLayer({ region, route, width, height, accent = '#1
     for (let ty = tyMin; ty <= tyMax; ty++) {
       const wx = ((tx % maxTile) + maxTile) % maxTile;
       jobs.push((async () => {
-        const res = await fetch(TILE_URL(style, z, wx, ty), { headers: { 'User-Agent': 'FitAvo/1.2 (Fitness-App; Lauf-Teilen-Bild)' } });
-        if (!res.ok) throw new Error(`tile ${z}/${wx}/${ty}: ${res.status}`);
-        const b64 = b64FromBuffer(await res.arrayBuffer());
+        const b64 = b64FromBuffer(await fetchTile(st.url(z, wx, ty)));
         // Kacheln 1 px ueberlappen lassen - sonst entstehen an den Kachel-Grenzen
         // sichtbare helle Naehte (Anti-Aliasing der Bildraender auf Bruchteil-Pixeln).
         const px = (tx * TILE_WORLD - viewLeft) * s;
         const py = (ty * TILE_WORLD - viewTop) * s;
         const size = TILE_WORLD * s + 1;
-        return `<image x="${px.toFixed(2)}" y="${py.toFixed(2)}" width="${size.toFixed(2)}" height="${size.toFixed(2)}" preserveAspectRatio="none" xlink:href="data:image/png;base64,${b64}"/>`;
+        return `<image x="${px.toFixed(2)}" y="${py.toFixed(2)}" width="${size.toFixed(2)}" height="${size.toFixed(2)}" preserveAspectRatio="none" xlink:href="data:${st.mime};base64,${b64}"/>`;
       })());
     }
   }
@@ -79,9 +111,9 @@ export async function buildMapLayer({ region, route, width, height, accent = '#1
   let routeSvg = '';
   if (pts.length > 1) {
     const first = pts[0].split(','), last = pts[pts.length - 1].split(',');
-    // Kontur um die Route: auf hellen Karten WEISS (Sticker-Look), auf dunklen dunkelgruen.
-    const casing = isDark ? '#06251B' : '#FFFFFF';
-    const casingOpacity = isDark ? '0.45' : '0.9';
+    // Kontur um die Route: WEISS auf Luftbild/hellen Karten (Sticker-Look), dunkel auf dunklen.
+    const casing = st.darkGround && style !== 'satellite' ? '#06251B' : '#FFFFFF';
+    const casingOpacity = casing === '#FFFFFF' ? '0.9' : '0.45';
     routeSvg = `
   <polyline points="${pts.join(' ')}" fill="none" stroke="${casing}" stroke-opacity="${casingOpacity}" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
   <polyline points="${pts.join(' ')}" fill="none" stroke="${accent}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
@@ -89,9 +121,11 @@ export async function buildMapLayer({ region, route, width, height, accent = '#1
   <circle cx="${last[0]}" cy="${last[1]}" r="13" fill="${endColor}" stroke="#FFFFFF" stroke-width="5"/>`;
   }
 
-  // Pflicht-Attribution fuer OSM/CARTO-Kartenmaterial, dezent unten links.
-  const attrFill = isDark ? '#FFFFFF' : '#3E4A55';
-  const attribution = `<text x="18" y="${height - 16}" font-family="Inter" font-size="17" font-weight="500" fill="${attrFill}" fill-opacity="0.6">© OpenStreetMap · © CARTO</text>`;
+  // Pflicht-Attribution fuers Kartenmaterial, dezent unten links (Schatten fuer Lesbarkeit
+  // auf wechselndem Untergrund, z. B. Luftbild).
+  const attrFill = st.darkGround ? '#FFFFFF' : '#3E4A55';
+  const attribution = `<text x="19" y="${height - 15}" font-family="Inter" font-size="17" font-weight="500" fill="#000000" fill-opacity="0.35">${st.attribution}</text>
+  <text x="18" y="${height - 16}" font-family="Inter" font-size="17" font-weight="500" fill="${attrFill}" fill-opacity="0.75">${st.attribution}</text>`;
 
   return `<g clip-path="url(#mapclip)">
   ${tileSvg}
