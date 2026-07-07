@@ -63,9 +63,10 @@ function b64FromBuffer(buf) {
 // region: {latitude, longitude, latitudeDelta, longitudeDelta} (Ausschnitt, Seitenverhaeltnis W:H)
 // route: [{lat, lng}, ...] (vereinfacht, in Reihenfolge)
 // Liefert ein SVG-Fragment (Kacheln + Route + Punkte + Attribution), geclippt auf W x H.
-// Standard "satellite": echtes Luftbild (realistischer Strava-Look), ohne jegliche Labels.
-export async function buildMapLayer({ region, route, width, height, accent = '#19C98F', endColor = '#F0574B', style = 'satellite' }) {
-  const st = STYLES[style] ?? STYLES.satellite;
+// Standard "voyager_nolabels" (CARTO/OSM): gezeichnete Karte ohne jegliche Labels.
+// BEWUSST KEIN Luftbild ("satellite"): zeigt im Zweifel das Wohnhaus -> Datenschutz.
+export async function buildMapLayer({ region, route, width, height, accent = '#19C98F', endColor = '#F0574B', style = 'voyager_nolabels' }) {
+  const st = STYLES[style] ?? STYLES.voyager_nolabels;
   // Zoom so waehlen, dass der Ausschnitt die Breite fuellt (Skalierung s in [1, 2) ->
   // Kacheln bleiben scharf und es sind hoechstens ~6x5 Kacheln zu laden).
   const zf = Math.log2((width * 360) / (TILE_WORLD * region.longitudeDelta));
