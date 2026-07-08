@@ -6,8 +6,10 @@
 
 export type CardioType = { key: string; met: number; icon: string };
 
-// Reihenfolge = Anzeige-Reihenfolge (haeufigste Gym-Geraete zuerst).
+// Reihenfolge = Anzeige-Reihenfolge (Krafttraining zuerst, dann haeufigste Gym-Geraete).
+// MET 5.0 fuer Krafttraining = konsistent mit estimateWorkoutKcal (Set-Tracking).
 export const CARDIO_TYPES: CardioType[] = [
+  { key: 'strength', met: 5.0, icon: 'barbell' },
   { key: 'treadmill', met: 8.5, icon: 'walk' },
   { key: 'running', met: 9.8, icon: 'body' },
   { key: 'walking', met: 3.5, icon: 'footsteps' },
