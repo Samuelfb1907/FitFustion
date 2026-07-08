@@ -7,9 +7,12 @@
 export type CardioType = { key: string; met: number; icon: string };
 
 // Reihenfolge = Anzeige-Reihenfolge (Krafttraining zuerst, dann haeufigste Gym-Geraete).
-// MET 5.0 fuer Krafttraining = konsistent mit estimateWorkoutKcal (Set-Tracking).
+// MET 3.5 fuer Krafttraining = "allgemeines Gewichtstraining, 8-15 Wdh mit Pausen"
+// (Compendium of Physical Activities 02054). Deckt sich mit Lifesum/MyFitnessPal.
+// MET 5.0 waere durchgehend hartes Heben - mit Satzpausen unrealistisch. Bleibt
+// konsistent mit estimateWorkoutKcal (Set-Tracking), das ebenfalls 3.5 nutzt.
 export const CARDIO_TYPES: CardioType[] = [
-  { key: 'strength', met: 5.0, icon: 'barbell' },
+  { key: 'strength', met: 3.5, icon: 'barbell' },
   { key: 'treadmill', met: 8.5, icon: 'walk' },
   { key: 'running', met: 9.8, icon: 'body' },
   { key: 'walking', met: 3.5, icon: 'footsteps' },
