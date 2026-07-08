@@ -426,11 +426,11 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
                     )}
                   </View>
                   <View style={{ alignItems: 'center', marginTop: 16 }}>
-                    <CalorieGauge target={nutrition.targetCalories + (dayOffset === 0 ? Math.max(trainingKcal, activityKcal) + cardioKcal : curActivityKcal)} eaten={cur.kcal} />
+                    <CalorieGauge target={nutrition.targetCalories + (dayOffset === 0 ? trainingKcal + activityKcal + cardioKcal : curActivityKcal)} eaten={cur.kcal} base={nutrition.targetCalories} />
                   </View>
                   {/* Ein einziger Bonus-Hinweis (Training/Cardio/Schritte zusammengefasst) statt zwei gestapelter Pillen. */}
                   {(() => {
-                    const bonusExtra = dayOffset === 0 ? Math.max(trainingKcal, activityKcal) + cardioKcal : curActivityKcal;
+                    const bonusExtra = dayOffset === 0 ? trainingKcal + activityKcal + cardioKcal : curActivityKcal;
                     if (bonusExtra <= 0 && curSteps <= 0) return null;
                     return (
                       <View style={styles.bonusPill}>
@@ -567,7 +567,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
                     <View style={[styles.achBarFill, { width: `${Math.round((earnedCount / ACHIEVEMENTS.length) * 100)}%`, backgroundColor: amber }]} />
                   </View>
                 )}
-                {dailyGoals({ trainedToday: goalsData.trainedToday, trackedToday: goalsData.trackedToday, eatenKcal: eaten.kcal, targetKcal: nutrition.targetCalories + Math.max(trainingKcal, activityKcal) + cardioKcal, eatenProtein: eaten.p, targetProtein: nutrition.proteinG }).map((g, i, arr) => (
+                {dailyGoals({ trainedToday: goalsData.trainedToday, trackedToday: goalsData.trackedToday, eatenKcal: eaten.kcal, targetKcal: nutrition.targetCalories + trainingKcal + activityKcal + cardioKcal, eatenProtein: eaten.p, targetProtein: nutrition.proteinG }).map((g, i, arr) => (
                   <GoalRow key={g.key} g={g} last={i === arr.length - 1} c={c} styles={styles} t={t} />
                 ))}
               </View>

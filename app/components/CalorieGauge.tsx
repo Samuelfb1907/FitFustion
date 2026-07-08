@@ -32,7 +32,7 @@ function polar(frac: number): { x: number; y: number } {
   return { x: CX + R * Math.cos(a), y: CY + R * Math.sin(a) };
 }
 
-export default function CalorieGauge({ target, eaten }: { target: number; eaten: number }) {
+export default function CalorieGauge({ target, eaten, base }: { target: number; eaten: number; base?: number }) {
   const c = useColors();
   const { theme } = useTheme();
   const t = useT();
@@ -113,6 +113,13 @@ export default function CalorieGauge({ target, eaten }: { target: number; eaten:
           <Text style={[styles.footLabel, { color: c.textMuted }]} numberOfLines={1}>{t('home.gauge.target')}</Text>
         </View>
       </View>
+
+      {/* Grundbedarf (ohne Training/Schritte) einblenden, sobald durch Aktivitaet dazugekommen ist. */}
+      {base != null && base > 0 && base < target && (
+        <Text style={[styles.baseCaption, { color: c.textMuted }]} numberOfLines={1}>
+          {t('home.gauge.base', { base: base.toLocaleString(loc), bonus: (target - base).toLocaleString(loc) })}
+        </Text>
+      )}
     </View>
   );
 }
@@ -128,4 +135,5 @@ const styles = StyleSheet.create({
   footValue: { fontSize: 21, fontWeight: Platform.OS === 'android' ? '700' : '800', letterSpacing: -0.3 },
   footLabel: { fontSize: 12, fontWeight: '500', marginTop: 8 },
   footSep: { width: 1, height: 40 },
+  baseCaption: { fontSize: 12, fontWeight: '500', marginTop: 14, textAlign: 'center' },
 });
