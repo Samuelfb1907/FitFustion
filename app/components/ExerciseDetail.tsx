@@ -4,7 +4,7 @@ import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, Touc
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useColors, Colors } from '../contexts/ThemeContext';
-import { useT } from '../contexts/LanguageContext';
+import { useT, useLang } from '../contexts/LanguageContext';
 import ExerciseFigure from './ExerciseFigure';
 import BackButton from './BackButton';
 import ExerciseGif, { GIF_AVAILABLE } from './ExerciseGif';
@@ -19,6 +19,7 @@ import { hTap, hSuccess } from '../lib/haptics';
 import Confetti from './Confetti';
 import { logActivity } from '../lib/activity';
 import { checkProgression, ProgressionResult } from '../lib/progression';
+import { buildExerciseHistory, HistoryEntry, SetRow } from '../lib/exerciseHistory';
 
 type Exercise = { id: string; name: string; difficulty: string; equipment: string; description: string | null; instructions: string | null };
 type SetLog = { id: string; set_index: number; reps: number | null; weight_kg: number | null };
@@ -30,6 +31,16 @@ function parseSteps(instr: string | null): string[] {
   if (!instr) return [];
   const parts = instr.split(/\s*\d+\.\s*/).map((s) => s.trim()).filter(Boolean);
   return parts.length ? parts : [instr.trim()];
+}
+
+// Kurzes Datum fuer die Fortschritts-Tabelle: "12. Juli" (mit Jahr, wenn nicht dieses Jahr).
+function formatHistoryDate(ms: number, lang: string): string {
+  const d = new Date(ms);
+  const sameYear = d.getFullYear() === new Date().getFullYear();
+  const opts: Intl.DateTimeFormatOptions = sameYear
+    ? { day: 'numeric', month: 'short' }
+    : { day: 'numeric', month: 'short', year: '2-digit' };
+  try { return d.toLocaleDateString(lang === 'en' ? 'en-US' : 'de-DE', opts); } catch { return d.toLocaleDateString(); }
 }
 
 // allgemein gueltige, hilfreiche Technik-Tipps (nach Geraet & Level)
@@ -80,6 +91,7 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
   const userId = session?.user?.id;
   const c = useColors();
   const t = useT();
+  const { lang } = useLang();
   const styles = useMemo(() => makeStyles(c), [c]);
   const steps = parseSteps(exercise.instructions);
   const tips = tipsFor(exercise.equipment, exercise.difficulty);
@@ -103,6 +115,7 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
   const bestWeightRef = useRef<number | null>(null);
   const [lastEntry, setLastEntry] = useState<{ reps: number | null; weight: number | null } | null>(null);
   const [best1RM, setBest1RM] = useState<number | null>(null);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
   const goal = useMemo(() => nextGoal(lastEntry, exercise.equipment), [lastEntry, exercise.equipment]);
   // Hantelscheiben-Rechner: nur bei Langhantel, live aus dem Gewichts-Feld.
   const plateW = Number(weight.replace(',', '.'));
@@ -165,6 +178,8 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
     return () => { active = false; };
   }, [userId, exercise.id]);
 
+  useEffect(() => { loadProgress(); }, [userId, exercise.id]); // Fortschritts-Tabelle
+
   useEffect(() => { setGifFailed(false); }, [exercise.id]);
 
   useEffect(() => {
@@ -180,6 +195,19 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
       .eq('exercise_id', exercise.id)
       .order('set_index');
     setSets(data ?? []);
+  }
+
+  // Fortschritts-Historie dieser Uebung laden: alle Saetze, nach Trainingseinheit gruppiert.
+  async function loadProgress() {
+    if (!userId) return;
+    const { data } = await supabase
+      .from('set_logs')
+      .select('session_id, reps, weight_kg, created_at')
+      .eq('user_id', userId)
+      .eq('exercise_id', exercise.id)
+      .order('created_at', { ascending: false })
+      .limit(200);
+    setHistory(buildExerciseHistory((data ?? []) as SetRow[]));
   }
 
   async function saveSet() {
@@ -210,6 +238,7 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
       if (iErr) setError(iErr.message);
       else {
         await refreshSets(sid);
+        loadProgress();
         setEnded(false);
         setRestSignal((n) => n + 1);
         setLastEntry({ reps: r, weight: w });
@@ -252,6 +281,7 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
       .eq('id', sessionId);
     setEnding(false);
     if (eErr) { setError(eErr.message); return; }
+    loadProgress();
     if (hadSets && planExerciseId && targetSets != null && targetReps != null) {
       const setsData = sets.map((s) => ({ reps: s.reps, weight_kg: s.weight_kg }));
       const pr = await checkProgression(planExerciseId, exercise.equipment, setsData, targetSets, targetReps, targetWeight ?? null);
@@ -308,6 +338,27 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
           <Text style={styles.tipText}>{tip}</Text>
         </View>
       ))}
+
+      {history.length > 0 && (
+        <View style={styles.progressCard}>
+          <GlassFill radius={16} />
+          <Text style={styles.h2}>{t('exercise.progressHeading')}</Text>
+          {history.map((h, i) => {
+            const col = h.trend === 'up' ? c.success : h.trend === 'down' ? c.danger : c.text;
+            const val = h.topWeight != null
+              ? `${h.topWeight} kg${h.repsAtTop != null ? ` × ${h.repsAtTop}` : ''}`
+              : (h.maxReps != null ? t('exercise.reps', { n: h.maxReps }) : '–');
+            const arrow = h.trend === 'up' ? '▲ ' : h.trend === 'down' ? '▼ ' : '';
+            return (
+              <View key={h.sessionId} style={[styles.progRow, i > 0 && styles.progRowDivider]}>
+                <Text style={styles.progDate}>{formatHistoryDate(h.dateMs, lang)}</Text>
+                <Text style={[styles.progVal, { color: col }]}>{arrow}{val}</Text>
+              </View>
+            );
+          })}
+          {history.length === 1 && <Text style={styles.progHintOne}>{t('exercise.progressOne')}</Text>}
+        </View>
+      )}
 
       <View style={styles.logCard}>
         <GlassFill radius={16} />
@@ -441,5 +492,11 @@ function makeStyles(c: Colors) {
     endText: { color: c.success, fontSize: 15, fontWeight: '700' },
     endedHint: { fontSize: 13, color: c.success, textAlign: 'center', marginTop: 12, lineHeight: 19 },
     progHint: { fontSize: 14, color: c.primary, fontWeight: '700', textAlign: 'center', marginTop: 10, lineHeight: 20 },
+    progressCard: { backgroundColor: c.card, borderRadius: 16, padding: 18, marginTop: 18, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    progRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10 },
+    progRowDivider: { borderTopColor: c.border, borderTopWidth: StyleSheet.hairlineWidth },
+    progDate: { fontSize: 15, color: c.textMuted, fontWeight: '600' },
+    progVal: { fontSize: 16, fontWeight: '800', letterSpacing: -0.3 },
+    progHintOne: { fontSize: 13, color: c.textMuted, marginTop: 10, lineHeight: 19 },
   });
 }
