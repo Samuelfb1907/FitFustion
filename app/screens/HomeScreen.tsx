@@ -440,27 +440,24 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
                     )}
                   </View>
                   <View style={{ alignItems: 'center', marginTop: 16 }}>
-                    <CalorieGauge target={nutrition.targetCalories + (dayOffset === 0 ? Math.max(trainingKcal, activityKcal) + cardioKcal : curActivityKcal)} eaten={cur.kcal} base={nutrition.targetCalories} />
+                    <CalorieGauge target={nutrition.targetCalories + (dayOffset === 0 ? activityKcal + trainingKcal + cardioKcal : curActivityKcal)} eaten={cur.kcal} base={nutrition.targetCalories} />
                   </View>
-                  {/* Ein einziger Bonus-Hinweis (Training/Cardio/Schritte zusammengefasst) statt zwei gestapelter Pillen. */}
-                  {(() => {
-                    const bonusExtra = dayOffset === 0 ? Math.max(trainingKcal, activityKcal) + cardioKcal : curActivityKcal;
-                    if (bonusExtra <= 0 && curSteps <= 0) return null;
-                    return (
-                      <View style={styles.bonusPill}>
-                        <Ionicons name={curSteps > 0 ? 'walk' : 'flame'} size={14} color={c.primary} />
-                        <Text style={styles.bonusText} numberOfLines={1}>{[
-                          bonusExtra > 0 ? t('home.extraKcal', { n: bonusExtra }) : null,
-                          curSteps > 0 ? t('home.stepsPrefix', { steps: curSteps.toLocaleString(lang === 'en' ? 'en-US' : 'de-DE') }) : null,
-                        ].filter(Boolean).join(' · ')}</Text>
-                      </View>
-                    );
-                  })()}
-                  {/* Zweite Pille (blau): rein informativ, wie viel das Training verbrannt hat. */}
-                  {dayOffset === 0 && trainingKcal > 0 && (
+                  {/* Gruene Pille: NUR Schritte (passive Alltagsbewegung). Trainings stehen unten in Blau. */}
+                  {curSteps > 0 && (
+                    <View style={styles.bonusPill}>
+                      <Ionicons name="walk" size={14} color={c.primary} />
+                      <Text style={styles.bonusText} numberOfLines={1}>{[
+                        curActivityKcal > 0 ? t('home.extraKcal', { n: curActivityKcal }) : null,
+                        t('home.stepsPrefix', { steps: curSteps.toLocaleString(lang === 'en' ? 'en-US' : 'de-DE') }),
+                      ].filter(Boolean).join(' · ')}</Text>
+                    </View>
+                  )}
+                  {/* Blaue Pille: ALLE Trainings zusammen - mitgeschriebene Saetze (trainingKcal) UND
+                      Cardio/Krafttraining aus dem Schnelleintrag (cardioKcal). */}
+                  {dayOffset === 0 && (trainingKcal + cardioKcal) > 0 && (
                     <View style={styles.trainingPill}>
                       <Ionicons name="barbell" size={14} color="#3D8BFD" />
-                      <Text style={styles.trainingPillText} numberOfLines={1}>{t('home.trainingKcal', { n: trainingKcal })}</Text>
+                      <Text style={styles.trainingPillText} numberOfLines={1}>{t('home.trainingKcal', { n: trainingKcal + cardioKcal })}</Text>
                     </View>
                   )}
                   {dayOffset > 0 && cur.kcal === 0 && curActivityKcal === 0 && (
