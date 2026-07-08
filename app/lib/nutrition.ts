@@ -63,9 +63,22 @@ export function ageFromBirthDate(birthDate: string | null | undefined): number {
 // overrideCalories: optionales, vom Nutzer manuell gesetztes Tagesziel. Wenn gesetzt, ersetzt
 // es die Berechnung (die Makros passen sich an: Eiweiss bleibt gewichtsbasiert, Fett = 25 %,
 // Rest = Kohlenhydrate). Harte Sicherheits-Spanne 800..8000 kcal.
-export function computeNutrition(i: NutritionInput, overrideCalories?: number | null): NutritionResult {
+export function computeNutrition(
+  i: NutritionInput,
+  overrideCalories?: number | null,
+  opts?: { restingBase?: boolean },
+): NutritionResult {
   const bmr = computeBMR(i);
-  const tdee = bmr * ACTIVITY_FACTORS[i.activity];
+  const tdee = bmr * ACTIVITY_FACTORS[i.activity]; // Erhaltungsbedarf inkl. typischer Alltagsbewegung
+
+  // Basis fuer die Zielkalorien:
+  //  - restingBase=true (Home/Tracker MIT Schrittzaehler): nur Ruhe-/Basisumsatz (Faktor 1.2),
+  //    weil echte Schritte + eingetragene Trainings SEPARAT oben drauf kommen. Sonst zaehlt die
+  //    Alltagsbewegung doppelt (Aktivitaetsfaktor + Schritte) und das Tagesziel wird zu hoch
+  //    (Lifesum-Modell: niedrige Basis, Bewegung waechst live oben drauf).
+  //  - sonst (Vorschau in Onboarding/Profil, oder ohne Schrittzaehler): Aktivitaetsfaktor als
+  //    Ganztags-Schaetzung wie bisher.
+  const targetBase = opts?.restingBase ? bmr * 1.2 : tdee;
 
   // Zielkalorien je nach Ziel
   let factor: number;
@@ -78,7 +91,7 @@ export function computeNutrition(i: NutritionInput, overrideCalories?: number | 
     case 'general_fitness':
     default: factor = 1.0; break;                // Erhaltung
   }
-  let targetCalories = Math.round(tdee * factor);
+  let targetCalories = Math.round(targetBase * factor);
 
   // Sicherheits-Untergrenze (kein ungesundes Defizit)
   const minCalories = i.gender === 'female' ? 1200 : 1500;

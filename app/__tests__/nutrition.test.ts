@@ -57,4 +57,14 @@ describe('nutrition', () => {
     expect(computeNutrition(base, null).targetCalories).toBe(computeNutrition(base).targetCalories);
     expect(computeNutrition(base, 0).targetCalories).toBe(computeNutrition(base).targetCalories);
   });
+
+  it('computeNutrition: restingBase nutzt Ruhe-Faktor 1.2 statt Aktivitaetsfaktor (niedriger)', () => {
+    // Schrittzaehler aktiv -> Basis nur Ruheumsatz, weil Schritte/Training separat oben drauf kommen.
+    const base = { weightKg: 82, heightCm: 180, age: 24, gender: 'male' as const, activity: 'light' as const, goal: 'lose_weight' as const };
+    const lifestyle = computeNutrition(base).targetCalories;                              // 1830 * 1.375 * 0.8 = 2013
+    const resting = computeNutrition(base, null, { restingBase: true }).targetCalories;   // 1830 * 1.2   * 0.8 = 1757
+    expect(lifestyle).toBe(2013);
+    expect(resting).toBe(1757);
+    expect(resting).toBeLessThan(lifestyle);
+  });
 });

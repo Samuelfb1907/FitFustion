@@ -157,16 +157,19 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
       setWeightKg(prof?.weight_kg != null ? Number(prof.weight_kg) : null);
       if (prof && prof.weight_kg && prof.height_cm) {
         const goalType = (goal?.goal_type ?? 'general_fitness') as GoalType;
+        // Schrittzaehler aktiv? Dann Ruhe-Basis (Schritte kommen live oben drauf) statt
+        // Aktivitaetsfaktor -> keine Doppelzaehlung. hasStepsPermission zuerst pruefen.
+        const stepsOK = await hasStepsPermission();
         setNutrition(
           computeNutrition({
             weightKg: Number(prof.weight_kg), heightCm: Number(prof.height_cm), age: ageFromBirthDate(prof.birth_date),
             gender: (prof.gender ?? 'prefer_not') as Gender, activity: (prof.activity_level ?? 'moderate') as ActivityLevel, goal: goalType,
-          }, prof.custom_calories)
+          }, prof.custom_calories, { restingBase: stepsOK })
         );
         setGoalLabel(GOAL_LABELS[goalType] ?? goalType);
         setTrainingKcal(await todayTrainingKcal(userId, Number(prof.weight_kg)));
         setCardioKcal(await todayCardioKcal(userId));
-        if (await hasStepsPermission()) {
+        if (stepsOK) {
           const a = await getTodayActivity(Number(prof.weight_kg));
           setSteps(a.steps); setActivityKcal(a.kcal); setActivityMeasured(a.measured);
           setDaySteps(await getStepsLastDays(DAYS_BACK + 1)); // Schritt-Verlauf fuers Zurueckwischen

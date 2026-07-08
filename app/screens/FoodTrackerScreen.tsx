@@ -274,15 +274,16 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
     const { data: prof } = await supabase.from('profiles').select('weight_kg, height_cm, birth_date, gender, activity_level, custom_calories').eq('id', userId).maybeSingle();
     const { data: goal } = await supabase.from('goals').select('goal_type').eq('user_id', userId).eq('is_active', true).order('created_at', { ascending: false }).limit(1).maybeSingle();
     if (prof && prof.weight_kg && prof.height_cm) {
+      const stepsOK = await hasStepsPermission();
       const t = computeNutrition({
         weightKg: Number(prof.weight_kg), heightCm: Number(prof.height_cm), age: ageFromBirthDate(prof.birth_date),
         gender: (prof.gender ?? 'prefer_not') as Gender, activity: (prof.activity_level ?? 'moderate') as ActivityLevel, goal: (goal?.goal_type ?? 'general_fitness') as GoalType,
-      }, prof.custom_calories);
+      }, prof.custom_calories, { restingBase: stepsOK });
       setTargetKcal(t.targetCalories);
       setMacroTargets({ p: t.proteinG, c: t.carbsG, f: t.fatG });
       setTrainingKcal(await todayTrainingKcal(userId, Number(prof.weight_kg)));
       setCardioKcal(await todayCardioKcal(userId));
-      if (await hasStepsPermission()) {
+      if (stepsOK) {
         const a = await getTodayActivity(Number(prof.weight_kg));
         setSteps(a.steps); setActivityKcal(a.kcal); setActivityMeasured(a.measured);
       } else { setSteps(0); setActivityKcal(0); setActivityMeasured(false); }
