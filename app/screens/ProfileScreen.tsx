@@ -10,6 +10,7 @@ import BackButton from '../components/BackButton';
 import GlassFill from '../components/GlassFill';
 import GoalRealismCard from '../components/GoalRealismCard';
 import { goalRealism } from '../lib/goalRealism';
+import { computeNutrition, ageFromBirthDate, Gender, ActivityLevel, GoalType } from '../lib/nutrition';
 import { TAB_BAR_SPACE } from '../lib/layout';
 
 type Opt = { label: string; value: string };
@@ -69,6 +70,7 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
   const [environment, setEnvironment] = useState('');
   const [goal, setGoal] = useState('');
   const [targetWeight, setTargetWeight] = useState('');
+  const [customKcal, setCustomKcal] = useState(''); // leer = automatisch berechnen
 
   const num = (v: string) => Number(v.replace(',', '.'));
 
@@ -78,7 +80,7 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
       if (!userId) return;
       const { data: prof } = await supabase
         .from('profiles')
-        .select('first_name, birth_date, gender, weight_kg, height_cm, activity_level, experience_level, training_environment')
+        .select('first_name, birth_date, gender, weight_kg, height_cm, activity_level, experience_level, training_environment, custom_calories')
         .eq('id', userId)
         .maybeSingle();
       const { data: g } = await supabase
@@ -99,6 +101,7 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
         setActivity(prof.activity_level ?? 'moderate');
         setExperience(prof.experience_level ?? '');
         setEnvironment(prof.training_environment ?? '');
+        setCustomKcal(prof.custom_calories != null ? String(prof.custom_calories) : '');
       }
       if (g) {
         setGoal(g.goal_type ?? '');
@@ -123,6 +126,7 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
     else if (!environment) err = t('profile.err.environment');
     else if (!goal) err = t('profile.err.goal');
     else if (goal === 'lose_weight' && !(num(targetWeight) >= 30 && num(targetWeight) <= 300)) err = t('profile.err.targetWeight');
+    else if (customKcal.trim() && !(num(customKcal) >= 1000 && num(customKcal) <= 8000)) err = t('profile.err.customCalories');
     if (err) { setMsg(err); setIsError(true); return; }
     setSaving(true);
     setMsg(null);
@@ -138,6 +142,7 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
       activity_level: activity,
       experience_level: experience,
       training_environment: environment,
+      custom_calories: customKcal.trim() ? Math.round(num(customKcal)) : null,
     });
 
     // Ziel aktualisieren: bestehendes aktives Ziel IN PLACE updaten (kein Zeilen-Wachstum
@@ -203,6 +208,16 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
   // Ehrliche Einordnung des Abnehmziels (ohne Zeitrahmen -> zeigt die realistische Dauer).
   const loseRealism = goal === 'lose_weight' ? goalRealism(num(weight), num(targetWeight), { heightCm: num(height) }) : null;
 
+  // Automatisch berechnetes Kalorienziel (aus den aktuellen Eingaben) als Referenz/Platzhalter.
+  const autoKcal = (() => {
+    const w = num(weight), h = num(height);
+    if (!(w >= 30 && w <= 300) || !(h >= 100 && h <= 250) || !gender || !goal) return null;
+    return computeNutrition({
+      weightKg: w, heightCm: h, age: ageFromBirthDate(buildBirthDate(birthDay, birthMonth, birthYear)),
+      gender: gender as Gender, activity: activity as ActivityLevel, goal: goal as GoalType,
+    }).targetCalories;
+  })();
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE + 48 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
       {onBack && <BackButton onPress={onBack} c={c} label={t('profile.backToSettings')} />}
@@ -248,6 +263,24 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
         </>
       )}
 
+      <Text style={styles.label}>{t('profile.calorieGoal')}</Text>
+      <Text style={styles.calorieAuto}>{autoKcal != null ? t('profile.calorieAuto', { kcal: autoKcal }) : t('profile.calorieAutoUnknown')}</Text>
+      <TextInput
+        style={styles.input}
+        value={customKcal}
+        onChangeText={setCustomKcal}
+        keyboardType="numeric"
+        inputMode="numeric"
+        placeholder={autoKcal != null ? String(autoKcal) : t('profile.calorieGoalPlaceholder')}
+        placeholderTextColor={c.textMuted}
+      />
+      <Text style={styles.calorieHint}>{t('profile.calorieGoalHint')}</Text>
+      {customKcal.trim() !== '' && (
+        <TouchableOpacity onPress={() => setCustomKcal('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button">
+          <Text style={styles.calorieReset}>{t('profile.calorieReset')}</Text>
+        </TouchableOpacity>
+      )}
+
       <TouchableOpacity style={[styles.saveBtn, saving && { opacity: 0.6 }]} onPress={save} disabled={saving}>
         {saving ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.saveText}>{t('profile.save')}</Text>}
       </TouchableOpacity>
@@ -265,6 +298,9 @@ function makeStyles(c: Colors) {
     subtitle: { fontSize: 15, color: c.textMuted, marginTop: 2, marginBottom: 8 },
     label: { fontSize: 14, color: c.text, fontWeight: '600', marginTop: 16, marginBottom: 6 },
     input: { borderWidth: 1, borderColor: c.border, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 16, backgroundColor: c.inputBg, color: c.text },
+    calorieAuto: { fontSize: 14, color: c.primary, fontWeight: '700', marginBottom: 8 },
+    calorieHint: { fontSize: 13, color: c.textMuted, marginTop: 6, lineHeight: 18 },
+    calorieReset: { fontSize: 13, color: c.primary, fontWeight: '700', marginTop: 10 },
     dateRow: { flexDirection: 'row', gap: 10 },
     dateField: { flex: 1, textAlign: 'center' },
     dateFieldYear: { flex: 1.5, textAlign: 'center' },

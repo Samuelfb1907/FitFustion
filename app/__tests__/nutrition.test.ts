@@ -39,4 +39,22 @@ describe('nutrition', () => {
     expect(cut).toBeLessThan(maint);
     expect(bulk).toBeGreaterThan(maint);
   });
+
+  it('computeNutrition: manuelles Ziel ueberschreibt Berechnung, Makros passen sich an', () => {
+    const base = { weightKg: 80, heightCm: 180, age: 30, gender: 'male' as const, activity: 'moderate' as const, goal: 'general_fitness' as const };
+    const auto = computeNutrition(base);
+    const custom = computeNutrition(base, 2000);
+    expect(custom.targetCalories).toBe(2000);          // manuelles Ziel gewinnt
+    expect(custom.proteinG).toBe(auto.proteinG);        // Eiweiss bleibt gewichtsbasiert
+    expect(custom.fatG).toBe(Math.round((2000 * 0.25) / 9)); // Fett = 25 % der neuen Kalorien
+    expect(custom.proteinG * 4 + custom.carbsG * 4 + custom.fatG * 9).toBeLessThanOrEqual(2010);
+  });
+
+  it('computeNutrition: manuelles Ziel wird auf 800..8000 begrenzt; null/0 = automatisch', () => {
+    const base = { weightKg: 80, heightCm: 180, age: 30, gender: 'male' as const, activity: 'moderate' as const, goal: 'general_fitness' as const };
+    expect(computeNutrition(base, 50).targetCalories).toBe(800);
+    expect(computeNutrition(base, 99999).targetCalories).toBe(8000);
+    expect(computeNutrition(base, null).targetCalories).toBe(computeNutrition(base).targetCalories);
+    expect(computeNutrition(base, 0).targetCalories).toBe(computeNutrition(base).targetCalories);
+  });
 });

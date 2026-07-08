@@ -19,6 +19,12 @@ export const de = {
   "profile.goal": "Ziel",
   "profile.targetWeight": "Traumgewicht (kg)",
   "profile.targetWeightPlaceholder": "z. B. 72",
+  "profile.calorieGoal": "Tägliches Kalorienziel",
+  "profile.calorieAuto": "Automatisch berechnet: {kcal} kcal/Tag",
+  "profile.calorieAutoUnknown": "Füll Gewicht, Größe und Ziel aus – dann berechnen wir dein Ziel.",
+  "profile.calorieGoalPlaceholder": "z. B. 2200",
+  "profile.calorieGoalHint": "Leer lassen = automatisch. Eigene Zahl eintragen, wenn dir die App zu viel oder zu wenig anzeigt.",
+  "profile.calorieReset": "↺ Wieder automatisch berechnen",
   "profile.save": "Speichern",
   "profile.saved": "Profil gespeichert ✓",
   "profile.saveFailed": "Speichern fehlgeschlagen. Bitte prüfe deine Internetverbindung und versuche es erneut.",
@@ -31,6 +37,7 @@ export const de = {
   "profile.err.environment": "Bitte wähle deine Trainingsumgebung.",
   "profile.err.goal": "Bitte wähle ein Ziel.",
   "profile.err.targetWeight": "Bitte ein gültiges Zielgewicht (30–300 kg) eingeben.",
+  "profile.err.customCalories": "Bitte ein Kalorienziel zwischen 1000 und 8000 eingeben – oder leer lassen für automatisch.",
 
   // Auswahl-Optionen (Choice-Buttons)
   "profile.gender.male": "Männlich",
@@ -87,6 +94,12 @@ export const en = {
   "profile.goal": "Goal",
   "profile.targetWeight": "Target weight (kg)",
   "profile.targetWeightPlaceholder": "e.g. 72",
+  "profile.calorieGoal": "Daily calorie goal",
+  "profile.calorieAuto": "Auto-calculated: {kcal} kcal/day",
+  "profile.calorieAutoUnknown": "Fill in weight, height and goal – then we'll calculate your target.",
+  "profile.calorieGoalPlaceholder": "e.g. 2200",
+  "profile.calorieGoalHint": "Leave empty = automatic. Enter your own number if the app shows too much or too little.",
+  "profile.calorieReset": "↺ Back to automatic",
   "profile.save": "Save",
   "profile.saved": "Profile saved ✓",
   "profile.saveFailed": "Saving failed. Please check your internet connection and try again.",
@@ -99,6 +112,7 @@ export const en = {
   "profile.err.environment": "Please choose your training environment.",
   "profile.err.goal": "Please choose a goal.",
   "profile.err.targetWeight": "Please enter a valid target weight (30–300 kg).",
+  "profile.err.customCalories": "Please enter a calorie goal between 1000 and 8000 – or leave empty for automatic.",
 
   // Choice options (choice buttons)
   "profile.gender.male": "Male",

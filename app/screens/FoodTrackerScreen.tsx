@@ -271,13 +271,13 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
     if (!userId) { setLoading(false); return; }
     if (!silent) setLoading(true);
     try {
-    const { data: prof } = await supabase.from('profiles').select('weight_kg, height_cm, birth_date, gender, activity_level').eq('id', userId).maybeSingle();
+    const { data: prof } = await supabase.from('profiles').select('weight_kg, height_cm, birth_date, gender, activity_level, custom_calories').eq('id', userId).maybeSingle();
     const { data: goal } = await supabase.from('goals').select('goal_type').eq('user_id', userId).eq('is_active', true).order('created_at', { ascending: false }).limit(1).maybeSingle();
     if (prof && prof.weight_kg && prof.height_cm) {
       const t = computeNutrition({
         weightKg: Number(prof.weight_kg), heightCm: Number(prof.height_cm), age: ageFromBirthDate(prof.birth_date),
         gender: (prof.gender ?? 'prefer_not') as Gender, activity: (prof.activity_level ?? 'moderate') as ActivityLevel, goal: (goal?.goal_type ?? 'general_fitness') as GoalType,
-      });
+      }, prof.custom_calories);
       setTargetKcal(t.targetCalories);
       setMacroTargets({ p: t.proteinG, c: t.carbsG, f: t.fatG });
       setTrainingKcal(await todayTrainingKcal(userId, Number(prof.weight_kg)));

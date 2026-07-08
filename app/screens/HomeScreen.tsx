@@ -140,7 +140,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
 
       try {
       const [profRes, goalRes, fdt, actRes, sessions, sets, foodLogs, sdRes, fd, schedRes] = await Promise.all([
-        supabase.from('profiles').select('weight_kg, height_cm, birth_date, gender, activity_level, streak_current').eq('id', userId).maybeSingle(),
+        supabase.from('profiles').select('weight_kg, height_cm, birth_date, gender, activity_level, streak_current, custom_calories').eq('id', userId).maybeSingle(),
         supabase.from('goals').select('goal_type').eq('user_id', userId).eq('is_active', true).order('created_at', { ascending: false }).limit(1).maybeSingle(),
         supabase.from('food_logs').select('amount_g, log_date, foods(kcal, protein, carbs, fat)').eq('user_id', userId).gte('log_date', daysAgoStr(DAYS_BACK)),
         supabase.from('workout_sessions').select('id').eq('user_id', userId).is('ended_at', null).gte('performed_at', startOfTodayISO()).order('performed_at', { ascending: false }).limit(1).maybeSingle(),
@@ -161,7 +161,7 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
           computeNutrition({
             weightKg: Number(prof.weight_kg), heightCm: Number(prof.height_cm), age: ageFromBirthDate(prof.birth_date),
             gender: (prof.gender ?? 'prefer_not') as Gender, activity: (prof.activity_level ?? 'moderate') as ActivityLevel, goal: goalType,
-          })
+          }, prof.custom_calories)
         );
         setGoalLabel(GOAL_LABELS[goalType] ?? goalType);
         setTrainingKcal(await todayTrainingKcal(userId, Number(prof.weight_kg)));

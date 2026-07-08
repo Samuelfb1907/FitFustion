@@ -60,7 +60,10 @@ export function ageFromBirthDate(birthDate: string | null | undefined): number {
   return age;
 }
 
-export function computeNutrition(i: NutritionInput): NutritionResult {
+// overrideCalories: optionales, vom Nutzer manuell gesetztes Tagesziel. Wenn gesetzt, ersetzt
+// es die Berechnung (die Makros passen sich an: Eiweiss bleibt gewichtsbasiert, Fett = 25 %,
+// Rest = Kohlenhydrate). Harte Sicherheits-Spanne 800..8000 kcal.
+export function computeNutrition(i: NutritionInput, overrideCalories?: number | null): NutritionResult {
   const bmr = computeBMR(i);
   const tdee = bmr * ACTIVITY_FACTORS[i.activity];
 
@@ -80,6 +83,11 @@ export function computeNutrition(i: NutritionInput): NutritionResult {
   // Sicherheits-Untergrenze (kein ungesundes Defizit)
   const minCalories = i.gender === 'female' ? 1200 : 1500;
   if (targetCalories < minCalories) targetCalories = minCalories;
+
+  // Manuelles Ziel hat Vorrang.
+  if (overrideCalories != null && isFinite(Number(overrideCalories)) && Number(overrideCalories) > 0) {
+    targetCalories = Math.min(8000, Math.max(800, Math.round(Number(overrideCalories))));
+  }
 
   // Eiweissbedarf abhaengig vom Ziel (g pro kg Koerpergewicht)
   let proteinPerKg: number;
