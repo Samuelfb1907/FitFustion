@@ -4,8 +4,9 @@
 // sondern ueber die Icons oben rechts auf der Startseite erreichbar (bleiben aber gemountet).
 // Die Reiter-Pille schwebt frei (iOS = Glas/BlurView, Android = deckende Leiste). Das "+" wird
 // SEPARAT und absolut positioniert (nicht in der Pille), damit es ueber deren Rand ragen darf.
-import { useState, useEffect, useRef, ReactNode } from 'react';
-import { AppState, Modal, Platform, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useState, useEffect, useRef, useMemo, ReactNode } from 'react';
+import { Animated, AppState, Dimensions, Modal, PanResponder, Platform, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -126,6 +127,53 @@ export default function MainTabs() {
   // Position des erhabenen "+" (mittig, ragt ueber die Leiste). Werte je Plattform abgestimmt.
   const plusBottom = isAndroid ? Math.max(insets.bottom, 8) + 16 : Math.max(insets.bottom, 12) + 26;
 
+  // --- Frei verschiebbarer Coach-Knopf --------------------------------------------------------
+  // Ziehen = verschieben (Position wird gemerkt), Tippen = Coach oeffnen. So verdeckt der Knopf
+  // nie dauerhaft Inhalte (z. B. Loeschen-Icons in Listen).
+  const { width: screenW, height: screenH } = Dimensions.get('window');
+  const FAB_SIZE = 56;
+  const fabDefaultBottom = isAndroid ? Math.max(insets.bottom, 8) + 64 : Math.max(insets.bottom, 12) + 76;
+  const fabMinX = 10, fabMaxX = screenW - FAB_SIZE - 10;
+  const fabMinY = insets.top + 6, fabMaxY = screenH - FAB_SIZE - Math.max(insets.bottom, 12) - 60;
+  const [fabPos] = useState(() => new Animated.ValueXY({ x: screenW - FAB_SIZE - 18, y: screenH - FAB_SIZE - fabDefaultBottom }));
+  const fabMoved = useRef(false); // wurde gezogen? -> dann Tippen NICHT als Coach-Oeffnen werten
+
+  // Gemerkte Position beim Start laden (auf aktuelle Bildschirmgroesse begrenzt).
+  useEffect(() => {
+    AsyncStorage.getItem('fitavo.coachFabPos').then((raw) => {
+      if (!raw) return;
+      try {
+        const p = JSON.parse(raw);
+        if (typeof p?.x === 'number' && typeof p?.y === 'number') {
+          fabPos.setValue({ x: Math.min(fabMaxX, Math.max(fabMinX, p.x)), y: Math.min(fabMaxY, Math.max(fabMinY, p.y)) });
+        }
+      } catch {}
+    }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const fabPan = useMemo(() => PanResponder.create({
+    onStartShouldSetPanResponder: () => false,
+    // Erst bei echter Bewegung (>6px) uebernehmen -> reine Tipps bleiben Tipps.
+    onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dx) > 6 || Math.abs(g.dy) > 6,
+    onMoveShouldSetPanResponderCapture: (_e, g) => Math.abs(g.dx) > 6 || Math.abs(g.dy) > 6,
+    onPanResponderGrant: () => {
+      fabMoved.current = false;
+      fabPos.setOffset({ x: (fabPos.x as any)._value, y: (fabPos.y as any)._value });
+      fabPos.setValue({ x: 0, y: 0 });
+    },
+    onPanResponderMove: (_e, g) => { fabMoved.current = true; fabPos.setValue({ x: g.dx, y: g.dy }); },
+    onPanResponderRelease: () => {
+      fabPos.flattenOffset();
+      const x = Math.min(fabMaxX, Math.max(fabMinX, (fabPos.x as any)._value));
+      const y = Math.min(fabMaxY, Math.max(fabMinY, (fabPos.y as any)._value));
+      Animated.spring(fabPos, { toValue: { x, y }, useNativeDriver: false, friction: 7 }).start();
+      AsyncStorage.setItem('fitavo.coachFabPos', JSON.stringify({ x, y })).catch(() => {});
+    },
+    onPanResponderTerminationRequest: () => false,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), []);
+
   const renderTab = (k: Tab) => {
     const active = tab === k;
     const color = active ? c.primary : c.textMuted;
@@ -204,17 +252,22 @@ export default function MainTabs() {
         </View>
       )}
 
-      {/* Schwebender KI-Coach-Knopf. Auf dem Lobby-Tab ausgeblendet (verdeckt dort Feed-Knoepfe). */}
+      {/* Schwebender KI-Coach-Knopf - FREI VERSCHIEBBAR (ziehen). Auf dem Lobby-Tab ausgeblendet. */}
       {tab !== 'lobby' && (
-        <TouchableOpacity
-          style={[styles.fab, { bottom: isAndroid ? Math.max(insets.bottom, 8) + 64 : Math.max(insets.bottom, 12) + 76, backgroundColor: c.primary }]}
-          onPress={() => { if (!isPremium) openPaywall('ki'); else setShowCoach(true); }}
-          activeOpacity={0.85}
-          accessibilityRole="button"
-          accessibilityLabel={t('coach.title')}
+        <Animated.View
+          style={[styles.fab, { left: 0, top: 0, backgroundColor: c.primary, transform: fabPos.getTranslateTransform() }]}
+          {...fabPan.panHandlers}
         >
-          <Ionicons name="chatbubble-ellipses" size={24} color={c.onPrimary} />
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.fabTouch}
+            onPress={() => { if (fabMoved.current) return; if (!isPremium) openPaywall('ki'); else setShowCoach(true); }}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel={t('coach.title')}
+          >
+            <Ionicons name="chatbubble-ellipses" size={24} color={c.onPrimary} />
+          </TouchableOpacity>
+        </Animated.View>
       )}
 
       {/* Zentrales "+"-Schnellmenue: getipptes Backdrop schliesst; die Blase liegt unten. */}
@@ -261,7 +314,8 @@ const styles = StyleSheet.create({
   // Wrapper fuer das "+": ueber die gesamte Breite, mittig zentriert.
   plusWrap: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   plusBtn: { width: 58, height: 58, borderRadius: 29, alignItems: 'center', justifyContent: 'center', borderWidth: 4, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 10 },
-  fab: { position: 'absolute', right: 18, width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 8 },
+  fab: { position: 'absolute', width: 56, height: 56, borderRadius: 28, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 8 },
+  fabTouch: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center' },
   label: { fontSize: 11, letterSpacing: 0.1 },
 
   // Schnell-Menue
