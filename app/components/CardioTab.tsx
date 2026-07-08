@@ -41,6 +41,7 @@ export default function CardioTab({ onChanged }: { onChanged?: () => void }) {
   const [saving, setSaving] = useState(false);
   const [showRun, setShowRun] = useState(false);
   const [detail, setDetail] = useState<Session | null>(null);
+  const [editing, setEditing] = useState<Session | null>(null); // bestehenden Eintrag korrigieren
 
   const load = useCallback(async () => {
     if (!uid) { setLoading(false); return; }
@@ -73,7 +74,21 @@ export default function CardioTab({ onChanged }: { onChanged?: () => void }) {
     hTap();
     setPicked(ct);
     setMins('30');
+    setEditing(null);
   }
+
+  // Bestehenden Eintrag antippen -> Dialog mit aktueller Dauer vorbelegen (z. B. 60 statt 90 Min
+  // korrigieren). Beim Speichern werden Minuten + neu berechnete Kalorien aktualisiert.
+  function openEdit(s: Session) {
+    const ct = cardioTypeByKey(s.activity_key);
+    if (!ct || !weightKg) return;
+    hTap();
+    setPicked(ct);
+    setMins(String(Math.round(Number(s.minutes))));
+    setEditing(s);
+  }
+
+  function closeModal() { setPicked(null); setEditing(null); }
 
   async function logIt() {
     if (!uid || !picked || !weightKg || minsNum <= 0 || saving) return;
@@ -86,7 +101,21 @@ export default function CardioTab({ onChanged }: { onChanged?: () => void }) {
     if (error) { Alert.alert(errorMessage(error)); return; }
     hSuccess();
     logActivity('cardio', t(`cardio.type.${picked.key}`)); // Freunde-Feed (fire-and-forget)
-    setPicked(null);
+    closeModal();
+    await load();
+    onChanged?.();
+  }
+
+  // Korrektur speichern: Minuten + neu berechnete Kalorien am bestehenden Eintrag aktualisieren.
+  async function saveEdit() {
+    if (!uid || !picked || !weightKg || !editing || minsNum <= 0 || saving) return;
+    setSaving(true);
+    const kcal = cardioKcal(picked.met, weightKg, minsNum);
+    const { error } = await supabase.from('cardio_sessions').update({ minutes: minsNum, kcal }).eq('id', editing.id);
+    setSaving(false);
+    if (error) { Alert.alert(errorMessage(error)); return; }
+    hSuccess();
+    closeModal();
     await load();
     onChanged?.();
   }
@@ -176,13 +205,18 @@ export default function CardioTab({ onChanged }: { onChanged?: () => void }) {
             const ct = cardioTypeByKey(s.activity_key);
             return (
               <View key={s.id} style={[styles.row, idx > 0 && styles.rowDivider]}>
-                <TouchableOpacity style={styles.rowMain} activeOpacity={s.route ? 0.6 : 1} onPress={s.route ? () => setDetail(s) : undefined} disabled={!s.route}>
+                <TouchableOpacity style={styles.rowMain} activeOpacity={0.6} onPress={s.route ? () => setDetail(s) : () => openEdit(s)} accessibilityRole="button" accessibilityLabel={s.route ? t(`cardio.type.${s.activity_key}`) : t('cardio.edit')}>
                   <View style={styles.rowIcon}><Ionicons name={(ct?.icon ?? 'flame') as any} size={18} color={c.primary} /></View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.rowName}>{t(`cardio.type.${s.activity_key}`)}{s.route ? '  🗺️' : ''}</Text>
                     <Text style={styles.rowMeta}>{s.distance_m ? `${formatDistance(s.distance_m)} · ` : ''}{Math.round(Number(s.minutes))} {t('cardio.minUnit')} · {s.kcal} kcal</Text>
                   </View>
                 </TouchableOpacity>
+                {!s.route && (
+                  <TouchableOpacity onPress={() => openEdit(s)} hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }} accessibilityRole="button" accessibilityLabel={t('cardio.edit')}>
+                    <Ionicons name="create-outline" size={19} color={c.textMuted} />
+                  </TouchableOpacity>
+                )}
                 <TouchableOpacity onPress={() => confirmDelete(s)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button" accessibilityLabel={t('cardio.deleteTitle')}>
                   <Ionicons name="trash-outline" size={20} color={c.textMuted} />
                 </TouchableOpacity>
@@ -193,12 +227,12 @@ export default function CardioTab({ onChanged }: { onChanged?: () => void }) {
       )}
 
       {/* Eingabe-Dialog: Dauer waehlen, Live-Vorschau der Kalorien, eintragen. */}
-      <Modal visible={!!picked} transparent animationType="fade" onRequestClose={() => setPicked(null)}>
+      <Modal visible={!!picked} transparent animationType="fade" onRequestClose={closeModal}>
         <View style={[styles.overlay, { paddingBottom: kb }]}>
           <View style={styles.modalCard}>
             <View style={styles.modalHead}>
               <View style={styles.modalIcon}><Ionicons name={(picked?.icon ?? 'flame') as any} size={24} color={c.primary} /></View>
-              <Text style={styles.modalTitle}>{picked ? t(`cardio.type.${picked.key}`) : ''}</Text>
+              <Text style={styles.modalTitle}>{picked ? (t(`cardio.type.${picked.key}`) + (editing ? ' · ' + t('cardio.editTitle') : '')) : ''}</Text>
             </View>
 
             <View style={styles.previewWrap}>
@@ -229,10 +263,10 @@ export default function CardioTab({ onChanged }: { onChanged?: () => void }) {
               underlineColorAndroid="transparent"
             />
 
-            <TouchableOpacity style={[styles.cta, (minsNum <= 0 || saving) && { opacity: 0.6 }]} onPress={logIt} disabled={minsNum <= 0 || saving} activeOpacity={0.85}>
-              {saving ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.ctaText}>{t('cardio.log')}</Text>}
+            <TouchableOpacity style={[styles.cta, (minsNum <= 0 || saving) && { opacity: 0.6 }]} onPress={editing ? saveEdit : logIt} disabled={minsNum <= 0 || saving} activeOpacity={0.85}>
+              {saving ? <ActivityIndicator color={c.onPrimary} /> : <Text style={styles.ctaText}>{editing ? t('cardio.save') : t('cardio.log')}</Text>}
             </TouchableOpacity>
-            <TouchableOpacity style={styles.cancel} onPress={() => setPicked(null)} activeOpacity={0.7}>
+            <TouchableOpacity style={styles.cancel} onPress={closeModal} activeOpacity={0.7}>
               <Text style={styles.cancelText}>{t('exercise.cancel')}</Text>
             </TouchableOpacity>
           </View>
