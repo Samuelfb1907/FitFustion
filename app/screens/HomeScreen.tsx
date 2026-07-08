@@ -387,22 +387,33 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
                 <Text style={styles.name} numberOfLines={1}>{profile?.first_name || t('home.welcome')}</Text>
                 <Text style={styles.date} numberOfLines={1}>{dateLine}</Text>
               </View>
-              {stats && (
-                <View style={styles.pillRow}>
-                  {stats.streak > 0 && (
-                    <View style={styles.pill} accessible accessibilityLabel={t('home.streakA11y', { streak: stats.streak })}>
-                      <GlassFill radius={999} />
-                      <Ionicons name="flame" size={13} color={amber} />
-                      <Text style={[styles.pillText, { color: amber }]} numberOfLines={1}>{stats.streak}</Text>
-                    </View>
-                  )}
-                  <View style={styles.pill} accessible accessibilityLabel={t('home.levelA11y', { level: lv.level })}>
-                    <GlassFill radius={999} />
-                    <Ionicons name="star" size={13} color={c.primary} />
-                    <Text style={[styles.pillText, { color: c.primary }]} numberOfLines={1}>{`Lv ${lv.level}`}</Text>
-                  </View>
+              <View style={styles.headerRight}>
+                {/* Fortschritt & Einstellungen sind keine Reiter mehr -> hier oben erreichbar. */}
+                <View style={styles.headerIcons}>
+                  <TouchableOpacity style={styles.headerIconBtn} onPress={() => onNavigate?.('progress')} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={t('quick.headerProgress')}>
+                    <Ionicons name="stats-chart-outline" size={19} color={c.text} />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.headerIconBtn} onPress={() => onNavigate?.('settings')} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={t('quick.headerSettings')}>
+                    <Ionicons name="settings-outline" size={19} color={c.text} />
+                  </TouchableOpacity>
                 </View>
-              )}
+                {stats && (
+                  <View style={styles.pillRow}>
+                    {stats.streak > 0 && (
+                      <View style={styles.pill} accessible accessibilityLabel={t('home.streakA11y', { streak: stats.streak })}>
+                        <GlassFill radius={999} />
+                        <Ionicons name="flame" size={13} color={amber} />
+                        <Text style={[styles.pillText, { color: amber }]} numberOfLines={1}>{stats.streak}</Text>
+                      </View>
+                    )}
+                    <View style={styles.pill} accessible accessibilityLabel={t('home.levelA11y', { level: lv.level })}>
+                      <GlassFill radius={999} />
+                      <Ionicons name="star" size={13} color={c.primary} />
+                      <Text style={[styles.pillText, { color: c.primary }]} numberOfLines={1}>{`Lv ${lv.level}`}</Text>
+                    </View>
+                  </View>
+                )}
+              </View>
             </View>
 
             {/* KALORIEN – ganze Karte wischbar; nach rechts wischen blaettert bis zu 7 Tage zurueck */}
@@ -693,6 +704,9 @@ function makeStyles(c: Colors) {
 
     // Header
     header: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 4 },
+    headerRight: { alignItems: 'flex-end', gap: 10 },
+    headerIcons: { flexDirection: 'row', gap: 8 },
+    headerIconBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, alignItems: 'center', justifyContent: 'center' },
     greet: { fontSize: 14, color: c.textMuted, fontWeight: '500' },
     name: { fontSize: 28, fontWeight: '800', color: c.primary, marginTop: 2, letterSpacing: -0.5 },
     date: { fontSize: 12, color: c.textMuted, fontWeight: '500', marginTop: 8 },

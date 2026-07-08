@@ -32,14 +32,18 @@ type Exercise = { id: string; name: string; difficulty: string; equipment: strin
 // Reihenfolge je Muskel-Key (clientseitig, damit die Anordnung stabil bleibt).
 const MUSCLE_ORDER = ['chest', 'back', 'shoulders', 'neck', 'biceps', 'triceps', 'abs', 'legs', 'glutes', 'calves'];
 
-export default function TrainingScreen({ focusTick, focused = true }: { focusTick?: number; focused?: boolean }) {
+export default function TrainingScreen({ focusTick, focused = true, initialSeg }: { focusTick?: number; focused?: boolean; initialSeg?: 'free' | 'plan' | 'cardio' }) {
   const { profile, isPremium, session } = useAuth();
   const { openPaywall } = usePaywall();
   const c = useColors();
   const t = useT();
   const styles = useMemo(() => makeStyles(c), [c]);
 
-  const [seg, setSeg] = useState<'free' | 'plan' | 'cardio'>('free');
+  // Startsegment: normal "Freies Training"; aus dem zentralen "+"-Menue kommt "cardio"
+  // (Aktivitaet) herein. initialSeg wird von MainTabs bei jedem Sprung neu gesetzt.
+  const [seg, setSeg] = useState<'free' | 'plan' | 'cardio'>(initialSeg ?? 'free');
+  const initialSegRef = useRef(initialSeg);
+  initialSegRef.current = initialSeg;
   const [muscles, setMuscles] = useState<Muscle[]>([]);
   const [selectedMuscle, setSelectedMuscle] = useState<Muscle | null>(null);
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -101,7 +105,7 @@ export default function TrainingScreen({ focusTick, focused = true }: { focusTic
   }
 
   useFocusTick(focusTick, () => {
-    setSeg('free');
+    setSeg(initialSegRef.current ?? 'free');
     setSelectedExercise(null);
     setSelectedMuscle(null);
     setPlanEx(null);
