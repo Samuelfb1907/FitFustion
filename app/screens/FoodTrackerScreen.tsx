@@ -746,7 +746,7 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
     }
     return { totalKcal: kcal, totalP: Math.round(p), totalC: Math.round(cc), totalF: Math.round(f) };
   }, [logs]);
-  const effTarget = targetKcal != null ? targetKcal + trainingKcal + activityKcal + cardioKcal : null;
+  const effTarget = targetKcal != null ? targetKcal + Math.max(trainingKcal, activityKcal) + cardioKcal : null;
   const remaining = effTarget != null ? effTarget - totalKcal : null;
 
   if (loading) {
@@ -1115,7 +1115,7 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
         {(trainingKcal > 0 || activityKcal > 0 || cardioKcal > 0) && (
           <View style={styles.bonusPill}>
             <Ionicons name={activityKcal > 0 ? 'walk' : 'flame'} size={14} color={c.primary} />
-            <Text style={styles.bonusText} numberOfLines={1}>{t('food.kcalExtra', { n: trainingKcal + activityKcal + cardioKcal })}{activityKcal > 0 && steps > 0 ? t('food.stepsSuffix', { steps: steps.toLocaleString(lang === 'en' ? 'en-US' : 'de-DE') }) : ''}</Text>
+            <Text style={styles.bonusText} numberOfLines={1}>{t('food.kcalExtra', { n: Math.max(trainingKcal, activityKcal) + cardioKcal })}{activityKcal > 0 && steps > 0 ? t('food.stepsSuffix', { steps: steps.toLocaleString(lang === 'en' ? 'en-US' : 'de-DE') }) : ''}</Text>
           </View>
         )}
         <View style={styles.macrosRow}>
