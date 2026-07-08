@@ -116,6 +116,7 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
   const [lastEntry, setLastEntry] = useState<{ reps: number | null; weight: number | null } | null>(null);
   const [best1RM, setBest1RM] = useState<number | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [showAllHistory, setShowAllHistory] = useState(false);
   const goal = useMemo(() => nextGoal(lastEntry, exercise.equipment), [lastEntry, exercise.equipment]);
   // Hantelscheiben-Rechner: nur bei Langhantel, live aus dem Gewichts-Feld.
   const plateW = Number(weight.replace(',', '.'));
@@ -206,8 +207,8 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
       .eq('user_id', userId)
       .eq('exercise_id', exercise.id)
       .order('created_at', { ascending: false })
-      .limit(200);
-    setHistory(buildExerciseHistory((data ?? []) as SetRow[]));
+      .limit(400);
+    setHistory(buildExerciseHistory((data ?? []) as SetRow[], 60));
   }
 
   async function saveSet() {
@@ -342,8 +343,15 @@ export default function ExerciseDetail({ exercise, onBack, muscleKey, muscleName
       {history.length > 0 && (
         <View style={styles.progressCard}>
           <GlassFill radius={16} />
-          <Text style={styles.h2}>{t('exercise.progressHeading')}</Text>
-          {history.map((h, i) => {
+          <View style={styles.progHeader}>
+            <Text style={[styles.h2, { marginBottom: 0 }]}>{t('exercise.progressHeading')}</Text>
+            {history.length > 5 && (
+              <TouchableOpacity onPress={() => { hTap(); setShowAllHistory((v) => !v); }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} accessibilityRole="button">
+                <Text style={styles.progToggle}>{showAllHistory ? t('exercise.progressShowLess') : t('exercise.progressShowAll', { n: history.length })}</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          {(showAllHistory ? history : history.slice(0, 5)).map((h, i) => {
             const col = h.trend === 'up' ? c.success : h.trend === 'down' ? c.danger : c.text;
             const val = h.topWeight != null
               ? `${h.topWeight} kg${h.repsAtTop != null ? ` × ${h.repsAtTop}` : ''}`
@@ -493,6 +501,8 @@ function makeStyles(c: Colors) {
     endedHint: { fontSize: 13, color: c.success, textAlign: 'center', marginTop: 12, lineHeight: 19 },
     progHint: { fontSize: 14, color: c.primary, fontWeight: '700', textAlign: 'center', marginTop: 10, lineHeight: 20 },
     progressCard: { backgroundColor: c.card, borderRadius: 16, padding: 18, marginTop: 18, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border },
+    progHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+    progToggle: { fontSize: 13, color: c.primary, fontWeight: '700' },
     progRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10 },
     progRowDivider: { borderTopColor: c.border, borderTopWidth: StyleSheet.hairlineWidth },
     progDate: { fontSize: 15, color: c.textMuted, fontWeight: '600' },
