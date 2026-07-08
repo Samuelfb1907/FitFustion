@@ -15,15 +15,18 @@ import { usePaywall } from '../components/Paywall';
 import { computeNutrition, ageFromBirthDate, Gender, ActivityLevel, GoalType } from '../lib/nutrition';
 import { ensurePermission, applyReminders, loadReminderPrefs, saveReminderPrefs } from '../lib/reminders';
 
-type Opt = { label: string; value: string };
+type Opt = { label: string; value: string; desc?: string };
 
 const GENDERS: Opt[] = [
   { label: 'onboarding.gender.male', value: 'male' }, { label: 'onboarding.gender.female', value: 'female' },
   { label: 'onboarding.gender.diverse', value: 'diverse' }, { label: 'onboarding.gender.prefer_not', value: 'prefer_not' },
 ];
 const ACTIVITY: Opt[] = [
-  { label: 'onboarding.activity.sedentary', value: 'sedentary' }, { label: 'onboarding.activity.light', value: 'light' },
-  { label: 'onboarding.activity.moderate', value: 'moderate' }, { label: 'onboarding.activity.active', value: 'active' }, { label: 'onboarding.activity.very_active', value: 'very_active' },
+  { label: 'onboarding.activity.sedentary', value: 'sedentary', desc: 'onboarding.activity.sedentaryDesc' },
+  { label: 'onboarding.activity.light', value: 'light', desc: 'onboarding.activity.lightDesc' },
+  { label: 'onboarding.activity.moderate', value: 'moderate', desc: 'onboarding.activity.moderateDesc' },
+  { label: 'onboarding.activity.active', value: 'active', desc: 'onboarding.activity.activeDesc' },
+  { label: 'onboarding.activity.very_active', value: 'very_active', desc: 'onboarding.activity.very_activeDesc' },
 ];
 const EXPERIENCE: Opt[] = [
   { label: 'onboarding.experience.beginner', value: 'beginner' }, { label: 'onboarding.experience.some', value: 'some' },
@@ -41,14 +44,16 @@ const TIMEFRAMES: Opt[] = [
 ];
 
 function Choice({ options, value, onChange, styles, t }: { options: Opt[]; value: string; onChange: (v: string) => void; styles: any; t: (key: string, vars?: Record<string, string | number>) => string }) {
+  const hasDesc = options.some((o) => o.desc); // mit Erklaerung -> vertikale Liste statt Chips
   return (
-    <View style={styles.choiceWrap}>
+    <View style={hasDesc ? styles.choiceList : styles.choiceWrap}>
       {options.map((o) => {
         const active = value === o.value;
         return (
-          <TouchableOpacity key={o.value} style={[styles.choice, active && styles.choiceActive]} onPress={() => onChange(o.value)} accessibilityRole="radio" accessibilityState={{ selected: active }} accessibilityLabel={t(o.label)}>
+          <TouchableOpacity key={o.value} style={[hasDesc ? styles.choiceRow : styles.choice, active && styles.choiceActive]} onPress={() => onChange(o.value)} accessibilityRole="radio" accessibilityState={{ selected: active }} accessibilityLabel={t(o.label)}>
             <GlassFill radius={14} />
             <Text style={[styles.choiceText, active && styles.choiceTextActive]}>{t(o.label)}</Text>
+            {o.desc ? <Text style={[styles.choiceDesc, active && styles.choiceDescActive]}>{t(o.desc)}</Text> : null}
           </TouchableOpacity>
         );
       })}
@@ -290,10 +295,14 @@ function makeStyles(c: Colors) {
     dateField: { flex: 1, textAlign: 'center' },
     dateFieldYear: { flex: 1.5, textAlign: 'center' },
     choiceWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    choiceList: { gap: 8 },
     choice: { borderWidth: 1, borderColor: c.border, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: c.card },
+    choiceRow: { borderWidth: 1, borderColor: c.border, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: c.card },
     choiceActive: { backgroundColor: c.primary, borderColor: c.primary },
     choiceText: { color: c.text, fontSize: 15 },
     choiceTextActive: { color: c.onPrimary, fontWeight: '600' },
+    choiceDesc: { color: c.textMuted, fontSize: 13, marginTop: 3, lineHeight: 18 },
+    choiceDescActive: { color: c.onPrimary, opacity: 0.9 },
     selected: { marginTop: 14, color: c.primary, fontWeight: '600' },
     error: { color: c.danger, marginTop: 16, fontSize: 14 },
     nav: { flexDirection: 'row', paddingVertical: 16, gap: 12 },

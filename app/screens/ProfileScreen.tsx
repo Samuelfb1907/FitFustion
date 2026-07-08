@@ -13,7 +13,7 @@ import { goalRealism } from '../lib/goalRealism';
 import { computeNutrition, ageFromBirthDate, Gender, ActivityLevel, GoalType } from '../lib/nutrition';
 import { TAB_BAR_SPACE } from '../lib/layout';
 
-type Opt = { label: string; value: string };
+type Opt = { label: string; value: string; desc?: string };
 const GENDERS: Opt[] = [
   { label: 'profile.gender.male', value: 'male' },
   { label: 'profile.gender.female', value: 'female' },
@@ -21,11 +21,11 @@ const GENDERS: Opt[] = [
   { label: 'profile.gender.prefer_not', value: 'prefer_not' },
 ];
 const ACTIVITY: Opt[] = [
-  { label: 'profile.activity.sedentary', value: 'sedentary' },
-  { label: 'profile.activity.light', value: 'light' },
-  { label: 'profile.activity.moderate', value: 'moderate' },
-  { label: 'profile.activity.active', value: 'active' },
-  { label: 'profile.activity.very_active', value: 'very_active' },
+  { label: 'profile.activity.sedentary', value: 'sedentary', desc: 'profile.activity.sedentaryDesc' },
+  { label: 'profile.activity.light', value: 'light', desc: 'profile.activity.lightDesc' },
+  { label: 'profile.activity.moderate', value: 'moderate', desc: 'profile.activity.moderateDesc' },
+  { label: 'profile.activity.active', value: 'active', desc: 'profile.activity.activeDesc' },
+  { label: 'profile.activity.very_active', value: 'very_active', desc: 'profile.activity.very_activeDesc' },
 ];
 const GOALS: Opt[] = [
   { label: 'profile.goal.lose_weight', value: 'lose_weight' },
@@ -180,14 +180,16 @@ export default function ProfileScreen({ onBack }: { onBack?: () => void }) {
   }
 
   function renderChoice(options: Opt[], value: string, onChange: (v: string) => void) {
+    const hasDesc = options.some((o) => o.desc); // mit Erklaerung -> vertikale Liste statt Chips
     return (
-      <View style={styles.choiceWrap}>
+      <View style={hasDesc ? styles.choiceList : styles.choiceWrap}>
         {options.map((o) => {
           const active = value === o.value;
           return (
-            <TouchableOpacity key={o.value} style={[styles.choice, active && styles.choiceActive]} onPress={() => onChange(o.value)}>
+            <TouchableOpacity key={o.value} style={[hasDesc ? styles.choiceRow : styles.choice, active && styles.choiceActive]} onPress={() => onChange(o.value)} accessibilityRole="radio" accessibilityState={{ selected: active }} accessibilityLabel={t(o.label)}>
               <GlassFill radius={14} />
               <Text style={[styles.choiceText, active && styles.choiceTextActive]}>{t(o.label)}</Text>
+              {o.desc ? <Text style={[styles.choiceDesc, active && styles.choiceDescActive]}>{t(o.desc)}</Text> : null}
             </TouchableOpacity>
           );
         })}
@@ -305,10 +307,14 @@ function makeStyles(c: Colors) {
     dateField: { flex: 1, textAlign: 'center' },
     dateFieldYear: { flex: 1.5, textAlign: 'center' },
     choiceWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    choiceList: { gap: 8 },
     choice: { borderWidth: 1, borderColor: c.border, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: c.card },
+    choiceRow: { borderWidth: 1, borderColor: c.border, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: c.card },
     choiceActive: { backgroundColor: c.primary, borderColor: c.primary },
     choiceText: { color: c.text, fontSize: 15 },
     choiceTextActive: { color: c.onPrimary, fontWeight: '600' },
+    choiceDesc: { color: c.textMuted, fontSize: 13, marginTop: 3, lineHeight: 18 },
+    choiceDescActive: { color: c.onPrimary, opacity: 0.9 },
     saveBtn: { backgroundColor: c.primary, borderRadius: 16, paddingVertical: 16, alignItems: 'center', marginTop: 28 },
     saveText: { color: c.onPrimary, fontSize: 16, fontWeight: '700' },
     msg: { fontSize: 14, textAlign: 'center', marginTop: 14 },
