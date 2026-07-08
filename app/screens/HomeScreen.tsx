@@ -442,6 +442,13 @@ export default function HomeScreen({ onNavigate, focusTick }: { onNavigate?: (ta
                       </View>
                     );
                   })()}
+                  {/* Zweite Pille (blau): rein informativ, wie viel das Training verbrannt hat. */}
+                  {dayOffset === 0 && trainingKcal > 0 && (
+                    <View style={styles.trainingPill}>
+                      <Ionicons name="barbell" size={14} color="#3D8BFD" />
+                      <Text style={styles.trainingPillText} numberOfLines={1}>{t('home.trainingKcal', { n: trainingKcal })}</Text>
+                    </View>
+                  )}
                   {dayOffset > 0 && cur.kcal === 0 && curActivityKcal === 0 && (
                     <Text style={styles.untracked}>{t('home.day.untracked')}</Text>
                   )}
@@ -709,6 +716,8 @@ function makeStyles(c: Colors) {
     dotActive: { width: 18, backgroundColor: c.primary },
     bonusPill: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'center', marginTop: 14, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(22,180,134,0.25)', backgroundColor: 'rgba(22,180,134,0.10)' },
     bonusText: { fontSize: 12, fontWeight: '600', color: c.primary },
+    trainingPill: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'center', marginTop: 8, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(61,139,253,0.30)', backgroundColor: 'rgba(61,139,253,0.12)' },
+    trainingPillText: { fontSize: 12, fontWeight: '600', color: '#3D8BFD' },
     headRight: { fontSize: 13, fontWeight: '700', color: c.textMuted },
     trophyRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
     achBar: { height: 4, borderRadius: 3, backgroundColor: c.track, overflow: 'hidden', marginTop: 12, marginBottom: 4 },
