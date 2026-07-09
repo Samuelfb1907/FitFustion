@@ -97,7 +97,7 @@
       "googleServicesFile": "./google-services.json",
       "config": {
         "googleMaps": {
-          "apiKey": "DEIN_GOOGLE_MAPS_ANDROID_KEY"
+          "apiKey": "AIzaSyBzDzgKv2WQbGG-23SR50WEdaxYA4st3r8"
         }
       },
       "adaptiveIcon": {
