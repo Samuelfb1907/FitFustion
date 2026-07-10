@@ -114,7 +114,7 @@ export const PRIVACY_SECTIONS: { h: string; p: string }[] = [
   },
   {
     h: 'Abo, In-App-Käufe & Zahlungen',
-    p: 'Premium-Funktionen kannst du als Abo buchen: 9,99 €/Monat oder 59,99 €/Jahr (für Neukunden in der Regel mit 7-tägiger kostenloser Testphase). Kauf und Abrechnung erfolgen ausschließlich über deinen App-Store-Account (Apple App Store bzw. Google Play); diese Anbieter sind dafür eigenständig Verantwortliche und verarbeiten deine Zahlungsdaten. Wir selbst erhalten und speichern KEINE Zahlungsdaten (z. B. Kreditkartennummern) – bei uns wird lediglich gespeichert, ob dein Konto ein aktives Premium-Abo besitzt. Zur technischen Verwaltung und Prüfung der Abos setzen wir den Dienstleister RevenueCat, Inc. (USA) als Auftragsverarbeiter ein; dabei werden eine pseudonyme Nutzer-Kennung und der Kaufstatus verarbeitet. Die Übermittlung in die USA ist über die EU-Standardvertragsklauseln (Art. 46 DSGVO) abgesichert; ein Auftragsverarbeitungsvertrag (AVV) gemäß Art. 28 DSGVO wird geschlossen.',
+    p: 'Premium-Funktionen kannst du als Abo buchen: 6,99 €/Monat oder 34,99 €/Jahr (für Neukunden in der Regel mit 7-tägiger kostenloser Testphase). Kauf und Abrechnung erfolgen ausschließlich über deinen App-Store-Account (Apple App Store bzw. Google Play); diese Anbieter sind dafür eigenständig Verantwortliche und verarbeiten deine Zahlungsdaten. Wir selbst erhalten und speichern KEINE Zahlungsdaten (z. B. Kreditkartennummern) – bei uns wird lediglich gespeichert, ob dein Konto ein aktives Premium-Abo besitzt. Zur technischen Verwaltung und Prüfung der Abos setzen wir den Dienstleister RevenueCat, Inc. (USA) als Auftragsverarbeiter ein; dabei werden eine pseudonyme Nutzer-Kennung und der Kaufstatus verarbeitet. Die Übermittlung in die USA ist über die EU-Standardvertragsklauseln (Art. 46 DSGVO) abgesichert; ein Auftragsverarbeitungsvertrag (AVV) gemäß Art. 28 DSGVO wird geschlossen.',
   },
   {
     h: 'Speicherdauer',
@@ -183,7 +183,7 @@ export const TERMS_SECTIONS: { h: string; p: string }[] = [
   },
   {
     h: '3. Premium-Abo, Preis & Laufzeit',
-    p: 'Premium ist als Monats- oder Jahresabo erhältlich: 9,99 € pro Monat oder 59,99 € pro Jahr (inkl. etwaiger gesetzlicher Steuern, soweit nicht anders angegeben). Neukunden erhalten in der Regel eine kostenlose Testphase von 7 Tagen; nach deren Ablauf wird der gewählte Abopreis berechnet, sofern du nicht vorher kündigst. Kauf und Abrechnung erfolgen ausschließlich über deinen App-Store-Account (Apple App Store bzw. Google Play). Es handelt sich um ein automatisch verlängerndes Abonnement: Es verlängert sich um die jeweils gewählte Laufzeit (einen Monat bzw. ein Jahr) zum dann gültigen Preis, sofern du es nicht mindestens 24 Stunden vor Ende des laufenden Zeitraums kündigst.',
+    p: 'Premium ist als Monats- oder Jahresabo erhältlich: 6,99 € pro Monat oder 34,99 € pro Jahr (inkl. etwaiger gesetzlicher Steuern, soweit nicht anders angegeben). Neukunden erhalten in der Regel eine kostenlose Testphase von 7 Tagen; nach deren Ablauf wird der gewählte Abopreis berechnet, sofern du nicht vorher kündigst. Kauf und Abrechnung erfolgen ausschließlich über deinen App-Store-Account (Apple App Store bzw. Google Play). Es handelt sich um ein automatisch verlängerndes Abonnement: Es verlängert sich um die jeweils gewählte Laufzeit (einen Monat bzw. ein Jahr) zum dann gültigen Preis, sofern du es nicht mindestens 24 Stunden vor Ende des laufenden Zeitraums kündigst.',
   },
   {
     h: '4. Kündigung',
@@ -337,7 +337,7 @@ export const PRIVACY_SECTIONS_EN: { h: string; p: string }[] = [
   },
   {
     h: 'Subscription, in-app purchases & payments',
-    p: 'You can book premium features as a subscription: €9.99/month or €59.99/year (for new customers, generally with a 7-day free trial period). Purchase and billing take place exclusively via your app store account (Apple App Store or Google Play); these providers are independently responsible for this and process your payment data. We ourselves do not receive or store ANY payment data (e.g. credit card numbers) – we only store whether your account has an active premium subscription. For the technical management and verification of subscriptions, we use the service provider RevenueCat, Inc. (USA) as a processor; in doing so, a pseudonymous user identifier and the purchase status are processed. The transfer to the USA is safeguarded by the EU Standard Contractual Clauses (Art. 46 GDPR); a data processing agreement (DPA) pursuant to Art. 28 GDPR is concluded.',
+    p: 'You can book premium features as a subscription: €6.99/month or €34.99/year (for new customers, generally with a 7-day free trial period). Purchase and billing take place exclusively via your app store account (Apple App Store or Google Play); these providers are independently responsible for this and process your payment data. We ourselves do not receive or store ANY payment data (e.g. credit card numbers) – we only store whether your account has an active premium subscription. For the technical management and verification of subscriptions, we use the service provider RevenueCat, Inc. (USA) as a processor; in doing so, a pseudonymous user identifier and the purchase status are processed. The transfer to the USA is safeguarded by the EU Standard Contractual Clauses (Art. 46 GDPR); a data processing agreement (DPA) pursuant to Art. 28 GDPR is concluded.',
   },
   {
     h: 'Storage period',
@@ -405,7 +405,7 @@ export const TERMS_SECTIONS_EN: { h: string; p: string }[] = [
   },
   {
     h: '3. Premium subscription, price & term',
-    p: 'Premium is available as a monthly or annual subscription: €9.99 per month or €59.99 per year (including any statutory taxes, unless stated otherwise). New customers generally receive a free trial period of 7 days; after it expires, the chosen subscription price is charged unless you cancel beforehand. Purchase and billing take place exclusively via your app store account (Apple App Store or Google Play). This is an automatically renewing subscription: it renews for the respectively chosen term (one month or one year) at the price then applicable, unless you cancel it at least 24 hours before the end of the current period.',
+    p: 'Premium is available as a monthly or annual subscription: €6.99 per month or €34.99 per year (including any statutory taxes, unless stated otherwise). New customers generally receive a free trial period of 7 days; after it expires, the chosen subscription price is charged unless you cancel beforehand. Purchase and billing take place exclusively via your app store account (Apple App Store or Google Play). This is an automatically renewing subscription: it renews for the respectively chosen term (one month or one year) at the price then applicable, unless you cancel it at least 24 hours before the end of the current period.',
   },
   {
     h: '4. Cancellation',

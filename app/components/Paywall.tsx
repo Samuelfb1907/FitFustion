@@ -15,7 +15,7 @@ import { getTermsSections, getPrivacySections } from '../lib/legal';
 import { getPremiumPlans, purchasePlan, restorePurchases, PremiumPlan, PremiumPlans } from '../lib/purchases';
 
 // Anzeige-Fallback, falls der echte Store-Preis (noch) nicht geladen werden kann.
-export const PREMIUM_PRICE = '9,99 € / Monat';
+export const PREMIUM_PRICE = '6,99 € / Monat';
 
 // Icon + Übersetzungs-Keys je Vorteil (Texte werden im Render via t() aufgelöst).
 const BENEFITS: [string, string, string][] = [

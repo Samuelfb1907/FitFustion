@@ -69,7 +69,7 @@ export type PurchaseOutcome = 'success' | 'cancelled' | 'unavailable' | 'none' |
 
 export type PremiumPlan = {
   pkg: PurchasesPackage;
-  priceString: string;                 // lokalisierter Vollpreis, z. B. "9,99 €"
+  priceString: string;                 // lokalisierter Vollpreis, z. B. "6,99 €"
   pricePerMonthString: string | null;  // lokalisierter Monats-Aequivalentpreis (v. a. fuers Jahresabo)
   priceAmount: number;                 // numerischer Preis, fuer die Ersparnis-Rechnung
   freeTrialDays: number | null;        // Gratis-Testtage (z. B. 7), sonst null
