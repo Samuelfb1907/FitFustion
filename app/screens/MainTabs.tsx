@@ -153,6 +153,10 @@ export default function MainTabs() {
   }, []);
 
   const fabPan = useMemo(() => PanResponder.create({
+    // Bei JEDEM Beruehrungs-Start (Capture laeuft zuerst) das "gezogen"-Flag zuruecksetzen.
+    // Sonst bleibt es nach einem Drag auf true haengen und jeder folgende Tipp wird faelschlich
+    // als Drag gewertet -> der Coach oeffnet nicht mehr. false = Tipp geht normal an den Knopf.
+    onStartShouldSetPanResponderCapture: () => { fabMoved.current = false; return false; },
     onStartShouldSetPanResponder: () => false,
     // Erst bei echter Bewegung (>6px) uebernehmen -> reine Tipps bleiben Tipps.
     onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dx) > 6 || Math.abs(g.dy) > 6,
