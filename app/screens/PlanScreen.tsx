@@ -390,7 +390,7 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
             const active = selectedDays === n;
             return (
               <TouchableOpacity key={n} style={[styles.dayOpt, active && styles.dayOptActive]} onPress={() => setSelectedDays(n)}>
-                <GlassFill radius={16} />
+                {!active && <GlassFill radius={16} />}
                 <Text style={[styles.dayOptText, active && styles.dayOptTextActive]}>{n}</Text>
               </TouchableOpacity>
             );
@@ -423,7 +423,7 @@ export default function PlanScreen({ embedded, onOpenExercise, refreshTick }: { 
           <Text style={styles.secondaryText}>{t('plan.newPlan')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.secondaryBtn, styles.topBtn, editMode && styles.editActive]} onPress={() => { setEditWeekday(null); setEditMode((v) => !v); }}>
-          <GlassFill radius={14} />
+          {!editMode && <GlassFill radius={14} />}
           <Text style={[styles.secondaryText, editMode && { color: c.onPrimary }]}>{editMode ? t('plan.done') : t('plan.edit')}</Text>
         </TouchableOpacity>
       </View>

@@ -75,7 +75,7 @@ export default function RestTimer({ c, autoStartSignal, defaultSeconds = 90 }: {
       <View style={styles.presets}>
         {PRESETS.map((p) => (
           <TouchableOpacity key={p} style={[styles.preset, duration === p && styles.presetActive]} onPress={() => start(p)} activeOpacity={0.8}>
-            <GlassFill radius={10} />
+            {duration !== p && <GlassFill radius={10} />}
             <Text style={[styles.presetText, duration === p && styles.presetTextActive]}>{fmtPreset(p)}</Text>
           </TouchableOpacity>
         ))}

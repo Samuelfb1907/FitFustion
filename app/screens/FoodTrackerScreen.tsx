@@ -1276,7 +1276,7 @@ export default function FoodTrackerScreen({ embedded, focusTick, focused = true 
               const active = nlMeal === m.key;
               return (
                 <TouchableOpacity key={m.key} onPress={() => setNlMealAll(m.key)} style={[styles.nlChip, active && styles.nlChipActive]} activeOpacity={0.8} accessibilityRole="button" accessibilityState={{ selected: active }}>
-                  <GlassFill radius={999} />
+                  {!active && <GlassFill radius={999} />}
                   <Text style={[styles.nlChipText, active && styles.nlChipTextActive]}>{mealLabel(m.key)}</Text>
                 </TouchableOpacity>
               );

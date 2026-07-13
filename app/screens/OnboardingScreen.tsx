@@ -51,7 +51,7 @@ function Choice({ options, value, onChange, styles, t }: { options: Opt[]; value
         const active = value === o.value;
         return (
           <TouchableOpacity key={o.value} style={[hasDesc ? styles.choiceRow : styles.choice, active && styles.choiceActive]} onPress={() => onChange(o.value)} accessibilityRole="radio" accessibilityState={{ selected: active }} accessibilityLabel={t(o.label)}>
-            <GlassFill radius={14} />
+            {!active && <GlassFill radius={14} />}
             <Text style={[styles.choiceText, active && styles.choiceTextActive]}>{t(o.label)}</Text>
             {o.desc ? <Text style={[styles.choiceDesc, active && styles.choiceDescActive]}>{t(o.desc)}</Text> : null}
           </TouchableOpacity>
